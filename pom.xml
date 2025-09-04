@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>dev.streamx.blueprints</groupId>
+  <artifactId>blueprints-project</artifactId>
+  <version>3.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>StreamX Blueprints : Project</name>
+
+  <modules>
+    <module>services</module>
+    <module>libraries</module>
+  </modules>
+
+  <properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <!--  Maven plugins  -->
+    <compiler-plugin.version>3.11.0</compiler-plugin.version>
+    <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
+    <failsafe-plugin.version>${surefire-plugin.version}</failsafe-plugin.version>
+    <surefire-plugin.version>3.1.2</surefire-plugin.version>
+    <jandex-maven-plugin.version>3.2.0</jandex-maven-plugin.version>
+
+    <!--  StreamX  -->
+    <streamx.version>1.1.6-SNAPSHOT</streamx.version>
+
+    <!-- CLoudEvents -->
+    <cloudevents-impl.version>4.0.1</cloudevents-impl.version>
+
+    <!--  Pulsar client version override  -->
+    <pulsar.client.version>4.0.0</pulsar.client.version>
+
+    <!-- Quarkus -->
+    <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+    <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+    <quarkus.platform.version>3.14.1</quarkus.platform.version>
+    <quarkus-reactive-messaging-http.version>2.5.0-lts</quarkus-reactive-messaging-http.version>
+
+    <!--  Docker  -->
+    <quarkus.container-image.build>true</quarkus.container-image.build>
+    <quarkus.container-image.registry>ghcr.io</quarkus.container-image.registry>
+    <quarkus.container-image.group>streamx-com/streamx-blueprints</quarkus.container-image.group>
+    <quarkus.container-image.name>${project.artifactId}</quarkus.container-image.name>
+    <quarkus.container-image.package.type>jvm</quarkus.container-image.package.type>
+    <quarkus.container-image.tag>${project.version}-${quarkus.container-image.package.type}</quarkus.container-image.tag>
+    <quarkus.container-image.additional-tags>latest-${quarkus.container-image.package.type}</quarkus.container-image.additional-tags>
+
+    <!-- Test dependencies -->
+    <assertj-core.version>3.24.2</assertj-core.version>
+    <javax.ws.rs-api.version>2.1.1</javax.ws.rs-api.version>
+  </properties>
+
+  <scm>
+    <connection>scm:git:git@github.com:streamx-com/streamx-blueprints.git</connection>
+    <developerConnection>scm:git:git@github.com:streamx-com/streamx-blueprints.git</developerConnection>
+    <tag>HEAD</tag>
+    <url>https://github.com/streamx-com/streamx-blueprints</url>
+  </scm>
+
+  <distributionManagement>
+    <repository>
+      <id>streamx-maven-public-releases</id>
+      <url>artifactregistry://europe-west1-maven.pkg.dev/streamx-releases/streamx-maven-public-releases</url>
+    </repository>
+    <snapshotRepository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/streamx-com/streamx-blueprints</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <repositories>
+    <repository>
+      <id>streamx-maven-public-releases</id>
+      <url>
+        https://europe-west1-maven.pkg.dev/streamx-releases/streamx-maven-public-releases
+      </url>
+    </repository>
+  </repositories>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>dev.streamx</groupId>
+        <artifactId>reactive-messaging-http-cloudevents</artifactId>
+        <version>${streamx.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>dev.streamx</groupId>
+        <artifactId>content-parser</artifactId>
+        <version>${streamx.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>dev.streamx.blueprints</groupId>
+        <artifactId>cloud-events-support</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>${quarkus.platform.artifact-id}</artifactId>
+        <version>${quarkus.platform.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.cloudevents</groupId>
+        <artifactId>cloudevents-core</artifactId>
+        <version>${cloudevents-impl.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.cloudevents</groupId>
+        <artifactId>cloudevents-json-jackson</artifactId>
+        <version>${cloudevents-impl.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.quarkiverse.reactivemessaging.http</groupId>
+        <artifactId>quarkus-reactive-messaging-http</artifactId>
+        <version>${quarkus-reactive-messaging-http.version}</version>
+      </dependency>
+
+      <!-- Test dependencies -->
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>${assertj-core.version}</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>${quarkus.platform.group-id}</groupId>
+          <artifactId>quarkus-maven-plugin</artifactId>
+          <version>${quarkus.platform.version}</version>
+          <extensions>true</extensions>
+          <executions>
+            <execution>
+              <goals>
+                <goal>build</goal>
+                <goal>generate-code</goal>
+                <goal>generate-code-tests</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${maven-jar-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>io.smallrye</groupId>
+          <artifactId>jandex-maven-plugin</artifactId>
+          <version>${jandex-maven-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>make-index</id>
+              <goals>
+                <goal>jandex</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${compiler-plugin.version}</version>
+        <configuration>
+          <compilerArgs>
+            <arg>-parameters</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire-plugin.version}</version>
+        <configuration>
+          <systemPropertyVariables>
+            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+            <maven.home>${maven.home}</maven.home>
+            <maven.repo>${settings.localRepository}</maven.repo>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${failsafe-plugin.version}</version>
+        <configuration>
+          <systemPropertyVariables>
+            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+            <maven.home>${maven.home}</maven.home>
+          </systemPropertyVariables>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>3.0.1</version>
+        <configuration>
+          <tagNameFormat>@{project.version}</tagNameFormat>
+          <scmCommentPrefix>[no ci] [maven-release-plugin]</scmCommentPrefix>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>container-image-multiplatform</id>
+      <properties>
+        <quarkus.docker.buildx.platform>linux/amd64,linux/arm64</quarkus.docker.buildx.platform>
+      </properties>
+    </profile>
+  </profiles>
+</project>
