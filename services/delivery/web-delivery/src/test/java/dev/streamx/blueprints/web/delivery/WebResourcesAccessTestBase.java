@@ -5,7 +5,7 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.core.StringContains.containsString;
 
 import dev.streamx.blueprints.data.Page;
-import dev.streamx.blueprints.utils.CloudEventUtils;
+import dev.streamx.blueprints.cloudeventsutils.CloudEventUtils;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;

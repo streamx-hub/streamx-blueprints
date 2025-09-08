@@ -9,9 +9,8 @@
   <name>StreamX Blueprints : Project</name>
 
   <modules>
-    <module>services</module>
     <module>libraries</module>
-    <module>services/web-delivery-service</module>
+    <module>services</module>
   </modules>
 
   <properties>
