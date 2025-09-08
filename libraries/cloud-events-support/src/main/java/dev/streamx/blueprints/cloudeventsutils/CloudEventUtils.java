@@ -1,4 +1,6 @@
-package dev.streamx.blueprints.utils;
+package dev.streamx.blueprints.cloudeventsutils;
+
+import static java.util.Objects.requireNonNull;
 
 import static java.util.Objects.requireNonNull;
 

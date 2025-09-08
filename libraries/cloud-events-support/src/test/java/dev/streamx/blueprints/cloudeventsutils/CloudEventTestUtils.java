@@ -1,4 +1,4 @@
-package dev.streamx.blueprints.utils;
+package dev.streamx.blueprints.cloudeventsutils;
 
 import io.cloudevents.CloudEvent;
 import java.util.Comparator;

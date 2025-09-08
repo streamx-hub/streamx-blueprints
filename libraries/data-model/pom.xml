@@ -7,16 +7,17 @@
     <groupId>dev.streamx.blueprints</groupId>
     <artifactId>blueprints-project</artifactId>
     <version>3.0.0-SNAPSHOT</version>
-    <relativePath>../pom.xml</relativePath>
+    <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>libraries</artifactId>
-  <name>Blueprints Libraries</name>
-  <packaging>pom</packaging>
+  <artifactId>data-model</artifactId>
 
-  <modules>
-    <module>cloud-events-support</module>
-    <module>data-model</module>
-  </modules>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.cloudevents</groupId>
+      <artifactId>cloudevents-core</artifactId>
+    </dependency>
+  </dependencies>
 
 </project>
