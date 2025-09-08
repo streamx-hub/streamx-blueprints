@@ -3,7 +3,7 @@ package dev.streamx.blueprints.composition;
 import dev.streamx.blueprints.data.Composition;
 import dev.streamx.blueprints.data.Layout;
 import dev.streamx.blueprints.data.Page;
-import dev.streamx.blueprints.utils.CloudEventUtils;
+import dev.streamx.blueprints.cloudeventsutils.CloudEventUtils;
 import dev.streamx.content.parser.datainsert.DataInsertHandler;
 import dev.streamx.content.parser.datainsert.Segment;
 import dev.streamx.content.parser.datainsert.SegmentDefineHandler;
@@ -42,10 +42,9 @@ public class CompositionFunction {
   @Outgoing(OUTGOING_PAGE_COMPOSE_REQUESTS_CHANNEL)
   @Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
   public Multi<CloudEvent> consumeLayout(CloudEvent layout) {
-    boolean isPublished = Layout.TYPE_PUBLISHED.equals(layout.getType());
-    if (isPublished) {
+    if (CloudEventUtils.isPublishingType(layout.getType())) {
       layoutsStore.put(layout.getSubject(), CloudEventUtils.getData(layout, Layout.class));
-    } else {
+    } if (CloudEventUtils.isUnpublishingType(layout.getType())) {
       layoutsStore.remove(layout.getSubject());
     }
     try {
@@ -60,7 +59,7 @@ public class CompositionFunction {
   @Outgoing(OUTGOING_PAGE_COMPOSE_REQUESTS_CHANNEL)
   public CloudEvent consumeComposition(CloudEvent compositionEvent) {
     String compositionKey = compositionEvent.getSubject();
-    if (Composition.TYPE_COMPOSITION_PUBLISHED.equals(compositionEvent.getType())) {
+    if (CloudEventUtils.isPublishingType(compositionEvent.getType())) {
       Composition composition = CloudEventUtils.getData(compositionEvent, Composition.class);
       compositionsStore.put(compositionKey, composition);
       return CloudEventUtils.builderWithJsonData(
@@ -69,7 +68,7 @@ public class CompositionFunction {
           .withSubject(compositionKey)
           .withType(PageComposeRequest.TYPE_PUBLISHED)
           .build();
-    } else if (Composition.TYPE_COMPOSITION_UNPUBLISHED.equals(compositionEvent.getType())) {
+    } else if (CloudEventUtils.isUnpublishingType(compositionEvent.getType())) {
       compositionsStore.remove(compositionKey);
       return CloudEventUtils.builderWithJsonData(new PageComposeRequest(compositionKey, null))
           .withTime(compositionEvent.getTime())

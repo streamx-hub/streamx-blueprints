@@ -10,7 +10,6 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <groupId>dev.streamx.blueprints</groupId>
   <artifactId>cloud-events-support</artifactId>
 
   <dependencies>

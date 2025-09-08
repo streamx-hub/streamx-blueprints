@@ -6,16 +6,20 @@
     <groupId>dev.streamx.blueprints</groupId>
     <artifactId>blueprints-project</artifactId>
     <version>3.0.0-SNAPSHOT</version>
-    <relativePath>../../pom.xml</relativePath>
+    <relativePath>../../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>composition-engine-processing-service</artifactId>
+  <artifactId>composition-engine</artifactId>
   <name>StreamX Blueprints : Composition Engine Processing Service</name>
 
   <dependencies>
     <dependency>
       <groupId>dev.streamx</groupId>
       <artifactId>reactive-messaging-http-cloudevents</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>dev.streamx.blueprints</groupId>
+      <artifactId>data-model</artifactId>
     </dependency>
     <dependency>
       <groupId>dev.streamx.blueprints</groupId>

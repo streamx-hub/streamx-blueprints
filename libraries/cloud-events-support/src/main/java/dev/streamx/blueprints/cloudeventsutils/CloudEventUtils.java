@@ -1,4 +1,6 @@
-package dev.streamx.blueprints.utils;
+package dev.streamx.blueprints.cloudeventsutils;
+
+import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cloudevents.CloudEvent;
@@ -8,10 +10,17 @@ import io.cloudevents.core.data.PojoCloudEventData;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.Optional;
 import java.util.UUID;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 public class CloudEventUtils {
+
+  public static final String NAMESPACE_SEPARATOR = ":";
+
+  private static final String PUBLISH_TYPE_SEARCH_TERM = ".published.";
+
+  private static final String UNPUBLISH_TYPE_SEARCH_TERM = ".unpublished.";
 
   private static final URI DEFAULT_SOURCE = URI.create(
       ConfigProvider.getConfig().getValue("quarkus.application.name", String.class));
@@ -27,7 +36,7 @@ public class CloudEventUtils {
     CloudEventData cloudEventData = cloudEvent.getData();
 
     if (cloudEventData == null) {
-      throw new IllegalStateException("CloudEvent has no data");
+      return null;
     }
 
     if (cloudEventData instanceof PojoCloudEventData<?>) {
@@ -47,6 +56,40 @@ public class CloudEventUtils {
           "Unexpected CloudEvent data type: " + cloudEventData.getClass().getName()
       );
     }
+  }
+
+  public static boolean isPublishingType(String type) {
+    return type.contains(PUBLISH_TYPE_SEARCH_TERM);
+  }
+
+  public static boolean isUnpublishingType(String type) {
+    return type.contains(UNPUBLISH_TYPE_SEARCH_TERM);
+  }
+
+  public static Optional<String> getSubjectNamespace(String subject) {
+    String value = requireNonNull(subject);
+
+    var indexOfColon = value.indexOf(NAMESPACE_SEPARATOR);
+    if (indexOfColon != -1) {
+      if (indexOfColon != 0) {
+        return Optional.of(value.substring(0, indexOfColon));
+      }
+    }
+    return Optional.empty();
+  }
+
+  public static String getSubjectWithoutNamespace(String subject) {
+    String value = requireNonNull(subject);
+
+    var indexOfColon = value.indexOf(NAMESPACE_SEPARATOR);
+    if (indexOfColon != -1) {
+      if (indexOfColon == 0) {
+        return value.substring(NAMESPACE_SEPARATOR.length());
+      } else {
+        return value.substring(indexOfColon + NAMESPACE_SEPARATOR.length());
+      }
+    }
+    return subject;
   }
 
   public static CloudEventBuilder builderWithJsonData(Object data) {
