@@ -3,7 +3,7 @@ package dev.streamx.blueprints.composition;
 import dev.streamx.blueprints.data.Composition;
 import dev.streamx.blueprints.data.Layout;
 import dev.streamx.blueprints.data.Page;
-import dev.streamx.blueprints.cloudeventsutils.CloudEventUtils;
+import dev.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import dev.streamx.content.parser.datainsert.DataInsertHandler;
 import dev.streamx.content.parser.datainsert.Segment;
 import dev.streamx.content.parser.datainsert.SegmentDefineHandler;
