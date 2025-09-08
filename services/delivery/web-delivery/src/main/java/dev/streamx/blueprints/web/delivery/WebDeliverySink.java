@@ -1,9 +1,9 @@
 package dev.streamx.blueprints.web.delivery;
 
-import static dev.streamx.blueprints.cloudeventsutils.CloudEventUtils.isPublishingType;
-import static dev.streamx.blueprints.cloudeventsutils.CloudEventUtils.isUnpublishingType;
+import static dev.streamx.blueprints.cloudevents.utils.CloudEventUtils.isPublishingType;
+import static dev.streamx.blueprints.cloudevents.utils.CloudEventUtils.isUnpublishingType;
 
-import dev.streamx.blueprints.cloudeventsutils.CloudEventUtils;
+import dev.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import dev.streamx.blueprints.data.TypedBinaryResource;
 import dev.streamx.blueprints.web.delivery.storage.FileSystemResourceStorage;
 import dev.streamx.content.parser.urlinclude.UrlIncludeReplacer;
