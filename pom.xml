@@ -11,6 +11,7 @@
   <modules>
     <module>services</module>
     <module>libraries</module>
+    <module>services/web-delivery-service</module>
   </modules>
 
   <properties>
