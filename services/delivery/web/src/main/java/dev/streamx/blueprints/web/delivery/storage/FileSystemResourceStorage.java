@@ -19,7 +19,7 @@ public class FileSystemResourceStorage {
   @Inject
   Logger log;
 
-  @ConfigProperty(name = "streamx.blueprints.web-delivery-service.resources.directory",
+  @ConfigProperty(name = "streamx.blueprints.web.resources.directory",
       defaultValue = "/tmp/streamx")
   String storageRootDirectory;
 
@@ -29,7 +29,7 @@ public class FileSystemResourceStorage {
   @PostConstruct
   void init() {
     log.infof(
-        "Stating with options: streamx.blueprints.web-delivery-service.resources.directory=%s",
+        "Stating with options: streamx.blueprints.web.resources.directory=%s",
         storageRootDirectory);
   }
 

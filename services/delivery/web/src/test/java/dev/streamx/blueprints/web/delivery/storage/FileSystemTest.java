@@ -33,12 +33,12 @@ class FileSystemTest {
     @Override
     public Map<String, String> getConfigOverrides() {
       return Map.of(
-          "streamx.blueprints.web-delivery-service.resources.directory",
+          "streamx.blueprints.web.resources.directory",
           sharedTempDir.toString());
     }
   }
 
-  @ConfigProperty(name = "streamx.blueprints.web-delivery-service.resources.directory")
+  @ConfigProperty(name = "streamx.blueprints.web.resources.directory")
   String tempDirectory;
 
   @Inject

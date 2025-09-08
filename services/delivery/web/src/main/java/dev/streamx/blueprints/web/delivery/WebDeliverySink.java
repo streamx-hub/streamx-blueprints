@@ -29,7 +29,7 @@ public class WebDeliverySink {
 
   private UrlIncludeReplacer urlIncludeReplacer;
 
-  @ConfigProperty(name = "streamx.blueprints.web-delivery-service.default-namespace")
+  @ConfigProperty(name = "streamx.blueprints.web.default-namespace")
   Optional<String> defaultNamespace;
 
   @ConfigProperty(name = "streamx.url-include-replacement.allowed-types")

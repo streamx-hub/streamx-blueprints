@@ -20,7 +20,7 @@ class WebResourcesAccessWithNamespaceConfigTest extends WebResourcesAccessTestBa
 
     @Override
     public Map<String, String> getConfigOverrides() {
-      return Map.of("streamx.blueprints.web-delivery-service.default-namespace",
+      return Map.of("streamx.blueprints.web.default-namespace",
           TEST_DEFAULT_NAMESPACE);
     }
   }

@@ -7,14 +7,14 @@ Note that the `{{#include ...}` expressions must contain same path as is used fo
 or additional HTTP server with host for each namespace directory should be setup - then fragments should be resolved using
 the namespace directory.
 
-It recommended to configure `streamx.blueprints.web-delivery-service.default-namespace` when working with namespaces.
+It recommended to configure `streamx.blueprints.web.default-namespace` when working with namespaces.
 
 ## Configuration
 
-`streamx.blueprints.web-delivery-service.resources.directory` - web resources storage location,
+`streamx.blueprints.web.resources.directory` - web resources storage location,
 default: `/tmp/streamx`
 
-`streamx.blueprints.web-delivery-service.default-namespace` - optional value, will be used as fallback value if resource has not namespace
+`streamx.blueprints.web.default-namespace` - optional value, will be used as fallback value if resource has not namespace
 
 `streamx.url-include-replacement-provider` - an URL Include Replacement Provider. Available predefined values are: `EsiInclude` and `SsiInclude`.
 This is an optional configuration entry. When specified, the service receives access to `urlIncludeReplacer` object.
