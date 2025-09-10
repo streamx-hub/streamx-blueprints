@@ -1,6 +1,6 @@
 package dev.streamx.blueprints.data;
 
-public abstract class BaseModel {
+public abstract class Typed {
 
   protected String type;
 

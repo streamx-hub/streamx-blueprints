@@ -16,7 +16,7 @@ import static org.mockito.Mockito.doThrow;
 import dev.streamx.blueprints.data.Composition;
 import dev.streamx.blueprints.data.Layout;
 import dev.streamx.blueprints.data.Page;
-import dev.streamx.blueprints.data.TypedBinaryResource;
+import dev.streamx.blueprints.data.Resource;
 import dev.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
@@ -278,9 +278,9 @@ class CompositionFunctionTest {
     // then
     assertOutgoingPageEvents(
         createEvent(activitiesCompositionKey, Page.TYPE_PUBLISHED,
-            new TypedBinaryResource("Title of Activities page")),
+            new Resource("Title of Activities page")),
         createEvent(carsCompositionKey, Page.TYPE_PUBLISHED,
-            new TypedBinaryResource("Title of Cars page"))
+            new Resource("Title of Cars page"))
     );
   }
 
@@ -357,7 +357,7 @@ class CompositionFunctionTest {
         IntStream
             .range(0, numberOfCompositions)
             .mapToObj(i -> createEvent("composition_" + i, Page.TYPE_PUBLISHED,
-                new TypedBinaryResource("Hello, User " + i, null))).toArray(CloudEvent[]::new)
+                new Resource("Hello, User " + i, null))).toArray(CloudEvent[]::new)
     );
     pagesSink.clear();
 
@@ -370,7 +370,7 @@ class CompositionFunctionTest {
         IntStream
             .range(0, numberOfCompositions)
             .mapToObj(i -> createEvent("composition_" + i, Page.TYPE_PUBLISHED,
-                new TypedBinaryResource("Bye, User " + i, null))).toArray(CloudEvent[]::new)
+                new Resource("Bye, User " + i, null))).toArray(CloudEvent[]::new)
     );
   }
 
@@ -435,7 +435,7 @@ class CompositionFunctionTest {
 
   private void assertSingleOutgoingPublishPage(String expectedKey, String expectedType,
       String expectedContent) {
-    TypedBinaryResource page = new TypedBinaryResource(expectedContent, expectedType);
+    Resource page = new Resource(expectedContent, expectedType);
     CloudEvent expectedEvent = CloudEventUtils.builderWithJsonData(page)
         .withType(Page.TYPE_PUBLISHED)
         .withSubject(expectedKey)

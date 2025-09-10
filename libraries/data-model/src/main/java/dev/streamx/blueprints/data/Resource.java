@@ -7,31 +7,31 @@ import java.nio.ByteBuffer;
 /**
  * Represents object containing content.
  */
-public class TypedBinaryResource extends BaseModel {
+public class Resource extends Typed {
   private final ByteBuffer content;
 
-  public TypedBinaryResource(ByteBuffer content) {
+  public Resource(ByteBuffer content) {
     this.content = content;
   }
 
-  public TypedBinaryResource(byte[] content) {
+  public Resource(byte[] content) {
     this(ByteBuffer.wrap(content));
   }
 
-  public TypedBinaryResource(String content) {
+  public Resource(String content) {
     this(content.getBytes(UTF_8));
   }
 
-  public TypedBinaryResource(ByteBuffer content, String type) {
+  public Resource(ByteBuffer content, String type) {
     this.content = content;
     this.type = type;
   }
 
-  public TypedBinaryResource(byte[] content, String type) {
+  public Resource(byte[] content, String type) {
     this(ByteBuffer.wrap(content), type);
   }
 
-  public TypedBinaryResource(String content, String type) {
+  public Resource(String content, String type) {
     this(content.getBytes(UTF_8), type);
   }
 
