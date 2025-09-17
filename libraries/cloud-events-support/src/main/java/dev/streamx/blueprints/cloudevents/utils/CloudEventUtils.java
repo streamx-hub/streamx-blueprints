@@ -2,8 +2,6 @@ package dev.streamx.blueprints.cloudevents.utils;
 
 import static java.util.Objects.requireNonNull;
 
-import static java.util.Objects.requireNonNull;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.CloudEventData;

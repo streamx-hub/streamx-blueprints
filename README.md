@@ -105,10 +105,12 @@ delivery:
 #        topic: outboxes/products
 #    port: 8084
   web:
-    image: web
+    image: web-delivery-service
     incoming:
-      resources:
+      pages:
         topic: outboxes/pages
+      web-resources:
+        topic: outboxes/web-resources
     port: 8081
 ```
 

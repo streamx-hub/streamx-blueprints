@@ -2,7 +2,7 @@ package dev.streamx.blueprints.data;
 
 import java.nio.ByteBuffer;
 
-public class Layout extends TypedBinaryResource {
+public class Layout extends Resource {
 
   public static final String TYPE_PUBLISHED = "dev.streamx.blueprints.layout.published.v1";
   public static final String TYPE_UNPUBLISHED = "dev.streamx.blueprints.layout.unpublished.v1";

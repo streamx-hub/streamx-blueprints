@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 /**
  * Represents object containing data to be injected into layout.
  */
-public class Composition extends TypedBinaryResource {
+public class Composition extends Resource {
 
   public static final String TYPE_COMPOSITION_PUBLISHED = "dev.streamx.blueprints.composition.published.v1";
   public static final String TYPE_COMPOSITION_UNPUBLISHED = "dev.streamx.blueprints.composition.unpublished.v1";
