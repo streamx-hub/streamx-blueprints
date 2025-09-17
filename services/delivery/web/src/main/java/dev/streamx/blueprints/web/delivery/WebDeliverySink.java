@@ -4,7 +4,7 @@ import static dev.streamx.blueprints.cloudevents.utils.CloudEventUtils.isPublish
 import static dev.streamx.blueprints.cloudevents.utils.CloudEventUtils.isUnpublishingType;
 
 import dev.streamx.blueprints.cloudevents.utils.CloudEventUtils;
-import dev.streamx.blueprints.data.TypedBinaryResource;
+import dev.streamx.blueprints.data.Resource;
 import dev.streamx.blueprints.web.delivery.storage.FileSystemResourceStorage;
 import dev.streamx.content.parser.urlinclude.UrlIncludeReplacer;
 import dev.streamx.content.parser.urlinclude.UrlIncludeReplacerFactory;
@@ -51,9 +51,9 @@ public class WebDeliverySink {
 
   @Incoming(CHANNEL)
   public Uni<Void> consume(CloudEvent event) {
-    TypedBinaryResource resource;
+    Resource resource;
     try {
-      resource = CloudEventUtils.getData(event, TypedBinaryResource.class);
+      resource = CloudEventUtils.getData(event, Resource.class);
     } catch (IllegalStateException e) {
       log.warnf("Unsupported event: subject %s, type %s", event.getSubject(), event.getType());
       return Uni.createFrom().voidItem();
@@ -62,13 +62,13 @@ public class WebDeliverySink {
         Objects.requireNonNull(event.getTime()).toInstant().toEpochMilli());
   }
 
-  private <T extends TypedBinaryResource> Uni<Void> process(T resource, String subject,
+  private <T extends Resource> Uni<Void> process(T resource, String subject,
       String type, long eventTime) {
     log.tracef("Storing resource: subject %s, type %s, event time %s", subject, type, eventTime);
     return updateStorage(resource, getPathFrom(subject), type);
   }
 
-  private <T extends TypedBinaryResource> Uni<Void> updateStorage(T resource, String path,
+  private <T extends Resource> Uni<Void> updateStorage(T resource, String path,
       String type) {
     if (isPublishingType(type)) {
       return fileSystemResourceStorage.add(path, getDataToStore(resource, type));
@@ -80,7 +80,7 @@ public class WebDeliverySink {
     return Uni.createFrom().voidItem();
   }
 
-  private <T extends TypedBinaryResource> byte[] getDataToStore(T resource, String type) {
+  private <T extends Resource> byte[] getDataToStore(T resource, String type) {
     ByteBuffer content = resource.getContent();
     if (urlReplacerAllowedTypes.map(types -> types.contains(type)).orElse(false)) {
       return urlIncludeReplacer.replace(content).array();
