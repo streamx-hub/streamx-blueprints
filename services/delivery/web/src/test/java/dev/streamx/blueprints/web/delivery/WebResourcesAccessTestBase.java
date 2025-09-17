@@ -1,13 +1,20 @@
 package dev.streamx.blueprints.web.delivery;
 
 import static io.restassured.RestAssured.given;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.core.StringContains.containsString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import dev.streamx.blueprints.data.Page;
 import dev.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import dev.streamx.blueprints.data.Resource;
+import dev.streamx.blueprints.web.delivery.storage.FileSystemResourceStorage;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.builder.CloudEventBuilder;
+import io.quarkus.test.junit.mockito.InjectSpy;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
@@ -37,6 +44,12 @@ public abstract class WebResourcesAccessTestBase {
   @Inject
   @Any
   InMemoryConnector connector;
+
+  @Inject
+  WebDeliverySink webDeliverySink;
+
+  @InjectSpy
+  FileSystemResourceStorage fileSystemResourceStorage;
 
   @ParameterizedTest
   @MethodSource("keyToExpectedPath")
@@ -92,6 +105,63 @@ public abstract class WebResourcesAccessTestBase {
     await().until(() -> canAccessViaHttp(file, publishedContent));
   }
 
+  @Test
+  void shouldAppendIndexHtmlWhenStoringPageThatHasPathEndingWithSlash() {
+    // given
+    String subject = "blogs/pages/";
+    String expectedPath = getExpectedDefaultNamespace() + "/blogs/pages/index.html";
+    String expectedContent = "Some content";
+
+    // when
+    publishPage(subject, new Page(expectedContent));
+
+    // then
+    await().until(() -> canAccessViaHttp(expectedPath, expectedContent));
+
+    // when
+    unpublishPage(subject);
+
+    // then
+    await().until(() -> cannotAccessViaHttp(expectedPath));
+  }
+
+  @Test
+  void shouldRemoveTrailingSlashWhenStoringResourceThatHasPathEndingWithSlash() {
+    // given
+    String subject = "images/image.jpg/";
+    String expectedPath = getExpectedDefaultNamespace() + "/images/image.jpg";
+    String assetContent = "Asset content";
+
+    // when
+    publish(subject, content -> new Resource(assetContent.getBytes(UTF_8)));
+
+    // then
+    await().until(() -> canAccessViaHttp(expectedPath, assetContent));
+
+    // when
+    unpublish(subject);
+
+    // then
+    await().until(() -> cannotAccessViaHttp(expectedPath));
+  }
+
+
+  @Test
+  void shouldSkipProcessingMessageWithUnexpectedPayload() {
+    // given
+    String file = "/directory/file.html";
+    Object payload = new Object();
+    CloudEvent cloudEvent = CloudEventUtils.builderWithJsonData(payload).withType("unexpected")
+        .build();
+
+    // when
+    webDeliverySink.consume(cloudEvent);
+
+    // then
+    verify(fileSystemResourceStorage, never()).add(any(), any());
+    verify(fileSystemResourceStorage, never()).delete(any());
+  }
+
   protected abstract String getExpectedDefaultNamespace();
 
   private Stream<Arguments> keyToExpectedPath() {
@@ -125,6 +195,14 @@ public abstract class WebResourcesAccessTestBase {
 
   private <T> void publish(String subject, T payload) {
     sendEvent(subject, payload, "dev.streamx.blueprints.any.published.v1");
+  }
+
+  private <T> void publishPage(String subject, T payload) {
+    sendEvent(subject, payload, "dev.streamx.blueprints.page.published.v1");
+  }
+
+  private <T> void unpublishPage(String subject) {
+    sendEvent(subject, null, "dev.streamx.blueprints.page.unpublished.v1");
   }
 
   private void unpublish(String subject) {

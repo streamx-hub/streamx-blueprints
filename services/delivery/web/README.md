@@ -13,6 +13,7 @@ It recommended to configure `streamx.blueprints.web.default-namespace` when work
 
 `streamx.blueprints.web.resources.directory` - web resources storage location,
 default: `/tmp/streamx`
+`streamx.blueprints.web.html-resource.types` -  List of CloudEvent types eligible for URL include replacement. Resources with these types are stored in filesystem as 'index.html' when CloudEvent 'subject' has no url extension
 
 `streamx.blueprints.web.default-namespace` - optional value, will be used as fallback value if resource has not namespace
 
@@ -20,5 +21,3 @@ default: `/tmp/streamx`
 This is an optional configuration entry. When specified, the service receives access to `urlIncludeReplacer` object.
 This object is capable of parsing incoming pages and replace URL include directives (`{{#include src="url"}}`) in the page content with supplied replacement, such as Server Side Include tags or Edge Side Include tags.
 A service can also define its own custom `UrlIncludeReplacer`. See `WebDeliverySink` and its unit tests for example use.
-
-`streamx.url-include-replacement.allowed-types` - List of CloudEvent types eligible for URL include replacement. 
