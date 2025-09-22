@@ -15,6 +15,7 @@
 
   <modules>
     <module>composition-engine</module>
+    <module>external-resources</module>
   </modules>
 
 </project>
