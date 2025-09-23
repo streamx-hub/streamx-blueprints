@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
-import javax.xml.xpath.XPathExpressionException;
 import org.jboss.logging.Logger;
 import org.junit.jupiter.api.Test;
 

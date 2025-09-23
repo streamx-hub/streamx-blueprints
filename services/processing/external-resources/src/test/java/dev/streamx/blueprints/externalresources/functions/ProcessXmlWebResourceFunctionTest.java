@@ -2,15 +2,14 @@ package dev.streamx.blueprints.externalresources.functions;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import dev.streamx.blueprints.data.WebResource;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
+import java.util.List;
 import java.util.Map;
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EmptySource;
-import org.junit.jupiter.params.provider.NullSource;
 
 @QuarkusTest
 class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
@@ -69,17 +68,17 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     publishWebResource(sitemapPath, sitemapContent);
 
     // then
-    waitForMessagesInSink(pagesSink, 2);
-    assertPublishedPage(0,
+    List<CloudEvent> pageEvents = waitForEventsInSink(EXTERNAL_PAGE, 2);
+    assertPublishedPage(pageEvents.get(0),
         "/page1.html",
         page1Content);
 
-    assertPublishedPage(1,
+    assertPublishedPage(pageEvents.get(1),
         "/page2.html",
         page2Content);
 
-    waitForMessagesInSink(webResourcesSink, 1);
-    assertPublishedWebResource(0,
+    List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 1);
+    assertPublishedWebResource(webResourceEvents.get(0),
         "/sitemap.xml",
         """
             <?xml version="1.0" encoding="utf-8"?>
@@ -93,23 +92,23 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
             </urlset>
             """);
 
-    // when 2: simulate the result messages are grabbed by second instance of the service
-    sendMessagesFromSinkToChannel(pagesSink, pagesChannel);
+    // when 2: simulate the result events are grabbed by second instance of the service
+    pageEvents.forEach(resourcesChannel::send);
 
     // then
-    waitForMessagesInSink(pagesSink, 4);
-    waitForMessagesInSink(assetsSink, 4);
+    pageEvents = waitForEventsInSink(EXTERNAL_PAGE, 4);
+    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 4);
 
     // page1 contains links to image1 and image2
-    assertPublishedAsset(0,
+    assertPublishedAsset(assetEvents.get(0),
         "/image1.jpg",
         image1Content);
 
-    assertPublishedAsset(1,
+    assertPublishedAsset(assetEvents.get(1),
         "/image2.jpg",
         image2Content);
 
-    assertPublishedPage(2,
+    assertPublishedPage(pageEvents.get(2),
         "/page1.html",
         """
             Page 1.
@@ -118,15 +117,15 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
             """);
 
     // page2 contains links to image3 and image4
-    assertPublishedAsset(2,
+    assertPublishedAsset(assetEvents.get(2),
         "/image3.jpg",
         image3Content);
 
-    assertPublishedAsset(3,
+    assertPublishedAsset(assetEvents.get(3),
         "/image4.jpg",
         image4Content);
 
-    assertPublishedPage(3,
+    assertPublishedPage(pageEvents.get(3),
         "/page2.html",
         """
             Page 2.
@@ -134,15 +133,14 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
             <img src="/image4.jpg">
             """);
 
-    // and: expect the sitemap file message to not processed by the second instance
-    waitForMessagesInSink(webResourcesSink, 1);
+    // and: expect the sitemap file events to be not processed by the second instance
+    waitForEventsInSink(WEB_RESOURCE, 1);
   }
 
   @ParameterizedTest
   @EmptySource
-  @NullSource
   @CsvSource("data/products")
-  void shouldRelayResourceThatHasNotMatchingSxType(String sxType) {
+  void shouldRelayResourceThatHasNotMatchingEventType(String eventType) {
     // given
     String path = "/products.xml";
     String content = """
@@ -155,15 +153,14 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
         """;
 
     // when
-    Message<WebResource> publishMessage = publish(webResourcesChannel, new WebResource(content),
-        path, sxType);
+    CloudEvent publishEvent = publishWebResource(path, content, eventType);
 
     // then
-    waitForMessagesInSink(webResourcesSink, 1);
+    List<CloudEvent> relayedEvents = waitForEventsInSink(eventType, 1);
 
-    // assert message is unchanged
-    Message<WebResource> relayedMessage = webResourcesSink.received().get(0);
-    assertSameMessages(relayedMessage, publishMessage);
+    // assert event is unchanged
+    CloudEvent relayedEvent = relayedEvents.get(0);
+    assertSameEvents(relayedEvent, publishEvent);
   }
 
   @Test
@@ -173,17 +170,13 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     String content = "bar";
 
     // when
-    Message<WebResource> publishMessage = publishWebResource(path, content);
+    CloudEvent publishEvent = publishWebResource(path, content);
 
     // then
-    waitForMessagesInSink(webResourcesSink, 1);
+    List<CloudEvent> relayedEvents = waitForEventsInSink(WEB_RESOURCE, 1);
 
-    // assert message is unchanged
-    Message<WebResource> relayedMessage = webResourcesSink.received().get(0);
-    assertSameMessages(relayedMessage, publishMessage);
-  }
-
-  private Message<WebResource> publishWebResource(String path, String content) {
-    return publish(webResourcesChannel, new WebResource(content), path, "web-resource/static");
+    // assert event is unchanged
+    CloudEvent relayedEvent = relayedEvents.get(0);
+    assertSameEvents(relayedEvent, publishEvent);
   }
 }

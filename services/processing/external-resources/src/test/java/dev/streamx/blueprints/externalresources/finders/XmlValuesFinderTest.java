@@ -4,10 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
-import javax.xml.xpath.XPathExpressionException;
 import org.junit.jupiter.api.Test;
-import org.xml.sax.SAXParseException;
 
 class XmlValuesFinderTest {
 

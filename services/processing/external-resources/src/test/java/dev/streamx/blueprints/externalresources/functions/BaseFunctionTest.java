@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import dev.streamx.blueprints.externalresources.registries.LastModifiedTimestampRegistry;
 import dev.streamx.blueprints.externalresources.services.HttpDownloader;
 import dev.streamx.blueprints.externalresources.testutils.SkipVerifyingEachExternalResourceWasDownloadedExactlyOnce;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
@@ -27,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -43,12 +43,12 @@ abstract class BaseFunctionTest {
   @Any
   InMemoryConnector connector;
 
-  protected <T> InMemorySource<Message<T>> getSource(String channel) {
+  protected InMemorySource<CloudEvent> getSource(String channel) {
     return connector.source(channel);
   }
 
-  protected <T> InMemorySink<T> getSink(String channel) {
-    InMemorySink<T> sink = connector.sink(channel);
+  protected InMemorySink<CloudEvent> getSink(String channel) {
+    InMemorySink<CloudEvent> sink = connector.sink(channel);
     sink.clear();
     return sink;
   }
@@ -67,7 +67,7 @@ abstract class BaseFunctionTest {
   }
 
   protected void mockGzippedDownloadResponse(String url, byte[] response) {
-    mockDownloadResponse(url, response, Map.of("Content-Encoding", "gzip"));
+    mockDownloadResponse(url, response, Map.of(HttpDownloader.CONTENT_ENCODING_HEADER, "gzip"));
   }
 
   protected void mockDownloadResponse(String url, Object response) {
@@ -96,7 +96,7 @@ abstract class BaseFunctionTest {
       HttpResponse<Buffer> responseMock) {
 
     headers.forEach((key, value) -> doReturn(value).when(responseMock).getHeader(key));
-    doReturn(contentType).when(responseMock).getHeader("Content-Type");
+    doReturn(contentType).when(responseMock).getHeader(HttpDownloader.CONTENT_TYPE_HEADER);
   }
 
   protected void mockDownloadCallsThrowException(String... urls) {

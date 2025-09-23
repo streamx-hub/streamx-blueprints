@@ -7,6 +7,7 @@ import io.cloudevents.CloudEvent;
 import io.cloudevents.CloudEventData;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import io.cloudevents.core.data.PojoCloudEventData;
+import io.cloudevents.lang.Nullable;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -31,6 +32,7 @@ public class CloudEventUtils {
     // no instance
   }
 
+  @Nullable
   @SuppressWarnings("unchecked")
   public static <T> T getData(CloudEvent cloudEvent, Class<T> clazz) {
     CloudEventData cloudEventData = cloudEvent.getData();
@@ -39,9 +41,7 @@ public class CloudEventUtils {
       return null;
     }
 
-    if (cloudEventData instanceof PojoCloudEventData<?>) {
-      PojoCloudEventData<?> pojoData = (PojoCloudEventData<?>) cloudEventData;
-
+    if (cloudEventData instanceof PojoCloudEventData<?> pojoData) {
       Object value = pojoData.getValue();
       if (!clazz.isInstance(value)) {
         throw new IllegalStateException(

@@ -1,13 +1,12 @@
 package dev.streamx.blueprints.externalresources.functions;
 
-import dev.streamx.blueprints.data.WebResource;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
-import org.eclipse.microprofile.reactive.messaging.Message;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EmptySource;
-import org.junit.jupiter.params.provider.NullSource;
 
 @QuarkusTest
 class ProcessHtmlWebResourceFunctionTest extends BaseProcessFunctionTest {
@@ -24,36 +23,34 @@ class ProcessHtmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     publishWebResource(pagePath, pageContent);
 
     // then
-    waitForMessagesInSink(assetsSink, 1);
-    assertPublishedAsset(0,
+    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 1);
+    assertPublishedAsset(assetEvents.get(0),
         "/logo.png",
         new byte[]{0, 1, 2});
 
-    waitForMessagesInSink(webResourcesSink, 1);
-    assertPublishedWebResource(0,
+    List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 1);
+    assertPublishedWebResource(webResourceEvents.get(0),
         pagePath,
         "<img src='/logo.png'>");
   }
 
   @ParameterizedTest
   @EmptySource
-  @NullSource
   @CsvSource("data/products")
-  void shouldRelayResourceThatHasNotMatchingSxType(String sxType) {
+  void shouldRelayResourceThatHasNotMatchingEventType(String eventType) {
     // given
     String path = "page.html";
     String content = "Hello World";
 
     // when
-    Message<WebResource> publishMessage = publish(webResourcesChannel, new WebResource(content),
-        path, sxType);
+    CloudEvent publishEvent = publishWebResource(path, content, eventType);
 
     // then
-    waitForMessagesInSink(webResourcesSink, 1);
+    List<CloudEvent> events = waitForEventsInSink(eventType, 1);
 
-    // assert message is unchanged
-    Message<WebResource> relayedMessage = webResourcesSink.received().get(0);
-    assertSameMessages(relayedMessage, publishMessage);
+    // assert event is unchanged
+    CloudEvent relayedEvent = events.get(0);
+    assertSameEvents(relayedEvent, publishEvent);
   }
 
   @Test
@@ -63,17 +60,13 @@ class ProcessHtmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     String content = "bar";
 
     // when
-    Message<WebResource> publishMessage = publishWebResource(path, content);
+    CloudEvent publishEvent = publishWebResource(path, content);
 
     // then
-    waitForMessagesInSink(webResourcesSink, 1);
+    List<CloudEvent> events = waitForEventsInSink(WEB_RESOURCE, 1);
 
-    // assert message is unchanged
-    Message<WebResource> relayedMessage = webResourcesSink.received().get(0);
-    assertSameMessages(relayedMessage, publishMessage);
-  }
-
-  private Message<WebResource> publishWebResource(String path, String content) {
-    return publish(webResourcesChannel, new WebResource(content), path, "web-resource/static");
+    // assert event is unchanged
+    CloudEvent relayedEvent = events.get(0);
+    assertSameEvents(relayedEvent, publishEvent);
   }
 }

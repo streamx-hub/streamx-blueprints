@@ -12,7 +12,7 @@ public interface Configuration {
 
   String baseUrlForRelativePaths();
 
-  Set<String> processableSxTypes();
+  Set<String> processablePayloadTypes();
 
   Optional<List<String>> htmlExternalResourceXpathSelectors();
 
@@ -26,9 +26,11 @@ public interface Configuration {
 
   Optional<Pattern> jsonExternalResourceUrlExclusionsPattern();
 
-  Optional<String> externalPagePublishSxType();
+  String externalPagePublishPayloadType();
 
-  Optional<String> externalWebResourcePublishSxType();
+  String externalWebResourcePublishPayloadType();
+
+  String externalAssetPublishPayloadType();
 
   @WithDefault("5000")
   int externalResourceDownloadTimeoutMilliseconds();

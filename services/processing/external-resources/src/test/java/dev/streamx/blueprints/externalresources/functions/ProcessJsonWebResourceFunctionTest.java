@@ -1,8 +1,8 @@
 package dev.streamx.blueprints.externalresources.functions;
 
-import dev.streamx.blueprints.data.WebResource;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
-import java.util.Map;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -51,15 +51,16 @@ class ProcessJsonWebResourceFunctionTest extends BaseProcessFunctionTest {
     publishWebResource(jsonResourcePath, jsonResourceContent);
 
     // then
-    waitForMessagesInSink(assetsSink, 3);
-    assertPublishedAssets(Map.of(
-        "/nav-image.png_width_1200_format_pjpg_optimize_medium.png", navImageContent,
-        "/article-1-image.png_width_1200_format_pjpg_optimize_medium.png", article1ImageContent,
-        "/article-2-image.png_width_1200_format_pjpg_optimize_medium.png", article2ImageContent
-    ));
+    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 3);
+    assertPublishedAsset(assetEvents.get(0),
+        "/nav-image.png_width_1200_format_pjpg_optimize_medium.png", navImageContent);
+    assertPublishedAsset(assetEvents.get(1),
+        "/article-1-image.png_width_1200_format_pjpg_optimize_medium.png", article1ImageContent);
+    assertPublishedAsset(assetEvents.get(2),
+        "/article-2-image.png_width_1200_format_pjpg_optimize_medium.png", article2ImageContent);
 
-    waitForMessagesInSink(webResourcesSink, 1);
-    assertPublishedWebResource(0,
+    List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 1);
+    assertPublishedWebResource(webResourceEvents.get(0),
         "/data/en-index.json",
         """
         {
@@ -82,9 +83,5 @@ class ProcessJsonWebResourceFunctionTest extends BaseProcessFunctionTest {
           ]
         }
         """);
-  }
-
-  private void publishWebResource(String path, String content) {
-    publish(webResourcesChannel, new WebResource(content), path, "web-resource/static");
   }
 }

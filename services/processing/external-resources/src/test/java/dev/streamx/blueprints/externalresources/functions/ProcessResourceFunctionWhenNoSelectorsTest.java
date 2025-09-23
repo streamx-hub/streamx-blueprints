@@ -2,10 +2,9 @@ package dev.streamx.blueprints.externalresources.functions;
 
 import static org.mockito.Mockito.doReturn;
 
-import dev.streamx.blueprints.data.Page;
-import dev.streamx.blueprints.data.WebResource;
 import dev.streamx.blueprints.externalresources.configuration.Configuration;
 import dev.streamx.blueprints.externalresources.testutils.ForceRecreatingBeans;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.Mock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -13,6 +12,7 @@ import io.quarkus.test.junit.TestProfile;
 import io.smallrye.config.SmallRyeConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,16 +81,16 @@ public class ProcessResourceFunctionWhenNoSelectorsTest extends BaseProcessFunct
         """;
 
     // when
-    publish(pagesChannel, new Page(pageContent), pagePath, "any");
-    publish(webResourcesChannel, new WebResource(sitemapContent), sitemapPath, "any");
-    publish(webResourcesChannel, new WebResource(jsonIndexContent), jsonIndexPath, "any");
+    publishPage(pagePath, pageContent);
+    publishWebResource(sitemapPath, sitemapContent);
+    publishWebResource(jsonIndexPath, jsonIndexContent);
 
     // then
-    waitForMessagesInSink(pagesSink, 1);
-    waitForMessagesInSink(webResourcesSink, 2);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
+    List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 2);
 
-    assertPublishedPage(0, pagePath, pageContent);
-    assertPublishedWebResource(0, sitemapPath, sitemapContent);
-    assertPublishedWebResource(1, jsonIndexPath, jsonIndexContent);
+    assertPublishedPage(pageEvents.get(0), pagePath, pageContent);
+    assertPublishedWebResource(webResourceEvents.get(0), sitemapPath, sitemapContent);
+    assertPublishedWebResource(webResourceEvents.get(1), jsonIndexPath, jsonIndexContent);
   }
 }

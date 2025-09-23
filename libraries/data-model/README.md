@@ -7,8 +7,8 @@ CloudEvent type should:
 1. start with revers domain - dev.streamx.blueprints
 2. dots separates logical blocks
 3. '-' can be used when multiword
-4. vX denotes the version - must be changed when no backward compatible change is introduced
-5. No requirement to contains "published/unpublished". It is up to service what types are supported and how they are processed
+4. vX denotes the version - must be changed when a not backward compatible change is introduced
+5. No requirement to contain "published/unpublished". It is up to service what types are supported and how they are processed
 
 Examples:
 - dev.streamx.blueprints.page.published.v1

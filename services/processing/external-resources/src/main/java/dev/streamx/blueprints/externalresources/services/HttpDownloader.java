@@ -1,8 +1,8 @@
 package dev.streamx.blueprints.externalresources.services;
 
-import com.google.common.net.HttpHeaders;
 import dev.streamx.blueprints.externalresources.configuration.Configuration;
 import dev.streamx.blueprints.externalresources.registries.LastModifiedTimestampRegistry;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.Vertx;
@@ -39,8 +39,11 @@ public class HttpDownloader {
   private static final String[] WEB_RESOURCE_CONTENT_TYPES = {
       "application/json",
       "application/xml",
+      "application/javascript",
       "text/plain",
-      "text/xml"
+      "text/xml",
+      "text/javascript",
+      "text/css"
   };
 
   private static final int NOT_MODIFIED_STATUS = HttpResponseStatus.NOT_MODIFIED.code();
@@ -49,10 +52,10 @@ public class HttpDownloader {
       IntStream.of(NOT_MODIFIED_STATUS).boxed()
   ).collect(Collectors.toSet());
 
-  private static final String CONTENT_TYPE_HEADER = HttpHeaders.CONTENT_TYPE;
-  private static final String CONTENT_ENCODING_HEADER = HttpHeaders.CONTENT_ENCODING;
-  private static final String LAST_MODIFIED_HEADER = HttpHeaders.LAST_MODIFIED;
-  private static final String IF_MODIFIED_SINCE_HEADER = HttpHeaders.IF_MODIFIED_SINCE;
+  public static final String CONTENT_TYPE_HEADER = HttpHeaderNames.CONTENT_TYPE.toString();
+  public static final String CONTENT_ENCODING_HEADER = HttpHeaderNames.CONTENT_ENCODING.toString();
+  private static final String LAST_MODIFIED_HEADER = HttpHeaderNames.LAST_MODIFIED.toString();
+  private static final String IF_MODIFIED_SINCE_HEADER = HttpHeaderNames.IF_MODIFIED_SINCE.toString();
 
   private int downloadTimeoutMillis;
 

@@ -30,75 +30,57 @@ sources:
       - "web-resources"
 
 processing:
-  blueprint-relay-pages:
-    image: relay-processing-service
+  blueprint-relay-resources:
+    image: null
     incoming:
-      messages:
-        topic: inboxes/pages
+      incoming-resources:
+        topic: "inboxes/resources"
     outgoing:
-      relayed-messages:
-        topic: relays/pages
+      outgoing-resources:
+        topic: "relays/resources"
     environment:
-      MP_MESSAGING_INCOMING_MESSAGES_SCHEMA: "page-schema"
-      MP_MESSAGING_OUTGOING_RELAYED-MESSAGES_SCHEMA: "page-schema"
-
-  blueprint-relay-web-resources:
-    image: relay-processing-service
-    incoming:
-      messages:
-        topic: inboxes/web-resources
-    outgoing:
-      relayed-messages:
-        topic: relays/web-resources
-    environment:
-      MP_MESSAGING_INCOMING_MESSAGES_SCHEMA: "web-resource-schema"
-      MP_MESSAGING_OUTGOING_RELAYED-MESSAGES_SCHEMA: "web-resource-schema"
+      STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
 
   # Instance 1: process pages
   blueprint-pages-external-resources-processor:
     image: external-resources-processing-service
     incoming:
-      incoming-pages:
-        topic: relays/pages
+      incoming-resources:
+        topic: relays/resources
     outgoing:
-      outgoing-pages:
-        topic: outboxes/pages
-      outgoing-web-resources:
-        topic: outboxes/web-resources
-      outgoing-assets:
-        topic: outboxes/assets
+      outgoing-resources:
+        topic: outboxes/resources
     environment:
       STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.dev/"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_PROCESSABLE_SX_TYPES: "page,page/external"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_PROCESSABLE_PAYLOAD_TYPES: "page,page/external"
       STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_HTML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "//img/@src,//link[@rel='stylesheet']/@href,//script/@src"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_PAGE_PUBLISH_PAYLOAD_TYPE: "page/external"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_WEB_RESOURCE_PUBLISH_PAYLOAD_TYPE: "web-resource/external"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_ASSET_PUBLISH_PAYLOAD_TYPE: "asset/external"
 
   # Instance 2: process web resources
   blueprint-web-resources-external-resources-processor:
     image: external-resources-processing-service
     incoming:
-      incoming-web-resources:
-        topic: relays/web-resources
+      incoming-resources:
+        topic: relays/resources
     outgoing:
-      outgoing-pages:
-        topic: relays/pages
-      outgoing-web-resources:
-        topic: outboxes/web-resources
+      outgoing-resources:
+        topic: outboxes/resources
     environment:
       STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.dev/"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_PROCESSABLE_SX_TYPES: "web-resource"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_PROCESSABLE_PAYLOAD_TYPES: "web-resource"
       STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_XML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "/*[local-name()='urlset']/*[local-name()='url']/*[local-name()='loc']"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_PAGE_PUBLISH_SX_TYPE: "page/external"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_PAGE_PUBLISH_PAYLOAD_TYPE: "page/external"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_WEB_RESOURCE_PUBLISH_PAYLOAD_TYPE: "web-resource/external"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_ASSET_PUBLISH_PAYLOAD_TYPE: "asset/external"
 
 delivery:
   blueprint-web:
     image: web-delivery-service
     incoming:
-      pages:
-        topic: outboxes/pages
-      assets:
-        topic: outboxes/assets
-      web-resources:
-        topic: outboxes/web-resources
+      resources:
+        topic: outboxes/resources
     port: 8081
 ```
 
@@ -109,8 +91,8 @@ Specifies the base URL used to resolve relative URLs found in the input resource
 This allows the service to construct absolute URLs for downloading linked resources. **This setting is required**.
 
 
-- `streamx.blueprints.external-resources-processing-service.processable-sx-types`  
-A comma-separated list of SX Types for incoming resources that the service will process.
+- `streamx.blueprints.external-resources-processing-service.processable-payload-types`  
+A comma-separated list of payload types for incoming resources that the service will process.
 Only resources matching one of these types will be handled. **This setting is required**.
 
 
@@ -144,16 +126,19 @@ A comma-separated list of regular expressions used to exclude certain external r
 Optional — this setting further filters the URLs found by the JSONPath selectors, limiting which resources are processed.
 
 
-- `streamx.blueprints.external-resources-processing-service.external-page-publish-sx-type`  
-Specifies the SX Type used when publishing downloaded external pages referenced by incoming resources.
-Optional — configure this only if your service instance is expected to download and process external pages.
-A common use case is processing a `sitemap.xml` file.
+- `streamx.blueprints.external-resources-processing-service.external-page-publish-payload-type`  
+Specifies the payload type used when publishing downloaded external pages referenced by incoming resources.
+This setting is required, even if the service instance is not expected to publish any external pages.
 
 
-- `streamx.blueprints.external-resources-processing-service.external-web-resource-publish-sx-type`  
-Specifies the SX Type used for publishing downloaded external web resources (non-pages) referenced in incoming resources.
-Optional — configure this only if your service instance is expected to download and process such external resources.
-A typical use case is processing pages that link to XML files.
+- `streamx.blueprints.external-resources-processing-service.external-web-resource-publish-payload-type`  
+Specifies the payload type used for publishing downloaded external web resources (non-pages) referenced in incoming resources.
+This setting is required, even if the service instance is not expected to publish any external web resources.
+
+
+- `streamx.blueprints.external-resources-processing-service.external-asset-publish-payload-type`  
+Specifies the payload type used for publishing downloaded external assets referenced in incoming resources.
+This setting is required, even if the service instance is not expected to publish any external assets.
 
 
 - `streamx.blueprints.external-resources-processing-service.external-resource-download-timeout-milliseconds`  

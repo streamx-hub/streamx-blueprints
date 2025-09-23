@@ -40,6 +40,9 @@ public class Resource extends Typed {
   }
 
   public String getContentAsString() {
+    if (content == null) {
+      return null;
+    }
     return new String(content.array(), UTF_8);
   }
 }

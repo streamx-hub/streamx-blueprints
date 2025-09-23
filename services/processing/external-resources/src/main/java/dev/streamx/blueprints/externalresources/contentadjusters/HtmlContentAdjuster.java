@@ -1,14 +1,14 @@
 package dev.streamx.blueprints.externalresources.contentadjusters;
 
 import java.util.regex.Pattern;
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 public class HtmlContentAdjuster extends BaseResourceContentAdjuster {
 
   @Override
   protected String fixedInputContent(String inputContent) {
     // external resources are read from cleaned up html, so we must first prepare the input content:
-    return StringEscapeUtils.unescapeHtml(inputContent);
+    return StringEscapeUtils.unescapeHtml4(inputContent);
   }
 
   @Override

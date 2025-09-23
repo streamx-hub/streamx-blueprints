@@ -1,5 +1,6 @@
 package dev.streamx.blueprints.externalresources.functions;
 
+import dev.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import dev.streamx.blueprints.data.Asset;
 import dev.streamx.blueprints.data.Page;
 import dev.streamx.blueprints.data.Resource;
@@ -9,21 +10,15 @@ import dev.streamx.blueprints.externalresources.configuration.Configuration;
 import dev.streamx.blueprints.externalresources.data.ExternalResource;
 import dev.streamx.blueprints.externalresources.data.ParentResource;
 import dev.streamx.blueprints.externalresources.services.HttpDownloader;
-import dev.streamx.metadata.Properties;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
+import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.ext.web.client.HttpResponse;
-import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.nio.ByteBuffer;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
 import org.jboss.logging.Logger;
 
 /**
@@ -41,14 +36,8 @@ public class ExternalResourcesProcessFunction {
   @Inject
   HttpDownloader httpDownloader;
 
-  @Channel(Channels.OUTGOING_PAGES)
-  Emitter<Page> pagesEmitter;
-
-  @Channel(Channels.OUTGOING_WEB_RESOURCES)
-  Emitter<WebResource> webResourcesEmitter;
-
-  @Channel(Channels.OUTGOING_ASSETS)
-  Emitter<Asset> assetsEmitter;
+  @Channel(Channels.OUTGOING_RESOURCES)
+  Emitter<CloudEvent> resourcesEmitter;
 
   public Uni<Boolean> downloadAndPublish(ExternalResource resource,
       ParentResource<? extends Resource> parentResource) {
@@ -88,49 +77,36 @@ public class ExternalResourcesProcessFunction {
     ByteBuffer content = ByteBuffer.wrap(resourceBytes);
     if (HttpDownloader.isHtmlPage(response)) {
       emit(
-          pagesEmitter,
           streamxKey,
-          new Page(content),
-          configuration.externalPagePublishSxType().orElseThrow()
+          new Page(content, configuration.externalPagePublishPayloadType()),
+          Page.TYPE_PUBLISHED
       );
     } else if (HttpDownloader.isWebResource(response)) {
       emit(
-          webResourcesEmitter,
           streamxKey,
-          new WebResource(content),
-          configuration.externalWebResourcePublishSxType().orElseThrow()
+          new WebResource(content, configuration.externalWebResourcePublishPayloadType()),
+          WebResource.TYPE_PUBLISHED
       );
     } else {
       emit(
-          assetsEmitter,
           streamxKey,
-          new Asset(content),
-          null
+          new Asset(content, configuration.externalAssetPublishPayloadType()),
+          Asset.TYPE_PUBLISHED
       );
     }
   }
 
-  private <T> void emit(Emitter<T> emitter, String key, T payload, @Nullable String sxType) {
-    String payloadType = payload.getClass().getSimpleName();
-    Properties properties = Properties.empty();
-    if (sxType == null) {
-      tracef("Publishing %s %s without sx:type", payloadType, key);
-    } else {
-      properties = properties.withType(sxType);
-      tracef("Publishing %s %s with sx:type %s", payloadType, key, sxType);
-    }
+  private <T extends Resource> void emit(String key, T payload, String eventType) {
+    String payloadClass = payload.getClass().getSimpleName();
+    String payloadType = payload.getType();
+    tracef("Publishing %s %s with event type %s and payload type %s", payloadClass, key, eventType, payloadType);
 
-    Metadata metadata = Metadata.of(
-        Key.of(key),
-        Action.PUBLISH,
-        EventTime.of(System.currentTimeMillis()),
-        properties
-    );
-    Message<T> message = Message.of(
-        payload,
-        metadata
-    );
-    emitter.send(message);
+    CloudEvent cloudEvent = CloudEventUtils.builderWithJsonData(payload)
+        .withSubject(key)
+        .withType(eventType)
+        .build();
+
+    resourcesEmitter.send(cloudEvent);
   }
 
   void tracef(String format, Object... params) {

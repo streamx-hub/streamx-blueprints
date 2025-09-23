@@ -2,10 +2,8 @@ package dev.streamx.blueprints.externalresources.finders;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.jayway.jsonpath.InvalidPathException;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 
 class JsonValuesFinderTest {

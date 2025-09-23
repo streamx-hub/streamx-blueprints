@@ -1,75 +1,56 @@
 package dev.streamx.blueprints.externalresources.functions;
 
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractAction;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractKey;
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import dev.streamx.blueprints.cloudevents.utils.CloudEventTestUtils;
+import dev.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import dev.streamx.blueprints.data.Asset;
 import dev.streamx.blueprints.data.Data;
 import dev.streamx.blueprints.data.Page;
 import dev.streamx.blueprints.data.Resource;
 import dev.streamx.blueprints.data.WebResource;
 import dev.streamx.blueprints.externalresources.Channels;
-import dev.streamx.blueprints.externalresources.services.ExternalResourcesCollector;
 import dev.streamx.blueprints.externalresources.testutils.SkipVerifyingNoDownloadErrors;
-import dev.streamx.metadata.Properties;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
-import dev.streamx.quasar.reactive.messaging.utils.MetadataUtils;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
 import io.smallrye.reactive.messaging.memory.InMemorySource;
-import jakarta.inject.Inject;
-import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-import org.awaitility.core.ConditionTimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
-import org.jboss.logging.Logger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 
 abstract class BaseProcessFunctionTest extends BaseFunctionTest {
 
-  @Inject
-  Logger log;
+  // payload types (as in src/test/resources/application.properties)
+  public static final String PAGE = "page/blog";
+  public static final String WEB_RESOURCE = "web-resource/static";
+  public static final String DATA = "product/simple";
+  public static final String EXTERNAL_PAGE = "page/blog/external";
+  public static final String EXTERNAL_WEB_RESOURCE = "web-resource/static/external";
+  public static final String EXTERNAL_ASSET = "asset/static/external";
 
   @InjectSpy
   ExternalResourcesProcessFunction externalResourcesProcessFunction;
 
-  protected InMemorySource<Message<Page>> pagesChannel;
-  protected InMemorySource<Message<WebResource>> webResourcesChannel;
-  protected InMemorySource<Message<Data>> dataChannel;
-
-  protected InMemorySink<Page> pagesSink;
-  protected InMemorySink<WebResource> webResourcesSink;
-  protected InMemorySink<Data> dataSink;
-  protected InMemorySink<Asset> assetsSink;
+  protected InMemorySource<CloudEvent> resourcesChannel;
+  protected InMemorySink<CloudEvent> resourcesSink;
 
   @BeforeEach
   void initSourcesAndSinks() {
-    pagesChannel = getSource(Channels.INCOMING_PAGES);
-    webResourcesChannel = getSource(Channels.INCOMING_WEB_RESOURCES);
-    dataChannel = getSource(Channels.INCOMING_DATA);
-
-    pagesSink = getSink(Channels.OUTGOING_PAGES);
-    webResourcesSink = getSink(Channels.OUTGOING_WEB_RESOURCES);
-    dataSink = getSink(Channels.OUTGOING_DATA);
-    assetsSink = getSink(Channels.OUTGOING_ASSETS);
+    resourcesChannel = getSource(Channels.INCOMING_RESOURCES);
+    resourcesSink = getSink(Channels.OUTGOING_RESOURCES);
   }
 
   @AfterEach
@@ -80,143 +61,105 @@ abstract class BaseProcessFunctionTest extends BaseFunctionTest {
     }
   }
 
-  protected <T extends Resource> Message<T> publish(InMemorySource<Message<T>> channel,
-      T resource, String path, String sxType) {
-    return sendToChannel(channel, resource, path, Action.PUBLISH, sxType);
+  protected CloudEvent publishPage(String path, String content) {
+    return publishPage(path, content, "page/blog");
   }
 
-  protected <T extends Resource> Message<T> unpublish(InMemorySource<Message<T>> channel,
-      String path, String sxType) {
-    return sendToChannel(channel, null, path, Action.UNPUBLISH, sxType);
+  protected CloudEvent publishPage(String path, String content, String payloadType) {
+    return sendToChannel(path, new Page(content, payloadType), Page.TYPE_PUBLISHED);
   }
 
-  private static <T extends Resource> Message<T> sendToChannel(
-      InMemorySource<Message<T>> channel, T resource,
-      String path, Action action, String sxType) {
-    Message<T> message = Message.of(
-        resource,
-        Metadata.of(
-            Key.of(path),
-            EventTime.of(System.currentTimeMillis()),
-            action,
-            Properties.empty().withType(sxType)
-        )
-    );
-    channel.send(message);
-    return message;
+  protected CloudEvent publishWebResource(String path, String content) {
+    return publishWebResource(path, content, "web-resource/static");
   }
 
-  protected <T extends Resource> void waitForMessagesInSink(InMemorySink<T> sink,
-      int expectedCount) {
-    try {
-      await().atMost(Duration.ofSeconds(3)).untilAsserted(() ->
-          assertThat(sink.received()).hasSize(expectedCount)
-      );
-    } catch (ConditionTimeoutException ex) {
-      dumpCurrentMessagesInSink(sink);
-      throw ex;
-    }
+  protected CloudEvent publishWebResource(String path, String content, String payloadType) {
+    return sendToChannel(path, new WebResource(content, payloadType), WebResource.TYPE_PUBLISHED);
   }
 
-  private <T extends Resource> void dumpCurrentMessagesInSink(InMemorySink<T> sink) {
-    log.infof("Current messages in %s sink:", sink.name());
-    List<? extends Message<T>> messages = sink.received();
-    for (int i = 0; i < messages.size(); i++) {
-      Message<T> message = messages.get(i);
-      log.infof("Message #%d: %s", i, MetadataUtils.extractKey(message));
-      if (message.getPayload() != null) {
-        log.info(message.getPayload().getContentAsString());
-      }
-    }
+  protected CloudEvent publishData(String path, String content, String payloadType) {
+    return sendToChannel(path, new Data(content, payloadType), Data.TYPE_PUBLISHED);
   }
 
-  protected void assertPublishedPage(int indexInSink, String expectedKey, String expectedContent) {
-    Message<Page> message = pagesSink.received().get(indexInSink);
-    verifyPublishedTextResource(message, expectedKey, expectedContent);
+  protected CloudEvent unpublishPage(String path) {
+    return sendToChannel(path, new Page((ByteBuffer) null, "page/blog"), Page.TYPE_UNPUBLISHED);
   }
 
-  protected void assertPublishedWebResource(int indexInSink, String expectedKey,
+  private <T extends Resource> CloudEvent sendToChannel(String path, T resource, String eventType) {
+    CloudEvent event = CloudEventUtils.builderWithJsonData(resource)
+        .withSubject(path)
+        .withType(eventType)
+        .build();
+    resourcesChannel.send(event);
+    return event;
+  }
+
+  protected List<CloudEvent> waitForEventsInSink(String payloadType, int expectedCount) {
+    AtomicReference<List<CloudEvent>> matchingEventsRef = new AtomicReference<>();
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+      List<CloudEvent> matchingEvents = resourcesSink.received().stream()
+          .map(Message::getPayload)
+          .filter(event -> CloudEventUtils.getData(event, Resource.class).getType().equals(payloadType))
+          .toList();
+      assertThat(matchingEvents).hasSize(expectedCount);
+      matchingEventsRef.set(matchingEvents);
+    });
+    return matchingEventsRef.get();
+  }
+
+  protected void assertPublishedPage(CloudEvent event, String expectedKey, String expectedContent) {
+    assertPublishedTextResource(event, expectedKey, expectedContent);
+  }
+
+  protected void assertPublishedWebResource(CloudEvent event, String expectedKey,
       String expectedContent) {
-    Message<WebResource> message = webResourcesSink.received().get(indexInSink);
-    verifyPublishedTextResource(message, expectedKey, expectedContent);
+    assertPublishedTextResource(event, expectedKey, expectedContent);
   }
 
-  protected void assertPublishedData(int indexInSink, String expectedKey, String expectedContent) {
-    Message<Data> message = dataSink.received().get(indexInSink);
-    verifyPublishedTextResource(message, expectedKey, expectedContent);
+  protected void assertPublishedData(CloudEvent event, String expectedKey, String expectedContent) {
+    assertPublishedTextResource(event, expectedKey, expectedContent);
   }
 
-  private static <T extends Resource> void verifyPublishedTextResource(Message<T> message,
+  private static void assertPublishedTextResource(CloudEvent event,
       String expectedKey, String expectedContent) {
-    assertThat(extractKey(message)).isEqualTo(expectedKey);
-    assertThat(extractAction(message)).isSameAs(Action.PUBLISH);
-    assertThat(message.getPayload().getContentAsString()).isEqualTo(expectedContent);
+    assertThat(event.getSubject()).isEqualTo(expectedKey);
+    String content = requireNonNull(CloudEventUtils.getData(event, Resource.class))
+        .getContentAsString();
+    assertThat(content).isEqualTo(expectedContent);
   }
 
-  protected void assertPublishedAsset(int indexInSink, String expectedKey, byte[] expectedContent) {
-    Message<Asset> message = assetsSink.received().get(indexInSink);
-    verifyPublishedAsset(message, expectedKey, expectedContent);
-  }
-
-  private static void verifyPublishedAsset(Message<Asset> message, String expectedKey,
+  protected void assertPublishedAsset(CloudEvent event, String expectedKey,
       byte[] expectedContent) {
-    assertThat(extractKey(message)).isEqualTo(expectedKey);
-    assertThat(extractAction(message)).isSameAs(Action.PUBLISH);
-    assertThat(message.getPayload().getContent().array()).containsExactly(expectedContent);
+    assertThat(event.getSubject()).isEqualTo(expectedKey);
+    byte[] content = requireNonNull(CloudEventUtils.getData(event, Resource.class))
+        .getContent().array();
+    assertThat(content).isEqualTo(expectedContent);
   }
 
-  protected void assertPublishedAssets(Map<String, byte[]> expectedAssets) {
-    List<? extends Message<Asset>> sortedActualMessages = assetsSink.received().stream()
-        .sorted(Comparator.comparing(MetadataUtils::extractKey))
+  protected void assertPublishedAssets(String payloadType, Map<String, byte[]> expectedAssets) {
+    List<CloudEvent> sortedActualAssets = waitForEventsInSink(payloadType, expectedAssets.size())
+        .stream()
+        .sorted(Comparator.comparing(asset -> requireNonNull(asset.getSubject())))
         .toList();
-    assertThat(sortedActualMessages).hasSize(expectedAssets.size());
 
-    List<Map.Entry<String, byte[]>> sortedExpectedAssets = new ArrayList<>(
-        new TreeMap<>(expectedAssets).entrySet());
+    List<CloudEvent> sortedExpectedAssets = expectedAssets.entrySet()
+        .stream()
+        .sorted(Map.Entry.comparingByKey())
+        .map(entry -> CloudEventUtils.builderWithJsonData(new Asset(entry.getValue()))
+            .withSubject(entry.getKey())
+            .withType(EXTERNAL_ASSET)
+            .build())
+        .toList();
 
-    for (int i = 0; i < sortedActualMessages.size(); i++) {
-      Message<Asset> message = sortedActualMessages.get(i);
-      Entry<String, byte[]> asset = sortedExpectedAssets.get(i);
-      verifyPublishedAsset(message, asset.getKey(), asset.getValue());
+    for (int i = 0; i < sortedActualAssets.size(); i++) {
+      CloudEvent expected = sortedExpectedAssets.get(i);
+      byte[] expectedContent = requireNonNull(CloudEventUtils.getData(expected, Asset.class))
+          .getContent().array();
+      assertPublishedAsset(sortedActualAssets.get(i), expected.getSubject(), expectedContent);
     }
   }
 
-  protected static <T extends Resource> void assertSameMessages(Message<T> message1,
-      Message<T> message2) {
-    if (extractAction(message1).equals(Action.PUBLISH)) {
-      assertThat(message1.getPayload().getContentAsString())
-          .isEqualTo(message2.getPayload().getContentAsString());
-    } else {
-      assertThat(message1.getPayload()).isNull();
-      assertThat(message2.getPayload()).isNull();
-    }
-    assertSameMetadata(message1.getMetadata(), message2.getMetadata());
-  }
-
-  private static void assertSameMetadata(Metadata relayed, Metadata original) {
-    assertThat(relayed.get(Key.class)).isEqualTo(original.get(Key.class));
-    assertThat(relayed.get(Action.class)).isEqualTo(original.get(Action.class));
-    assertThat(relayed.get(EventTime.class)).isEqualTo(original.get(EventTime.class));
-  }
-
-  protected static <T extends Resource> void sendMessagesFromSinkToChannel(InMemorySink<T> sink,
-      InMemorySource<Message<T>> channel) {
-    sink.received().forEach(channel::send);
-  }
-
-  protected static <T extends Resource, F extends BaseProcessResourceFunction<T>>
-      void overrideResourceSelectors(F functionSpy, String... selectors) {
-    ExternalResourcesCollector collector = functionSpy.externalResourcesCollector();
-
-    try {
-      Field selectorsField = collector.getClass().getDeclaredField("resourceSelectors");
-      selectorsField.setAccessible(true);
-      selectorsField.set(collector, List.of(selectors));
-    } catch (ReflectiveOperationException ex) {
-      fail(ex);
-    }
-
-    doReturn(collector).when(functionSpy).externalResourcesCollector();
-    functionSpy.init();
+  protected static void assertSameEvents(CloudEvent actual, CloudEvent expected) {
+    CloudEventTestUtils.assertEventsData(expected, actual);
   }
 }

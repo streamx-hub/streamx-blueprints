@@ -1,16 +1,15 @@
 package dev.streamx.blueprints.externalresources.functions;
 
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractKey;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.verify;
 
-import dev.streamx.blueprints.data.Asset;
 import dev.streamx.blueprints.data.Page;
 import dev.streamx.blueprints.externalresources.Channels;
 import dev.streamx.blueprints.externalresources.data.ExternalResource;
 import dev.streamx.blueprints.externalresources.data.ParentResource;
 import dev.streamx.blueprints.externalresources.testutils.UsesTestWebServer;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
@@ -22,14 +21,14 @@ import org.junit.jupiter.api.Test;
 class ExternalResourcesProcessFunctionTest extends BaseFunctionTest
     implements UsesTestWebServer {
 
-  private InMemorySink<Asset> assetsSink;
+  private InMemorySink<CloudEvent> resourcesSink;
 
   @InjectSpy
   ExternalResourcesProcessFunction processFunction;
 
   @BeforeEach
   void initSink() {
-    assetsSink = getSink(Channels.OUTGOING_ASSETS);
+    resourcesSink = getSink(Channels.OUTGOING_RESOURCES);
   }
 
   @Test
@@ -41,7 +40,7 @@ class ExternalResourcesProcessFunctionTest extends BaseFunctionTest
     ExternalResource imageResource = new ExternalResource(imagePath, imageUrl, imagePath);
 
     ParentResource<Page> parentPage = new ParentResource<>(
-        "http://server.com/blog.html", "/blog.html", "<img src='/logo.gif'>", Page.class);
+        "http://server.com/blog.html", "/blog.html", "<img src='/logo.gif'>", "page/blog", Page.class);
 
     // when: publish page
     downloadAndPublish(imageResource, parentPage);
@@ -68,9 +67,9 @@ class ExternalResourcesProcessFunctionTest extends BaseFunctionTest
 
   private void assertSingleAssetInSink(String expectedKey) {
     await().atMost(Duration.ofSeconds(3)).untilAsserted(() ->
-        assertThat(assetsSink.received()).hasSize(1)
+        assertThat(resourcesSink.received()).hasSize(1)
     );
-    assertThat(extractKey(assetsSink.received().get(0))).isEqualTo(expectedKey);
+    assertThat(resourcesSink.received().get(0).getPayload().getSubject()).isEqualTo(expectedKey);
   }
 
   private void downloadAndPublish(ExternalResource resource, ParentResource<Page> parentResource) {

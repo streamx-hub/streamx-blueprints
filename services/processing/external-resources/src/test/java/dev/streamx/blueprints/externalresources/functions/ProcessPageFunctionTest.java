@@ -2,16 +2,17 @@ package dev.streamx.blueprints.externalresources.functions;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import dev.streamx.blueprints.data.Page;
 import dev.streamx.blueprints.externalresources.testutils.SkipVerifyingEachExternalResourceWasDownloadedExactlyOnce;
 import dev.streamx.blueprints.externalresources.testutils.SkipVerifyingNoDownloadErrors;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -32,15 +33,15 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     // when
     publishPage(pagePath, pageContent);
 
-    // then: wait for expected messages to be published
-    waitForMessagesInSink(assetsSink, 1);
-    waitForMessagesInSink(pagesSink, 1);
+    // then: wait for expected events to be published
+    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 1);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
-    // and: assert content of published messages
-    assertPublishedAsset(0,
+    // and: assert content of published events
+    assertPublishedAsset(assetEvents.get(0),
         "/image-_.jpg",
         imageContent);
-    assertPublishedPage(0,
+    assertPublishedPage(pageEvents.get(0),
         "/page.html",
         "⭐<img src='/image-_.jpg'>⭐");
   }
@@ -71,18 +72,18 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     // when
     publishPage(pagePath, pageContent);
 
-    // then: wait for expected messages to be published
-    waitForMessagesInSink(assetsSink, 2);
-    waitForMessagesInSink(pagesSink, 1);
+    // then: wait for expected events to be published
+    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 2);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
-    // and: assert content of published messages
-    assertPublishedAsset(0,
+    // and: assert content of published events
+    assertPublishedAsset(assetEvents.get(0),
         "/image.png",
         imageContent);
-    assertPublishedAsset(1,
+    assertPublishedAsset(assetEvents.get(1),
         "/image.png_a_b_c_d.png",
         imageCustomizedContent);
-    assertPublishedPage(0,
+    assertPublishedPage(pageEvents.get(0),
         "/page1.html",
         """
             <img src='/image.png'>
@@ -118,9 +119,9 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     // when
     publishPage(page1Path, page1Content);
 
-    // then: wait for expected messages to be published
-    waitForMessagesInSink(pagesSink, 1);
-    assertPublishedPage(0,
+    // then: wait for expected events to be published
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
+    assertPublishedPage(pageEvents.get(0),
         "/page1.html",
         """
             <picture>
@@ -130,11 +131,11 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
             """
     );
 
-    waitForMessagesInSink(assetsSink, 2);
-    assertPublishedAsset(0,
+    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 2);
+    assertPublishedAsset(assetEvents.get(0),
         "/media_14c1.jpg_width_750_format_jpg_optimize_medium.jpg",
         "media_14c1.jpg".getBytes(UTF_8));
-    assertPublishedAsset(1,
+    assertPublishedAsset(assetEvents.get(1),
         "/media_1d5b.jpg_width_2000_format_webply_optimize_medium.jpg",
         "media_1d5b.jpg".getBytes(UTF_8));
   }
@@ -154,15 +155,15 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     // when
     publishPage(pagePath, pageContent);
 
-    // then: wait for expected messages to be published
-    waitForMessagesInSink(assetsSink, 1);
-    waitForMessagesInSink(pagesSink, 1);
+    // then: wait for expected events to be published
+    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 1);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
-    // and: assert content of published messages
-    assertPublishedAsset(0,
+    // and: assert content of published events
+    assertPublishedAsset(assetEvents.get(0),
         "/http_www.goggle.com/image.jpg",
         imageContent);
-    assertPublishedPage(0,
+    assertPublishedPage(pageEvents.get(0),
         "/page.html",
         "<img src='/http_www.goggle.com/image.jpg'>");
   }
@@ -204,31 +205,21 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     // when
     publishPage(pagePath, initialHtml);
 
-    // then: wait for expected messages to be published
-    waitForMessagesInSink(assetsSink, 6);
-    waitForMessagesInSink(pagesSink, 1);
+    // then: wait for expected events to be published
+    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 6);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
-    // and: assert content of published messages
-    assertPublishedAsset(0,
-        "/eds/pages/blogs/adventures.jpg",
-        blogImageContent);
-    assertPublishedAsset(1,
-        "/eds/eds-index.jpg",
-        edsIndexImageContent);
-    assertPublishedAsset(2,
-        "/images/logo.png",
-        logoImageContent);
-    assertPublishedAsset(3,
-        "/https_www.goggle.com/streamx-mesh-overview.jpg_par_val.jpg",
-        meshImageContent);
-    assertPublishedAsset(4,
-        "/https_www.goggle.com/assets/jcr_content/cloud.svg",
-        cloudImageContent);
-    assertPublishedAsset(5,
-        "/stylesheets/styles.css",
-        stylesheetContent.getBytes(UTF_8));
+    // and: assert content of published events
+    assertPublishedAssets(EXTERNAL_ASSET, Map.of(
+        "/eds/pages/blogs/adventures.jpg", blogImageContent,
+        "/eds/eds-index.jpg", edsIndexImageContent,
+        "/images/logo.png", logoImageContent,
+        "/https_www.goggle.com/streamx-mesh-overview.jpg_par_val.jpg", meshImageContent,
+        "/https_www.goggle.com/assets/jcr_content/cloud.svg", cloudImageContent,
+        "/stylesheets/styles.css", stylesheetContent.getBytes(UTF_8)
+    ));
 
-    assertPublishedPage(0,
+    assertPublishedPage(pageEvents.get(0),
         "/eds/pages/page.html",
         """
             <html>
@@ -275,12 +266,12 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     publishPage(pagePath, pageInitialContent);
 
     // then
-    waitForMessagesInSink(assetsSink, 2);
-    waitForMessagesInSink(pagesSink, 1);
+    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 2);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
-    assertPublishedAsset(0, "/eds/images/image1.jpg", image1Content);
-    assertPublishedAsset(1, "/eds/images/image2.jpg", image2Content);
-    assertPublishedPage(0,
+    assertPublishedAsset(assetEvents.get(0), "/eds/images/image1.jpg", image1Content);
+    assertPublishedAsset(assetEvents.get(1), "/eds/images/image2.jpg", image2Content);
+    assertPublishedPage(pageEvents.get(0),
         "/eds/pages/page.html",
         """
             <img src='/eds/images/image1.jpg'>
@@ -291,12 +282,12 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     publishPage(pagePath, pageEditedContent);
 
     // then
-    waitForMessagesInSink(assetsSink, 4);
-    waitForMessagesInSink(pagesSink, 2);
+    assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 4);
+    pageEvents = waitForEventsInSink(PAGE, 2);
 
-    assertPublishedAsset(2, "/eds/images/image1.jpg", image1Content);
-    assertPublishedAsset(3, "/eds/images/image3.jpg", image3Content);
-    assertPublishedPage(1,
+    assertPublishedAsset(assetEvents.get(2), "/eds/images/image1.jpg", image1Content);
+    assertPublishedAsset(assetEvents.get(3), "/eds/images/image3.jpg", image3Content);
+    assertPublishedPage(pageEvents.get(1),
         "/eds/pages/page.html",
         """
             <img src='/eds/images/image1.jpg'>
@@ -316,11 +307,11 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     String pageContent = "<img src='page.html'>";
 
     // when
-    Message<Page> publishedPage = publishPage(pagePath, pageContent);
+    CloudEvent publishedPage = publishPage(pagePath, pageContent);
 
     // then
-    waitForMessagesInSink(pagesSink, 1);
-    assertSameMessages(pagesSink.received().get(0), publishedPage);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
+    assertSameEvents(pageEvents.get(0), publishedPage);
   }
 
   @Test
@@ -343,12 +334,12 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     publishPage(pagePath, pageContent);
 
     // then
-    waitForMessagesInSink(webResourcesSink, 1);
-    waitForMessagesInSink(pagesSink, 1);
+    List<CloudEvent> webResourceEvents = waitForEventsInSink(EXTERNAL_WEB_RESOURCE, 1);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
-    assertPublishedWebResource(0, "/pages/configuration.xml",
+    assertPublishedWebResource(webResourceEvents.get(0), "/pages/configuration.xml",
         configurationContent);
-    assertPublishedPage(0, pagePath,
+    assertPublishedPage(pageEvents.get(0), pagePath,
         """
         <a href='page2.html'>Page 2</a>
         <img src='/pages/configuration.xml'>
@@ -390,12 +381,12 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     publishPage(pagePath, initialHtml);
 
     // then: wait for expected pages to be published
-    waitForMessagesInSink(assetsSink, 2);
-    waitForMessagesInSink(pagesSink, 1);
+    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 2);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
-    assertPublishedAsset(0, "/eds/pages/image1.jpg", image1Content);
-    assertPublishedAsset(1, "/eds/pages/image3.jpg", image3Content);
-    assertPublishedPage(0,
+    assertPublishedAsset(assetEvents.get(0), "/eds/pages/image1.jpg", image1Content);
+    assertPublishedAsset(assetEvents.get(1), "/eds/pages/image3.jpg", image3Content);
+    assertPublishedPage(pageEvents.get(0),
         "/eds/pages/page.html",
         """
             <html>
@@ -419,8 +410,8 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     publishPage(pagePath, pageContent);
 
     // then: expecting nothing to be downloaded and no edits in page content
-    waitForMessagesInSink(pagesSink, 1);
-    assertPublishedPage(0, pagePath, pageContent);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
+    assertPublishedPage(pageEvents.get(0), pagePath, pageContent);
     verifyNoDownloads();
   }
 
@@ -459,17 +450,16 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     publishPage(pagePath, pageContent);
 
     // then
-    waitForMessagesInSink(assetsSink, 5);
-    assertPublishedAsset(0,
-        "/pages/image_20with_20spaces_20and_20invalid_20chars_20like_20_5E.jpg",
-        externalImageContent);
-    assertPublishedAsset(1, "/http_server.com/image_20with_20spaces.jpg", externalImageContent);
-    assertPublishedAsset(2, "/assets/Cube_20Images/cube1.webp", externalImageContent);
-    assertPublishedAsset(3, "/assets/Cube-Images/cube2.webp", externalImageContent);
-    assertPublishedAsset(4, "/assets/Cube_20Images/cube3.webp", externalImageContent);
+    assertPublishedAssets(EXTERNAL_ASSET, Map.of(
+    "/pages/image_20with_20spaces_20and_20invalid_20chars_20like_20_5E.jpg", externalImageContent,
+        "/http_server.com/image_20with_20spaces.jpg", externalImageContent,
+        "/assets/Cube_20Images/cube1.webp", externalImageContent,
+        "/assets/Cube-Images/cube2.webp", externalImageContent,
+        "/assets/Cube_20Images/cube3.webp", externalImageContent
+    ));
 
-    waitForMessagesInSink(pagesSink, 1);
-    assertPublishedPage(0,
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
+    assertPublishedPage(pageEvents.get(0),
         "/pages/page.html",
         """
             <html>
@@ -495,8 +485,8 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     publishPage(pagePath, pageContent);
 
     // then
-    waitForMessagesInSink(pagesSink, 1);
-    assertPublishedPage(0, pagePath, pageContent);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
+    assertPublishedPage(pageEvents.get(0), pagePath, pageContent);
   }
 
   @Test
@@ -514,12 +504,12 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     publishPage(pagePath, pageContent);
 
     // then
-    waitForMessagesInSink(assetsSink, 1);
-    waitForMessagesInSink(pagesSink, 1);
+    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 1);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
-    assertPublishedAsset(0, "/Nested_20Images/image.jpg",
+    assertPublishedAsset(assetEvents.get(0), "/Nested_20Images/image.jpg",
         nestedImageContent);
-    assertPublishedPage(0, "/eds/pages/page_20with_20space.html",
+    assertPublishedPage(pageEvents.get(0), "/eds/pages/page_20with_20space.html",
         "<img src='/Nested_20Images/image.jpg'>");
   }
 
@@ -545,12 +535,12 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     publishPage(pagePath, html);
 
     // then
-    waitForMessagesInSink(pagesSink, 1);
-    assertPublishedPage(0, "/page.html",
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
+    assertPublishedPage(pageEvents.get(0), "/page.html",
         "<link rel='stylesheet' href='/stylesheets/styles.css'>");
 
-    waitForMessagesInSink(assetsSink, 1);
-    assertPublishedAsset(0, "/stylesheets/styles.css",
+    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 1);
+    assertPublishedAsset(assetEvents.get(0), "/stylesheets/styles.css",
         stylesPlainText.getBytes(UTF_8));
   }
 
@@ -568,12 +558,12 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     publishPage(pagePath, html);
 
     // then
-    waitForMessagesInSink(pagesSink, 1);
-    assertPublishedPage(0, "/page.html",
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
+    assertPublishedPage(pageEvents.get(0), "/page.html",
         "<link rel='stylesheet' href='/styles.css'>");
 
-    waitForMessagesInSink(assetsSink, 1);
-    assertPublishedAsset(0, "/styles.css",
+    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 1);
+    assertPublishedAsset(assetEvents.get(0), "/styles.css",
         stylesGzippedBytes);
   }
 
@@ -598,9 +588,9 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     publishPage(pagePath, html);
 
     // then
-    waitForMessagesInSink(pagesSink, 1);
-    assertPublishedPage(0, pagePath, html);
-    waitForMessagesInSink(assetsSink, 0);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
+    assertPublishedPage(pageEvents.get(0), pagePath, html);
+    waitForEventsInSink(EXTERNAL_ASSET, 0);
 
     // and
     verifyNoDownloads();
@@ -621,14 +611,14 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
         """;
 
     // when
-    Message<Page> publishPageMessage = publishPage(pagePath, html);
+    CloudEvent publishPageEvent = publishPage(pagePath, html);
 
     // then
-    waitForMessagesInSink(pagesSink, 1);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
-    // assert the message is unchanged
-    Message<Page> relayedPageMessage = pagesSink.received().get(0);
-    assertSameMessages(relayedPageMessage, publishPageMessage);
+    // assert the event is unchanged
+    CloudEvent relayedPageEvent = pageEvents.get(0);
+    assertSameEvents(relayedPageEvent, publishPageEvent);
   }
 
   @Test
@@ -637,18 +627,18 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     String pagePath = "/eds/pages/page.html";
 
     // when
-    Message<Page> unpublishPageMessage = unpublishPage(pagePath);
+    CloudEvent unpublishPageEvent = unpublishPage(pagePath);
 
     // then
-    waitForMessagesInSink(pagesSink, 1);
+    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
-    // assert the message is unchanged
-    Message<Page> relayedPageMessage = pagesSink.received().get(0);
-    assertSameMessages(relayedPageMessage, unpublishPageMessage);
+    // assert the event is unchanged
+    CloudEvent relayedPageEvent = pageEvents.get(0);
+    assertSameEvents(relayedPageEvent, unpublishPageEvent);
   }
 
   @Test
-  void shouldRelayPageThatHasNotMatchingSxType() {
+  void shouldRelayPageThatHasNotMatchingEventType() {
     // given
     String pagePath = "/pages/page.html";
     String html = """
@@ -663,23 +653,15 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
         """;
 
     // when
-    Message<Page> publishPageMessage = publish(pagesChannel, new Page(html), pagePath,
-        "page/experience-fragment");
+    String eventType = "page/experience-fragment";
+    CloudEvent publishPageEvent = publishPage(pagePath, html, eventType);
 
     // then
-    waitForMessagesInSink(pagesSink, 1);
+    List<CloudEvent> pageEvents = waitForEventsInSink(eventType, 1);
 
-    // assert message is unchanged
-    Message<Page> relayedPageMessage = pagesSink.received().get(0);
-    assertSameMessages(relayedPageMessage, publishPageMessage);
-  }
-
-  private Message<Page> publishPage(String pagePath, String html) {
-    return publish(pagesChannel, new Page(html), pagePath, "page/blog");
-  }
-
-  private Message<Page> unpublishPage(String pagePath) {
-    return unpublish(pagesChannel, pagePath, "page/blog");
+    // assert event is unchanged
+    CloudEvent relayedPageEvent = pageEvents.get(0);
+    assertSameEvents(relayedPageEvent, publishPageEvent);
   }
 
   private static byte[] generateImageContent(String imagePath) {
