@@ -4,7 +4,7 @@ import static dev.streamx.blueprints.composition.CompositionFunction.INCOMING_CO
 import static dev.streamx.blueprints.composition.CompositionFunction.INCOMING_LAYOUTS_CHANNEL;
 import static dev.streamx.blueprints.composition.CompositionFunction.INCOMING_PAGE_COMPOSE_REQUESTS_CHANNEL;
 import static dev.streamx.blueprints.composition.CompositionFunction.OUTGOING_PAGES_CHANNEL;
-import static dev.streamx.blueprints.cloudevents.utils.CloudEventTestUtils.assertEvents;
+import static dev.streamx.blueprints.cloudevents.utils.CloudEventTestUtils.assertEventsData;
 import static dev.streamx.blueprints.cloudevents.utils.CloudEventTestUtils.createEvent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -456,7 +456,7 @@ class CompositionFunctionTest {
         assertThat(pagesSink.received()).hasSameSizeAs(expectedEvents)
     );
 
-    assertEvents(expectedEvents,
+    assertEventsData(expectedEvents,
         pagesSink.received().stream().map(Message::getPayload).toArray(CloudEvent[]::new));
   }
 

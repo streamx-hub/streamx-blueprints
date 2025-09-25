@@ -6,16 +6,15 @@
     <groupId>dev.streamx.blueprints</groupId>
     <artifactId>blueprints-project</artifactId>
     <version>3.0.0-SNAPSHOT</version>
-    <relativePath>../pom.xml</relativePath>
+    <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>services</artifactId>
-  <name>Blueprints : Services</name>
+  <artifactId>delivery</artifactId>
+  <name>Blueprints : Delivery Services</name>
   <packaging>pom</packaging>
 
   <modules>
-    <module>processing</module>
-    <module>delivery</module>
+    <module>web</module>
   </modules>
 
 </project>

@@ -6,8 +6,8 @@ import org.assertj.core.api.Assertions;
 
 public class CloudEventTestUtils {
 
-  public static void assertEvents(CloudEvent[] expectedEvents, CloudEvent[] actualEvents) {
-    Assertions.assertThat(actualEvents).usingElementComparator(new CloudEventComparator())
+  public static void assertEventsData(CloudEvent[] expectedEvents, CloudEvent[] actualEvents) {
+    Assertions.assertThat(actualEvents).usingElementComparator(new CloudEventDataComparator())
         .containsExactlyInAnyOrder(expectedEvents);
   }
 
@@ -24,7 +24,7 @@ public class CloudEventTestUtils {
 
 }
 
-class CloudEventComparator implements Comparator<CloudEvent> {
+class CloudEventDataComparator implements Comparator<CloudEvent> {
 
   @Override
   public int compare(CloudEvent e1, CloudEvent e2) {
