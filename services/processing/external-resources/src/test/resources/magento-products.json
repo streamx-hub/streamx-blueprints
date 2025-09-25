@@ -1,0 +1,1530 @@
+{
+  "sku": "MH01",
+  "id": "62",
+  "lang": "en",
+  "attributes": [
+    {
+      "name": "small_image",
+      "label": "Small",
+      "values": [
+        {
+          "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+          "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg"
+        }
+      ],
+      "isFacet": false
+    },
+    {
+      "name": "thumbnail",
+      "label": "Thumbnail",
+      "values": [
+        {
+          "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+          "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg"
+        }
+      ],
+      "isFacet": false
+    },
+    {
+      "name": "url_key",
+      "label": "URL Key",
+      "values": [
+        {
+          "value": "chaz-kangeroo-hoodie",
+          "label": "chaz-kangeroo-hoodie"
+        }
+      ],
+      "isFacet": false
+    },
+    {
+      "name": "status",
+      "label": "Enable Product",
+      "values": [
+        {
+          "value": "Enabled",
+          "label": "Enabled"
+        }
+      ],
+      "isFacet": false
+    },
+    {
+      "name": "visibility",
+      "label": "Visibility",
+      "values": [
+        {
+          "value": "Catalog, Search",
+          "label": "Catalog, Search"
+        }
+      ],
+      "isFacet": false
+    },
+    {
+      "name": "tax_class_id",
+      "label": "Tax Class",
+      "values": [
+        {
+          "value": "Taxable Goods",
+          "label": "Taxable Goods"
+        }
+      ],
+      "isFacet": false
+    }
+  ],
+  "name": "Name modified for testing, was Chaz Kangeroo Hoodie",
+  "label": "Name modified for testing, was Chaz Kangeroo Hoodie",
+  "primaryImage": {
+    "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+    "alt": ""
+  },
+  "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+  "price": {
+    "value": 52,
+    "discountedValue": 52
+  },
+  "slug": "name-modified-for-testing-was-chaz-kangeroo-hoodie-62",
+  "categories": [
+    {
+      "id": "2",
+      "name": "Default Category",
+      "slug": "default-category-2",
+      "label": "Default Category",
+      "parent": {
+        "id": "1",
+        "name": "Root Catalog",
+        "slug": "root-catalog-1",
+        "label": "Root Catalog"
+      }
+    },
+    {
+      "id": "15",
+      "name": "Hoodies & Sweatshirts",
+      "slug": "hoodies-and-sweatshirts-15",
+      "label": "Hoodies & Sweatshirts",
+      "parent": {
+        "id": "12",
+        "name": "Tops",
+        "slug": "tops-12",
+        "label": "Tops",
+        "parent": {
+          "id": "11",
+          "name": "Men",
+          "slug": "men-11",
+          "label": "Men",
+          "parent": {
+            "id": "2",
+            "name": "Default Category",
+            "slug": "default-category-2",
+            "label": "Default Category",
+            "parent": {
+              "id": "1",
+              "name": "Root Catalog",
+              "slug": "root-catalog-1",
+              "label": "Root Catalog"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "36",
+      "name": "Eco Friendly",
+      "slug": "eco-friendly-36",
+      "label": "Eco Friendly",
+      "parent": {
+        "id": "7",
+        "name": "Collections",
+        "slug": "collections-7",
+        "label": "Collections",
+        "parent": {
+          "id": "2",
+          "name": "Default Category",
+          "slug": "default-category-2",
+          "label": "Default Category",
+          "parent": {
+            "id": "1",
+            "name": "Root Catalog",
+            "slug": "root-catalog-1",
+            "label": "Root Catalog"
+          }
+        }
+      }
+    }
+  ],
+  "gallery": [
+    {
+      "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+      "alt": ""
+    },
+    {
+      "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_alt1_1.jpg",
+      "alt": ""
+    },
+    {
+      "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_back_1.jpg",
+      "alt": ""
+    }
+  ],
+  "quantity": 0,
+  "variants": [
+    {
+      "sku": "MH01-XS-Black",
+      "id": "47",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-xs-black",
+              "label": "chaz-kangeroo-hoodie-xs-black"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Black",
+              "label": "Black",
+              "swatch": {
+                "type": "color",
+                "value": "#000000"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "XS",
+              "label": "XS",
+              "swatch": {
+                "type": "textual",
+                "value": "XS"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-XS-Black",
+      "label": "Chaz Kangeroo Hoodie-XS-Black",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-xs-black-47",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    },
+    {
+      "sku": "MH01-XS-Gray",
+      "id": "48",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-xs-gray",
+              "label": "chaz-kangeroo-hoodie-xs-gray"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Gray",
+              "label": "Gray",
+              "swatch": {
+                "type": "color",
+                "value": "#8f8f8f"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "XS",
+              "label": "XS",
+              "swatch": {
+                "type": "textual",
+                "value": "XS"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-XS-Gray",
+      "label": "Chaz Kangeroo Hoodie-XS-Gray",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-xs-gray-48",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+          "alt": ""
+        },
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_alt1_1.jpg",
+          "alt": ""
+        },
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_back_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    },
+    {
+      "sku": "MH01-XS-Orange",
+      "id": "49",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-xs-orange",
+              "label": "chaz-kangeroo-hoodie-xs-orange"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Orange",
+              "label": "Orange",
+              "swatch": {
+                "type": "color",
+                "value": "#eb6703"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "XS",
+              "label": "XS",
+              "swatch": {
+                "type": "textual",
+                "value": "XS"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-XS-Orange",
+      "label": "Chaz Kangeroo Hoodie-XS-Orange",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-xs-orange-49",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    },
+    {
+      "sku": "MH01-S-Black",
+      "id": "50",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-s-black",
+              "label": "chaz-kangeroo-hoodie-s-black"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Black",
+              "label": "Black",
+              "swatch": {
+                "type": "color",
+                "value": "#000000"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "S",
+              "label": "S",
+              "swatch": {
+                "type": "textual",
+                "value": "S"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-S-Black",
+      "label": "Chaz Kangeroo Hoodie-S-Black",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-s-black-50",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    },
+    {
+      "sku": "MH01-S-Gray",
+      "id": "51",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-s-gray",
+              "label": "chaz-kangeroo-hoodie-s-gray"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Gray",
+              "label": "Gray",
+              "swatch": {
+                "type": "color",
+                "value": "#8f8f8f"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "S",
+              "label": "S",
+              "swatch": {
+                "type": "textual",
+                "value": "S"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-S-Gray",
+      "label": "Chaz Kangeroo Hoodie-S-Gray",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-s-gray-51",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+          "alt": ""
+        },
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_alt1_1.jpg",
+          "alt": ""
+        },
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_back_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    },
+    {
+      "sku": "MH01-S-Orange",
+      "id": "52",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-s-orange",
+              "label": "chaz-kangeroo-hoodie-s-orange"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Orange",
+              "label": "Orange",
+              "swatch": {
+                "type": "color",
+                "value": "#eb6703"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "S",
+              "label": "S",
+              "swatch": {
+                "type": "textual",
+                "value": "S"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-S-Orange",
+      "label": "Chaz Kangeroo Hoodie-S-Orange",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-s-orange-52",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    },
+    {
+      "sku": "MH01-M-Black",
+      "id": "53",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-m-black",
+              "label": "chaz-kangeroo-hoodie-m-black"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Black",
+              "label": "Black",
+              "swatch": {
+                "type": "color",
+                "value": "#000000"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "M",
+              "label": "M",
+              "swatch": {
+                "type": "textual",
+                "value": "M"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-M-Black",
+      "label": "Chaz Kangeroo Hoodie-M-Black",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-m-black-53",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    },
+    {
+      "sku": "MH01-M-Gray",
+      "id": "54",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-m-gray",
+              "label": "chaz-kangeroo-hoodie-m-gray"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Gray",
+              "label": "Gray",
+              "swatch": {
+                "type": "color",
+                "value": "#8f8f8f"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "M",
+              "label": "M",
+              "swatch": {
+                "type": "textual",
+                "value": "M"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-M-Gray",
+      "label": "Chaz Kangeroo Hoodie-M-Gray",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-m-gray-54",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+          "alt": ""
+        },
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_alt1_1.jpg",
+          "alt": ""
+        },
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_back_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    },
+    {
+      "sku": "MH01-M-Orange",
+      "id": "55",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-m-orange",
+              "label": "chaz-kangeroo-hoodie-m-orange"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Orange",
+              "label": "Orange",
+              "swatch": {
+                "type": "color",
+                "value": "#eb6703"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "M",
+              "label": "M",
+              "swatch": {
+                "type": "textual",
+                "value": "M"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-M-Orange",
+      "label": "Chaz Kangeroo Hoodie-M-Orange",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-m-orange-55",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    },
+    {
+      "sku": "MH01-L-Black",
+      "id": "56",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-l-black",
+              "label": "chaz-kangeroo-hoodie-l-black"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Black",
+              "label": "Black",
+              "swatch": {
+                "type": "color",
+                "value": "#000000"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "L",
+              "label": "L",
+              "swatch": {
+                "type": "textual",
+                "value": "L"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-L-Black",
+      "label": "Chaz Kangeroo Hoodie-L-Black",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-l-black-56",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    },
+    {
+      "sku": "MH01-L-Gray",
+      "id": "57",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-l-gray",
+              "label": "chaz-kangeroo-hoodie-l-gray"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Gray",
+              "label": "Gray",
+              "swatch": {
+                "type": "color",
+                "value": "#8f8f8f"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "L",
+              "label": "L",
+              "swatch": {
+                "type": "textual",
+                "value": "L"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-L-Gray",
+      "label": "Chaz Kangeroo Hoodie-L-Gray",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-l-gray-57",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+          "alt": ""
+        },
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_alt1_1.jpg",
+          "alt": ""
+        },
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_back_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    },
+    {
+      "sku": "MH01-L-Orange",
+      "id": "58",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-l-orange",
+              "label": "chaz-kangeroo-hoodie-l-orange"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Orange",
+              "label": "Orange",
+              "swatch": {
+                "type": "color",
+                "value": "#eb6703"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "L",
+              "label": "L",
+              "swatch": {
+                "type": "textual",
+                "value": "L"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-L-Orange",
+      "label": "Chaz Kangeroo Hoodie-L-Orange",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-l-orange-58",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    },
+    {
+      "sku": "MH01-XL-Black",
+      "id": "59",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-xl-black",
+              "label": "chaz-kangeroo-hoodie-xl-black"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Black",
+              "label": "Black",
+              "swatch": {
+                "type": "color",
+                "value": "#000000"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "XL",
+              "label": "XL",
+              "swatch": {
+                "type": "textual",
+                "value": "XL"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-XL-Black",
+      "label": "Chaz Kangeroo Hoodie-XL-Black",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-xl-black-59",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-black_main_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    },
+    {
+      "sku": "MH01-XL-Gray",
+      "id": "60",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-xl-gray",
+              "label": "chaz-kangeroo-hoodie-xl-gray"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Gray",
+              "label": "Gray",
+              "swatch": {
+                "type": "color",
+                "value": "#8f8f8f"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "XL",
+              "label": "XL",
+              "swatch": {
+                "type": "textual",
+                "value": "XL"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-XL-Gray",
+      "label": "Chaz Kangeroo Hoodie-XL-Gray",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-xl-gray-60",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_main_1.jpg",
+          "alt": ""
+        },
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_alt1_1.jpg",
+          "alt": ""
+        },
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-gray_back_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    },
+    {
+      "sku": "MH01-XL-Orange",
+      "id": "61",
+      "attributes": [
+        {
+          "name": "small_image",
+          "label": "Small",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "thumbnail",
+          "label": "Thumbnail",
+          "values": [
+            {
+              "value": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+              "label": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "url_key",
+          "label": "URL Key",
+          "values": [
+            {
+              "value": "chaz-kangeroo-hoodie-xl-orange",
+              "label": "chaz-kangeroo-hoodie-xl-orange"
+            }
+          ],
+          "isFacet": false
+        },
+        {
+          "name": "color",
+          "label": "Color",
+          "values": [
+            {
+              "value": "Orange",
+              "label": "Orange",
+              "swatch": {
+                "type": "color",
+                "value": "#eb6703"
+              }
+            }
+          ],
+          "isFacet": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "values": [
+            {
+              "value": "XL",
+              "label": "XL",
+              "swatch": {
+                "type": "textual",
+                "value": "XL"
+              }
+            }
+          ],
+          "isFacet": true
+        }
+      ],
+      "name": "Chaz Kangeroo Hoodie-XL-Orange",
+      "label": "Chaz Kangeroo Hoodie-XL-Orange",
+      "primaryImage": {
+        "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+        "alt": ""
+      },
+      "description": "<p>Ideal for cold-weather training or work outdoors, the Chaz Hoodie promises superior warmth with every wear. Thick material blocks out the wind as ribbed cuffs and bottom band seal in body heat.<\/p>\n<p>&bull; Two-tone gray heather hoodie.<br \/>&bull; Drawstring-adjustable hood. <br \/>&bull; Machine wash\/dry.<\/p>",
+      "price": {
+        "value": 52,
+        "discountedValue": 52
+      },
+      "slug": "chaz-kangeroo-hoodie-xl-orange-61",
+      "gallery": [
+        {
+          "url": "https:\/\/magento.test\/media\/catalog\/product\/m\/h\/mh01-orange_main_1.jpg",
+          "alt": ""
+        }
+      ],
+      "quantity": 100
+    }
+  ]
+}
