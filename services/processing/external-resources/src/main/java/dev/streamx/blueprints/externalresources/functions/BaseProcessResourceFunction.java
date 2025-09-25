@@ -9,12 +9,12 @@ import dev.streamx.blueprints.externalresources.Channels;
 import dev.streamx.blueprints.externalresources.configuration.Configuration;
 import dev.streamx.blueprints.externalresources.data.ExternalResource;
 import dev.streamx.blueprints.externalresources.data.ParentResource;
-import dev.streamx.blueprints.externalresources.functions.settings.ProcessHtmlWebResourceFunctionSettings;
-import dev.streamx.blueprints.externalresources.functions.settings.ProcessJsonDataFunctionSettings;
-import dev.streamx.blueprints.externalresources.functions.settings.ProcessJsonWebResourceFunctionSettings;
-import dev.streamx.blueprints.externalresources.functions.settings.ProcessPageFunctionSettings;
-import dev.streamx.blueprints.externalresources.functions.settings.ProcessResourceFunctionSettings;
-import dev.streamx.blueprints.externalresources.functions.settings.ProcessXmlWebResourceFunctionSettings;
+import dev.streamx.blueprints.externalresources.functions.settings.BaseProcessingSettings;
+import dev.streamx.blueprints.externalresources.functions.settings.HtmlWebResourceProcessingSettings;
+import dev.streamx.blueprints.externalresources.functions.settings.JsonDataProcessingSettings;
+import dev.streamx.blueprints.externalresources.functions.settings.JsonWebResourceProcessingSettings;
+import dev.streamx.blueprints.externalresources.functions.settings.PageProcessingSettings;
+import dev.streamx.blueprints.externalresources.functions.settings.XmlWebResourceProcessingSettings;
 import dev.streamx.blueprints.externalresources.services.UrlComputationService;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.v1.CloudEventBuilder;
@@ -49,16 +49,16 @@ public class BaseProcessResourceFunction {
   @Inject
   ExternalResourcesProcessFunction externalResourcesProcessFunction;
 
-  private final List<ProcessResourceFunctionSettings<?>> processingSettings = new ArrayList<>();
+  private final List<BaseProcessingSettings<?>> processingSettings = new ArrayList<>();
 
   @PostConstruct
   void init() {
     Stream.of(
-            new ProcessPageFunctionSettings(log, urlComputationService, configuration),
-            new ProcessJsonDataFunctionSettings(log, urlComputationService, configuration),
-            new ProcessXmlWebResourceFunctionSettings(log, urlComputationService, configuration),
-            new ProcessJsonWebResourceFunctionSettings(log, urlComputationService, configuration),
-            new ProcessHtmlWebResourceFunctionSettings(log, urlComputationService, configuration)
+            new PageProcessingSettings(configuration, urlComputationService),
+            new JsonDataProcessingSettings(configuration, urlComputationService),
+            new XmlWebResourceProcessingSettings(configuration, urlComputationService),
+            new JsonWebResourceProcessingSettings(configuration, urlComputationService),
+            new HtmlWebResourceProcessingSettings(configuration, urlComputationService)
         ).sorted(Comparator.comparing(settings ->
             // give priority to settings that define a path suffix (false is "less than" true)
             settings.getHandledResourcePathSuffix().isEmpty()))
@@ -91,7 +91,7 @@ public class BaseProcessResourceFunction {
       return asRelayedEvent(event);
     }
 
-    ProcessResourceFunctionSettings<?> settings = settingsOpt.get();
+    BaseProcessingSettings<?> settings = settingsOpt.get();
     if (!settings.getExternalResourcesCollector().hasResourceSelectors()) {
       log.tracef("Skipping processing %s - no resource selectors are specified", resourcePath);
       return asRelayedEvent(event);
@@ -159,7 +159,7 @@ public class BaseProcessResourceFunction {
 
   private Uni<CloudEvent> downloadExternalResourcesAndReturnAdjustedResource(
       CloudEvent event, ParentResource<?> resource,
-      Set<ExternalResource> externalResources, ProcessResourceFunctionSettings<?> settings) {
+      Set<ExternalResource> externalResources, BaseProcessingSettings<?> settings) {
 
     return Multi.createFrom().iterable(externalResources)
         .onItem()
