@@ -20,7 +20,7 @@ Below is a sample `mesh.yaml` file demonstrating a basic service setup that enab
 the `external-resources-processing-service` instances to work together as described.
 
 ```yaml
-defaultRegistry: ghcr.io/streamx-dev/streamx-blueprints
+defaultRegistry: ghcr.io/streamx-com/streamx-blueprints
 defaultImageTag: latest-jvm
 
 sources:
