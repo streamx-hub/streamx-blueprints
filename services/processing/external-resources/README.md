@@ -141,13 +141,8 @@ For reference, an example configuration is available in the `src/test/resources/
 
 Incoming channels:
 
-- `incoming-pages`
-- `incoming-web-resources`
-- `incoming-data`
+- `incoming-resources`
 
 Outgoing channels:
 
-- `outgoing-pages`
-- `outgoing-web-resources`
-- `outgoing-data`
-- `outgoing-assets`
+- `outgoing-resources`
