@@ -30,18 +30,24 @@ sources:
       - "web-resources"
 
 processing:
-  blueprint-relay-resources:
-    image: null
+  # Instance 1: process web resources
+  blueprint-web-resources-external-resources-processor:
+    image: external-resources-processing-service
     incoming:
       incoming-resources:
-        topic: "inboxes/resources"
+        topic: inboxes/resources
     outgoing:
       outgoing-resources:
-        topic: "relays/resources"
+        topic: relays/resources
     environment:
-      STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.dev/"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_PROCESSABLE_PAYLOAD_TYPES: "web-resource"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_XML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "/*[local-name()='urlset']/*[local-name()='url']/*[local-name()='loc']"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_PAGE_PUBLISH_PAYLOAD_TYPE: "page/external"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_WEB_RESOURCE_PUBLISH_PAYLOAD_TYPE: "web-resource/external"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_ASSET_PUBLISH_PAYLOAD_TYPE: "asset/external"
 
-  # Instance 1: process pages
+  # Instance 2: process pages
   blueprint-pages-external-resources-processor:
     image: external-resources-processing-service
     incoming:
@@ -52,25 +58,8 @@ processing:
         topic: outboxes/resources
     environment:
       STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.dev/"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_PROCESSABLE_PAYLOAD_TYPES: "page,page/external"
+      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_PROCESSABLE_PAYLOAD_TYPES: "page/external"
       STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_HTML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "//img/@src,//link[@rel='stylesheet']/@href,//script/@src"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_PAGE_PUBLISH_PAYLOAD_TYPE: "page/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_WEB_RESOURCE_PUBLISH_PAYLOAD_TYPE: "web-resource/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_ASSET_PUBLISH_PAYLOAD_TYPE: "asset/external"
-
-  # Instance 2: process web resources
-  blueprint-web-resources-external-resources-processor:
-    image: external-resources-processing-service
-    incoming:
-      incoming-resources:
-        topic: relays/resources
-    outgoing:
-      outgoing-resources:
-        topic: outboxes/resources
-    environment:
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.dev/"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_PROCESSABLE_PAYLOAD_TYPES: "web-resource"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_XML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "/*[local-name()='urlset']/*[local-name()='url']/*[local-name()='loc']"
       STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_PAGE_PUBLISH_PAYLOAD_TYPE: "page/external"
       STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_WEB_RESOURCE_PUBLISH_PAYLOAD_TYPE: "web-resource/external"
       STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_ASSET_PUBLISH_PAYLOAD_TYPE: "asset/external"
