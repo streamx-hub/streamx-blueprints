@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.AfterEach;
@@ -99,7 +100,7 @@ abstract class BaseProcessFunctionTest extends BaseFunctionTest {
     await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
       List<CloudEvent> matchingEvents = resourcesSink.received().stream()
           .map(Message::getPayload)
-          .filter(event -> CloudEventUtils.getData(event, Resource.class).getType().equals(payloadType))
+          .filter(event -> Objects.equals(payloadType, CloudEventUtils.getData(event, Resource.class).getType()))
           .toList();
       assertThat(matchingEvents).hasSize(expectedCount);
       matchingEventsRef.set(matchingEvents);

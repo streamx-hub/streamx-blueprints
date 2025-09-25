@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.NullSource;
 
 @QuarkusTest
 class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
@@ -139,8 +140,9 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
 
   @ParameterizedTest
   @EmptySource
+  @NullSource
   @CsvSource("data/products")
-  void shouldRelayResourceThatHasNotMatchingEventType(String eventType) {
+  void shouldRelayResourceThatHasNotMatchingPayloadType(String payloadType) {
     // given
     String path = "/products.xml";
     String content = """
@@ -153,10 +155,10 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
         """;
 
     // when
-    CloudEvent publishEvent = publishWebResource(path, content, eventType);
+    CloudEvent publishEvent = publishWebResource(path, content, payloadType);
 
     // then
-    List<CloudEvent> relayedEvents = waitForEventsInSink(eventType, 1);
+    List<CloudEvent> relayedEvents = waitForEventsInSink(payloadType, 1);
 
     // assert event is unchanged
     CloudEvent relayedEvent = relayedEvents.get(0);

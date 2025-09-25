@@ -638,7 +638,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
   }
 
   @Test
-  void shouldRelayPageThatHasNotMatchingEventType() {
+  void shouldRelayPageThatHasNotMatchingPayloadType() {
     // given
     String pagePath = "/pages/page.html";
     String html = """
@@ -653,11 +653,11 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
         """;
 
     // when
-    String eventType = "page/experience-fragment";
-    CloudEvent publishPageEvent = publishPage(pagePath, html, eventType);
+    String payloadType = "page/experience-fragment";
+    CloudEvent publishPageEvent = publishPage(pagePath, html, payloadType);
 
     // then
-    List<CloudEvent> pageEvents = waitForEventsInSink(eventType, 1);
+    List<CloudEvent> pageEvents = waitForEventsInSink(payloadType, 1);
 
     // assert event is unchanged
     CloudEvent relayedPageEvent = pageEvents.get(0);
