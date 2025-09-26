@@ -2,6 +2,9 @@ package dev.streamx.blueprints.data;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.nio.ByteBuffer;
 
 /**
@@ -22,7 +25,8 @@ public class Resource extends Typed {
     this(content.getBytes(UTF_8));
   }
 
-  public Resource(ByteBuffer content, String type) {
+  @JsonCreator
+  public Resource(@JsonProperty("content") ByteBuffer content, @JsonProperty("type") String type) {
     this.content = content;
     this.type = type;
   }
@@ -39,6 +43,7 @@ public class Resource extends Typed {
     return content;
   }
 
+  @JsonIgnore
   public String getContentAsString() {
     if (content == null) {
       return null;

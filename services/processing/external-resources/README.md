@@ -11,67 +11,13 @@ making the page self-contained and operational without external dependencies.
 Instead, each page should be published individually.
 
 One valid workaround is to **publish a sitemap XML file** to StreamX.
-To support this, your mesh file can include an instance of `external-resources-processing-service` configured to handle sitemap XML files.
+To support this, your mesh file can include an instance of `external-resources` service configured to handle sitemap XML files.
 This instance will extract the page URLs, download and publish their HTML content,
-and then pass that content to a second instance of `external-resources-processing-service`.
+and then pass that content to a second instance of `external-resources` service.
 The second instance is responsible for extracting, downloading and publishing any referenced assets, such as images, stylesheets, and scripts.
 
-Below is a sample `mesh.yaml` file demonstrating a basic service setup that enables
-the `external-resources-processing-service` instances to work together as described.
-
-```yaml
-defaultRegistry: ghcr.io/streamx-com/streamx-blueprints
-defaultImageTag: latest-jvm
-
-sources:
-  cli:
-    outgoing:
-      - "pages"
-      - "web-resources"
-
-processing:
-  # Instance 1: process web resources
-  blueprint-web-resources-external-resources-processor:
-    image: external-resources-processing-service
-    incoming:
-      incoming-resources:
-        topic: inboxes/resources
-    outgoing:
-      outgoing-resources:
-        topic: relays/resources
-    environment:
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.dev/"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_PROCESSABLE_PAYLOAD_TYPES: "web-resource"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_XML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "/*[local-name()='urlset']/*[local-name()='url']/*[local-name()='loc']"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_PAGE_PUBLISH_PAYLOAD_TYPE: "page/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_WEB_RESOURCE_PUBLISH_PAYLOAD_TYPE: "web-resource/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_ASSET_PUBLISH_PAYLOAD_TYPE: "asset/external"
-
-  # Instance 2: process pages
-  blueprint-pages-external-resources-processor:
-    image: external-resources-processing-service
-    incoming:
-      incoming-resources:
-        topic: relays/resources
-    outgoing:
-      outgoing-resources:
-        topic: outboxes/resources
-    environment:
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.dev/"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_PROCESSABLE_PAYLOAD_TYPES: "page/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_HTML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "//img/@src,//link[@rel='stylesheet']/@href,//script/@src"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_PAGE_PUBLISH_PAYLOAD_TYPE: "page/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_WEB_RESOURCE_PUBLISH_PAYLOAD_TYPE: "web-resource/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EXTERNAL_ASSET_PUBLISH_PAYLOAD_TYPE: "asset/external"
-
-delivery:
-  blueprint-web:
-    image: web-delivery-service
-    incoming:
-      resources:
-        topic: outboxes/resources
-    port: 8081
-```
+The project includes a sample [mesh.yaml](../../../mesh.yaml) file that demonstrates a basic service configuration,
+enabling multiple `external-resources` service instances to operate together as described.
 
 ## Configuration
 
