@@ -6,8 +6,8 @@ sources:
     outgoing:
       - topic: "inboxes/resources"
         produces:
-          - "dev.streamx.blueprints.web-resource.published.v1"
-          - "dev.streamx.blueprints.web-resource.unpublished.v1"
+          - "com.streamx.blueprints.web-resource.published.v1"
+          - "com.streamx.blueprints.web-resource.unpublished.v1"
 
 descriptors:
   external-resources-processing-service:
