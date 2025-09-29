@@ -1,12 +1,12 @@
 package dev.streamx.blueprints.composition;
 
+import com.streamx.content.parser.datainsert.DataInsertHandler;
+import com.streamx.content.parser.datainsert.Segment;
+import com.streamx.content.parser.datainsert.SegmentDefineHandler;
+import dev.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import dev.streamx.blueprints.data.Composition;
 import dev.streamx.blueprints.data.Layout;
 import dev.streamx.blueprints.data.Page;
-import dev.streamx.blueprints.cloudevents.utils.CloudEventUtils;
-import dev.streamx.content.parser.datainsert.DataInsertHandler;
-import dev.streamx.content.parser.datainsert.Segment;
-import dev.streamx.content.parser.datainsert.SegmentDefineHandler;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;

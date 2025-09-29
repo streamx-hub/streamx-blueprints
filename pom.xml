@@ -28,7 +28,7 @@
     <jandex-maven-plugin.version>3.2.0</jandex-maven-plugin.version>
 
     <!--  StreamX  -->
-    <streamx.version>1.1.6-SNAPSHOT</streamx.version>
+    <streamx.version>2.0.0-SNAPSHOT</streamx.version>
 
     <!-- CLoudEvents -->
     <cloudevents-impl.version>4.0.1</cloudevents-impl.version>
@@ -97,12 +97,12 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>dev.streamx</groupId>
+        <groupId>com.streamx</groupId>
         <artifactId>reactive-messaging-http-cloudevents</artifactId>
         <version>${streamx.version}</version>
       </dependency>
       <dependency>
-        <groupId>dev.streamx</groupId>
+        <groupId>com.streamx</groupId>
         <artifactId>content-parser</artifactId>
         <version>${streamx.version}</version>
       </dependency>

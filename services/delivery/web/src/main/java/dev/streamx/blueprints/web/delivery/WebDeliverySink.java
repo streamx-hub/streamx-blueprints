@@ -3,11 +3,11 @@ package dev.streamx.blueprints.web.delivery;
 import static dev.streamx.blueprints.cloudevents.utils.CloudEventUtils.isPublishingType;
 import static dev.streamx.blueprints.cloudevents.utils.CloudEventUtils.isUnpublishingType;
 
+import com.streamx.content.parser.urlinclude.UrlIncludeReplacer;
+import com.streamx.content.parser.urlinclude.UrlIncludeReplacerFactory;
 import dev.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import dev.streamx.blueprints.data.Resource;
 import dev.streamx.blueprints.web.delivery.storage.FileSystemResourceStorage;
-import dev.streamx.content.parser.urlinclude.UrlIncludeReplacer;
-import dev.streamx.content.parser.urlinclude.UrlIncludeReplacerFactory;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.PostConstruct;
