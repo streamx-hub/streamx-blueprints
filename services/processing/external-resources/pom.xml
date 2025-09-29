@@ -8,7 +8,7 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>external-resources</artifactId>
+  <artifactId>external-resources-processing-service</artifactId>
   <name>StreamX Blueprints : External Resources Processing Service</name>
 
   <dependencies>

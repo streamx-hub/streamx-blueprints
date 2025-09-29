@@ -11,13 +11,13 @@ making the page self-contained and operational without external dependencies.
 Instead, each page should be published individually.
 
 One valid workaround is to **publish a sitemap XML file** to StreamX.
-To support this, your mesh file can include an instance of `external-resources` service configured to handle sitemap XML files.
+To support this, your mesh file can include an instance of `external-resources-processing-service` configured to handle sitemap XML files.
 This instance will extract the page URLs, download and publish their HTML content,
-and then pass that content to a second instance of `external-resources` service.
+and then pass that content to a second instance of `external-resources-processing-service`.
 The second instance is responsible for extracting, downloading and publishing any referenced assets, such as images, stylesheets, and scripts.
 
 The project includes a sample [mesh.yaml](../../../mesh.yaml) file that demonstrates a basic service configuration,
-enabling multiple `external-resources` service instances to operate together as described.
+enabling multiple `external-resources-processing-service` instances to operate together as described.
 
 ## Configuration
 

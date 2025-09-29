@@ -10,7 +10,7 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>web</artifactId>
+  <artifactId>web-delivery-service</artifactId>
   <name>StreamX Blueprints : Web Delivery Service</name>
 
   <dependencies>
