@@ -24,8 +24,8 @@ class ProcessHtmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     publishWebResource(pagePath, pageContent);
 
     // then
-    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 1);
-    assertPublishedAsset(assetEvents.get(0),
+    waitForDownloadedAssets(1);
+    assertDownloadedAsset(0,
         "/logo.png",
         new byte[]{0, 1, 2});
 

@@ -1,5 +1,6 @@
 package com.streamx.blueprints.externalresources.functions;
 
+import com.streamx.blueprints.externalresources.testutils.DownloadedResource;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import java.util.List;
@@ -51,13 +52,15 @@ class ProcessJsonWebResourceFunctionTest extends BaseProcessFunctionTest {
     publishWebResource(jsonResourcePath, jsonResourceContent);
 
     // then
-    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 3);
-    assertPublishedAsset(assetEvents.get(0),
-        "/nav-image.png_width_1200_format_pjpg_optimize_medium.png", navImageContent);
-    assertPublishedAsset(assetEvents.get(1),
-        "/article-1-image.png_width_1200_format_pjpg_optimize_medium.png", article1ImageContent);
-    assertPublishedAsset(assetEvents.get(2),
-        "/article-2-image.png_width_1200_format_pjpg_optimize_medium.png", article2ImageContent);
+    waitForDownloadedAssets(3);
+    assertDownloadedAssets(List.of(
+        new DownloadedResource("/nav-image.png_width_1200_format_pjpg_optimize_medium.png",
+            navImageContent),
+        new DownloadedResource("/article-1-image.png_width_1200_format_pjpg_optimize_medium.png",
+            article1ImageContent),
+        new DownloadedResource("/article-2-image.png_width_1200_format_pjpg_optimize_medium.png",
+            article2ImageContent)
+    ));
 
     List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 1);
     assertPublishedWebResource(webResourceEvents.get(0),

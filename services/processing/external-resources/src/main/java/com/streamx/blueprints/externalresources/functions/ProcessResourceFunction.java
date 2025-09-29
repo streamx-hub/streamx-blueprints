@@ -15,10 +15,10 @@ import com.streamx.blueprints.externalresources.functions.settings.JsonDataProce
 import com.streamx.blueprints.externalresources.functions.settings.JsonWebResourceProcessingSettings;
 import com.streamx.blueprints.externalresources.functions.settings.PageProcessingSettings;
 import com.streamx.blueprints.externalresources.functions.settings.XmlWebResourceProcessingSettings;
+import com.streamx.blueprints.externalresources.services.DownloadRequestsSender;
 import com.streamx.blueprints.externalresources.services.UrlComputationService;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.v1.CloudEventBuilder;
-import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -46,7 +46,7 @@ public class ProcessResourceFunction {
   UrlComputationService urlComputationService;
 
   @Inject
-  ExternalResourcesProcessFunction externalResourcesProcessFunction;
+  DownloadRequestsSender downloadRequestsSender;
 
   private final List<BaseProcessingSettings<?>> processingSettings = new ArrayList<>();
 
@@ -97,29 +97,29 @@ public class ProcessResourceFunction {
     }
 
     String resourceContent = payload.getContentAsString();
-    ParentResource<?> resource = toParentResource(resourcePath, resourceContent,
+    ParentResource resource = toParentResource(resourcePath, resourceContent,
         settings.getHandledResourceClass(), payloadType);
 
     log.infof("Resource %s, having absolute url %s, will be published to StreamX as %s",
-        resourcePath, resource.getAbsoluteUrl(), resource.getStreamxKey());
+        resourcePath, resource.absoluteUrl(), resource.streamxKey());
 
     if (!CloudEventUtils.isPublishingType(eventType)) {
       // TODO implement unpublishing orphaned external resources, for now just relay the event
       // TODO implement it also for publishing an edited resource with some links removed
-      return asProcessedEvent(event, resource.getStreamxKey());
+      return asProcessedEvent(event, resource.streamxKey());
     }
 
     Set<ExternalResource> externalResources = settings.getExternalResourcesCollector()
         .collectExternalResources(resource);
 
     if (externalResources.isEmpty()) {
-      log.tracef("No external resources found for %s", resource.getStreamxKey());
-      return asProcessedEvent(event, resource.getStreamxKey());
+      log.tracef("No external resources found for %s", resource.streamxKey());
+      return asProcessedEvent(event, resource.streamxKey());
     }
 
     log.tracef("Found %d external resources for %s: %s",
         externalResources.size(),
-        resource.getStreamxKey(),
+        resource.streamxKey(),
         externalResources.stream().map(ExternalResource::getPaths).collect(Collectors.toList())
     );
 
@@ -139,7 +139,7 @@ public class ProcessResourceFunction {
     return Uni.createFrom().item(adjustedEvent);
   }
 
-  private ParentResource<?> toParentResource(String path, String content,
+  private ParentResource toParentResource(String path, String content,
       Class<? extends Resource> handledResourceType, String payloadType) {
     if (WebResource.class.isAssignableFrom(handledResourceType)) {
       // web resources later become available by http as files, so must sanitize their paths
@@ -148,38 +148,35 @@ public class ProcessResourceFunction {
           .computeAbsoluteUrlRelativeToConfiguredBaseUrl(sanitizedResourcePath);
       String resourceStreamxKey = urlComputationService
           .asStreamxKeyRelativeToConfiguredBaseUrl(resourceAbsoluteUrl);
-      return new ParentResource<>(
-          resourceAbsoluteUrl, resourceStreamxKey, content, payloadType, handledResourceType);
+      return new ParentResource(
+          resourceAbsoluteUrl, resourceStreamxKey, content, payloadType);
     } else {
-      return new ParentResource<>(
-          configuration.baseUrlForRelativePaths(), path, content, payloadType, handledResourceType);
+      return new ParentResource(
+          configuration.baseUrlForRelativePaths(), path, content, payloadType);
     }
   }
 
   private Uni<CloudEvent> downloadExternalResourcesAndReturnAdjustedResource(
-      CloudEvent event, ParentResource<?> resource,
+      CloudEvent event, ParentResource resource,
       Set<ExternalResource> externalResources, BaseProcessingSettings<?> settings) {
 
-    return Multi.createFrom().iterable(externalResources)
-        .onItem()
-        .transformToUniAndMerge(externalResource -> externalResourcesProcessFunction
-            .downloadAndPublish(externalResource, resource))
-        .collect().last()
-        .map(ignored -> {
-          String content = resource.getContent();
+    String resourceStreamxKey = resource.streamxKey();
+    log.tracef("Sending download and publish requests for %d external resources of %s",
+        externalResources.size(), resourceStreamxKey);
+    externalResources.forEach(downloadRequestsSender::sendRequest);
 
-          log.tracef("Replacing external links in %s", resource.getStreamxKey());
-          String adjustedContent = settings.getContentAdjuster()
-              .adjustLinks(content, externalResources, log);
+    String content = resource.content();
+    log.tracef("Replacing external links in content of %s", resourceStreamxKey);
+    String adjustedContent = settings.getContentAdjuster().adjustLinks(content, externalResources);
+    Resource adjustedResource = settings.newResource(adjustedContent, resource.payloadType());
 
-          log.tracef("Publishing resource %s with all external links adjusted to local paths",
-              resource.getStreamxKey());
+    log.tracef("Publishing resource %s with all external links adjusted to local paths",
+        resourceStreamxKey);
 
-          Resource adjustedResource = settings.newResource(adjustedContent, resource.getPayloadType());
-          return CloudEventUtils.builderWithJsonData(adjustedResource)
-              .withSubject(resource.getStreamxKey())
-              .withType(event.getType())
-              .build();
-        });
+    CloudEvent adjustedEvent = CloudEventUtils.builderWithJsonData(adjustedResource)
+        .withSubject(resourceStreamxKey)
+        .withType(event.getType())
+        .build();
+    return Uni.createFrom().item(adjustedEvent);
   }
 }
