@@ -34,8 +34,7 @@ import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
-// TODO remove "Base"
-public class BaseProcessResourceFunction {
+public class ProcessResourceFunction {
 
   @Inject
   Logger log;

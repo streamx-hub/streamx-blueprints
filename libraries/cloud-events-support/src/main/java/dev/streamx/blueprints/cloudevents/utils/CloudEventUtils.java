@@ -2,11 +2,13 @@ package dev.streamx.blueprints.cloudevents.utils;
 
 import static java.util.Objects.requireNonNull;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.CloudEventData;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import io.cloudevents.core.data.PojoCloudEventData;
+import io.cloudevents.jackson.JsonCloudEventData;
 import io.cloudevents.lang.Nullable;
 import java.net.URI;
 import java.time.OffsetDateTime;
@@ -33,7 +35,6 @@ public class CloudEventUtils {
   }
 
   @Nullable
-  @SuppressWarnings("unchecked")
   public static <T> T getData(CloudEvent cloudEvent, Class<T> clazz) {
     CloudEventData cloudEventData = cloudEvent.getData();
 
@@ -41,21 +42,38 @@ public class CloudEventUtils {
       return null;
     }
 
-    if (cloudEventData instanceof PojoCloudEventData<?> pojoData) {
-      Object value = pojoData.getValue();
-      if (!clazz.isInstance(value)) {
-        throw new IllegalStateException(
-            "Invalid payload type: expected " + clazz.getName() +
-                " but received " + value.getClass().getName()
-        );
-      }
+    if (cloudEventData instanceof JsonCloudEventData jsonData) {
+      return parseJsonCloudEventData(jsonData, clazz);
+    }
 
-      return (T) value;
-    } else {
+    if (cloudEventData instanceof PojoCloudEventData<?> pojoData) {
+      return parsePojoCloudEventData(pojoData, clazz);
+    }
+
+    throw new IllegalStateException(
+        "Unexpected CloudEvent data type: " + cloudEventData.getClass().getName()
+    );
+  }
+
+  private static <T> T parseJsonCloudEventData(JsonCloudEventData jsonData, Class<T> clazz) {
+    try {
+      return objectMapper.treeToValue(jsonData.getNode(), clazz);
+    } catch (JsonProcessingException ex) {
+      throw new IllegalStateException("Error parsing payload to " + clazz.getName(), ex);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> T parsePojoCloudEventData(PojoCloudEventData<?> pojoData, Class<T> clazz) {
+    Object value = pojoData.getValue();
+    if (!clazz.isInstance(value)) {
       throw new IllegalStateException(
-          "Unexpected CloudEvent data type: " + cloudEventData.getClass().getName()
+          "Invalid payload type: expected " + clazz.getName() +
+          " but received " + value.getClass().getName()
       );
     }
+
+    return (T) value;
   }
 
   public static boolean isPublishingType(String type) {

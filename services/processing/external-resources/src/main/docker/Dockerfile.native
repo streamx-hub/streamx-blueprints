@@ -7,11 +7,11 @@
 #
 # Then, build the image with:
 #
-# docker build -f src/main/docker/Dockerfile.native -t quarkus/external-resources .
+# docker build -f src/main/docker/Dockerfile.native -t quarkus/external-resources-processing-service .
 #
 # Then run the container using:
 #
-# docker run -i --rm -p 8080:8080 quarkus/external-resources
+# docker run -i --rm -p 8080:8080 quarkus/external-resources-processing-service
 #
 ###
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9

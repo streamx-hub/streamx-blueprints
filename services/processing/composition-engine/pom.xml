@@ -9,7 +9,7 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>composition-engine</artifactId>
+  <artifactId>composition-engine-processing-service</artifactId>
   <name>StreamX Blueprints : Composition Engine Processing Service</name>
 
   <dependencies>

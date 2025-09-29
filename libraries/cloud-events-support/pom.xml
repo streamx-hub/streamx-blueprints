@@ -26,6 +26,10 @@
       <artifactId>cloudevents-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.cloudevents</groupId>
+      <artifactId>cloudevents-json-jackson</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
