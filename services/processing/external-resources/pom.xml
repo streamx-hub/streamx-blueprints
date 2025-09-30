@@ -13,7 +13,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>dev.streamx</groupId>
+      <groupId>com.streamx</groupId>
       <artifactId>reactive-messaging-http-cloudevents</artifactId>
     </dependency>
     <dependency>

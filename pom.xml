@@ -28,7 +28,7 @@
     <jandex-maven-plugin.version>3.2.0</jandex-maven-plugin.version>
 
     <!--  StreamX  -->
-    <streamx.version>1.1.6-SNAPSHOT</streamx.version>
+    <streamx.version>2.0.0-SNAPSHOT</streamx.version>
 
     <!-- CLoudEvents -->
     <cloudevents-impl.version>4.0.1</cloudevents-impl.version>
@@ -69,17 +69,31 @@
       <url>artifactregistry://europe-west1-maven.pkg.dev/streamx-releases/streamx-maven-public-releases</url>
     </repository>
     <snapshotRepository>
-      <id>github</id>
-      <url>https://maven.pkg.github.com/streamx-com/streamx-blueprints</url>
+      <id>streamx-maven-snapshots</id>
+      <url>artifactregistry://europe-west1-maven.pkg.dev/streamx-releases/streamx-maven-snapshots</url>
     </snapshotRepository>
   </distributionManagement>
 
   <repositories>
     <repository>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <id>streamx-maven-snapshots</id>
+      <url>artifactregistry://europe-west1-maven.pkg.dev/streamx-releases/streamx-maven-snapshots</url>
+    </repository>
+    <repository>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
       <id>streamx-maven-public-releases</id>
-      <url>
-        https://europe-west1-maven.pkg.dev/streamx-releases/streamx-maven-public-releases
-      </url>
+      <url>artifactregistry://europe-west1-maven.pkg.dev/streamx-releases/streamx-maven-public-releases</url>
     </repository>
   </repositories>
 
@@ -97,12 +111,12 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>dev.streamx</groupId>
+        <groupId>com.streamx</groupId>
         <artifactId>reactive-messaging-http-cloudevents</artifactId>
         <version>${streamx.version}</version>
       </dependency>
       <dependency>
-        <groupId>dev.streamx</groupId>
+        <groupId>com.streamx</groupId>
         <artifactId>content-parser</artifactId>
         <version>${streamx.version}</version>
       </dependency>
@@ -236,6 +250,13 @@
         </configuration>
       </plugin>
     </plugins>
+    <extensions>
+      <extension>
+        <groupId>com.google.cloud.artifactregistry</groupId>
+        <artifactId>artifactregistry-maven-wagon</artifactId>
+        <version>2.2.1</version>
+      </extension>
+    </extensions>
   </build>
 
   <profiles>
