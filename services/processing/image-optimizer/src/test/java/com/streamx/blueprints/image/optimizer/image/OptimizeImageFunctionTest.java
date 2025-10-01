@@ -1,21 +1,16 @@
 package com.streamx.blueprints.image.optimizer.image;
 
-import static dev.streamx.quasar.reactive.messaging.metadata.Action.PUBLISH;
-import static dev.streamx.quasar.reactive.messaging.metadata.Action.UNPUBLISH;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractAction;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractKey;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 
 import com.google.common.collect.Iterables;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Asset;
-import dev.streamx.quasar.reactive.messaging.Store.Entry;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
-import dev.streamx.quasar.reactive.messaging.utils.MetadataUtils;
+import com.streamx.blueprints.data.Data;
+import com.streamx.blueprints.image.optimizer.Channels;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
@@ -29,11 +24,10 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -54,14 +48,14 @@ class OptimizeImageFunctionTest {
 
   private final List<String> rejectedImagesPaths = new ArrayList<>();
 
-  private InMemorySource<Message<Asset>> channel;
-  private InMemorySink<Asset> sink;
+  private InMemorySource<CloudEvent> channel;
+  private InMemorySink<CloudEvent> sink;
 
   @InjectSpy
   OptimizeImageFunction optimizeImageFunction;
 
   @InjectSpy
-  AssetActionStore assetActionStore;
+  AssetEventTypeStore assetEventTypeStore;
 
   @Inject
   @Any
@@ -69,8 +63,8 @@ class OptimizeImageFunctionTest {
 
   @BeforeEach
   void init() {
-    channel = connector.source(OptimizeImageFunction.INCOMING_ASSETS_CHANNEL);
-    sink = connector.sink(OptimizeImageFunction.OPTIMIZED_ASSETS_CHANNEL);
+    channel = connector.source(Channels.INCOMING_RESOURCES);
+    sink = connector.sink(Channels.OPTIMIZED_ASSETS);
     sink.clear();
   }
 
@@ -80,29 +74,29 @@ class OptimizeImageFunctionTest {
       try {
         return invocationOnMock.callRealMethod();
       } catch (Exception ex) {
-        rejectedImagesPaths.add(invocationOnMock.getArgument(1, Key.class).getValue());
+        CloudEvent event = invocationOnMock.getArgument(0);
+        rejectedImagesPaths.add(event.getSubject());
         throw ex;
       }
-    }).when(optimizeImageFunction)
-        .process(any(Asset.class), any(Key.class), any(Action.class), any(EventTime.class));
+    }).when(optimizeImageFunction).process(any(CloudEvent.class));
   }
 
   @ParameterizedTest
   @MethodSource("imageFiles")
   void shouldOptimizeImage(File imageFile) throws IOException {
     // given
-    Message<Asset> imageMessage = createPublishFileMessage(imageFile);
+    CloudEvent imageEvent = createPublishAssetEvent(imageFile);
 
     // when
-    channel.send(imageMessage);
+    channel.send(imageEvent);
 
     // then: expect the optimized image to be published
-    Message<Asset> optimizedImageMessage = assertMessageIsProcessed(imageMessage);
-    assertAction(optimizedImageMessage, PUBLISH);
-    assertOptimizedFileIsRenamed(imageFile, optimizedImageMessage);
+    CloudEvent optimizedImageEvent = assertEventIsProcessed(imageEvent);
+    assertEventType(optimizedImageEvent, Asset.TYPE_PUBLISHED);
+    assertOptimizedFileIsRenamed(imageFile, optimizedImageEvent);
 
     // and: verify its content (should be optimized - have different bytes)
-    byte[] optimizedImageBytes = extractImageBytes(optimizedImageMessage);
+    byte[] optimizedImageBytes = extractImageBytes(optimizedImageEvent);
     byte[] originalImageBytes = FileUtils.readFileToByteArray(imageFile);
     assertThat(optimizedImageBytes).isNotEqualTo(originalImageBytes);
   }
@@ -111,48 +105,48 @@ class OptimizeImageFunctionTest {
   void shouldUnpublishOptimizedImageAlongWithOriginalImage() throws IOException {
     // given: image was published along with its optimized version:
     File imageFile = PNG_FILE;
-    Message<Asset> publishImageMessage = createPublishFileMessage(imageFile);
-    channel.send(publishImageMessage);
-    assertMessageIsProcessed(publishImageMessage);
+    CloudEvent publishImageEvent = createPublishAssetEvent(imageFile);
+    channel.send(publishImageEvent);
+    assertEventIsProcessed(publishImageEvent);
     sink.clear();
 
     // when
-    Message<Asset> unpublishImageMessage = createUnpublishFileMessage(imageFile);
-    channel.send(unpublishImageMessage);
+    CloudEvent unpublishImageEvent = createUnpublishAssetEvent(imageFile);
+    channel.send(unpublishImageEvent);
 
     // then: expect the optimized image to be unpublished
-    Message<Asset> optimizedImageMessage = assertMessageIsProcessed(unpublishImageMessage);
-    assertAction(optimizedImageMessage, UNPUBLISH);
-    assertOptimizedFileIsRenamed(imageFile, optimizedImageMessage);
+    CloudEvent optimizedImageEvent = assertEventIsProcessed(unpublishImageEvent);
+    assertEventType(optimizedImageEvent, Asset.TYPE_UNPUBLISHED);
+    assertOptimizedFileIsRenamed(imageFile, optimizedImageEvent);
 
     // and: verify its content - should be null
-    byte[] optimizedImageBytes = extractImageBytes(optimizedImageMessage);
+    byte[] optimizedImageBytes = extractImageBytes(optimizedImageEvent);
     assertThat(optimizedImageBytes).isNull();
   }
 
-  private static void assertAction(Message<Asset> optimizedImageMessage, Action expectedAction) {
-    Action actualAction = extractAction(optimizedImageMessage);
-    assertThat(actualAction).isEqualTo(expectedAction);
+  private static void assertEventType(CloudEvent optimizedImageEvent, String expectedEventType) {
+    String actualEventType = optimizedImageEvent.getType();
+    assertThat(actualEventType).isEqualTo(expectedEventType);
   }
 
   private static void assertOptimizedFileIsRenamed(File sourceImage,
-      Message<Asset> optimizedImageMessage) {
+      CloudEvent optimizedImageEvent) {
     String filePathWithoutExtension = StringUtils.substringBeforeLast(sourceImage.getPath(), ".");
     String expectedOptimizedImagePath = filePathWithoutExtension + "-optimized.webp";
-    String actualOptimizedImagePath = extractKey(optimizedImageMessage);
+    String actualOptimizedImagePath = optimizedImageEvent.getSubject();
     assertThat(actualOptimizedImagePath).isEqualTo(expectedOptimizedImagePath);
   }
 
   @Test
   void shouldNotOptimizeAlreadyOptimizedImage() throws IOException {
     // given: perform standard image optimization
-    Message<Asset> imageMessage = createPublishFileMessage(PNG_FILE);
-    channel.send(imageMessage);
-    Message<Asset> optimizedImageMessage = assertMessageIsProcessed(imageMessage);
+    CloudEvent imageEvent = createPublishAssetEvent(PNG_FILE);
+    channel.send(imageEvent);
+    CloudEvent optimizedImageEvent = assertEventIsProcessed(imageEvent);
     sink.clear();
 
     // when: simulate the service picks up the optimized image again
-    channel.send(optimizedImageMessage);
+    channel.send(optimizedImageEvent);
 
     // then
     assertImageIsNotPublishedDueToValidationNotPassed();
@@ -161,10 +155,10 @@ class OptimizeImageFunctionTest {
   @Test
   void shouldNotOptimizeImageOfUnsupportedExtension() throws IOException {
     // given
-    Message<Asset> textFileMessage = createPublishFileMessage(TEXT_FILE);
+    CloudEvent textFileEvent = createPublishAssetEvent(TEXT_FILE);
 
     // when
-    channel.send(textFileMessage);
+    channel.send(textFileEvent);
 
     // then
     assertImageIsNotPublishedDueToValidationNotPassed();
@@ -174,10 +168,10 @@ class OptimizeImageFunctionTest {
   void shouldNotOptimizeFileWithoutExtension() throws IOException {
     // given
     File testFile = new File(IMAGES_DIR, "file-without-extension");
-    Message<Asset> testFileMessage = createPublishFileMessage(testFile);
+    CloudEvent testFileEvent = createPublishAssetEvent(testFile);
 
     // when
-    channel.send(testFileMessage);
+    channel.send(testFileEvent);
 
     // then
     assertImageIsNotPublishedDueToValidationNotPassed();
@@ -187,65 +181,79 @@ class OptimizeImageFunctionTest {
   void shouldNotOptimizeTextFileHavingJpgExtension() throws IOException {
     // given
     File testFile = new File(IMAGES_DIR, "text-file-with-jpg-extension.jpg");
-    Message<Asset> testFileMessage = createPublishFileMessage(testFile);
+    CloudEvent testFileEvent = createPublishAssetEvent(testFile);
 
     // when
-    channel.send(testFileMessage);
+    channel.send(testFileEvent);
 
     // then
-    assertImageIsNotPublishedDueToException(testFileMessage);
+    assertImageIsNotPublishedDueToException(testFileEvent);
   }
 
   @Test
-  void shouldNotOptimizeThatDoesNotMatchFilePathsPattern() throws IOException {
+  void shouldNotOptimizeImageThatDoesNotMatchFilePathsPattern() throws IOException {
     // given
     File testFile = new File("src/test/resources/ds.png");
-    Message<Asset> testFileMessage = createPublishFileMessage(testFile);
+    CloudEvent testFileEvent = createPublishAssetEvent(testFile);
 
     // when
-    channel.send(testFileMessage);
+    channel.send(testFileEvent);
 
     // then
     assertImageIsNotPublishedDueToValidationNotPassed();
   }
 
-  private static Message<Asset> createPublishFileMessage(File file) throws IOException {
-    byte[] payload = FileUtils.readFileToByteArray(file);
-    return createIngestionMessage(PUBLISH, file, new Asset(payload));
+  @Test
+  void shouldNotOptimizeImageIfUnexpectedEventType() {
+    // given
+    String path = JPG_FILE.getPath();
+    Asset asset = new Asset(new byte[]{0, 1, 2});
+    CloudEvent event = CloudEventUtils.eventWithData(asset, Data.TYPE_PUBLISHED, path);
+
+    // when
+    channel.send(event);
+
+    // then
+    assertImageIsNotPublished();
   }
 
-  private static Message<Asset> createUnpublishFileMessage(File file) {
-    return createIngestionMessage(UNPUBLISH, file, null);
+  @Test
+  void shouldNotOptimizeImageIfUnexpectedPayloadType() {
+    // given
+    String path = JPG_FILE.getPath();
+    Data data = new Data(new byte[]{0, 1, 2});
+    CloudEvent event = CloudEventUtils.eventWithData(data, Data.TYPE_PUBLISHED, path);
+
+    // when
+    channel.send(event);
+
+    // then
+    assertImageIsNotPublished();
   }
 
-  private static Message<Asset> createIngestionMessage(Action action, File file, Asset payload) {
-    Metadata metadata = createMetadata(file, action);
-    return Message.of(payload, metadata);
+  private static CloudEvent createPublishAssetEvent(File assetFile) throws IOException {
+    String path = assetFile.getPath();
+    byte[] payload = FileUtils.readFileToByteArray(assetFile);
+    return CloudEventUtils.eventWithData(new Asset(payload), Asset.TYPE_PUBLISHED, path);
   }
 
-  private static Metadata createMetadata(File file, Action action) {
-    return Metadata.of(
-        Key.of(file.getPath()),
-        EventTime.of(System.currentTimeMillis()),
-        action
+  private static CloudEvent createUnpublishAssetEvent(File assetFile) {
+    return CloudEventUtils.eventWithData(new Asset((ByteBuffer) null), Asset.TYPE_UNPUBLISHED,
+        assetFile.getPath());
+  }
+
+  private CloudEvent assertEventIsProcessed(CloudEvent inputEvent) {
+    Map.Entry<String, String> expectedEntry = Map.entry(
+        CloudEventUtils.getSubject(inputEvent),
+        inputEvent.getType()
     );
-  }
 
-  private Message<Asset> assertMessageIsProcessed(Message<Asset> inputMessage) {
-    Entry<String> expectedEntry = new Entry<>(
-        MetadataUtils.extractKey(inputMessage),
-        MetadataUtils.extractAction(inputMessage).getValue()
-    );
-
-    await().untilAsserted(() -> {
-      assertThat(assetActionStore.getAssetActionByKey().entries())
-          .contains(expectedEntry);
-
-      assertThat(sink.received())
-          .hasSize(1);
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+      assertThat(assetEventTypeStore.getAssetEventTypeByKey().entrySet()).contains(expectedEntry);
+      assertThat(sink.received()).hasSize(1);
     });
 
-    return Iterables.getOnlyElement(sink.received());
+    return Iterables.getOnlyElement(sink.received()).getPayload();
   }
 
   private void assertImageIsNotPublishedDueToValidationNotPassed() {
@@ -253,20 +261,20 @@ class OptimizeImageFunctionTest {
     assertThat(rejectedImagesPaths).isEmpty();
   }
 
-  private void assertImageIsNotPublishedDueToException(Message<Asset> inputMessage) {
+  private void assertImageIsNotPublishedDueToException(CloudEvent inputEvent) {
     assertImageIsNotPublished();
     assertThat(rejectedImagesPaths).hasSize(1);
-    assertThat(rejectedImagesPaths.get(0)).isEqualTo(extractKey(inputMessage));
+    assertThat(rejectedImagesPaths.get(0)).isEqualTo(inputEvent.getSubject());
   }
 
   private void assertImageIsNotPublished() {
-    await().atLeast(Duration.ofMillis(100)).untilAsserted(() ->
+    await().atMost(Duration.ofSeconds(3)).atLeast(Duration.ofMillis(100)).untilAsserted(() ->
         assertThat(sink.received()).isEmpty()
     );
   }
 
-  private static byte[] extractImageBytes(Message<Asset> message) {
-    return Optional.ofNullable(message.getPayload())
+  private static byte[] extractImageBytes(CloudEvent event) {
+    return Optional.ofNullable(CloudEventUtils.getData(event, Asset.class))
         .map(Asset::getContent)
         .map(ByteBuffer::array)
         .orElse(null);

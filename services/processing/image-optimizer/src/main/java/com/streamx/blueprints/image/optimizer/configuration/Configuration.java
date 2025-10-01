@@ -1,25 +1,38 @@
 package com.streamx.blueprints.image.optimizer.configuration;
 
 import io.smallrye.config.ConfigMapping;
+import io.smallrye.config.WithDefault;
 
 @ConfigMapping(prefix = "streamx.blueprints.image-optimizer")
 public interface Configuration {
 
   String optimizedFilePathsPattern();
 
+  @WithDefault("-optimized")
   String optimizedImageFileNameSuffix();
 
   String adjustedPagePathsPattern();
 
-  Integer webpConversionSpeed();
+  WebpConversion webpConversion();
 
-  Integer webpConversionQuality();
+  interface WebpConversion {
 
-  Integer webpConversionMethod();
+    @WithDefault("6")
+    int speed();
 
-  Boolean webpConversionLossless();
+    @WithDefault("75")
+    int quality();
 
-  Boolean webpConversionNoAlpha();
+    @WithDefault("4")
+    int method();
 
-  Boolean webpConversionMultiThread();
+    @WithDefault("false")
+    boolean lossless();
+
+    @WithDefault("false")
+    boolean noAlpha();
+
+    @WithDefault("false")
+    boolean multiThread();
+  }
 }

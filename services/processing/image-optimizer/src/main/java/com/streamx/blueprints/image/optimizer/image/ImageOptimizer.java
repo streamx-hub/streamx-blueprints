@@ -3,7 +3,7 @@ package com.streamx.blueprints.image.optimizer.image;
 import com.sksamuel.scrimage.AwtImage;
 import com.sksamuel.scrimage.metadata.ImageMetadata;
 import com.sksamuel.scrimage.webp.WebpWriter;
-import com.streamx.blueprints.image.optimizer.configuration.Configuration;
+import com.streamx.blueprints.image.optimizer.configuration.Configuration.WebpConversion;
 import com.streamx.blueprints.image.optimizer.image.exceptions.NotAnImageException;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -42,7 +42,7 @@ final class ImageOptimizer {
     }
   }
 
-  ImageOptimizer(Configuration configuration) {
+  ImageOptimizer(WebpConversion configuration) {
     this(WebpWriterFactory.createWriterInstance(configuration));
   }
 

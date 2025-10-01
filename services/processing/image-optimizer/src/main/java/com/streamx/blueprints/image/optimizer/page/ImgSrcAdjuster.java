@@ -1,6 +1,6 @@
 package com.streamx.blueprints.image.optimizer.page;
 
-import com.streamx.blueprints.image.optimizer.image.AssetActionStore;
+import com.streamx.blueprints.image.optimizer.image.AssetEventTypeStore;
 import com.streamx.blueprints.image.optimizer.image.OptimizedImagePathsService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -22,7 +22,7 @@ class ImgSrcAdjuster {
   OptimizedImagePathsService optimizedImagePathsService;
 
   @Inject
-  AssetActionStore assetActionStore;
+  AssetEventTypeStore assetEventTypeStore;
 
   /**
    * @return adjusted page content, or empty optional if no adjustments were applied
@@ -55,14 +55,14 @@ class ImgSrcAdjuster {
   private boolean adjustImgSrc(Element img) {
     String imagePath = img.attr("src");
     if (optimizedImagePathsService.isOptimizedImagePath(imagePath)) {
-      // the image already uses optimized image path
+      log.tracef("The image already uses optimized image path: %s", imagePath);
       return false;
     }
 
     String optimizedImagePath = optimizedImagePathsService.computePathForOptimizedImage(imagePath);
     String optimizedImagePathWithoutQueryString =
         StringUtils.substringBeforeLast(optimizedImagePath, "?");
-    if (assetActionStore.isOptimizedImagePublished(optimizedImagePathWithoutQueryString)) {
+    if (assetEventTypeStore.isOptimizedImagePublished(optimizedImagePathWithoutQueryString)) {
       log.tracef("Updating %s to %s", imagePath, optimizedImagePath);
       img.attr("src", optimizedImagePath);
       return true;

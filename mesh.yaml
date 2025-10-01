@@ -10,6 +10,8 @@ sources:
           - "com.streamx.blueprints.page.unpublished.v1"
           - "com.streamx.blueprints.web-resource.published.v1"
           - "com.streamx.blueprints.web-resource.unpublished.v1"
+          - "com.streamx.blueprints.asset.published.v1"
+          - "com.streamx.blueprints.asset.unpublished.v1"
       - topic: "inboxes/layouts"
         produces:
           - "com.streamx.blueprints.layout.published.v1"
@@ -53,6 +55,17 @@ descriptors:
       pages:
         binding: "http-structured-json"
       outgoing-page-compose-requests:
+        binding: "http-structured-json"
+
+  image-optimizer:
+    type: "processing"
+    incoming:
+      incoming-resources:
+        binding: "http-structured-json"
+    outgoing:
+      outgoing-resources:
+        binding: "http-structured-json"
+      optimized-assets:
         binding: "http-structured-json"
 
   web-server:
@@ -128,6 +141,20 @@ processing:
         topic: relays/resources
       outgoing-page-compose-requests:
         topic: relays/page-compose-requests
+
+  blueprint-image-optimizer:
+    image: image-optimizer
+    incoming:
+      incoming-resources:
+        topic: inboxes/resources
+    outgoing:
+      outgoing-resources:
+        topic: outboxes/resources
+      optimized-assets:
+        topic: inboxes/resources
+    environment:
+      STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_OPTIMIZED_FILE_PATHS_PATTERN: ".*(png|gif|jpg|jpeg)$"
+      STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_ADJUSTED_PAGE_PATHS_PATTERN: ".*"
 
 delivery:
   blueprint-web-server:

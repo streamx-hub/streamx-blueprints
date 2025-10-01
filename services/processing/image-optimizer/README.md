@@ -6,11 +6,11 @@ Page and asset metadata are transferred to optimized versions.
 
 The designed behavior of optimizing images is to publish the generated webp images on the same destination (e.g. Pulsar topic) where the source images are read from.
 
-Therefore, the source (e.g. Pulsar topic) assigned to `incoming-assets` channel should be same as the destination assigned to `optimized-assets` outgoing channel.
+Therefore, the source (e.g. Pulsar topic) assigned to `incoming-resources` channel should be same as the destination assigned to `optimized-assets` outgoing channel.
 This is crucial for the service because incoming pages are adjusted to use the optimized images only when the images are available
-on the `incoming-assets` channel.
+on the `incoming-resources` channel.
 
-The page adjustment feature requires its input `incoming-pages` channel and output `outgoing-pages` channel must not be using the same source and destination (e.g. same Pulsar topic).
+The page adjustment feature requires its input `incoming-resources` channel and output `outgoing-resources` channel must not be using the same source and destination (e.g. same Pulsar topic).
 The service sends the adjusted pages as well as non-adjusted pages to outgoing channel with the same name and metadata as the original page.
 Therefore, StreamX mesh should not define any additional relaying feature for pages.
 
@@ -33,7 +33,7 @@ Note: the pattern is case-insensitive.
 `streamx.blueprints.image-optimizer.optimized-image-file-name-suffix` - a suffix that will be added
 to names of optimized images.
 
-Example value of the configuration property:
+Default value:
 `-optimized`
 
 The above setting will result in generating file name for the optimized image as `image-optimized.webp`, if the input image file is named `image.png`.
@@ -95,19 +95,19 @@ streamx.blueprints.image-optimizer.webp-conversion-multi-thread=false
 
 Incoming channels:
 
-- `incoming-assets`
-- `incoming-pages`
+- `incoming-resourcess`
 
 Outgoing channels:
 
+- `outgoing-resources`
 - `optimized-assets`
-- `outgoing-pages`
 
 ### Example environment variables config
 
 ```
-MP_MESSAGING_INCOMING_INCOMING-ASSETS_TOPIC: "persistent://streamx/inboxes/assets"
-MP_MESSAGING_OUTGOING_OPTIMIZED-ASSETS_TOPIC: "persistent://streamx/inboxes/assets"
+MP_MESSAGING_INCOMING_INCOMING-RESOURCES_TOPIC: "persistent://streamx/inboxes/resources"
+MP_MESSAGING_OUTGOING_OUTGOING-RESOURCES_TOPIC: "persistent://streamx/outboxes/resources"
+MP_MESSAGING_OUTGOING_OPTIMIZED-ASSETS_TOPIC: "persistent://streamx/inboxes/resources"
 STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_OPTIMIZED_FILE_PATHS_PATTERN: ".*(png|gif|jpg|jpeg)$"
 STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_OPTIMIZED_IMAGE_FILE_NAME-SUFFIX: "-optimized"
 STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_ADJUSTED_PAGE_PATHS_PATTERN: ".*"

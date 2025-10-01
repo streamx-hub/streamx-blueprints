@@ -1,5 +1,7 @@
 package com.streamx.blueprints.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.nio.ByteBuffer;
 
 public class Page extends WebResource {
@@ -19,7 +21,8 @@ public class Page extends WebResource {
     super(content);
   }
 
-  public Page(ByteBuffer content, String type) {
+  @JsonCreator
+  public Page(@JsonProperty("content") ByteBuffer content, @JsonProperty("type") String type) {
     super(content, type);
   }
 
