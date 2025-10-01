@@ -7,6 +7,6 @@ public record DownloadRequest(
     String webResourcePublishPayloadType,
     String assetPublishPayloadType) {
 
-  public static final String TYPE_PUBLISHED = "com.streamx.blueprints.download-request.published.v1";
+  public static final String TYPE_PUBLISHED = "com.streamx.blueprints.resource-download.request.v1";
 
 }
