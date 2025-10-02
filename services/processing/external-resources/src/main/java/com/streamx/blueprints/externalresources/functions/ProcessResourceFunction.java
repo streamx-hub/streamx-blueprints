@@ -10,25 +10,16 @@ import com.streamx.blueprints.externalresources.configuration.Configuration;
 import com.streamx.blueprints.externalresources.data.ExternalResource;
 import com.streamx.blueprints.externalresources.data.ParentResource;
 import com.streamx.blueprints.externalresources.functions.settings.BaseProcessingSettings;
-import com.streamx.blueprints.externalresources.functions.settings.HtmlWebResourceProcessingSettings;
-import com.streamx.blueprints.externalresources.functions.settings.JsonDataProcessingSettings;
-import com.streamx.blueprints.externalresources.functions.settings.JsonWebResourceProcessingSettings;
-import com.streamx.blueprints.externalresources.functions.settings.PageProcessingSettings;
-import com.streamx.blueprints.externalresources.functions.settings.XmlWebResourceProcessingSettings;
 import com.streamx.blueprints.externalresources.services.DownloadRequestsSender;
 import com.streamx.blueprints.externalresources.services.UrlComputationService;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.v1.CloudEventBuilder;
 import io.smallrye.mutiny.Uni;
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.jboss.logging.Logger;
@@ -48,32 +39,18 @@ public class ProcessResourceFunction {
   @Inject
   DownloadRequestsSender downloadRequestsSender;
 
-  private final List<BaseProcessingSettings<?>> processingSettings = new ArrayList<>();
-
-  @PostConstruct
-  void init() {
-    Stream.of(
-            new PageProcessingSettings(configuration, urlComputationService),
-            new JsonDataProcessingSettings(configuration, urlComputationService),
-            new XmlWebResourceProcessingSettings(configuration, urlComputationService),
-            new JsonWebResourceProcessingSettings(configuration, urlComputationService),
-            new HtmlWebResourceProcessingSettings(configuration, urlComputationService)
-        ).sorted(Comparator.comparing(settings ->
-            // give priority to settings that define a path suffix (false is "less than" true)
-            settings.getHandledResourcePathSuffix().isEmpty()))
-        .forEach(processingSettings::add);
-  }
+  @Inject
+  Instance<BaseProcessingSettings<?>> processingSettings;
 
   @Incoming(Channels.INCOMING_RESOURCES)
   @Outgoing(Channels.OUTGOING_RESOURCES)
   public Uni<CloudEvent> processIncomingEvent(CloudEvent event) {
-    String resourcePath = requireNonNull(event.getSubject());
     Resource payload = CloudEventUtils.getData(event, Resource.class);
     if (payload == null) {
-      log.tracef("Skipping processing %s - payload is null - cannot determine payload type", resourcePath);
       return asRelayedEvent(event);
     }
 
+    String resourcePath = requireNonNull(event.getSubject());
     String payloadType = payload.getType();
     if (!configuration.processablePayloadTypes().contains(payloadType)) {
       log.tracef("Skipping processing %s - the service is not configured to handle payload type %s", resourcePath, payloadType);
@@ -126,6 +103,19 @@ public class ProcessResourceFunction {
     return downloadExternalResourcesAndReturnAdjustedResource(
         event, resource, externalResources, settings
     );
+  }
+
+  private Resource extractResource(CloudEvent event) {
+    try {
+      Resource resource = CloudEventUtils.getData(event, Resource.class);
+      if (resource == null) {
+        log.tracef("Skipping processing %s - payload is null - cannot determine payload type", event.getSubject());
+      }
+      return resource;
+    } catch (RuntimeException ex) {
+      log.warnf("Invalid incoming CloudEvent %s: %s", event.getSubject(), ex.getMessage());
+      return null;
+    }
   }
 
   private Uni<CloudEvent> asRelayedEvent(CloudEvent event) {

@@ -1,28 +1,35 @@
 package com.streamx.blueprints.externalresources.functions.settings;
 
 import com.streamx.blueprints.data.Resource;
+import com.streamx.blueprints.externalresources.configuration.Configuration;
 import com.streamx.blueprints.externalresources.contentadjusters.BaseResourceContentAdjuster;
 import com.streamx.blueprints.externalresources.functions.settings.contentprocessing.BaseContentProcessingSettings;
 import com.streamx.blueprints.externalresources.functions.settings.resourcemetadata.BaseResourceMetadata;
 import com.streamx.blueprints.externalresources.services.ExternalResourcesCollector;
 import com.streamx.blueprints.externalresources.services.UrlComputationService;
+import jakarta.inject.Inject;
 import java.util.Set;
 import java.util.function.BiFunction;
 
 public abstract class BaseProcessingSettings<T extends Resource> {
 
-  private final BaseResourceContentAdjuster contentAdjuster;
-  private final ExternalResourcesCollector externalResourcesCollector;
-  private final Class<T> handledResourceClass;
-  private final BiFunction<String, String, T> newResourceConstructor;
-  private final Set<String> handledCloudEventTypes;
-  private final String handledResourcePathSuffix;
+  @Inject
+  Configuration configuration;
 
-  protected BaseProcessingSettings(
+  @Inject
+  UrlComputationService urlComputationService;
+
+  private BaseResourceContentAdjuster contentAdjuster;
+  private ExternalResourcesCollector externalResourcesCollector;
+  private Class<T> handledResourceClass;
+  private BiFunction<String, String, T> newResourceConstructor;
+  private Set<String> handledCloudEventTypes;
+  private String handledResourcePathSuffix;
+
+  protected void loadSettings(
       BaseContentProcessingSettings contentProcessingSettings,
       BaseResourceMetadata<T> resourceMetadata,
-      String handledResourcePathSuffix,
-      UrlComputationService urlComputationService) {
+      String handledResourcePathSuffix) {
     this.contentAdjuster = contentProcessingSettings.getContentAdjuster();
     this.externalResourcesCollector = new ExternalResourcesCollector(
         contentProcessingSettings, urlComputationService);

@@ -1,5 +1,7 @@
 package com.streamx.blueprints.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.nio.ByteBuffer;
 
 public class Layout extends Resource {
@@ -19,7 +21,8 @@ public class Layout extends Resource {
     super(content);
   }
 
-  public Layout(ByteBuffer content, String type) {
+  @JsonCreator
+  public Layout(@JsonProperty("content") ByteBuffer content, @JsonProperty("type") String type) {
     super(content, type);
   }
 

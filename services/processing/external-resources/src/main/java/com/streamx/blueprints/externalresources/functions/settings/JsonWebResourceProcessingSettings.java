@@ -1,20 +1,22 @@
 package com.streamx.blueprints.externalresources.functions.settings;
 
 import com.streamx.blueprints.data.WebResource;
-import com.streamx.blueprints.externalresources.configuration.Configuration;
 import com.streamx.blueprints.externalresources.functions.settings.contentprocessing.JsonContentProcessingSettings;
 import com.streamx.blueprints.externalresources.functions.settings.resourcemetadata.WebResourceMetadata;
-import com.streamx.blueprints.externalresources.services.UrlComputationService;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
 
+@Priority(2)
+@ApplicationScoped
 public class JsonWebResourceProcessingSettings extends BaseProcessingSettings<WebResource> {
 
-  public JsonWebResourceProcessingSettings(Configuration configuration,
-      UrlComputationService urlComputationService) {
-    super(
+  @PostConstruct
+  void init() {
+    loadSettings(
         new JsonContentProcessingSettings(configuration),
         new WebResourceMetadata(),
-        ".json",
-        urlComputationService
+        ".json"
     );
   }
 }
