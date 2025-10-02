@@ -68,7 +68,7 @@ public class LastModifiedTimestampRegistry {
     try (CloseableHttpResponse response = httpClient.execute(headRequest)) {
       timestampsStore.put(url, getLastModifiedTimestamp(url, response));
     } catch (Exception ex) {
-      log.errorf(ex, "Failure performing HEAD for %s", url);
+      log.debugf(ex, "Failure performing HEAD for %s", url);
       timestampsStore.put(url, cachedOrMinTimestamp(url, 500));
     }
   }
@@ -100,7 +100,7 @@ public class LastModifiedTimestampRegistry {
         return cachedOrMinTimestamp(url, status);
       }
     } else {
-      log.errorf("Unexpected HTTP status %d for %s", status, url);
+      log.debugf("Unexpected HTTP status %d for %s", status, url);
       return cachedOrMinTimestamp(url, status);
     }
   }

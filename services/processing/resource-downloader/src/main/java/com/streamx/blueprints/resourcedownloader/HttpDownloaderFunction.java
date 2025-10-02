@@ -72,7 +72,7 @@ public class HttpDownloaderFunction {
   }
 
   @Incoming(Channels.DOWNLOAD_REQUESTS)
-  public void downloadAndPublish(CloudEvent event) {
+  public void downloadAndEmit(CloudEvent event) {
     DownloadRequest request = extractDownloadRequest(event);
     if (request == null) {
       return;
@@ -84,7 +84,7 @@ public class HttpDownloaderFunction {
 
     String url = request.url();
     log.tracef("Processing download request with source URL %s and destination Streamx Key %s",
-        url, request.publishKey());
+        url, request.emitKey());
 
     int httpHeadStatus = lastModifiedTimestampRegistry.getLastHttpHeadStatus(url);
     if (httpHeadStatus == NOT_MODIFIED_STATUS) {
@@ -97,15 +97,15 @@ public class HttpDownloaderFunction {
       return;
     }
 
-    downloadAndPublish(url, request);
+    downloadAndEmit(url, request);
   }
 
-  private void downloadAndPublish(String url, DownloadRequest request) {
+  private void downloadAndEmit(String url, DownloadRequest request) {
     HttpGet httpGetRequest = prepareHttpGetRequest(url);
     try (CloseableHttpResponse httpGetResponse = httpClient.execute(httpGetRequest)) {
       int httpGetStatus = httpGetResponse.getStatusLine().getStatusCode();
       if (SUCCESS_STATUSES.contains(httpGetStatus)) {
-        publishResource(request, httpGetResponse);
+        emitResource(request, httpGetResponse);
       } else {
         log.errorf("Error downloading resource %s, unexpected HTTP status: %s", url, httpGetStatus);
       }
@@ -136,27 +136,27 @@ public class HttpDownloaderFunction {
     return request;
   }
 
-  private void publishResource(DownloadRequest request, CloseableHttpResponse response)
+  private void emitResource(DownloadRequest request, CloseableHttpResponse response)
       throws IOException {
     byte[] resourceBytes = getResponseBytes(response);
     ByteBuffer content = ByteBuffer.wrap(resourceBytes);
-    String streamxKey = request.publishKey();
+    String streamxKey = request.emitKey();
     if (isHtmlPage(response)) {
-      publish(
+      emit(
           streamxKey,
-          new Page(content, request.pagePublishPayloadType()),
+          new Page(content, request.pageEmitPayloadType()),
           Page.TYPE_PUBLISHED
       );
     } else if (isWebResource(response)) {
-      publish(
+      emit(
           streamxKey,
-          new WebResource(content, request.webResourcePublishPayloadType()),
+          new WebResource(content, request.webResourceEmitPayloadType()),
           WebResource.TYPE_PUBLISHED
       );
     } else {
-      publish(
+      emit(
           streamxKey,
-          new Asset(content, request.assetPublishPayloadType()),
+          new Asset(content, request.assetEmitPayloadType()),
           Asset.TYPE_PUBLISHED
       );
     }
@@ -183,10 +183,10 @@ public class HttpDownloaderFunction {
     return StringUtils.startsWithAny(contentTypeHeader.getValue(), prefixes);
   }
 
-  private <T extends Resource> void publish(String key, T payload, String eventType) {
+  private <T extends Resource> void emit(String key, T payload, String eventType) {
     String payloadClass = payload.getClass().getSimpleName();
     String payloadType = payload.getType();
-    log.tracef("Publishing %s %s with event type %s and payload type %s", payloadClass, key, eventType, payloadType);
+    log.tracef("Emitting %s %s with event type %s and payload type %s", payloadClass, key, eventType, payloadType);
 
     CloudEvent cloudEvent = CloudEventUtils.builderWithJsonData(payload)
         .withSubject(key)

@@ -2,11 +2,11 @@ package com.streamx.blueprints.data;
 
 public record DownloadRequest(
     String url,
-    String publishKey,
-    String pagePublishPayloadType,
-    String webResourcePublishPayloadType,
-    String assetPublishPayloadType) {
+    String emitKey,
+    String pageEmitPayloadType,
+    String webResourceEmitPayloadType,
+    String assetEmitPayloadType) {
 
-  public static final String TYPE_PUBLISHED = "com.streamx.blueprints.resource-download.request.v1";
+  public static final String EVENT_TYPE = "com.streamx.blueprints.resource-download.request.v1";
 
 }

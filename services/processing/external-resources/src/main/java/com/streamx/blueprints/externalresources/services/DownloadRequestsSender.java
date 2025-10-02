@@ -30,16 +30,16 @@ public class DownloadRequestsSender {
     DownloadRequest downloadRequest = new DownloadRequest(
         absoluteUrl,
         streamxKey,
-        configuration.externalPagePublishPayloadType(),
-        configuration.externalWebResourcePublishPayloadType(),
-        configuration.externalAssetPublishPayloadType()
+        configuration.externalPageEmitPayloadType(),
+        configuration.externalWebResourceEmitPayloadType(),
+        configuration.externalAssetEmitPayloadType()
     );
 
-    log.tracef("Publishing download request for %s", absoluteUrl);
+    log.tracef("Sending download request for %s", absoluteUrl);
 
     CloudEvent cloudEvent = CloudEventUtils.builderWithJsonData(downloadRequest)
         .withSubject(streamxKey)
-        .withType(DownloadRequest.TYPE_PUBLISHED)
+        .withType(DownloadRequest.EVENT_TYPE)
         .build();
 
     downloadRequestEmitter.send(cloudEvent);
