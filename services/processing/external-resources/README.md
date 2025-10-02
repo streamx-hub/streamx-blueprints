@@ -61,18 +61,18 @@ A comma-separated list of regular expressions used to exclude certain external r
 Optional — this setting further filters the URLs found by the JSONPath selectors, limiting which resources are processed.
 
 
-- `streamx.blueprints.external-resources-processing-service.external-page-publish-payload-type`  
-Specifies the payload type used when publishing downloaded external pages referenced by incoming resources.
+- `streamx.blueprints.external-resources-processing-service.emitted-page-type`  
+Specifies the payload type used when emitting downloaded external pages referenced by incoming resources.
 This setting is required, even if the service instance is not expected to publish any external pages.
 
 
-- `streamx.blueprints.external-resources-processing-service.external-web-resource-publish-payload-type`  
-Specifies the payload type used for publishing downloaded external web resources (non-pages) referenced in incoming resources.
+- `streamx.blueprints.external-resources-processing-service.emitted-web-resource-type`  
+Specifies the payload type used for emitting downloaded external web resources (non-pages) referenced in incoming resources.
 This setting is required, even if the service instance is not expected to publish any external web resources.
 
 
-- `streamx.blueprints.external-resources-processing-service.external-asset-publish-payload-type`  
-Specifies the payload type used for publishing downloaded external assets referenced in incoming resources.
+- `streamx.blueprints.external-resources-processing-service.emitted-asset-type`  
+Specifies the payload type used for emitting downloaded external assets referenced in incoming resources.
 This setting is required, even if the service instance is not expected to publish any external assets.
 
 

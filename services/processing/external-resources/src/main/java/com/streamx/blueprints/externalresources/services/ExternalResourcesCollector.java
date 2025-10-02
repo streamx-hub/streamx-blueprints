@@ -34,9 +34,9 @@ public class ExternalResourcesCollector {
     return !resourceSelectors.isEmpty();
   }
 
-  public Set<ExternalResource> collectExternalResources(ParentResource<?> parentResource) {
+  public Set<ExternalResource> collectExternalResources(ParentResource parentResource) {
     Set<String> resourcePaths = valuesFinder
-        .findMatchingValues(parentResource.getContent(), resourceSelectors)
+        .findMatchingValues(parentResource.content(), resourceSelectors)
         .stream()
         .filter(path -> !path.startsWith("#")) // link to own section - no action needed
         .map(path -> StringUtils.substringBefore(path, "#")) // use base url if anchor in url
@@ -49,7 +49,7 @@ public class ExternalResourcesCollector {
     return resources;
   }
 
-  private void addResource(String path, ParentResource<?> parent, Set<ExternalResource> resources) {
+  private void addResource(String path, ParentResource parent, Set<ExternalResource> resources) {
     String absoluteUrl = getValidatedAbsoluteUrl(path, parent);
     if (absoluteUrl == null) {
       return;
@@ -71,19 +71,19 @@ public class ExternalResourcesCollector {
   }
 
   @Nullable
-  private String getValidatedAbsoluteUrl(String path, ParentResource<?> parentResource) {
+  private String getValidatedAbsoluteUrl(String path, ParentResource parentResource) {
     String absoluteUrl;
     try {
-      absoluteUrl = urlComputationService.computeAbsoluteUrl(parentResource.getAbsoluteUrl(), path);
+      absoluteUrl = urlComputationService.computeAbsoluteUrl(parentResource.absoluteUrl(), path);
     } catch (RuntimeException ex) {
       Log.errorf(ex, "Error computing absolute url for %s found in parent resource %s",
-          path, parentResource.getStreamxKey());
+          path, parentResource.streamxKey());
       return null;
     }
 
     if (!urlComputationService.isAbsoluteHttpUrl(absoluteUrl)) {
       Log.warnf("Skipping non http(s) url %s found in parent resource %s",
-          absoluteUrl, parentResource.getStreamxKey());
+          absoluteUrl, parentResource.streamxKey());
       return null;
     }
 
@@ -101,7 +101,7 @@ public class ExternalResourcesCollector {
   }
 
   @Nullable
-  private String getValidatedStreamxKey(String absoluteUrl, ParentResource<?> parentResource) {
+  private String getValidatedStreamxKey(String absoluteUrl, ParentResource parentResource) {
     String streamxKey;
     try {
       streamxKey = urlComputationService.asStreamxKeyRelativeToConfiguredBaseUrl(absoluteUrl);
@@ -110,7 +110,7 @@ public class ExternalResourcesCollector {
       return null;
     }
 
-    if (streamxKey.equals(parentResource.getStreamxKey())) {
+    if (streamxKey.equals(parentResource.streamxKey())) {
       Log.tracef("Skipping external resource %s because it's same as parent resource",
           absoluteUrl);
       return null;

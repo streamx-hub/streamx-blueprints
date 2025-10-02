@@ -26,11 +26,11 @@ public interface Configuration {
 
   Optional<Pattern> jsonExternalResourceUrlExclusionsPattern();
 
-  String externalPagePublishPayloadType();
+  String emittedPageType();
 
-  String externalWebResourcePublishPayloadType();
+  String emittedWebResourceType();
 
-  String externalAssetPublishPayloadType();
+  String emittedAssetType();
 
   @WithDefault("5000")
   int externalResourceDownloadTimeoutMilliseconds();

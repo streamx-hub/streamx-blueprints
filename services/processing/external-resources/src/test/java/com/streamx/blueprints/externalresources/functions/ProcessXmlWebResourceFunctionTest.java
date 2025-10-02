@@ -69,12 +69,12 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     publishWebResource(sitemapPath, sitemapContent);
 
     // then
-    List<CloudEvent> pageEvents = waitForEventsInSink(EXTERNAL_PAGE, 2);
-    assertPublishedPage(pageEvents.get(0),
+    waitForDownloadedPages(2);
+    assertDownloadedPage(0,
         "/page1.html",
         page1Content);
 
-    assertPublishedPage(pageEvents.get(1),
+    assertDownloadedPage(1,
         "/page2.html",
         page2Content);
 
@@ -94,22 +94,24 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
             """);
 
     // when 2: simulate the result events are grabbed by second instance of the service
-    pageEvents.forEach(resourcesChannel::send);
+    downloadedPages.forEach(page ->
+        publishPage(page.streamxKey(), page.contentAsString(), EXTERNAL_PAGE)
+    );
 
     // then
-    pageEvents = waitForEventsInSink(EXTERNAL_PAGE, 4);
-    List<CloudEvent> assetEvents = waitForEventsInSink(EXTERNAL_ASSET, 4);
+    List<CloudEvent> pageEvents = waitForEventsInSink(EXTERNAL_PAGE, 2);
+    waitForDownloadedAssets(4);
 
     // page1 contains links to image1 and image2
-    assertPublishedAsset(assetEvents.get(0),
+    assertDownloadedAsset(0,
         "/image1.jpg",
         image1Content);
 
-    assertPublishedAsset(assetEvents.get(1),
+    assertDownloadedAsset(1,
         "/image2.jpg",
         image2Content);
 
-    assertPublishedPage(pageEvents.get(2),
+    assertPublishedPage(pageEvents.get(0),
         "/page1.html",
         """
             Page 1.
@@ -118,15 +120,15 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
             """);
 
     // page2 contains links to image3 and image4
-    assertPublishedAsset(assetEvents.get(2),
+    assertDownloadedAsset(2,
         "/image3.jpg",
         image3Content);
 
-    assertPublishedAsset(assetEvents.get(3),
+    assertDownloadedAsset(3,
         "/image4.jpg",
         image4Content);
 
-    assertPublishedPage(pageEvents.get(3),
+    assertPublishedPage(pageEvents.get(1),
         "/page2.html",
         """
             Page 2.

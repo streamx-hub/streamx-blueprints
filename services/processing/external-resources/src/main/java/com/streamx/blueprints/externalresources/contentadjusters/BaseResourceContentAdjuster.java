@@ -1,10 +1,10 @@
 package com.streamx.blueprints.externalresources.contentadjusters;
 
 import com.streamx.blueprints.externalresources.data.ExternalResource;
+import io.quarkus.logging.Log;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jboss.logging.Logger;
 
 public abstract class BaseResourceContentAdjuster {
 
@@ -19,8 +19,7 @@ public abstract class BaseResourceContentAdjuster {
     return inputContent;
   }
 
-  public final String adjustLinks(String inputContent, Set<ExternalResource> externalResources,
-      Logger log) {
+  public final String adjustLinks(String inputContent, Set<ExternalResource> externalResources) {
     inputContent = fixedInputContent(inputContent);
     for (ExternalResource resource : externalResources) {
       for (String resourcePath : resource.getPaths()) {
@@ -28,16 +27,16 @@ public abstract class BaseResourceContentAdjuster {
         Matcher matcher = inputUrlPattern.matcher(inputContent);
         if (matcher.find()) {
           String replacementUrl = resource.getStreamxKey();
-          inputContent = replaceUrl(matcher, replacementUrl, log);
+          inputContent = replaceUrl(matcher, replacementUrl);
         } else {
-          log.warnf("Didn't replace %s", resourcePath);
+          Log.warnf("Didn't replace %s", resourcePath);
         }
       }
     }
     return inputContent;
   }
 
-  private String replaceUrl(Matcher matcher, String replacementUrl, Logger log) {
+  private String replaceUrl(Matcher matcher, String replacementUrl) {
     StringBuilder result = new StringBuilder();
 
     do {
@@ -50,7 +49,7 @@ public abstract class BaseResourceContentAdjuster {
         }
       }
 
-      log.tracef("Replacing %s to %s", matcher.group(0), replacement);
+      Log.tracef("Replacing %s to %s", matcher.group(0), replacement);
       matcher.appendReplacement(result, replacement.toString());
     } while (matcher.find());
 

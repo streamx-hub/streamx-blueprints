@@ -2,11 +2,8 @@ package com.streamx.blueprints.externalresources.contentadjusters;
 
 import com.streamx.blueprints.externalresources.data.ExternalResource;
 import java.util.Set;
-import org.jboss.logging.Logger;
 
 class BaseContentAdjusterTest {
-
-  private static final Logger log = Logger.getLogger(BaseContentAdjusterTest.class);
 
   private final BaseResourceContentAdjuster contentAdjuster;
 
@@ -15,6 +12,6 @@ class BaseContentAdjusterTest {
   }
 
   protected String adjustLinks(String inputContent, Set<ExternalResource> externalResources) {
-    return contentAdjuster.adjustLinks(inputContent, externalResources, log);
+    return contentAdjuster.adjustLinks(inputContent, externalResources);
   }
 }
