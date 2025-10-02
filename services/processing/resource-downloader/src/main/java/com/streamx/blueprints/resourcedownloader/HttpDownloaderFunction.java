@@ -144,19 +144,19 @@ public class HttpDownloaderFunction {
     if (isHtmlPage(response)) {
       emit(
           streamxKey,
-          new Page(content, request.pageEmitPayloadType()),
+          new Page(content, request.emittedPageType()),
           Page.TYPE_PUBLISHED
       );
     } else if (isWebResource(response)) {
       emit(
           streamxKey,
-          new WebResource(content, request.webResourceEmitPayloadType()),
+          new WebResource(content, request.emittedWebResourceType()),
           WebResource.TYPE_PUBLISHED
       );
     } else {
       emit(
           streamxKey,
-          new Asset(content, request.assetEmitPayloadType()),
+          new Asset(content, request.emittedAssetType()),
           Asset.TYPE_PUBLISHED
       );
     }

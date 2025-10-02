@@ -21,9 +21,9 @@ Based on the detected `Content-Type`, the service selects the appropriate `Cloud
 The `DownloadRequest` event must specify which payload types to use when emitting different kinds of resources.
 These should be set using the following fields:
 
-- `pageEmitPayloadType` – for full HTML pages
-- `webResourceEmitPayloadType` – for general web resources (e.g., scripts, stylesheets)
-- `assetEmitPayloadType` – for assets such as images, fonts, or binary files
+- `emittedPageType` – for full HTML pages
+- `emittedWebResourceType` – for general web resources (e.g., scripts, stylesheets)
+- `emittedAssetType` – for assets such as images, fonts, or binary files
 
 It is the caller’s responsibility to provide the correct payload type values in these fields.
 

@@ -30,9 +30,9 @@ public class DownloadRequestsSender {
     DownloadRequest downloadRequest = new DownloadRequest(
         absoluteUrl,
         streamxKey,
-        configuration.externalPageEmitPayloadType(),
-        configuration.externalWebResourceEmitPayloadType(),
-        configuration.externalAssetEmitPayloadType()
+        configuration.emittedPageType(),
+        configuration.emittedWebResourceType(),
+        configuration.emittedAssetType()
     );
 
     log.tracef("Sending download request for %s", absoluteUrl);

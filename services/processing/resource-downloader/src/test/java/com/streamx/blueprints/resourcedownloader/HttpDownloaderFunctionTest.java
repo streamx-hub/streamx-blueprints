@@ -31,9 +31,9 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 class HttpDownloaderFunctionTest {
 
-  private static final String PAGE_EMIT_PAYLOAD_TYPE = "page_emit";
-  private static final String WEB_RESOURCE_EMIT_PAYLOAD_TYPE = "web-resource_emit";
-  private static final String ASSET_EMIT_PAYLOAD_TYPE = "asset_emit";
+  private static final String EMITTED_PAGE_TYPE = "page/external";
+  private static final String EMITTED_WEB_RESOURCE_TYPE = "web-resource/external";
+  private static final String EMITTED_ASSET_TYPE = "asset/external";
 
   private InMemorySource<CloudEvent> downloadRequestsChannel;
   private InMemorySink<CloudEvent> downloadedResourcesSink;
@@ -73,14 +73,14 @@ class HttpDownloaderFunctionTest {
     sendDownloadRequest(imageUrl, imagePath);
 
     // then
-    List<CloudEvent> assetEvents = waitForSingleDownloadedResource(ASSET_EMIT_PAYLOAD_TYPE);
+    List<CloudEvent> assetEvents = waitForSingleDownloadedResource(EMITTED_ASSET_TYPE);
     assertEvent(assetEvents.get(0), imagePath, imageContent);
 
     // when 2
     sendDownloadRequest(imageUrl, imagePath);
 
     // then: expect no re-download
-    waitForSingleDownloadedResource(ASSET_EMIT_PAYLOAD_TYPE);
+    waitForSingleDownloadedResource(EMITTED_ASSET_TYPE);
   }
 
   @Test
@@ -94,14 +94,14 @@ class HttpDownloaderFunctionTest {
     sendDownloadRequest(fileUrl, filePath);
 
     // then
-    List<CloudEvent> webResourceEvents = waitForSingleDownloadedResource(WEB_RESOURCE_EMIT_PAYLOAD_TYPE);
+    List<CloudEvent> webResourceEvents = waitForSingleDownloadedResource(EMITTED_WEB_RESOURCE_TYPE);
     assertEvent(webResourceEvents.get(0), filePath, fileContent);
 
     // when 2
     sendDownloadRequest(fileUrl, filePath);
 
     // then: expect no re-download
-    waitForSingleDownloadedResource(WEB_RESOURCE_EMIT_PAYLOAD_TYPE);
+    waitForSingleDownloadedResource(EMITTED_WEB_RESOURCE_TYPE);
   }
 
   @Test // TODO: when the service is finished, remove this online test
@@ -113,7 +113,7 @@ class HttpDownloaderFunctionTest {
     sendDownloadRequest(pageUrl, "/en/");
 
     // then
-    List<CloudEvent> pageEvents = waitForSingleDownloadedResource(PAGE_EMIT_PAYLOAD_TYPE);
+    List<CloudEvent> pageEvents = waitForSingleDownloadedResource(EMITTED_PAGE_TYPE);
     CloudEvent downloadedPage = pageEvents.get(0);
     assertThat(downloadedPage.getSubject()).isEqualTo("/en/");
 
@@ -121,7 +121,7 @@ class HttpDownloaderFunctionTest {
     sendDownloadRequest(pageUrl, "/en/");
 
     // then: expect no re-download
-    waitForSingleDownloadedResource(PAGE_EMIT_PAYLOAD_TYPE);
+    waitForSingleDownloadedResource(EMITTED_PAGE_TYPE);
   }
 
   @Test
@@ -135,14 +135,14 @@ class HttpDownloaderFunctionTest {
     sendDownloadRequest(imageUrl, imagePath);
 
     // then
-    List<CloudEvent> assetEvents = waitForSingleDownloadedResource(ASSET_EMIT_PAYLOAD_TYPE);
+    List<CloudEvent> assetEvents = waitForSingleDownloadedResource(EMITTED_ASSET_TYPE);
     assertEvent(assetEvents.get(0), imagePath, imageContent);
 
     // when 2
     sendDownloadRequest(imageUrl, imagePath);
 
     // then: expect no re-download
-    waitForSingleDownloadedResource(ASSET_EMIT_PAYLOAD_TYPE);
+    waitForSingleDownloadedResource(EMITTED_ASSET_TYPE);
   }
 
   @Test
@@ -199,7 +199,7 @@ class HttpDownloaderFunctionTest {
 
   private void sendDownloadRequest(String url, String emitKey) {
     DownloadRequest downloadRequest = new DownloadRequest(url, emitKey,
-        PAGE_EMIT_PAYLOAD_TYPE, WEB_RESOURCE_EMIT_PAYLOAD_TYPE, ASSET_EMIT_PAYLOAD_TYPE);
+        EMITTED_PAGE_TYPE, EMITTED_WEB_RESOURCE_TYPE, EMITTED_ASSET_TYPE);
 
     CloudEvent event = CloudEventTestUtils.createEvent(emitKey, "send.download.request",
         downloadRequest);
