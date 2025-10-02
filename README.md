@@ -105,7 +105,7 @@ delivery:
 #        topic: outboxes/products
 #    port: 8084
   web:
-    image: web-delivery-service
+    image: web-server
     incoming:
       pages:
         topic: outboxes/pages

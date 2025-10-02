@@ -20,7 +20,7 @@ sources:
           - "com.streamx.blueprints.composition.unpublished.v1"
 
 descriptors:
-  external-resources-processing-service:
+  dependencies-rewriter:
     type: "processing"
     incoming:
       incoming-resources:
@@ -31,7 +31,7 @@ descriptors:
       download-requests:
         binding: "http-structured-json"
 
-  resource-downloader-processing-service:
+  resource-downloader:
     type: "processing"
     incoming:
       download-requests:
@@ -40,7 +40,7 @@ descriptors:
       downloaded-resources:
         binding: "http-structured-json"
 
-  composition-engine-processing-service:
+  composition-engine:
     type: "processing"
     incoming:
       layouts:
@@ -55,7 +55,7 @@ descriptors:
       outgoing-page-compose-requests:
         binding: "http-structured-json"
 
-  web-delivery-service:
+  web-server:
     type: "processing"
     incoming:
       resources:
@@ -67,9 +67,9 @@ ingestion:
       QUARKUS_HTTP_AUTH_PERMISSION_BEARER_POLICY: permit
 
 processing:
-  # Instance 1 of external-resources service: process web resources
-  blueprint-web-resources-external-resources-processor:
-    image: external-resources-processing-service
+  # Instance 1 of dependencies-rewriter: process web resources
+  blueprint-web-resources-dependencies-rewriter:
+    image: dependencies-rewriter
     incoming:
       incoming-resources:
         topic: inboxes/resources
@@ -79,16 +79,16 @@ processing:
       download-requests:
         topic: relays/download-requests
     environment:
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.dev/"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_PROCESSABLE_PAYLOAD_TYPES: "web-resource"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_XML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "/*[local-name()='urlset']/*[local-name()='url']/*[local-name()='loc']"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EMITTED_PAGE_TYPE: "page/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EMITTED_WEB_RESOURCE_TYPE: "web-resource/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EMITTED_ASSET_TYPE: "asset/external"
+      STREAMX_BLUEPRINTS_DEPENDENCIES_REWRITER_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.dev/"
+      STREAMX_BLUEPRINTS_DEPENDENCIES_REWRITER_PROCESSABLE_PAYLOAD_TYPES: "web-resource"
+      STREAMX_BLUEPRINTS_DEPENDENCIES_REWRITER_XML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "/*[local-name()='urlset']/*[local-name()='url']/*[local-name()='loc']"
+      STREAMX_BLUEPRINTS_DEPENDENCIES_REWRITER_EMITTED_PAGE_TYPE: "page/external"
+      STREAMX_BLUEPRINTS_DEPENDENCIES_REWRITER_EMITTED_WEB_RESOURCE_TYPE: "web-resource/external"
+      STREAMX_BLUEPRINTS_DEPENDENCIES_REWRITER_EMITTED_ASSET_TYPE: "asset/external"
 
-  # Instance 2 of external-resources service: process pages
-  blueprint-pages-external-resources-processor:
-    image: external-resources-processing-service
+  # Instance 2 of dependencies-rewriter: process pages
+  blueprint-pages-dependencies-rewriter:
+    image: dependencies-rewriter
     incoming:
       incoming-resources:
         topic: relays/resources
@@ -98,15 +98,15 @@ processing:
       download-requests:
         topic: relays/download-requests
     environment:
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.dev/"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_PROCESSABLE_PAYLOAD_TYPES: "page/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_HTML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "//img/@src,//link[@rel='stylesheet']/@href,//script/@src"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EMITTED_PAGE_TYPE: "page/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EMITTED_WEB_RESOURCE_TYPE: "web-resource/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_RESOURCES_PROCESSING_SERVICE_EMITTED_ASSET_TYPE: "asset/external"
+      STREAMX_BLUEPRINTS_DEPENDENCIES_REWRITER_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.dev/"
+      STREAMX_BLUEPRINTS_DEPENDENCIES_REWRITER_PROCESSABLE_PAYLOAD_TYPES: "page/external"
+      STREAMX_BLUEPRINTS_DEPENDENCIES_REWRITER_HTML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "//img/@src,//link[@rel='stylesheet']/@href,//script/@src"
+      STREAMX_BLUEPRINTS_DEPENDENCIES_REWRITER_EMITTED_PAGE_TYPE: "page/external"
+      STREAMX_BLUEPRINTS_DEPENDENCIES_REWRITER_EMITTED_WEB_RESOURCE_TYPE: "web-resource/external"
+      STREAMX_BLUEPRINTS_DEPENDENCIES_REWRITER_EMITTED_ASSET_TYPE: "asset/external"
 
   blueprint-resource-downloader:
-    image: resource-downloader-processing-service
+    image: resource-downloader
     incoming:
       download-requests:
         topic: relays/download-requests
@@ -115,7 +115,7 @@ processing:
         topic: inboxes/resources
 
   blueprint-composition-engine:
-    image: composition-engine-processing-service
+    image: composition-engine
     incoming:
       layouts:
         topic: inboxes/layouts
@@ -130,8 +130,8 @@ processing:
         topic: relays/page-compose-requests
 
 delivery:
-  blueprint-web:
-    image: web-delivery-service
+  blueprint-web-server:
+    image: web-server
     incoming:
       resources:
         topic: outboxes/resources

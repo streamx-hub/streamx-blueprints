@@ -8,8 +8,8 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>resource-downloader-processing-service</artifactId>
-  <name>StreamX Blueprints : Resource Downloader Processing Service</name>
+  <artifactId>resource-downloader</artifactId>
+  <name>StreamX Blueprints : Resource Downloader</name>
 
   <dependencies>
     <dependency>

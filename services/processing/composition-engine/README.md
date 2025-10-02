@@ -1,4 +1,4 @@
-# Composition Engine Processing Service
+# Composition Engine
 
 This service generates pages from compositions and layouts.
 Layout is a html page with placeholders for segments.
