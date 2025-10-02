@@ -18,11 +18,11 @@ public class Resource extends Typed {
   }
 
   public Resource(byte[] content) {
-    this(ByteBuffer.wrap(content));
+    this(wrapBytes(content));
   }
 
   public Resource(String content) {
-    this(content.getBytes(UTF_8));
+    this(getBytes(content));
   }
 
   @JsonCreator
@@ -32,11 +32,11 @@ public class Resource extends Typed {
   }
 
   public Resource(byte[] content, String type) {
-    this(ByteBuffer.wrap(content), type);
+    this(wrapBytes(content), type);
   }
 
   public Resource(String content, String type) {
-    this(content.getBytes(UTF_8), type);
+    this(getBytes(content), type);
   }
 
   public ByteBuffer getContent() {
@@ -45,9 +45,18 @@ public class Resource extends Typed {
 
   @JsonIgnore
   public String getContentAsString() {
-    if (content == null) {
-      return null;
-    }
-    return new String(content.array(), UTF_8);
+    return contentAsString(content);
+  }
+
+  private static ByteBuffer wrapBytes(byte[] content) {
+    return content == null ? null : ByteBuffer.wrap(content);
+  }
+
+  private static byte[] getBytes(String content) {
+    return content == null ? null : content.getBytes(UTF_8);
+  }
+
+  private static String contentAsString(ByteBuffer content) {
+    return content == null ? null : new String(content.array(), UTF_8);
   }
 }

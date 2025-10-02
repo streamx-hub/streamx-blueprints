@@ -62,19 +62,18 @@ public class CompositionFunction {
     if (CloudEventUtils.isPublishingType(compositionEvent.getType())) {
       Composition composition = CloudEventUtils.getData(compositionEvent, Composition.class);
       compositionsStore.put(compositionKey, composition);
-      return CloudEventUtils.builderWithJsonData(
-              new PageComposeRequest(compositionKey, composition.getLayoutKey()))
-          .withTime(compositionEvent.getTime())
-          .withSubject(compositionKey)
-          .withType(PageComposeRequest.TYPE_PUBLISHED)
-          .build();
+      return CloudEventUtils.eventWithData(
+          new PageComposeRequest(compositionKey, composition.getLayoutKey()),
+          PageComposeRequest.TYPE_PUBLISHED,
+          compositionKey,
+          compositionEvent.getTime());
     } else if (CloudEventUtils.isUnpublishingType(compositionEvent.getType())) {
       compositionsStore.remove(compositionKey);
-      return CloudEventUtils.builderWithJsonData(new PageComposeRequest(compositionKey, null))
-          .withTime(compositionEvent.getTime())
-          .withType(PageComposeRequest.TYPE_UNPUBLISHED)
-          .withSubject(compositionKey)
-          .build();
+      return CloudEventUtils.eventWithData(
+          new PageComposeRequest(compositionKey, null),
+          PageComposeRequest.TYPE_UNPUBLISHED,
+          compositionKey,
+          compositionEvent.getTime());
     }
     return null;
   }
@@ -92,18 +91,12 @@ public class CompositionFunction {
 
       if (ableToGeneratePage(layout, layoutKey, composition, compositionKey)) {
         Page page = composePage(composition, layout);
-        return CloudEventUtils.builderWithJsonData(page)
-            .withType(Page.TYPE_PUBLISHED)
-            .withSubject(compositionKey)
-            .withTime(pageCompositionRequest.getTime())
-            .build();
+        return CloudEventUtils.eventWithData(page, Page.TYPE_PUBLISHED,
+            compositionKey, pageCompositionRequest.getTime());
       }
     } else if (PageComposeRequest.TYPE_UNPUBLISHED.equals(pageCompositionRequest.getType())) {
-      return CloudEventUtils.builder()
-          .withType(Page.TYPE_UNPUBLISHED)
-          .withSubject(compositionKey)
-          .withTime(pageCompositionRequest.getTime())
-          .build();
+      return CloudEventUtils.eventWithoutData(Page.TYPE_UNPUBLISHED,
+          compositionKey, pageCompositionRequest.getTime());
     }
     return null;
   }
@@ -120,12 +113,11 @@ public class CompositionFunction {
             entry.getValue() != null && entry.getValue().getLayoutKey().equals(layoutKey))
         .map(Entry::getKey)
         .map(compositionKey ->
-            CloudEventUtils
-                .builderWithJsonData(new PageComposeRequest(compositionKey, layoutKey))
-                .withTime(layout.getTime())
-                .withSubject(compositionKey)
-                .withType(type)
-                .build());
+            CloudEventUtils.eventWithData(
+                new PageComposeRequest(compositionKey, layoutKey),
+                type,
+                compositionKey,
+                layout.getTime()));
   }
 
   private boolean ableToGeneratePage(Layout layout, String layoutKey,

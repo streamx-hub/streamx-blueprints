@@ -1,10 +1,11 @@
 package com.streamx.blueprints.composition;
 
-import static com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils.createEvent;
 import static com.streamx.blueprints.composition.CompositionFunction.INCOMING_COMPOSITIONS_CHANNEL;
 import static com.streamx.blueprints.composition.CompositionFunction.INCOMING_LAYOUTS_CHANNEL;
 import static com.streamx.blueprints.composition.CompositionFunction.INCOMING_PAGE_COMPOSE_REQUESTS_CHANNEL;
 import static com.streamx.blueprints.composition.CompositionFunction.OUTGOING_PAGES_CHANNEL;
+import static com.streamx.blueprints.cloudevents.utils.CloudEventUtils.eventWithData;
+import static com.streamx.blueprints.cloudevents.utils.CloudEventUtils.eventWithoutData;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
@@ -426,22 +427,22 @@ class CompositionFunctionTest {
   }
 
   private void publishLayout(String key, String type, String content) {
-    layoutsSource.send(createEvent(key, Layout.TYPE_PUBLISHED,
-        new Layout(content, type)));
+    layoutsSource.send(eventWithData(new Layout(content, type), Layout.TYPE_PUBLISHED, key));
   }
 
   private void unpublishLayout(String key) {
-    layoutsSource.send(createEvent(key, Layout.TYPE_UNPUBLISHED, null));
+    layoutsSource.send(eventWithoutData(Layout.TYPE_UNPUBLISHED, key));
   }
 
   private void publishComposition(String key, String content, String layoutKey) {
     compositionsSource.send(
-        createEvent(key, Composition.TYPE_PUBLISHED,
-            new Composition(content, null, layoutKey)));
+        eventWithData(new Composition(content, null, layoutKey),
+            Composition.TYPE_PUBLISHED, key));
   }
 
   private void unpublishComposition(String key) {
-    compositionsSource.send(createEvent(key, Composition.TYPE_UNPUBLISHED, null));
+    compositionsSource.send(
+        eventWithoutData(Composition.TYPE_UNPUBLISHED, key));
   }
 
   private void assertSingleOutgoingPublishPage(String expectedKey, String expectedContent) {
