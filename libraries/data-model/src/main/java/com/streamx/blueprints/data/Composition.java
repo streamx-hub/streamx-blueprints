@@ -9,8 +9,8 @@ import java.nio.ByteBuffer;
  */
 public class Composition extends Resource {
 
-  public static final String TYPE_COMPOSITION_PUBLISHED = "com.streamx.blueprints.composition.published.v1";
-  public static final String TYPE_COMPOSITION_UNPUBLISHED = "com.streamx.blueprints.composition.unpublished.v1";
+  public static final String TYPE_PUBLISHED = "com.streamx.blueprints.composition.published.v1";
+  public static final String TYPE_UNPUBLISHED = "com.streamx.blueprints.composition.unpublished.v1";
 
   private final String layoutKey;
 

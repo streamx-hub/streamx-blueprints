@@ -45,7 +45,7 @@ public class ProcessResourceFunction {
   @Incoming(Channels.INCOMING_RESOURCES)
   @Outgoing(Channels.OUTGOING_RESOURCES)
   public Uni<CloudEvent> processIncomingEvent(CloudEvent event) {
-    Resource payload = CloudEventUtils.getData(event, Resource.class);
+    Resource payload = extractResource(event);
     if (payload == null) {
       return asRelayedEvent(event);
     }
