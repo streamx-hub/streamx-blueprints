@@ -1,20 +1,21 @@
 package com.streamx.blueprints.externalresources.functions.settings;
 
 import com.streamx.blueprints.data.Page;
-import com.streamx.blueprints.externalresources.configuration.Configuration;
 import com.streamx.blueprints.externalresources.functions.settings.contentprocessing.HtmlContentProcessingSettings;
 import com.streamx.blueprints.externalresources.functions.settings.resourcemetadata.PageMetadata;
-import com.streamx.blueprints.externalresources.services.UrlComputationService;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
 
+@Priority(1)
+@ApplicationScoped
 public class PageProcessingSettings extends BaseProcessingSettings<Page> {
 
-  public PageProcessingSettings(Configuration configuration,
-      UrlComputationService urlComputationService) {
-    super(
+  @PostConstruct
+  void init() {
+    loadSettings(
         new HtmlContentProcessingSettings(configuration),
-        new PageMetadata(),
-        "",
-        urlComputationService
+        new PageMetadata()
     );
   }
 }

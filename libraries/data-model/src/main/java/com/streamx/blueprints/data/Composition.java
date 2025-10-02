@@ -1,5 +1,7 @@
 package com.streamx.blueprints.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.nio.ByteBuffer;
 
 /**
@@ -7,12 +9,14 @@ import java.nio.ByteBuffer;
  */
 public class Composition extends Resource {
 
-  public static final String TYPE_COMPOSITION_PUBLISHED = "com.streamx.blueprints.composition.published.v1";
-  public static final String TYPE_COMPOSITION_UNPUBLISHED = "com.streamx.blueprints.composition.unpublished.v1";
+  public static final String TYPE_PUBLISHED = "com.streamx.blueprints.composition.published.v1";
+  public static final String TYPE_UNPUBLISHED = "com.streamx.blueprints.composition.unpublished.v1";
 
-  private String layoutKey;
+  private final String layoutKey;
 
-  public Composition(ByteBuffer content, String type, String layoutKey) {
+  @JsonCreator
+  public Composition(@JsonProperty("content") ByteBuffer content, @JsonProperty("type") String type,
+      @JsonProperty("layoutKey") String layoutKey) {
     super(content, type);
     this.layoutKey = layoutKey;
   }

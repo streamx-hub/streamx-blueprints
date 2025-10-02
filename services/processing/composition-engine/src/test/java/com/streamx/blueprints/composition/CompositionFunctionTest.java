@@ -436,13 +436,12 @@ class CompositionFunctionTest {
 
   private void publishComposition(String key, String content, String layoutKey) {
     compositionsSource.send(
-        createEvent(key, Composition.TYPE_COMPOSITION_PUBLISHED,
+        createEvent(key, Composition.TYPE_PUBLISHED,
             new Composition(content, null, layoutKey)));
   }
 
   private void unpublishComposition(String key) {
-    compositionsSource.send(
-        createEvent(key, Composition.TYPE_COMPOSITION_UNPUBLISHED, null));
+    compositionsSource.send(createEvent(key, Composition.TYPE_UNPUBLISHED, null));
   }
 
   private void assertSingleOutgoingPublishPage(String expectedKey, String expectedContent) {

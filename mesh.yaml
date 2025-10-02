@@ -6,8 +6,18 @@ sources:
     outgoing:
       - topic: "inboxes/resources"
         produces:
+          - "com.streamx.blueprints.page.published.v1"
+          - "com.streamx.blueprints.page.unpublished.v1"
           - "com.streamx.blueprints.web-resource.published.v1"
           - "com.streamx.blueprints.web-resource.unpublished.v1"
+      - topic: "inboxes/layouts"
+        produces:
+          - "com.streamx.blueprints.layout.published.v1"
+          - "com.streamx.blueprints.layout.unpublished.v1"
+      - topic: "inboxes/compositions"
+        produces:
+          - "com.streamx.blueprints.composition.published.v1"
+          - "com.streamx.blueprints.composition.unpublished.v1"
 
 descriptors:
   external-resources-processing-service:
@@ -20,6 +30,7 @@ descriptors:
         binding: "http-structured-json"
       download-requests:
         binding: "http-structured-json"
+
   resource-downloader-processing-service:
     type: "processing"
     incoming:
@@ -28,6 +39,22 @@ descriptors:
     outgoing:
       downloaded-resources:
         binding: "http-structured-json"
+
+  composition-engine-processing-service:
+    type: "processing"
+    incoming:
+      layouts:
+        binding: "http-structured-json"
+      compositions:
+        binding: "http-structured-json"
+      incoming-page-compose-requests:
+        binding: "http-structured-json"
+    outgoing:
+      pages:
+        binding: "http-structured-json"
+      outgoing-page-compose-requests:
+        binding: "http-structured-json"
+
   web-delivery-service:
     type: "processing"
     incoming:
@@ -86,6 +113,21 @@ processing:
     outgoing:
       downloaded-resources:
         topic: inboxes/resources
+
+  blueprint-composition-engine:
+    image: composition-engine-processing-service
+    incoming:
+      layouts:
+        topic: inboxes/layouts
+      compositions:
+        topic: inboxes/compositions
+      incoming-page-compose-requests:
+        topic: relays/page-compose-requests
+    outgoing:
+      pages:
+        topic: relays/resources
+      outgoing-page-compose-requests:
+        topic: relays/page-compose-requests
 
 delivery:
   blueprint-web:
