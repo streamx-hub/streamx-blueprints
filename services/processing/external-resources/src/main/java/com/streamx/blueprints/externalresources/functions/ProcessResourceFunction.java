@@ -59,8 +59,8 @@ public class ProcessResourceFunction {
 
     String eventType = event.getType();
     var settingsOpt = processingSettings.stream()
-        .filter(setting -> setting.getHandledCloudEventTypes().contains(eventType))
-        .filter(setting -> resourcePath.endsWith(setting.getHandledResourcePathSuffix()))
+        .filter(setting -> setting.handledCloudEventType(eventType))
+        .filter(setting -> setting.handlesResourcePath(resourcePath))
         .findFirst();
     if (settingsOpt.isEmpty()) {
       log.tracef("No handler for resource event %s of type %s", resourcePath, eventType);

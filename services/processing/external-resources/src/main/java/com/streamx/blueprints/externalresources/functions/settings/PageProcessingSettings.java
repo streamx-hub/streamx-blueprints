@@ -15,8 +15,7 @@ public class PageProcessingSettings extends BaseProcessingSettings<Page> {
   void init() {
     loadSettings(
         new HtmlContentProcessingSettings(configuration),
-        new PageMetadata(),
-        ""
+        new PageMetadata()
     );
   }
 }

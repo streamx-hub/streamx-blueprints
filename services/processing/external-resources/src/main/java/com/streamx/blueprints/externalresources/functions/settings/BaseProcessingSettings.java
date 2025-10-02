@@ -24,19 +24,16 @@ public abstract class BaseProcessingSettings<T extends Resource> {
   private Class<T> handledResourceClass;
   private BiFunction<String, String, T> newResourceConstructor;
   private Set<String> handledCloudEventTypes;
-  private String handledResourcePathSuffix;
 
   protected void loadSettings(
       BaseContentProcessingSettings contentProcessingSettings,
-      BaseResourceMetadata<T> resourceMetadata,
-      String handledResourcePathSuffix) {
+      BaseResourceMetadata<T> resourceMetadata) {
     this.contentAdjuster = contentProcessingSettings.getContentAdjuster();
     this.externalResourcesCollector = new ExternalResourcesCollector(
         contentProcessingSettings, urlComputationService);
     this.handledResourceClass = resourceMetadata.getResourceClass();
     this.newResourceConstructor = resourceMetadata.getResourceConstructor();
     this.handledCloudEventTypes = resourceMetadata.getEventTypes();
-    this.handledResourcePathSuffix = handledResourcePathSuffix;
   }
 
   public BaseResourceContentAdjuster getContentAdjuster() {
@@ -51,12 +48,12 @@ public abstract class BaseProcessingSettings<T extends Resource> {
     return handledResourceClass;
   }
 
-  public Set<String> getHandledCloudEventTypes() {
-    return Set.copyOf(handledCloudEventTypes);
+  public boolean handledCloudEventType(String eventType) {
+    return handledCloudEventTypes.contains(eventType);
   }
 
-  public String getHandledResourcePathSuffix() {
-    return handledResourcePathSuffix;
+  public boolean handlesResourcePath(String path) {
+    return true;
   }
 
   public T newResource(String content, String payloadType) {

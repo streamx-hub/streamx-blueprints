@@ -15,8 +15,7 @@ public class JsonDataProcessingSettings extends BaseProcessingSettings<Data> {
   void init() {
     loadSettings(
         new JsonContentProcessingSettings(configuration),
-        new DataMetadata(),
-        ""
+        new DataMetadata()
     );
   }
 }
