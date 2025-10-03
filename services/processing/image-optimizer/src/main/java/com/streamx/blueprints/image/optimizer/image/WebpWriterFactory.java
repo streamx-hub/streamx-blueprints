@@ -1,7 +1,7 @@
 package com.streamx.blueprints.image.optimizer.image;
 
 import com.sksamuel.scrimage.webp.WebpWriter;
-import com.streamx.blueprints.image.optimizer.configuration.Configuration;
+import com.streamx.blueprints.image.optimizer.configuration.Configuration.WebpConversion;
 import java.util.Optional;
 
 final class WebpWriterFactory {
@@ -13,14 +13,14 @@ final class WebpWriterFactory {
   private static final int INTEGER_PARAM_DEFAULT_VALUE = -1;
   private static final boolean BOOLEAN_PARAM_DEFAULT_VALUE = false;
 
-  static WebpWriter createWriterInstance(Configuration configuration) {
+  static WebpWriter createWriterInstance(WebpConversion configuration) {
     return new WebpWriter(
-        getOrDefault(configuration.webpConversionSpeed()),
-        getOrDefault(configuration.webpConversionQuality()),
-        getOrDefault(configuration.webpConversionMethod()),
-        getOrDefault(configuration.webpConversionLossless()),
-        getOrDefault(configuration.webpConversionNoAlpha()),
-        getOrDefault(configuration.webpConversionMultiThread())
+        getOrDefault(configuration.speed()),
+        getOrDefault(configuration.quality()),
+        getOrDefault(configuration.method()),
+        getOrDefault(configuration.lossless()),
+        getOrDefault(configuration.noAlpha()),
+        getOrDefault(configuration.multiThread())
     );
   }
 

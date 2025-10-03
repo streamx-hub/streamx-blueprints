@@ -33,7 +33,7 @@ Note: the pattern is case-insensitive.
 `streamx.blueprints.image-optimizer.optimized-image-file-name-suffix` - a suffix that will be added
 to names of optimized images.
 
-Example value of the configuration property:
+Default value:
 `-optimized`
 
 The above setting will result in generating file name for the optimized image as `image-optimized.webp`, if the input image file is named `image.png`.

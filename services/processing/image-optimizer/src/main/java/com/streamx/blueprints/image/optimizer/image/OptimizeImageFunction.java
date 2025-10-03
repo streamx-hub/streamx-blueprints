@@ -49,7 +49,7 @@ public class OptimizeImageFunction {
         Pattern.compile(configuration.optimizedFilePathsPattern().toLowerCase());
     optimizedImageFileNameSuffixAndExtension =
         configuration.optimizedImageFileNameSuffix() + OPTIMIZED_IMAGE_EXTENSION;
-    imageOptimizer = new ImageOptimizer(configuration);
+    imageOptimizer = new ImageOptimizer(configuration.webpConversion());
   }
 
   /**
