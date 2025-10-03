@@ -15,7 +15,7 @@
 
   <modules>
     <module>composition-engine</module>
-    <module>dependencies-rewriter</module>
+    <module>external-references-rewriter</module>
     <module>resource-downloader</module>
   </modules>
 
