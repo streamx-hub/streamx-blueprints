@@ -18,6 +18,7 @@
     <module>external-references-rewriter</module>
     <module>image-optimizer</module>
     <module>resource-downloader</module>
+    <module>sitemap-generator</module>
   </modules>
 
 </project>
