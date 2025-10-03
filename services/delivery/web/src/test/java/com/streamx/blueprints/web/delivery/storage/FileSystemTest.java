@@ -6,8 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.wildfly.common.Assert.assertFalse;
 
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.QuarkusTestProfile;
-import io.quarkus.test.junit.TestProfile;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import io.vertx.core.file.FileSystemException;
 import jakarta.inject.Inject;
@@ -16,27 +14,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 @QuarkusTest
-@TestProfile(FileSystemTest.Configuration.class)
 class FileSystemTest {
-
-  @TempDir
-  static Path sharedTempDir;
-
-  public static class Configuration implements QuarkusTestProfile {
-
-    @Override
-    public Map<String, String> getConfigOverrides() {
-      return Map.of(
-          "streamx.blueprints.web.resources.directory",
-          sharedTempDir.toString());
-    }
-  }
 
   @ConfigProperty(name = "streamx.blueprints.web.resources.directory")
   String tempDirectory;
