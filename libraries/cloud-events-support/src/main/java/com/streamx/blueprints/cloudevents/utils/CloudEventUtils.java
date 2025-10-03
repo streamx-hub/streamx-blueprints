@@ -13,6 +13,7 @@ import io.cloudevents.lang.Nullable;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -53,6 +54,10 @@ public class CloudEventUtils {
     throw new IllegalStateException(
         "Unexpected CloudEvent data type: " + cloudEventData.getClass().getName()
     );
+  }
+
+  public static String getSubject(CloudEvent cloudEvent) {
+    return Objects.requireNonNull(cloudEvent.getSubject());
   }
 
   private static <T> T parseJsonCloudEventData(JsonCloudEventData jsonData, Class<T> clazz) {
@@ -110,20 +115,49 @@ public class CloudEventUtils {
     return subject;
   }
 
+  public static CloudEvent eventWithData(Object data, String type, String subject) {
+    return eventWithData(data, type, subject, getNow());
+  }
+
+  public static CloudEvent eventWithData(Object data, String type, String subject, OffsetDateTime time) {
+    return builderWithJsonData(data)
+        .withType(type)
+        .withSubject(subject)
+        .withTime(time)
+        .build();
+  }
+
+  public static CloudEvent eventWithoutData(String type, String subject) {
+    return eventWithoutData(type, subject, getNow());
+  }
+
+  public static CloudEvent eventWithoutData(String type, String subject, OffsetDateTime time) {
+    return builder()
+        .withType(type)
+        .withSubject(subject)
+        .withTime(time)
+        .build();
+  }
+
   public static CloudEventBuilder builderWithJsonData(Object data) {
-    return CloudEventBuilder.v1()
-        .withId(UUID.randomUUID().toString())
-        .withSource(DEFAULT_SOURCE)
-        .withTime(OffsetDateTime.now(DEFAULT_ZONE))
+    return baseBuilder()
         .withDataContentType("application/json")
         .withData(PojoCloudEventData.wrap(data, objectMapper::writeValueAsBytes));
   }
 
   public static CloudEventBuilder builder() {
+    return baseBuilder()
+        .withoutData();
+  }
+
+  private static io.cloudevents.core.v1.CloudEventBuilder baseBuilder() {
     return CloudEventBuilder.v1()
         .withId(UUID.randomUUID().toString())
         .withSource(DEFAULT_SOURCE)
-        .withTime(OffsetDateTime.now(DEFAULT_ZONE))
-        .withoutData();
+        .withTime(getNow());
+  }
+
+  private static OffsetDateTime getNow() {
+    return OffsetDateTime.now(DEFAULT_ZONE);
   }
 }

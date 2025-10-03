@@ -17,18 +17,6 @@ public class CloudEventTestUtils {
     Assertions.assertThat(actualEvents).usingElementComparator(cloudEventComparator)
         .containsExactlyInAnyOrder(expectedEvents);
   }
-
-  public static <T> CloudEvent createEvent(String subject, String type, T data) {
-    if (data != null) {
-      return CloudEventUtils.builderWithJsonData(data)
-          .withSubject(subject)
-          .withType(type).build();
-    } else {
-      return CloudEventUtils.builder()
-          .withType(type).withSubject(subject).build();
-    }
-  }
-
 }
 
 class CloudEventDataComparator implements Comparator<CloudEvent> {

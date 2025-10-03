@@ -1,7 +1,5 @@
 package com.streamx.blueprints.externalresources.functions;
 
-import static java.util.Objects.requireNonNull;
-
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.data.WebResource;
@@ -50,7 +48,7 @@ public class ProcessResourceFunction {
       return asRelayedEvent(event);
     }
 
-    String resourcePath = requireNonNull(event.getSubject());
+    String resourcePath = CloudEventUtils.getSubject(event);
     String payloadType = payload.getType();
     if (!configuration.processablePayloadTypes().contains(payloadType)) {
       log.tracef("Skipping processing %s - the service is not configured to handle payload type %s", resourcePath, payloadType);
@@ -163,10 +161,8 @@ public class ProcessResourceFunction {
     log.tracef("Publishing resource %s with all external links adjusted to local paths",
         resourceStreamxKey);
 
-    CloudEvent adjustedEvent = CloudEventUtils.builderWithJsonData(adjustedResource)
-        .withSubject(resourceStreamxKey)
-        .withType(event.getType())
-        .build();
+    CloudEvent adjustedEvent = CloudEventUtils.eventWithData(adjustedResource,
+        event.getType(), resource.streamxKey());
     return Uni.createFrom().item(adjustedEvent);
   }
 }

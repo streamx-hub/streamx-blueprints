@@ -4,9 +4,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.DownloadRequest;
+import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.resourcedownloader.testutils.TestWebServer;
 import io.cloudevents.CloudEvent;
@@ -148,11 +148,11 @@ class HttpDownloaderFunctionTest {
   @Test
   void shouldSkipProcessingUnexpectedInputEvent() {
     // when
-    CloudEvent event1 = CloudEventTestUtils.createEvent("key", "type", "payload");
+    CloudEvent event1 = CloudEventUtils.eventWithData("payload", Page.TYPE_PUBLISHED, "key");
     httpDownloaderFunction.downloadAndEmit(event1);
 
     // amd
-    CloudEvent event2 = CloudEventTestUtils.createEvent("key", "type", null);
+    CloudEvent event2 = CloudEventUtils.eventWithoutData(Page.TYPE_PUBLISHED, "key");
     httpDownloaderFunction.downloadAndEmit(event2);
 
     // then: expect no exceptions
@@ -201,8 +201,8 @@ class HttpDownloaderFunctionTest {
     DownloadRequest downloadRequest = new DownloadRequest(url, emitKey,
         EMITTED_PAGE_TYPE, EMITTED_WEB_RESOURCE_TYPE, EMITTED_ASSET_TYPE);
 
-    CloudEvent event = CloudEventTestUtils.createEvent(emitKey, "send.download.request",
-        downloadRequest);
+    CloudEvent event = CloudEventUtils
+        .eventWithData(downloadRequest, DownloadRequest.EVENT_TYPE, emitKey);
 
     downloadRequestsChannel.send(event);
   }

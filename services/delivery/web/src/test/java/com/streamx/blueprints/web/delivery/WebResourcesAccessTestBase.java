@@ -9,11 +9,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.Asset;
 import com.streamx.blueprints.data.Page;
-import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.web.delivery.storage.FileSystemResourceStorage;
 import io.cloudevents.CloudEvent;
-import io.cloudevents.core.builder.CloudEventBuilder;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySource;
@@ -133,7 +132,7 @@ public abstract class WebResourcesAccessTestBase {
     String assetContent = "Asset content";
 
     // when
-    publish(subject, content -> new Resource(assetContent.getBytes(UTF_8)));
+    publish(subject, content -> new Asset(assetContent.getBytes(UTF_8)));
 
     // then
     await().until(() -> canAccessViaHttp(expectedPath, assetContent));
@@ -151,8 +150,7 @@ public abstract class WebResourcesAccessTestBase {
     // given
     String file = "/directory/file.html";
     Object payload = new Object();
-    CloudEvent cloudEvent = CloudEventUtils.builderWithJsonData(payload).withType("unexpected")
-        .build();
+    CloudEvent cloudEvent = CloudEventUtils.eventWithData(payload, "unexpected", file);
 
     // when
     webDeliverySink.consume(cloudEvent);
@@ -198,11 +196,11 @@ public abstract class WebResourcesAccessTestBase {
   }
 
   private <T> void publishPage(String subject, T payload) {
-    sendEvent(subject, payload, "com.streamx.blueprints.page.published.v1");
+    sendEvent(subject, payload, Page.TYPE_PUBLISHED);
   }
 
   private <T> void unpublishPage(String subject) {
-    sendEvent(subject, null, "com.streamx.blueprints.page.unpublished.v1");
+    sendEvent(subject, null, Page.TYPE_UNPUBLISHED);
   }
 
   private void unpublish(String subject) {
@@ -211,14 +209,12 @@ public abstract class WebResourcesAccessTestBase {
 
   private <T> void sendEvent(String subject, T payload, String type) {
     InMemorySource<CloudEvent> pages = connector.source(WebDeliverySink.CHANNEL);
-    CloudEventBuilder cloudEventBuilder =
-        payload == null ? CloudEventUtils.builder() : CloudEventUtils.builderWithJsonData(payload);
-    cloudEventBuilder
-        .withSubject(subject)
-        .withTime(OffsetDateTime.ofInstant(Instant.ofEpochMilli(EVENT_TIME.getAndIncrement()),
-            ZoneOffset.UTC)).withType(type);
-
-    pages.send(cloudEventBuilder.build());
+    OffsetDateTime eventTime = OffsetDateTime.ofInstant(
+        Instant.ofEpochMilli(EVENT_TIME.getAndIncrement()), ZoneOffset.UTC);
+    CloudEvent event = payload == null
+        ? CloudEventUtils.eventWithoutData(type, subject, eventTime)
+        : CloudEventUtils.eventWithData(payload, type, subject, eventTime);
+    pages.send(event);
   }
 
   private boolean canAccessViaHttp(String path, String content) {
