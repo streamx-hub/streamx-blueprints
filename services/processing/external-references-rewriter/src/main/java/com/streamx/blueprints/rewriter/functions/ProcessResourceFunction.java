@@ -6,7 +6,7 @@ import com.streamx.blueprints.data.WebResource;
 import com.streamx.blueprints.rewriter.Channels;
 import com.streamx.blueprints.rewriter.configuration.Configuration;
 import com.streamx.blueprints.rewriter.data.ExternalResource;
-import com.streamx.blueprints.rewriter.data.ParentResource;
+import com.streamx.blueprints.rewriter.data.ResourceData;
 import com.streamx.blueprints.rewriter.functions.settings.BaseProcessingSettings;
 import com.streamx.blueprints.rewriter.services.DownloadRequestsSender;
 import com.streamx.blueprints.rewriter.services.UrlComputationService;
@@ -51,7 +51,8 @@ public class ProcessResourceFunction {
     String resourcePath = CloudEventUtils.getSubject(event);
     String payloadType = payload.getType();
     if (!configuration.processablePayloadTypes().contains(payloadType)) {
-      log.tracef("Skipping processing %s - the service is not configured to handle payload type %s", resourcePath, payloadType);
+      log.tracef("Skipping processing %s - the service is not configured to handle payload type %s",
+          resourcePath, payloadType);
       return asRelayedEvent(event);
     }
 
@@ -71,14 +72,19 @@ public class ProcessResourceFunction {
       return asRelayedEvent(event);
     }
 
+    return processIncomingResource(payload, payloadType, resourcePath, event, settings);
+  }
+
+  private Uni<CloudEvent> processIncomingResource(Resource payload, String payloadType,
+      String resourcePath, CloudEvent event, BaseProcessingSettings<?> settings) {
     String resourceContent = payload.getContentAsString();
-    ParentResource resource = toParentResource(resourcePath, resourceContent,
+    ResourceData resource = collectResourceData(resourcePath, resourceContent,
         settings.getHandledResourceClass(), payloadType);
 
     log.infof("Resource %s, having absolute url %s, will be published to StreamX as %s",
         resourcePath, resource.absoluteUrl(), resource.streamxKey());
 
-    if (!CloudEventUtils.isPublishingType(eventType)) {
+    if (!CloudEventUtils.isPublishingType(event.getType())) {
       // TODO implement unpublishing orphaned external resources, for now just relay the event
       // TODO implement it also for publishing an edited resource with some links removed
       return asProcessedEvent(event, resource.streamxKey());
@@ -107,7 +113,8 @@ public class ProcessResourceFunction {
     try {
       Resource resource = CloudEventUtils.getData(event, Resource.class);
       if (resource == null) {
-        log.tracef("Skipping processing %s - payload is null - cannot determine payload type", event.getSubject());
+        log.tracef("Skipping processing %s - payload is null - cannot determine payload type",
+            event.getSubject());
       }
       return resource;
     } catch (RuntimeException ex) {
@@ -127,7 +134,7 @@ public class ProcessResourceFunction {
     return Uni.createFrom().item(adjustedEvent);
   }
 
-  private ParentResource toParentResource(String path, String content,
+  private ResourceData collectResourceData(String path, String content,
       Class<? extends Resource> handledResourceType, String payloadType) {
     if (WebResource.class.isAssignableFrom(handledResourceType)) {
       // web resources later become available by http as files, so must sanitize their paths
@@ -136,16 +143,16 @@ public class ProcessResourceFunction {
           .computeAbsoluteUrlRelativeToConfiguredBaseUrl(sanitizedResourcePath);
       String resourceStreamxKey = urlComputationService
           .asStreamxKeyRelativeToConfiguredBaseUrl(resourceAbsoluteUrl);
-      return new ParentResource(
+      return new ResourceData(
           resourceAbsoluteUrl, resourceStreamxKey, content, payloadType);
     } else {
-      return new ParentResource(
+      return new ResourceData(
           configuration.baseUrlForRelativePaths(), path, content, payloadType);
     }
   }
 
   private CloudEvent downloadExternalResourcesAndReturnAdjustedResource(
-      CloudEvent event, ParentResource resource,
+      CloudEvent event, ResourceData resource,
       Set<ExternalResource> externalResources, BaseProcessingSettings<?> settings) {
 
     String resourceStreamxKey = resource.streamxKey();
