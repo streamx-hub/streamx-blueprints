@@ -74,7 +74,7 @@ public class CloudEventUtils {
     if (!clazz.isInstance(value)) {
       throw new IllegalStateException(
           "Invalid payload type: expected " + clazz.getName() +
-          " but received " + value.getClass().getName()
+              " but received " + value.getClass().getName()
       );
     }
 

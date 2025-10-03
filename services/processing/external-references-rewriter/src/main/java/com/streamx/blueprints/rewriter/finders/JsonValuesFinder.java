@@ -17,7 +17,8 @@ public class JsonValuesFinder extends BaseValuesFinder {
       .addOptions(Option.SUPPRESS_EXCEPTIONS);
 
   @Override
-  public Set<String> doFindMatchingValues(String inputContent, List<String> jsonPaths) {
+  public Set<String> doFindMatchingValues(String inputContent, List<String> jsonPaths)
+      throws Exception {
     DocumentContext document = JsonPath.using(config).parse(inputContent);
     Set<String> foundValues = new LinkedHashSet<>();
 

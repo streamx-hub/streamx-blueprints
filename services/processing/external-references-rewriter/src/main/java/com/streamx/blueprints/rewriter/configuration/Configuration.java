@@ -26,6 +26,10 @@ public interface Configuration {
 
   Optional<Pattern> jsonExternalResourceUrlExclusionsPattern();
 
+  Optional<List<String>> yamlExternalResourceJsonpathSelectors();
+
+  Optional<Pattern> yamlExternalResourceUrlExclusionsPattern();
+
   String emittedPageType();
 
   String emittedWebResourceType();

@@ -56,6 +56,13 @@ public class TestWebServer {
     return computeAbsoluteUrl(relativeUrl);
   }
 
+  public static String uploadJsonFile(String relativeUrl, String content) {
+    httpServer.createContext(relativeUrl, exchange ->
+        handleStringBodyRequest(exchange, content, MediaType.JSON_UTF_8)
+    );
+    return computeAbsoluteUrl(relativeUrl);
+  }
+
   public static String uploadPage(String relativeUrl, String content) {
     httpServer.createContext(relativeUrl, exchange ->
         handleStringBodyRequest(exchange, content, MediaType.HTML_UTF_8)

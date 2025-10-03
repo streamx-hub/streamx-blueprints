@@ -90,9 +90,8 @@ public class LastModifiedTimestampRegistry {
   private LastModifiedTimestamp getLastModifiedTimestamp(String url,
       CloseableHttpResponse response) {
     int status = response.getStatusLine().getStatusCode();
-    Header lastModifiedHeader = response.getFirstHeader(LAST_MODIFIED_HEADER);
-
     if (SUCCESS_STATUSES.contains(status)) {
+      Header lastModifiedHeader = response.getFirstHeader(LAST_MODIFIED_HEADER);
       if (lastModifiedHeader != null) {
         String lastModifiedGmt = lastModifiedHeader.getValue();
         return new LastModifiedTimestamp(lastModifiedGmt, status);
