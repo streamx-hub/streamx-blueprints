@@ -43,8 +43,8 @@ class ProcessPageFunction {
   }
 
   @Scheduled(
-      every = "${streamx.blueprints.sitemap-generator-processing-service.dirty-check.interval}",
-      delayed = "${streamx.blueprints.sitemap-generator-processing-service.dirty-check.delay}",
+      every = "${streamx.blueprints.sitemap-generator.dirty-check.interval}",
+      delayed = "${streamx.blueprints.sitemap-generator.dirty-check.delay}",
       concurrentExecution = ConcurrentExecution.SKIP
   )
   public void publishSitemapIfNeeded() {

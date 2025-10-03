@@ -8,8 +8,8 @@
     <version>2.0.14-SNAPSHOT</version>
   </parent>
 
-  <artifactId>sitemap-generator-processing-service</artifactId>
-  <name>StreamX Blueprints : Sitemap Generator Processing Service</name>
+  <artifactId>sitemap-generator</artifactId>
+  <name>StreamX Blueprints : Sitemap Generator</name>
 
   <properties>
     <jsitemapgenerator.version>4.5</jsitemapgenerator.version>
