@@ -1,6 +1,6 @@
-# Resource Downloader Processing Service
+# Resource Downloader
 
-The `Resource Downloader Processing Service` is responsible for downloading web resources from specified URLs
+The `Resource Downloader` service is responsible for downloading web resources from specified URLs
 and emitting the results to an outgoing resources channel.
 
 ## How it works
@@ -59,12 +59,12 @@ the service automatically decompresses the response body before emitting it.
 
 ## Configuration
 
-- `streamx.blueprints.resource-downloader-processing-service.head-timeout-milliseconds`  
+- `streamx.blueprints.resource-downloader.head-timeout-milliseconds`  
 Defines the timeout (in milliseconds) for the HTTP `HEAD` request used to inspect the headers of a resource at the given URL.  
 **Default**: 1500 milliseconds
 
 
-- `streamx.blueprints.resource-downloader-processing-service.download-timeout-milliseconds`  
+- `streamx.blueprints.resource-downloader.download-timeout-milliseconds`  
 Defines the timeout (in milliseconds) for the HTTP GET request used to download the resource.  
 **Default**: 5000 milliseconds
 

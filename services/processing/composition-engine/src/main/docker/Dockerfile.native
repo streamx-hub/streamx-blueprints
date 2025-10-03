@@ -7,11 +7,11 @@
 #
 # Then, build the image with:
 #
-# docker build -f src/main/docker/Dockerfile.native -t quarkus/composition-engine-processing-service .
+# docker build -f src/main/docker/Dockerfile.native -t quarkus/composition-engine .
 #
 # Then run the container using:
 #
-# docker run -i --rm -p 8080:8080 quarkus/composition-engine-processing-service
+# docker run -i --rm -p 8080:8080 quarkus/composition-engine
 #
 ###
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.9
