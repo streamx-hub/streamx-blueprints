@@ -72,9 +72,8 @@ public class CloudEventUtils {
   private static <T> T parsePojoCloudEventData(PojoCloudEventData<?> pojoData, Class<T> clazz) {
     Object value = pojoData.getValue();
     if (!clazz.isInstance(value)) {
-      throw new IllegalStateException(
-          "Invalid payload type: expected " + clazz.getName() +
-          " but received " + value.getClass().getName()
+      throw new IllegalStateException("Invalid payload type: expected %s but received %s".formatted(
+          clazz.getName(), value.getClass().getName())
       );
     }
 
@@ -119,7 +118,8 @@ public class CloudEventUtils {
     return eventWithData(data, type, subject, getNow());
   }
 
-  public static CloudEvent eventWithData(Object data, String type, String subject, OffsetDateTime time) {
+  public static CloudEvent eventWithData(Object data, String type, String subject,
+      OffsetDateTime time) {
     return builderWithJsonData(data)
         .withType(type)
         .withSubject(subject)

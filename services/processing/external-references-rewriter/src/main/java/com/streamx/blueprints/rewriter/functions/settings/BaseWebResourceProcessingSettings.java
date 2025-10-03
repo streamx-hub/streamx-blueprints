@@ -4,7 +4,8 @@ import com.streamx.blueprints.data.WebResource;
 import com.streamx.blueprints.rewriter.functions.settings.contentprocessing.BaseContentProcessingSettings;
 import com.streamx.blueprints.rewriter.functions.settings.resourcemetadata.WebResourceMetadata;
 
-public abstract class BaseWebResourceProcessingSettings extends BaseProcessingSettings<WebResource> {
+public abstract class BaseWebResourceProcessingSettings extends
+    BaseProcessingSettings<WebResource> {
 
   private String handledResourcePathSuffix;
 

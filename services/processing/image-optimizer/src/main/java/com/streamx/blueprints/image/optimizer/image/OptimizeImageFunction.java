@@ -110,14 +110,15 @@ public class OptimizeImageFunction {
   }
 
   private Asset extractAsset(CloudEvent event) {
+    String subject = event.getSubject();
     try {
       Asset asset = CloudEventUtils.getData(event, Asset.class);
       if (asset == null) {
-        log.warnf("Null data in the incoming CloudEvent %s, expected an asset", event.getSubject());
+        log.warnf("Null data in the incoming CloudEvent %s, expected an asset", subject);
       }
       return asset;
     } catch (RuntimeException ex) {
-      log.warnf("Error extracting an asset from CloudEvent %s: %s", event.getSubject(), ex.getMessage());
+      log.warnf("Error extracting an asset from CloudEvent %s: %s", subject, ex.getMessage());
       return null;
     }
   }

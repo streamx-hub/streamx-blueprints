@@ -7,8 +7,10 @@ import java.nio.ByteBuffer;
  */
 public class WebResource extends Resource {
 
-  public static final String TYPE_PUBLISHED = "com.streamx.blueprints.web-resource.published.v1";
-  public static final String TYPE_UNPUBLISHED = "com.streamx.blueprints.web-resource.unpublished.v1";
+  public static final String TYPE_PUBLISHED =
+      "com.streamx.blueprints.web-resource.published.v1";
+  public static final String TYPE_UNPUBLISHED =
+      "com.streamx.blueprints.web-resource.unpublished.v1";
 
   public WebResource(ByteBuffer content) {
     super(content);

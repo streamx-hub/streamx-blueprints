@@ -112,7 +112,8 @@ abstract class BaseMockedDownloaderTest {
   protected void assertDownloadedAsset(int indexInList, String expectedKey,
       byte[] expectedContent) {
     DownloadedResource resource = downloadedAssets.get(indexInList);
-    assertDownloadedAsset(resource, expectedKey, expectedContent);
+    assertThat(resource.streamxKey()).isEqualTo(expectedKey);
+    assertThat(resource.content()).isEqualTo(expectedContent);
   }
 
   protected void assertDownloadedAssets(List<DownloadedResource> expectedAssets) {
@@ -128,14 +129,9 @@ abstract class BaseMockedDownloaderTest {
     for (int i = 0; i < sortedActualAssets.size(); i++) {
       DownloadedResource actualAsset = sortedActualAssets.get(i);
       DownloadedResource expectedAsset = sortedExpectedAssets.get(i);
-      assertDownloadedAsset(actualAsset, expectedAsset.streamxKey(), expectedAsset.content());
+      assertThat(actualAsset.streamxKey()).isEqualTo(expectedAsset.streamxKey());
+      assertThat(actualAsset.content()).isEqualTo(expectedAsset.content());
     }
-  }
-
-  private void assertDownloadedAsset(DownloadedResource asset, String expectedKey,
-      byte[] expectedContent) {
-    assertThat(asset.streamxKey()).isEqualTo(expectedKey);
-    assertThat(asset.content()).isEqualTo(expectedContent);
   }
 
   protected void verifyDownloadedOnce(String url) {

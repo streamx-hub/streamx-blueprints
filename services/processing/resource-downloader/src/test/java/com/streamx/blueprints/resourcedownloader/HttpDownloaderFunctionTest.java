@@ -1,6 +1,7 @@
 package com.streamx.blueprints.resourcedownloader;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -20,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPOutputStream;
 import org.eclipse.microprofile.reactive.messaging.Message;
@@ -212,7 +214,10 @@ class HttpDownloaderFunctionTest {
     await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
       List<CloudEvent> matchingEvents = downloadedResourcesSink.received().stream()
           .map(Message::getPayload)
-          .filter(event -> CloudEventUtils.getData(event, Resource.class).getType().equals(payloadType))
+          .filter(event -> {
+            Resource payload = requireNonNull(CloudEventUtils.getData(event, Resource.class));
+            return Objects.equals(payload.getType(), payloadType);
+          })
           .toList();
       assertThat(matchingEvents).hasSize(1);
       matchingEventsRef.set(matchingEvents);

@@ -79,14 +79,15 @@ public class AdjustImgSrcFunction {
       return null;
     }
 
+    String subject = event.getSubject();
     try {
       Page page = CloudEventUtils.getData(event, Page.class);
       if (page == null) {
-        log.warnf("Null data in the incoming CloudEvent %s, expected a page", event.getSubject());
+        log.warnf("Null data in the incoming CloudEvent %s, expected a page", subject);
       }
       return page;
     } catch (RuntimeException ex) {
-      log.warnf("Error extracting a page from CloudEvent %s: %s", event.getSubject(), ex.getMessage());
+      log.warnf("Error extracting a page from CloudEvent %s: %s", subject, ex.getMessage());
       return null;
     }
   }

@@ -186,7 +186,8 @@ public class HttpDownloaderFunction {
   private <T extends Resource> void emit(String key, T payload, String eventType) {
     String payloadClass = payload.getClass().getSimpleName();
     String payloadType = payload.getType();
-    log.tracef("Emitting %s %s with event type %s and payload type %s", payloadClass, key, eventType, payloadType);
+    log.tracef("Emitting %s at key %s with event type %s and payload type %s", payloadClass, key,
+        eventType, payloadType);
 
     CloudEvent cloudEvent = CloudEventUtils.eventWithData(payload, eventType, key);
     resourcesEmitter.send(cloudEvent);
