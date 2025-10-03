@@ -16,6 +16,7 @@
   <modules>
     <module>composition-engine</module>
     <module>external-references-rewriter</module>
+    <module>image-optimizer</module>
     <module>resource-downloader</module>
   </modules>
 
