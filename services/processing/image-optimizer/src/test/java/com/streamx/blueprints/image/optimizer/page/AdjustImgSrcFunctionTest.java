@@ -105,14 +105,14 @@ class AdjustImgSrcFunctionTest {
         "<html>",
 
         // note: this image was not optimized yet
-        "  Image 1: <img src='%s' />".formatted(PNG_FILE.getPath()),
+        "  Image 1: <img src='%s' />".formatted(normalizedPath(PNG_FILE)),
 
         // note: multiple lines tag should be tolerated while searching for img src to be adjusted
         "  Image 2: <img  src =",
-        "                  '%s' />".formatted(JPG_FILE.getPath()),
+        "                  '%s' />".formatted(normalizedPath(JPG_FILE)),
 
         // note: unclosed tag should be tolerated while searching for img src to be adjusted
-        "  Image 3: <img src='%s'>".formatted(GIF_FILE.getPath()),
+        "  Image 3: <img src='%s'>".formatted(normalizedPath(GIF_FILE)),
 
         // note: non-matching closing tag should be tolerated
         "</body>"
@@ -132,9 +132,9 @@ class AdjustImgSrcFunctionTest {
     assertThat(adjustedHtml)
         .isNotEqualTo(html)
         .contains(
-            PNG_FILE.getPath(),
-            JPG_FILE.getPath().replace(".jpg", "-optimized.webp"),
-            GIF_FILE.getPath().replace(".gif", "-optimized.webp")
+            normalizedPath(PNG_FILE),
+            normalizedPath(JPG_FILE).replace(".jpg", "-optimized.webp"),
+            normalizedPath(GIF_FILE).replace(".gif", "-optimized.webp")
         );
 
     // and: the current library re-formats (and improves) html code
@@ -156,7 +156,7 @@ class AdjustImgSrcFunctionTest {
     // given: prepare optimized image and page to be published (referencing that image)
     publishOptimizedImage(JPG_FILE);
     String pagePath = "/pages/page.html";
-    String html = "<html><img src ='%s' /></html>".formatted(JPG_FILE.getPath());
+    String html = "<html><img src ='%s' /></html>".formatted(normalizedPath(JPG_FILE));
 
     // and: publish the page
     CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
@@ -166,7 +166,7 @@ class AdjustImgSrcFunctionTest {
 
     // when: simulate user edits the same page (removes html tags and changes images to other one):
     publishOptimizedImage(PNG_FILE);
-    String editedHtml = "<img src ='%s' />".formatted(PNG_FILE.getPath());
+    String editedHtml = "<img src ='%s' />".formatted(normalizedPath(PNG_FILE));
 
     // and: the page is published
     CloudEvent editedPageEvent = createPublishPageEvent(pagePath, editedHtml);
@@ -192,7 +192,7 @@ class AdjustImgSrcFunctionTest {
     publishOptimizedImage(JPG_FILE);
 
     String pagePath = "/pages/page.html";
-    String html = "<html><img src='%s?param=value' /></html>".formatted(JPG_FILE.getPath());
+    String html = "<html><img src='%s?param=value' /></html>".formatted(normalizedPath(JPG_FILE));
 
     // when: publish the page
     CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
@@ -223,7 +223,7 @@ class AdjustImgSrcFunctionTest {
           <img src="%s"/>
           <img src="not-optimized-image.jpg"/>
         </html>
-        """.formatted(JPG_FILE.getPath());
+        """.formatted(normalizedPath(JPG_FILE));
 
     // when: publish the page
     CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
@@ -253,7 +253,7 @@ class AdjustImgSrcFunctionTest {
     unpublishImage(JPG_FILE);
 
     String pagePath = "/pages/page.html";
-    String html = "<html><img src ='%s' /></html>".formatted(JPG_FILE.getPath());
+    String html = "<html><img src ='%s' /></html>".formatted(normalizedPath(JPG_FILE));
 
     // when: publish the page
     CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
@@ -267,7 +267,6 @@ class AdjustImgSrcFunctionTest {
   void shouldNotAdjustImgSrc_ToOptimizedImage_IfOptimizingImageHasFailed() throws IOException {
     // given: attempt to optimize invalid image file
     File invalidJpgFile = new File(IMAGES_DIR, "text-file-with-jpg-extension.jpg");
-    String invalidJpgFilePath = invalidJpgFile.getPath();
 
     CloudEvent publishAssetEvent = createPublishAssetEvent(invalidJpgFile);
     resourcesChannel.send(publishAssetEvent);
@@ -276,7 +275,7 @@ class AdjustImgSrcFunctionTest {
 
     // when: publish page that references this invalid image
     String pagePath = "/pages/page.html";
-    String html = "<html><img src ='%s' /></html>".formatted(invalidJpgFilePath);
+    String html = "<html><img src ='%s' /></html>".formatted(normalizedPath(invalidJpgFile));
 
     CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
     resourcesChannel.send(pageEvent);
@@ -291,7 +290,7 @@ class AdjustImgSrcFunctionTest {
     publishOptimizedImage(PNG_FILE);
 
     String pagePath = "/pages/page.html";
-    String html = "<html><img src='" + PNG_FILE.getPath() + "' /></html>";
+    String html = "<html><img src='" + normalizedPath(PNG_FILE) + "' /></html>";
     CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
     resourcesChannel.send(pageEvent);
 
@@ -327,7 +326,7 @@ class AdjustImgSrcFunctionTest {
     publishOptimizedImage(PNG_FILE);
 
     String pagePath = "/sites/site.html";
-    String html = "<html><img src='%s' /></html>".formatted(PNG_FILE.getPath());
+    String html = "<html><img src='%s' /></html>".formatted(normalizedPath(PNG_FILE));
     CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
 
     // when
@@ -384,7 +383,7 @@ class AdjustImgSrcFunctionTest {
   }
 
   private static CloudEvent createPublishAssetEvent(File assetFile) throws IOException {
-    String path = assetFile.getPath();
+    String path = normalizedPath(assetFile);
     byte[] content = FileUtils.readFileToByteArray(assetFile);
     return CloudEventUtils.eventWithData(new Asset(content), Asset.TYPE_PUBLISHED, path);
   }
@@ -396,7 +395,7 @@ class AdjustImgSrcFunctionTest {
 
   private static CloudEvent createUnpublishAssetEvent(File assetFile) {
     return CloudEventUtils.eventWithData(new Asset((ByteBuffer) null), Asset.TYPE_UNPUBLISHED,
-        assetFile.getPath());
+        normalizedPath(assetFile));
   }
 
   private CloudEvent waitForAdjustedOutputEvent(CloudEvent inputEvent) {
@@ -459,7 +458,7 @@ class AdjustImgSrcFunctionTest {
 
   private void verifyOptimizedImageEventIsReceived(File imageFile, String eventType) {
     String expectedOptimizedImagePath = optimizedImagePathsService
-        .computePathForOptimizedImage(imageFile.getPath());
+        .computePathForOptimizedImage(normalizedPath(imageFile));
 
     await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
       Stream<CloudEvent> matchingEvents = optimizedAssetsSink.received()
@@ -482,5 +481,9 @@ class AdjustImgSrcFunctionTest {
         .map(Message::getPayload)
         .filter(event -> PAGE_EVENTS.contains(event.getType()))
         .toList();
+  }
+
+  private static String normalizedPath(File file) {
+    return file.getPath().replace('\\', '/');
   }
 }
