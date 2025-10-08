@@ -24,11 +24,8 @@ import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 
-@Disabled
 abstract class AbstractDownloaderFunctionTest {
-
 
   protected static final String EMITTED_PAGE_TYPE = "page/external";
   protected static final String EMITTED_WEB_RESOURCE_TYPE = "web-resource/external";

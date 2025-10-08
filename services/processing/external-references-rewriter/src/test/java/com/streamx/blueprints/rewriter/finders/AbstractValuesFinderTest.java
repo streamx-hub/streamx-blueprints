@@ -9,9 +9,9 @@ import java.util.Set;
 abstract class AbstractValuesFinderTest<T extends AbstractValuesFinderTest<T>> {
 
   private String input;
-  private List<String> lookupPaths;
-  private Set<String> values;
-  private Exception exception;
+  private List<String> lookupSelectors;
+  private Set<String> foundValues;
+  private Exception givenException;
 
   protected abstract BaseValuesFinder getFinder();
 
@@ -21,39 +21,39 @@ abstract class AbstractValuesFinderTest<T extends AbstractValuesFinderTest<T>> {
   }
 
 
-  protected T andGivenPath(String path) {
-    this.lookupPaths = List.of(path);
+  protected T andGivenLookupSelector(String selector) {
+    this.lookupSelectors = List.of(selector);
     return (T) this;
   }
 
-  protected T andGivenLookupPaths(String... paths) {
-    this.lookupPaths = List.of(paths);
+  protected T andGivenLookupSelectors(String... selectors) {
+    this.lookupSelectors = List.of(selectors);
     return (T) this;
   }
 
   protected T whenFindMatchingValues() {
     try {
-      this.values = getFinder().findMatchingValues(input, lookupPaths);
+      this.foundValues = getFinder().findMatchingValues(input, lookupSelectors);
     } catch (Exception ex) {
       Log.warn("Exception", ex);
-      this.exception = ex;
+      this.givenException = ex;
     }
     return (T) this;
   }
 
   protected void thenExpectFoundValue(String expectedValue) {
-    assertThat(exception).isNull();
-    assertThat(values).containsOnly(expectedValue);
+    assertThat(givenException).isNull();
+    assertThat(foundValues).containsOnly(expectedValue);
   }
 
   protected void thenExpectFoundValues(String... expectedValues) {
-    assertThat(exception).isNull();
-    assertThat(values).containsExactly(expectedValues);
+    assertThat(givenException).isNull();
+    assertThat(foundValues).containsExactly(expectedValues);
   }
 
   protected void thenExpectNoFoundValues() {
-    assertThat(exception).isNull();
-    assertThat(values).isEmpty();
+    assertThat(givenException).isNull();
+    assertThat(foundValues).isEmpty();
   }
 
 }

@@ -31,7 +31,7 @@ class JsonValuesFinderTest extends AbstractValuesFinderTest<JsonValuesFinderTest
           "total": 3
         }
         """)
-        .andGivenLookupPaths("$.data[*].image")
+        .andGivenLookupSelectors("$.data[*].image")
         .whenFindMatchingValues()
         .thenExpectFoundValues(
             "/en/media_13aa.png?width=1200&format=jpg",
@@ -73,7 +73,7 @@ class JsonValuesFinderTest extends AbstractValuesFinderTest<JsonValuesFinderTest
           ]
         }
         """)
-        .andGivenLookupPaths("$.data[*].image", "$.data[*].title")
+        .andGivenLookupSelectors("$.data[*].image", "$.data[*].title")
         .whenFindMatchingValues()
         .thenExpectFoundValues(
             "image-3.jpg", "image-2.jpg", "image-1.jpg",
@@ -84,7 +84,7 @@ class JsonValuesFinderTest extends AbstractValuesFinderTest<JsonValuesFinderTest
   @Test
   void shouldFindNumericValues() {
     givenInput("{ \"value\": 1 }")
-        .andGivenLookupPaths("$.value")
+        .andGivenLookupSelectors("$.value")
         .whenFindMatchingValues()
         .thenExpectFoundValues("1");
   }
@@ -92,7 +92,7 @@ class JsonValuesFinderTest extends AbstractValuesFinderTest<JsonValuesFinderTest
   @Test
   void shouldFindNothingWhenNoMatches() {
     givenInput("{ \"value\": 1 }")
-        .andGivenLookupPaths("$.data[*].image")
+        .andGivenLookupSelectors("$.data[*].image")
         .whenFindMatchingValues()
         .thenExpectFoundValues();
   }
@@ -100,7 +100,7 @@ class JsonValuesFinderTest extends AbstractValuesFinderTest<JsonValuesFinderTest
   @Test
   void shouldNotThrowExceptionForInvalidJson() {
     givenInput("Not a JSON")
-        .andGivenLookupPaths("$")
+        .andGivenLookupSelectors("$")
         .whenFindMatchingValues()
         .thenExpectFoundValue("Not a JSON");
   }
@@ -108,7 +108,7 @@ class JsonValuesFinderTest extends AbstractValuesFinderTest<JsonValuesFinderTest
   @Test
   void shouldNotThrowExceptionForInvalidJsonPath() {
     givenInput("{}")
-        .andGivenLookupPaths("$.data[?(@.price > )]\n")
+        .andGivenLookupSelectors("$.data[?(@.price > )]\n")
         .whenFindMatchingValues()
         .thenExpectNoFoundValues();
   }

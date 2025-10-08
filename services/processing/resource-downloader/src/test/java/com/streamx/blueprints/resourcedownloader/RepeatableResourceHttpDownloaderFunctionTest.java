@@ -33,17 +33,16 @@ import org.junit.jupiter.api.Test;
 @TestProfile(RepeatableResourceHttpDownloaderFunctionTest.Configuration.class)
 class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
 
-  public static final String TEST_LAST_MODIFIED_HEADER_VALUE = "Tue, 05 Aug 2025 11:13:45 GMT";
+  private static final String TEST_LAST_MODIFIED_HEADER_VALUE = "Tue, 05 Aug 2025 11:13:45 GMT";
 
   @Inject
   MockWebClientsFactory mockWebClientsFactory;
 
-  CloseableHttpClient httpClient;
-
-  CloseableHttpResponse headHttpResponse;
-  StatusLine headStatusLine;
-  CloseableHttpResponse getHttpResponse;
-  StatusLine getStatusLine;
+  private CloseableHttpClient httpClient;
+  private CloseableHttpResponse headHttpResponse;
+  private StatusLine headStatusLine;
+  private CloseableHttpResponse getHttpResponse;
+  private StatusLine getStatusLine;
 
 
   @BeforeEach

@@ -26,7 +26,7 @@ class YamlValuesFinderTest extends AbstractValuesFinderTest<YamlValuesFinderTest
             target: /pl-index.json
             properties:
         """)
-        .andGivenLookupPaths("$.indices.[*].target")
+        .andGivenLookupSelectors("$.indices.[*].target")
         .whenFindMatchingValues()
         .thenExpectFoundValues("/en-index.json", "/pl-index.json");
   }
@@ -41,7 +41,7 @@ class YamlValuesFinderTest extends AbstractValuesFinderTest<YamlValuesFinderTest
           item2:
             value: 2
         """)
-        .andGivenLookupPaths("$.numbers.[*].value")
+        .andGivenLookupSelectors("$.numbers.[*].value")
         .whenFindMatchingValues()
         .thenExpectFoundValues("1", "2");
   }
@@ -55,15 +55,15 @@ class YamlValuesFinderTest extends AbstractValuesFinderTest<YamlValuesFinderTest
           item2:
             value: 2
         """)
-        .andGivenLookupPaths("$.numbers.[*].key")
+        .andGivenLookupSelectors("$.numbers.[*].key")
         .whenFindMatchingValues()
-        .thenExpectFoundValues();
+        .thenExpectNoFoundValues();
   }
 
   @Test
   void shouldNotThrowExceptionForInvalidJson() {
     givenInput("Not a YAML")
-        .andGivenLookupPaths("$")
+        .andGivenLookupSelectors("$")
         .whenFindMatchingValues()
         .thenExpectFoundValue("Not a YAML");
   }
@@ -71,7 +71,7 @@ class YamlValuesFinderTest extends AbstractValuesFinderTest<YamlValuesFinderTest
   @Test
   void shouldNotThrowExceptionForInvalidJsonPath() {
     givenInput("")
-        .andGivenLookupPaths("$.data[?(@.price > )]\n")
+        .andGivenLookupSelectors("$.data[?(@.price > )]\n")
         .whenFindMatchingValues()
         .thenExpectNoFoundValues();
   }

@@ -19,7 +19,7 @@ class XmlValuesFinderTest extends AbstractValuesFinderTest<XmlValuesFinderTest> 
           </container>
         </root>
         """)
-        .andGivenLookupPaths("//image/@src")
+        .andGivenLookupSelectors("//image/@src")
         .whenFindMatchingValues()
         .thenExpectFoundValues("a.png", "b.png", "c.png");
   }
@@ -34,7 +34,7 @@ class XmlValuesFinderTest extends AbstractValuesFinderTest<XmlValuesFinderTest> 
           <image src='http://www.streamx.com/logo.png' />
         </root>
         """)
-        .andGivenLookupPaths("//image[not(contains(@src, '://www.google.com/'))]/@src")
+        .andGivenLookupSelectors("//image[not(contains(@src, '://www.google.com/'))]/@src")
         .whenFindMatchingValues()
         .thenExpectFoundValues("a.png", "b.png", "http://www.streamx.com/logo.png");
   }
@@ -48,7 +48,7 @@ class XmlValuesFinderTest extends AbstractValuesFinderTest<XmlValuesFinderTest> 
           <image src='c.png' />
         </root>
         """)
-        .andGivenPath("//image[last()]/@src")
+        .andGivenLookupSelector("//image[last()]/@src")
         .whenFindMatchingValues()
         .thenExpectFoundValue("c.png");
   }
@@ -64,7 +64,7 @@ class XmlValuesFinderTest extends AbstractValuesFinderTest<XmlValuesFinderTest> 
           <image src='e.png' />
         </root>
         """)
-        .andGivenPath("//image[position() mod 2 = 0]/@src")
+        .andGivenLookupSelector("//image[position() mod 2 = 0]/@src")
         .whenFindMatchingValues()
         .thenExpectFoundValues("b.png", "d.png");
   }
@@ -78,7 +78,7 @@ class XmlValuesFinderTest extends AbstractValuesFinderTest<XmlValuesFinderTest> 
           <image id='3' src='c.png' />
         </root>
         """)
-        .andGivenPath("//image[@id = '2']/@src")
+        .andGivenLookupSelector("//image[@id = '2']/@src")
         .whenFindMatchingValues()
         .thenExpectFoundValue("b.png");
   }
@@ -100,7 +100,7 @@ class XmlValuesFinderTest extends AbstractValuesFinderTest<XmlValuesFinderTest> 
             </block>
         </root>
         """)
-        .andGivenPath("/root/container[2]/p/image/@src")
+        .andGivenLookupSelector("/root/container[2]/p/image/@src")
         .whenFindMatchingValues()
         .thenExpectFoundValue("b.png");
   }
@@ -108,7 +108,7 @@ class XmlValuesFinderTest extends AbstractValuesFinderTest<XmlValuesFinderTest> 
   @Test
   void shouldNotThrowExceptionForInvalidXml() {
     givenInput("<root arg=value>")
-        .andGivenPath("//*")
+        .andGivenLookupSelector("//*")
         .whenFindMatchingValues()
         .thenExpectNoFoundValues();
   }
@@ -116,7 +116,7 @@ class XmlValuesFinderTest extends AbstractValuesFinderTest<XmlValuesFinderTest> 
   @Test
   void shouldNotThrowExceptionForInvalidXpath() {
     givenInput("<root />")
-        .andGivenPath("//root[is-foo(@class, 'foo')]")
+        .andGivenLookupSelector("//root[is-foo(@class, 'foo')]")
         .whenFindMatchingValues()
         .thenExpectNoFoundValues();
   }

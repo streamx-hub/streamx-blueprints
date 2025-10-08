@@ -17,7 +17,7 @@ class HtmlValuesFinderTest extends AbstractValuesFinderTest<HtmlValuesFinderTest
           </span>
         </div>
         """)
-        .andGivenPath("//img/@src")
+        .andGivenLookupSelector("//img/@src")
         .whenFindMatchingValues()
         .thenExpectFoundValues("a.png", "b.png", "c.png");
   }
@@ -30,7 +30,7 @@ class HtmlValuesFinderTest extends AbstractValuesFinderTest<HtmlValuesFinderTest
         <img src='b.png'>
         <img src='http://www.streamx.com/logo.png'>
         """)
-        .andGivenLookupPaths("//img[not(contains(@src, '://www.google.com/'))]/@src")
+        .andGivenLookupSelectors("//img[not(contains(@src, '://www.google.com/'))]/@src")
         .whenFindMatchingValues()
         .thenExpectFoundValues("a.png", "b.png", "http://www.streamx.com/logo.png");
   }
@@ -42,7 +42,7 @@ class HtmlValuesFinderTest extends AbstractValuesFinderTest<HtmlValuesFinderTest
         <img src='b.png'>
         <img src='c.png'>
         """)
-        .andGivenLookupPaths("//img[last()]/@src")
+        .andGivenLookupSelectors("//img[last()]/@src")
         .whenFindMatchingValues()
         .thenExpectFoundValue("c.png");
   }
@@ -56,7 +56,7 @@ class HtmlValuesFinderTest extends AbstractValuesFinderTest<HtmlValuesFinderTest
         <img src='d.png'>
         <img src='e.png'>
         """)
-        .andGivenLookupPaths("//img[position() mod 2 = 0]/@src")
+        .andGivenLookupSelectors("//img[position() mod 2 = 0]/@src")
         .whenFindMatchingValues()
         .thenExpectFoundValues("b.png", "d.png");
   }
@@ -64,7 +64,7 @@ class HtmlValuesFinderTest extends AbstractValuesFinderTest<HtmlValuesFinderTest
   @Test
   void shouldFindValuesWithAppendedFixedValue() {
     givenHtmlBodyContent("<header data-header-path='http://www.google.com/header' />")
-        .andGivenLookupPaths("concat(//header/@data-header-path, '.plain.html')")
+        .andGivenLookupSelectors("concat(//header/@data-header-path, '.plain.html')")
         .whenFindMatchingValues()
         .thenExpectFoundValues("http://www.google.com/header.plain.html");
   }
@@ -76,7 +76,7 @@ class HtmlValuesFinderTest extends AbstractValuesFinderTest<HtmlValuesFinderTest
         <img id=2 src='b.png'>
         <img id=3 src='c.png'>
         """)
-        .andGivenLookupPaths("//img[@id = '2']/@src")
+        .andGivenLookupSelectors("//img[@id = '2']/@src")
         .whenFindMatchingValues()
         .thenExpectFoundValue("b.png");
   }
@@ -100,7 +100,7 @@ class HtmlValuesFinderTest extends AbstractValuesFinderTest<HtmlValuesFinderTest
           </body>
         </html>
         """)
-        .andGivenLookupPaths("/html/body/div[2]/p/img/@src")
+        .andGivenLookupSelectors("/html/body/div[2]/p/img/@src")
         .whenFindMatchingValues()
         .thenExpectFoundValue("b.png");
   }
@@ -120,7 +120,7 @@ class HtmlValuesFinderTest extends AbstractValuesFinderTest<HtmlValuesFinderTest
           </head>
         </html>
         """)
-        .andGivenLookupPaths("//meta[@property='og:image' or @name='twitter:image']/@content")
+        .andGivenLookupSelectors("//meta[@property='og:image' or @name='twitter:image']/@content")
         .whenFindMatchingValues()
         .thenExpectFoundValues(
             "http://my-server.com/image.png",
@@ -141,7 +141,7 @@ class HtmlValuesFinderTest extends AbstractValuesFinderTest<HtmlValuesFinderTest
         "/content/page-1/image_777.coreimg.85.1200.jpeg/999/lava-rock-formation.jpeg 1200w,",
         "/content/page-1/image_777.coreimg.85.1600.jpeg/999/lava-rock-formation.jpeg 1600w",
         "'  height='509'  alt='Gray lava rock formation' />"))
-        .andGivenLookupPaths("//img/@src", "//img/@srcset")
+        .andGivenLookupSelectors("//img/@src", "//img/@srcset")
         .whenFindMatchingValues()
         .thenExpectFoundValues(
             "/content/page-1/image_777.coreimg.jpeg/999/lava-rock-formation.jpeg",
@@ -167,7 +167,7 @@ class HtmlValuesFinderTest extends AbstractValuesFinderTest<HtmlValuesFinderTest
               </picture>
             </div>
         """)
-        .andGivenLookupPaths("//picture/source/@srcset", "//picture/img/@src")
+        .andGivenLookupSelectors("//picture/source/@srcset", "//picture/img/@src")
         .whenFindMatchingValues()
         .thenExpectFoundValues(
             "./image1.png",
@@ -187,7 +187,7 @@ class HtmlValuesFinderTest extends AbstractValuesFinderTest<HtmlValuesFinderTest
   @Test
   void shouldNotThrowExceptionForInvalidHtml() {
     givenInput("foobar")
-        .andGivenPath("//*")
+        .andGivenLookupSelector("//*")
         .whenFindMatchingValues()
         .thenExpectFoundValue("foobar");
   }
@@ -195,7 +195,7 @@ class HtmlValuesFinderTest extends AbstractValuesFinderTest<HtmlValuesFinderTest
   @Test
   void shouldNotThrowExceptionForInvalidXpath() {
     givenInput("any")
-        .andGivenPath("//div[is-foo(@class, 'foo')]")
+        .andGivenLookupSelector("//div[is-foo(@class, 'foo')]")
         .whenFindMatchingValues()
         .thenExpectNoFoundValues();
   }

@@ -17,5 +17,5 @@ public interface Configuration {
   Optional<Pattern> urlRepeatingPattern();
 
   @WithDefault("30000")
-  long repeatDurationMillis();
+  long repeatIntervalMillis();
 }
