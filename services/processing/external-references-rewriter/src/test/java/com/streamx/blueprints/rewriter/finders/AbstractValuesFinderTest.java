@@ -11,7 +11,7 @@ abstract class AbstractValuesFinderTest<T extends AbstractValuesFinderTest<T>> {
   private String input;
   private List<String> lookupSelectors;
   private Set<String> foundValues;
-  private Exception givenException;
+  private Exception thrownException;
 
   protected abstract BaseValuesFinder getFinder();
 
@@ -36,23 +36,23 @@ abstract class AbstractValuesFinderTest<T extends AbstractValuesFinderTest<T>> {
       this.foundValues = getFinder().findMatchingValues(input, lookupSelectors);
     } catch (Exception ex) {
       Log.warn("Exception", ex);
-      this.givenException = ex;
+      this.thrownException = ex;
     }
     return (T) this;
   }
 
   protected void thenExpectFoundValue(String expectedValue) {
-    assertThat(givenException).isNull();
+    assertThat(thrownException).isNull();
     assertThat(foundValues).containsOnly(expectedValue);
   }
 
   protected void thenExpectFoundValues(String... expectedValues) {
-    assertThat(givenException).isNull();
+    assertThat(thrownException).isNull();
     assertThat(foundValues).containsExactly(expectedValues);
   }
 
   protected void thenExpectNoFoundValues() {
-    assertThat(givenException).isNull();
+    assertThat(thrownException).isNull();
     assertThat(foundValues).isEmpty();
   }
 
