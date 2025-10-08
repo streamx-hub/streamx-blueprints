@@ -10,6 +10,7 @@ import jakarta.inject.Inject;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
 
@@ -37,7 +38,7 @@ public class OptimizedImagePathsService {
   }
 
   public String computePathForOptimizedImage(String filePath) {
-    String fileNameAndExtension = getFileNameAndExtension(filePath);
+    String fileNameAndExtension = FilenameUtils.getName(filePath);
     Matcher matcher = FILE_NAME_AND_EXTENSION_AND_QUERY_STRING.matcher(fileNameAndExtension);
     if (matcher.find()) {
       String fileName = matcher.group(1);
@@ -48,14 +49,6 @@ public class OptimizedImagePathsService {
       log.errorf("Error creating path for optimized image, for input file %s", filePath);
       return filePath;
     }
-  }
-
-  private static String getFileNameAndExtension(String filePath) {
-    String normalizedFilePath = filePath.replace('\\', '/');
-    if (normalizedFilePath.contains("/")) {
-      return StringUtils.substringAfterLast(normalizedFilePath, '/');
-    }
-    return filePath;
   }
 
   public boolean isOptimizedImagePath(String filePath) {
