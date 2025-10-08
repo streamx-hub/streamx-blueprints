@@ -233,11 +233,7 @@ public class HttpDownloaderFunction {
     String payloadType = payload.getType();
     log.tracef("Emitting %s %s with event type %s and payload type %s", payloadClass, key, eventType, payloadType);
 
-    CloudEvent cloudEvent = CloudEventUtils.builderWithJsonData(payload)
-        .withSubject(key)
-        .withType(eventType)
-        .build();
-
+    CloudEvent cloudEvent = CloudEventUtils.eventWithData(payload, eventType, key);
     resourcesEmitter.send(cloudEvent);
   }
 
