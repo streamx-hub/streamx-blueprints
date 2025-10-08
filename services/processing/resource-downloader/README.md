@@ -36,6 +36,13 @@ If the resource has not changed since the last successful download, the request 
 - For binary resources (assets), if the HTTP response includes a `Content-Encoding: gzip` header,
 the service automatically decompresses the response body before emitting it.
 
+- For resources that might change or get frequently updated by other services, we can register such
+  a resource for interval download.  
+  By configuring `streamx.blueprints.resource-downloader.url-repeating-pattern` (optionally
+  `streamx.blueprints.resource-downloader.repeat-interval-millis`)
+  We can enable this feature. Every configurable interval period, the service will check if the
+  resource has changed, and download it again to the storage if so.
+
 ## Sample usage (relevant code snippets only):
 ```java
   @Channel(Channels.DOWNLOAD_REQUESTS)
@@ -60,13 +67,27 @@ the service automatically decompresses the response body before emitting it.
 ## Configuration
 
 - `streamx.blueprints.resource-downloader.head-timeout-milliseconds`  
-Defines the timeout (in milliseconds) for the HTTP `HEAD` request used to inspect the headers of a resource at the given URL.  
+  Defines the timeout (in milliseconds) for the HTTP `HEAD` request used to inspect the headers of a
+  resource at the given URL.
 **Default**: 1500 milliseconds
 
 
 - `streamx.blueprints.resource-downloader.download-timeout-milliseconds`  
 Defines the timeout (in milliseconds) for the HTTP GET request used to download the resource.  
 **Default**: 5000 milliseconds
+
+
+- `streamx.blueprints.resource-downloader.url-repeating-pattern`
+  A regular expression is used to include certain external resource URLs (such as indexes updated
+  frequently) for repeating in configurable intervals.
+  Optional — if not set, then the repeating function is turned off.
+
+
+- `streamx.blueprints.resource-downloader.repeat-interval-millis`
+  Defines the time (in milliseconds) between resource that matches `url-repeating-pattern`, will be
+  requested for download, and if changed
+  new version of it will be stored at the delivery service.
+  **Default**: 30000 milliseconds
 
 
 ### Channels

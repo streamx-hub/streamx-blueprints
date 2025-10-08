@@ -97,10 +97,10 @@ public class ProcessResourceFunction {
         resource.streamxKey(),
         externalResources.stream().map(ExternalResource::getPaths).collect(Collectors.toList())
     );
-
-    return downloadExternalResourcesAndReturnAdjustedResource(
+    CloudEvent cloudEvent = downloadExternalResourcesAndReturnAdjustedResource(
         event, resource, externalResources, settings
     );
+    return Uni.createFrom().item(cloudEvent);
   }
 
   private Resource extractResource(CloudEvent event) {
@@ -144,7 +144,7 @@ public class ProcessResourceFunction {
     }
   }
 
-  private Uni<CloudEvent> downloadExternalResourcesAndReturnAdjustedResource(
+  private CloudEvent downloadExternalResourcesAndReturnAdjustedResource(
       CloudEvent event, ParentResource resource,
       Set<ExternalResource> externalResources, BaseProcessingSettings<?> settings) {
 
@@ -161,8 +161,7 @@ public class ProcessResourceFunction {
     log.tracef("Publishing resource %s with all external links adjusted to local paths",
         resourceStreamxKey);
 
-    CloudEvent adjustedEvent = CloudEventUtils.eventWithData(adjustedResource,
+    return CloudEventUtils.eventWithData(adjustedResource,
         event.getType(), resource.streamxKey());
-    return Uni.createFrom().item(adjustedEvent);
   }
 }
