@@ -1,29 +1,25 @@
 package com.streamx.blueprints.image.optimizer.image;
 
-
 import static com.streamx.blueprints.image.optimizer.image.ImageOptimizer.OPTIMIZED_IMAGE_EXTENSION;
+import static java.util.Objects.requireNonNull;
 
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Asset;
+import com.streamx.blueprints.image.optimizer.Channels;
 import com.streamx.blueprints.image.optimizer.configuration.Configuration;
 import com.streamx.blueprints.image.optimizer.image.exceptions.ImageOptimizationException;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
-import io.smallrye.reactive.messaging.GenericPayload;
+import io.cloudevents.CloudEvent;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.time.OffsetDateTime;
 import java.util.regex.Pattern;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class OptimizeImageFunction {
-
-  public static final String INCOMING_ASSETS_CHANNEL = "incoming-assets";
-  public static final String OPTIMIZED_ASSETS_CHANNEL = "optimized-assets";
 
   private Pattern lowercasedOptimizedFilePathsPattern;
   private String optimizedImageFileNameSuffixAndExtension;
@@ -36,6 +32,9 @@ public class OptimizeImageFunction {
   Configuration configuration;
 
   @Inject
+  AssetEventTypeStore assetActionStore;
+
+  @Inject
   OptimizedImagePathsService optimizedImagePathsService;
 
   @PostConstruct
@@ -44,23 +43,24 @@ public class OptimizeImageFunction {
         Pattern.compile(configuration.optimizedFilePathsPattern().toLowerCase());
     optimizedImageFileNameSuffixAndExtension =
         configuration.optimizedImageFileNameSuffix() + OPTIMIZED_IMAGE_EXTENSION;
-    imageOptimizer = new ImageOptimizer(configuration);
+    imageOptimizer = new ImageOptimizer(configuration.webpConversion());
   }
 
   /**
-   * Receives the asset from incoming channel and if the {@code action} is PUBLISH - creates its
-   * webp representation and publishes it to outgoing channel.
-   * In case of any validation errors - the webp image is not generated.
-   * If the {@code action} is UNPUBLISH - sends an unpublish message for the optimized image
-   * to the outgoing channel.
+   * Receives the asset from incoming channel and if the event is a publish event - creates its webp
+   * representation and publishes it to outgoing channel. In case of any validation errors - the
+   * webp image is not generated. If the event is an unpublish event - sends an unpublish event for
+   * the optimized image to the outgoing channel.
    *
-   * @return The optimized webp image ingestion message, or null
+   * @return The optimized webp image ingestion event, or null
    */
-  @Incoming(INCOMING_ASSETS_CHANNEL)
-  @Outgoing(OPTIMIZED_ASSETS_CHANNEL)
-  public GenericPayload<Asset> process(Asset asset, Key key, Action action, EventTime eventTime) {
-    String filePath = key.getValue();
-    log.tracef("Processing file [%s] with eventTime %s", filePath, eventTime);
+  @Incoming(Channels.INCOMING_ASSETS)
+  @Outgoing(Channels.OPTIMIZED_ASSETS)
+  public CloudEvent process(CloudEvent event) {
+    String filePath = CloudEventUtils.getSubject(event);
+    log.tracef("Processing %s", filePath);
+
+    assetActionStore.registerAsset(filePath, event.getType());
 
     if (filePath.endsWith(optimizedImageFileNameSuffixAndExtension)) {
       log.tracef("Skipping already optimized image [%s]", filePath);
@@ -72,22 +72,27 @@ public class OptimizeImageFunction {
       return null;
     }
 
-    return createOptimizedImagePayload(asset, action, eventTime, filePath);
+    return createOptimizedImageEvent(event, filePath);
   }
 
-  private GenericPayload<Asset> createOptimizedImagePayload(Asset asset, Action action,
-      EventTime eventTime, String filePath) {
+  private CloudEvent createOptimizedImageEvent(CloudEvent event, String filePath) {
     String optimizedImagePath = optimizedImagePathsService.computePathForOptimizedImage(filePath);
-    Metadata metadata = createMetadata(optimizedImagePath, eventTime, action);
-    if (Action.PUBLISH.equals(action)) {
+    String eventType = event.getType();
+    OffsetDateTime eventTime = event.getTime();
+
+    if (Asset.TYPE_PUBLISHED.equals(eventType)) {
+      Asset asset = requireNonNull(CloudEventUtils.getData(event, Asset.class));
       Asset optimizedImage = createOptimizedImage(asset, filePath);
-      return GenericPayload.of(optimizedImage, metadata);
+      return CloudEventUtils.eventWithData(optimizedImage, Asset.TYPE_PUBLISHED, optimizedImagePath,
+          eventTime);
     }
-    if (Action.UNPUBLISH.equals(action)) {
-      return GenericPayload.of(null, metadata);
+    if (Asset.TYPE_UNPUBLISHED.equals(eventType)) {
+      return CloudEventUtils.eventWithoutData(Asset.TYPE_UNPUBLISHED, optimizedImagePath,
+          eventTime);
     }
 
-    log.tracef("Skipping optimizing incoming file [%s] - unsupported action %s", filePath, action);
+    log.tracef("Skipping optimizing incoming file [%s] - unsupported event type %s", filePath,
+        eventType);
     return null;
   }
 
@@ -100,9 +105,5 @@ public class OptimizeImageFunction {
     } catch (Exception e) {
       throw new ImageOptimizationException("Error processing file " + filePath, e);
     }
-  }
-
-  private static Metadata createMetadata(String filePath, EventTime eventTime, Action action) {
-    return Metadata.of(Key.of(filePath), eventTime, action);
   }
 }

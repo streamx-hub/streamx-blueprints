@@ -1,5 +1,7 @@
 package com.streamx.blueprints.resourcedownloader;
 
+import static java.util.Objects.requireNonNull;
+
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Asset;
 import com.streamx.blueprints.data.DownloadRequest;
@@ -17,7 +19,6 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.IntegerRange;
@@ -65,8 +66,14 @@ public class HttpDownloaderFunction {
   @Inject
   LastModifiedTimestampRegistry lastModifiedTimestampRegistry;
 
-  @Channel(Channels.DOWNLOADED_RESOURCES)
-  Emitter<CloudEvent> resourcesEmitter;
+  @Channel(Channels.DOWNLOADED_PAGES)
+  Emitter<CloudEvent> pagesEmitter;
+
+  @Channel(Channels.DOWNLOADED_ASSETS)
+  Emitter<CloudEvent> assetsEmitter;
+
+  @Channel(Channels.DOWNLOADED_WEB_RESOURCES)
+  Emitter<CloudEvent> webResourcesEmitter;
 
   @Inject
   CloseableHttpClient httpClient;
@@ -80,10 +87,7 @@ public class HttpDownloaderFunction {
 
   @Incoming(Channels.DOWNLOAD_REQUESTS)
   public void downloadAndEmit(CloudEvent event) {
-    DownloadRequest request = extractDownloadRequest(event);
-    if (Objects.isNull(request)) {
-      return;
-    }
+    DownloadRequest request = requireNonNull(CloudEventUtils.getData(event, DownloadRequest.class));
     log.tracef("Processing download request: %s", request);
 
     downloadAndPublish(request);
@@ -133,19 +137,6 @@ public class HttpDownloaderFunction {
         .with(this::downloadAndPublish);
   }
 
-  private DownloadRequest extractDownloadRequest(CloudEvent event) {
-    try {
-      DownloadRequest downloadRequest = CloudEventUtils.getData(event, DownloadRequest.class);
-      if (downloadRequest == null) {
-        log.warnf("Null data in the incoming CloudEvent %s", event.getSubject());
-      }
-      return downloadRequest;
-    } catch (RuntimeException ex) {
-      log.warnf("Invalid incoming CloudEvent %s: %s", event.getSubject(), ex.getMessage());
-      return null;
-    }
-  }
-
   private HttpGet prepareHttpGetRequest(String url) {
     HttpGet request = new HttpGet(url);
     request.setConfig(RequestConfig.copy(RequestConfig.DEFAULT)
@@ -162,18 +153,21 @@ public class HttpDownloaderFunction {
     String streamxKey = request.emitKey();
     if (isHtmlPage(response)) {
       emit(
+          pagesEmitter,
           streamxKey,
           new Page(content, request.emittedPageType()),
           Page.TYPE_PUBLISHED
       );
     } else if (isWebResource(response)) {
       emit(
+          webResourcesEmitter,
           streamxKey,
           new WebResource(content, request.emittedWebResourceType()),
           WebResource.TYPE_PUBLISHED
       );
     } else {
       emit(
+          assetsEmitter,
           streamxKey,
           new Asset(content, request.emittedAssetType()),
           Asset.TYPE_PUBLISHED
@@ -228,13 +222,14 @@ public class HttpDownloaderFunction {
     }
   }
 
-  private <T extends Resource> void emit(String key, T payload, String eventType) {
+  private <T extends Resource> void emit(Emitter<CloudEvent> emitter, String key, T payload,
+      String eventType) {
     String payloadClass = payload.getClass().getSimpleName();
     String payloadType = payload.getType();
     log.tracef("Emitting %s %s with event type %s and payload type %s", payloadClass, key, eventType, payloadType);
 
     CloudEvent cloudEvent = CloudEventUtils.eventWithData(payload, eventType, key);
-    resourcesEmitter.send(cloudEvent);
+    emitter.send(cloudEvent);
   }
 
   void onStart(@Observes StartupEvent ev) {

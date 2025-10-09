@@ -84,14 +84,14 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     sendDownloadRequest(testContentUrl, testPath);
 
     // then
-    List<CloudEvent> webResourceEvents = waitForSingleDownloadedResource(EMITTED_WEB_RESOURCE_TYPE);
-    assertEvent(webResourceEvents.get(0), testPath, testContent);
+    CloudEvent webResourceEvent = waitForSingleDownloadedWebResource();
+    assertEvent(webResourceEvent, testPath, testContent);
 
     // when 2
     sendDownloadRequest(testContentUrl, testPath);
 
     // then: expect no re-download
-    waitForSingleDownloadedResource(EMITTED_WEB_RESOURCE_TYPE);
+    waitForSingleDownloadedWebResource();
     verify(httpClient, atLeast(3)).execute(any(HttpHead.class));
     verify(httpClient, atLeast(1)).execute(any(HttpGet.class));
     verify(httpEntity, times(1)).getContent();
@@ -124,8 +124,8 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     sendDownloadRequest(testContentUrl, testPath);
 
     // then
-    List<CloudEvent> webResourceEvents = waitForDownloadedResource(EMITTED_WEB_RESOURCE_TYPE,
-        2);
+    List<CloudEvent> webResourceEvents = waitForDownloadedResources(downloadedWebResourcesSink,
+        EMITTED_WEB_RESOURCE_TYPE, 2);
     assertEvent(webResourceEvents.get(0), testPath, testContent);
     assertEvent(webResourceEvents.get(1), testPath, testContent);
 
@@ -135,7 +135,7 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     verify(httpEntity, times(2)).getContent();
   }
 
-  private HttpEntity mockGetResponseEntity() throws IOException {
+  private HttpEntity mockGetResponseEntity() {
     HttpEntity httpEntity = mock(HttpEntity.class);
     when(getHttpResponse.getEntity()).thenReturn(httpEntity);
     when(getHttpResponse.getFirstHeader(HttpHeaders.CONTENT_TYPE))

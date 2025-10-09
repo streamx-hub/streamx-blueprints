@@ -1,9 +1,5 @@
 package com.streamx.blueprints.image.optimizer.page;
 
-import static dev.streamx.quasar.reactive.messaging.metadata.Action.PUBLISH;
-import static dev.streamx.quasar.reactive.messaging.metadata.Action.UNPUBLISH;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractAction;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractKey;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -12,14 +8,14 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import com.google.common.collect.Iterables;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Asset;
 import com.streamx.blueprints.data.Page;
-import com.streamx.blueprints.image.optimizer.image.AssetActionStore;
+import com.streamx.blueprints.image.optimizer.Channels;
+import com.streamx.blueprints.image.optimizer.image.AssetEventTypeStore;
 import com.streamx.blueprints.image.optimizer.image.OptimizeImageFunction;
 import com.streamx.blueprints.image.optimizer.image.OptimizedImagePathsService;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
@@ -31,13 +27,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -49,14 +46,15 @@ class AdjustImgSrcFunctionTest {
   private static final File JPG_FILE = new File(IMAGES_DIR, "mesh.jpg");
   private static final File GIF_FILE = new File(IMAGES_DIR, "streamx logo.gif");
 
-  private InMemorySource<Message<Page>> pageChannel;
-  private InMemorySink<Page> pagesSink;
+  private static final Set<String> PAGE_EVENTS = Set.of(Page.TYPE_PUBLISHED, Page.TYPE_UNPUBLISHED);
 
-  private InMemorySource<Message<Asset>> imagesChannel;
-  private InMemorySink<Asset> imagesSink;
+  private InMemorySource<CloudEvent> pagesChannel;
+  private InMemorySource<CloudEvent> assetsChannel;
+  private InMemorySink<CloudEvent> outgoingPagesSink;
+  private InMemorySink<CloudEvent> optimizedAssetsSink;
 
   @InjectSpy
-  AssetActionStore assetActionStore;
+  AssetEventTypeStore assetEventTypeStore;
 
   @InjectSpy
   OptimizeImageFunction optimizeImageFunction;
@@ -70,32 +68,31 @@ class AdjustImgSrcFunctionTest {
 
   @BeforeEach
   void init() {
-    pageChannel = connector.source(AdjustImgSrcFunction.INCOMING_CHANNEL);
-    pagesSink = connector.sink(AdjustImgSrcFunction.OUTGOING_CHANNEL);
-    pagesSink.clear();
-
-    imagesChannel = connector.source(OptimizeImageFunction.INCOMING_ASSETS_CHANNEL);
-    imagesSink = connector.sink(OptimizeImageFunction.OPTIMIZED_ASSETS_CHANNEL);
-    imagesSink.clear();
+    pagesChannel = connector.source(Channels.INCOMING_PAGES);
+    assetsChannel = connector.source(Channels.INCOMING_ASSETS);
+    outgoingPagesSink = connector.sink(Channels.OUTGOING_PAGES);
+    outgoingPagesSink.clear();
+    optimizedAssetsSink = connector.sink(Channels.OPTIMIZED_ASSETS);
+    optimizedAssetsSink.clear();
   }
 
   @BeforeEach
   void simulateOptimizedImagesArePublishedToInputTopic() {
-    // OptimizeImageFunction should be configured to send messages with optimized images
-    // to the same topic as the topic where the original image messages were initially read from.
+    // OptimizeImageFunction should be configured to send events with optimized images
+    // to the same topic as the topic where the original image events were initially read from.
     // Since InMemoryConnector operates on channels, not topics, it's not able to reproduce that.
     // Simulate this operation manually here:
     doAnswer(invocationOnMock -> {
       String optimizedImagePath = invocationOnMock.getArgument(0, String.class);
-      List<Message<Asset>> receivedAssets = imagesSink.received().stream()
-          .filter(msg -> extractKey(msg).equals(optimizedImagePath))
+      List<CloudEvent> receivedEvents = optimizedAssetsSink.received().stream()
+          .map(Message::getPayload)
+          .filter(event -> CloudEventUtils.getSubject(event).equals(optimizedImagePath))
           .collect(Collectors.toList());
-      if (receivedAssets.isEmpty()) {
+      if (receivedEvents.isEmpty()) {
         return null;
       }
-      Message<Asset> lastMessage = Iterables.getLast(receivedAssets);
-      return extractAction(lastMessage).getValue();
-    }).when(assetActionStore).getOptimizedImageAction(anyString());
+      return Iterables.getLast(receivedEvents).getType();
+    }).when(assetEventTypeStore).getOptimizedImageEventType(anyString());
   }
 
   @Test
@@ -110,36 +107,36 @@ class AdjustImgSrcFunctionTest {
         "<html>",
 
         // note: this image was not optimized yet
-        "  Image 1: <img src='%s' />".formatted(PNG_FILE.getPath()),
+        "  Image 1: <img src='%s' />".formatted(normalizedPath(PNG_FILE)),
 
         // note: multiple lines tag should be tolerated while searching for img src to be adjusted
         "  Image 2: <img  src =",
-        "                  '%s' />".formatted(JPG_FILE.getPath()),
+        "                  '%s' />".formatted(normalizedPath(JPG_FILE)),
 
         // note: unclosed tag should be tolerated while searching for img src to be adjusted
-        "  Image 3: <img src='%s'>".formatted(GIF_FILE.getPath()),
+        "  Image 3: <img src='%s'>".formatted(normalizedPath(GIF_FILE)),
 
         // note: non-matching closing tag should be tolerated
         "</body>"
     );
 
     // when: publish the page
-    Message<Page> pageMessage = createPublishPageMessage(pagePath, html);
-    pageChannel.send(pageMessage);
+    CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
+    pagesChannel.send(pageEvent);
 
     // then: expect the adjusted page to be published
-    Message<Page> adjustedPageMessage = waitForAdjustedOutputMessage(pageMessage);
-    assertThat(extractAction(adjustedPageMessage)).isEqualTo(PUBLISH);
-    assertThat(extractKey(adjustedPageMessage)).isEqualTo(pagePath);
+    CloudEvent adjustedPageEvent = waitForAdjustedOutputEvent(pageEvent);
+    assertThat(adjustedPageEvent.getType()).isEqualTo(Page.TYPE_PUBLISHED);
+    assertThat(adjustedPageEvent.getSubject()).isEqualTo(pagePath);
 
     // and: verify its content (the correct image paths should be adjusted)
-    String adjustedHtml = extractPageHtml(adjustedPageMessage);
+    String adjustedHtml = extractPageHtml(adjustedPageEvent);
     assertThat(adjustedHtml)
         .isNotEqualTo(html)
         .contains(
-            PNG_FILE.getPath(),
-            JPG_FILE.getPath().replace(".jpg", "-optimized.webp"),
-            GIF_FILE.getPath().replace(".gif", "-optimized.webp")
+            normalizedPath(PNG_FILE),
+            normalizedPath(JPG_FILE).replace(".jpg", "-optimized.webp"),
+            normalizedPath(GIF_FILE).replace(".gif", "-optimized.webp")
         );
 
     // and: the current library re-formats (and improves) html code
@@ -149,8 +146,8 @@ class AdjustImgSrcFunctionTest {
             " <head></head>",
             " <body>",
             "  Image 1: <img src=\"src/test/resources/images/ds.pNg\"> "
-                + "Image 2: <img src=\"src/test/resources/images/mesh-optimized.webp\"> "
-                + "Image 3: <img src=\"src/test/resources/images/streamx logo-optimized.webp\">",
+            + "Image 2: <img src=\"src/test/resources/images/mesh-optimized.webp\"> "
+            + "Image 3: <img src=\"src/test/resources/images/streamx logo-optimized.webp\">",
             " </body>",
             "</html>"
         );
@@ -161,27 +158,27 @@ class AdjustImgSrcFunctionTest {
     // given: prepare optimized image and page to be published (referencing that image)
     publishOptimizedImage(JPG_FILE);
     String pagePath = "/pages/page.html";
-    String html = "<html><img src ='%s' /></html>".formatted(JPG_FILE.getPath());
+    String html = "<html><img src ='%s' /></html>".formatted(normalizedPath(JPG_FILE));
 
     // and: publish the page
-    Message<Page> pageMessage = createPublishPageMessage(pagePath, html);
-    pageChannel.send(pageMessage);
-    waitForAdjustedOutputMessage(pageMessage);
-    pagesSink.clear();
+    CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
+    pagesChannel.send(pageEvent);
+    waitForAdjustedOutputEvent(pageEvent);
+    outgoingPagesSink.clear();
 
     // when: simulate user edits the same page (removes html tags and changes images to other one):
     publishOptimizedImage(PNG_FILE);
-    String editedHtml = "<img src ='%s' />".formatted(PNG_FILE.getPath());
+    String editedHtml = "<img src ='%s' />".formatted(normalizedPath(PNG_FILE));
 
     // and: the page is published
-    Message<Page> editedPageMessage = createPublishPageMessage(pagePath, editedHtml);
-    pageChannel.send(editedPageMessage);
+    CloudEvent editedPageEvent = createPublishPageEvent(pagePath, editedHtml);
+    pagesChannel.send(editedPageEvent);
 
     // then: expect the edited page to have img src adjusted to use the optimized image
-    Message<Page> adjustedEditedPageMessage = waitForAdjustedOutputMessage(editedPageMessage);
-    assertThat(extractAction(adjustedEditedPageMessage)).isEqualTo(PUBLISH);
-    assertThat(extractKey(adjustedEditedPageMessage)).isEqualTo(pagePath);
-    assertThat(extractPageHtml(adjustedEditedPageMessage)).isEqualTo("""
+    CloudEvent adjustedEditedPageEvent = waitForAdjustedOutputEvent(editedPageEvent);
+    assertThat(adjustedEditedPageEvent.getType()).isEqualTo(Page.TYPE_PUBLISHED);
+    assertThat(adjustedEditedPageEvent.getSubject()).isEqualTo(pagePath);
+    assertThat(extractPageHtml(adjustedEditedPageEvent)).isEqualTo("""
         <html>
          <head></head>
          <body>
@@ -197,15 +194,15 @@ class AdjustImgSrcFunctionTest {
     publishOptimizedImage(JPG_FILE);
 
     String pagePath = "/pages/page.html";
-    String html = "<html><img src='%s?param=value' /></html>".formatted(JPG_FILE.getPath());
+    String html = "<html><img src='%s?param=value' /></html>".formatted(normalizedPath(JPG_FILE));
 
     // when: publish the page
-    Message<Page> pageMessage = createPublishPageMessage(pagePath, html);
-    pageChannel.send(pageMessage);
+    CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
+    pagesChannel.send(pageEvent);
 
     // then
-    Message<Page> adjustedPageMessage = waitForAdjustedOutputMessage(pageMessage);
-    assertThat(extractPageHtml(adjustedPageMessage)).isEqualTo("""
+    CloudEvent adjustedPageEvent = waitForAdjustedOutputEvent(pageEvent);
+    assertThat(extractPageHtml(adjustedPageEvent)).isEqualTo("""
         <html>
          <head></head>
          <body>
@@ -228,15 +225,15 @@ class AdjustImgSrcFunctionTest {
           <img src="%s"/>
           <img src="not-optimized-image.jpg"/>
         </html>
-        """.formatted(JPG_FILE.getPath());
+        """.formatted(normalizedPath(JPG_FILE));
 
     // when: publish the page
-    Message<Page> pageMessage = createPublishPageMessage(pagePath, html);
-    pageChannel.send(pageMessage);
+    CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
+    pagesChannel.send(pageEvent);
 
     // then
-    Message<Page> adjustedPageMessage = waitForAdjustedOutputMessage(pageMessage);
-    assertThat(extractPageHtml(adjustedPageMessage)).isEqualTo(
+    CloudEvent adjustedPageEvent = waitForAdjustedOutputEvent(pageEvent);
+    assertThat(extractPageHtml(adjustedPageEvent)).isEqualTo(
         """
             <html>
              <head></head>
@@ -258,42 +255,35 @@ class AdjustImgSrcFunctionTest {
     unpublishImage(JPG_FILE);
 
     String pagePath = "/pages/page.html";
-    String html = "<html><img src ='%s' /></html>".formatted(JPG_FILE.getPath());
+    String html = "<html><img src ='%s' /></html>".formatted(normalizedPath(JPG_FILE));
 
     // when: publish the page
-    Message<Page> pageMessage = createPublishPageMessage(pagePath, html);
-    pageChannel.send(pageMessage);
+    CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
+    pagesChannel.send(pageEvent);
 
     // then
-    assertPageMessageIsRelayedWithNoAdjustments(pageMessage);
+    assertPageEventIsRelayedWithNoAdjustments(pageEvent);
   }
 
   @Test
   void shouldNotAdjustImgSrc_ToOptimizedImage_IfOptimizingImageHasFailed() throws IOException {
     // given: attempt to optimize invalid image file
     File invalidJpgFile = new File(IMAGES_DIR, "text-file-with-jpg-extension.jpg");
-    String invalidJpgFilePath = invalidJpgFile.getPath();
 
-    Asset asset = new Asset(FileUtils.readFileToByteArray(invalidJpgFile));
-    Metadata metadata = createMetadata(invalidJpgFilePath, PUBLISH);
-    imagesChannel.send(Message.of(asset, metadata));
+    CloudEvent publishAssetEvent = createPublishAssetEvent(invalidJpgFile);
+    assetsChannel.send(publishAssetEvent);
 
-    verify(optimizeImageFunction, timeout(500)).process(
-        asset,
-        Key.of(invalidJpgFilePath),
-        PUBLISH,
-        metadata.get(EventTime.class).get()
-    );
+    verify(optimizeImageFunction, timeout(500)).process(publishAssetEvent);
 
     // when: publish page that references this invalid image
     String pagePath = "/pages/page.html";
-    String html = "<html><img src ='%s' /></html>".formatted(invalidJpgFilePath);
+    String html = "<html><img src ='%s' /></html>".formatted(normalizedPath(invalidJpgFile));
 
-    Message<Page> pageMessage = createPublishPageMessage(pagePath, html);
-    pageChannel.send(pageMessage);
+    CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
+    pagesChannel.send(pageEvent);
 
     // then
-    assertPageMessageIsRelayedWithNoAdjustments(pageMessage);
+    assertPageEventIsRelayedWithNoAdjustments(pageEvent);
   }
 
   @Test
@@ -302,20 +292,20 @@ class AdjustImgSrcFunctionTest {
     publishOptimizedImage(PNG_FILE);
 
     String pagePath = "/pages/page.html";
-    String html = "<html><img src='" + PNG_FILE.getPath() + "' /></html>";
-    Message<Page> pageMessage = createPublishPageMessage(pagePath, html);
-    pageChannel.send(pageMessage);
+    String html = "<html><img src='" + normalizedPath(PNG_FILE) + "' /></html>";
+    CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
+    pagesChannel.send(pageEvent);
 
     // make sure the page was adjusted
-    Message<Page> adjustedPageMessage = waitForAdjustedOutputMessage(pageMessage);
-    assertThat(extractPageHtml(adjustedPageMessage)).contains("-optimized.webp");
-    pagesSink.clear();
+    CloudEvent adjustedPageEvent = waitForAdjustedOutputEvent(pageEvent);
+    assertThat(extractPageHtml(adjustedPageEvent)).contains("-optimized.webp");
+    outgoingPagesSink.clear();
 
     // when: simulate the service picks up the adjusted page again
-    pageChannel.send(adjustedPageMessage);
+    pagesChannel.send(adjustedPageEvent);
 
     // then
-    assertPageMessageIsRelayedWithNoAdjustments(adjustedPageMessage);
+    assertPageEventIsRelayedWithNoAdjustments(adjustedPageEvent);
   }
 
   @Test
@@ -323,13 +313,13 @@ class AdjustImgSrcFunctionTest {
     // given
     String pagePath = "/pages/page.html";
     String html = "<html><img src='src/test/resources/images/mesh-optimized.png' /></html>";
-    Message<Page> pageMessage = createPublishPageMessage(pagePath, html);
+    CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
 
     // when
-    pageChannel.send(pageMessage);
+    pagesChannel.send(pageEvent);
 
     // then
-    assertPageMessageIsRelayedWithNoAdjustments(pageMessage);
+    assertPageEventIsRelayedWithNoAdjustments(pageEvent);
   }
 
   @Test
@@ -338,14 +328,14 @@ class AdjustImgSrcFunctionTest {
     publishOptimizedImage(PNG_FILE);
 
     String pagePath = "/sites/site.html";
-    String html = "<html><img src='%s' /></html>".formatted(PNG_FILE.getPath());
-    Message<Page> pageMessage = createPublishPageMessage(pagePath, html);
+    String html = "<html><img src='%s' /></html>".formatted(normalizedPath(PNG_FILE));
+    CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
 
     // when
-    pageChannel.send(pageMessage);
+    pagesChannel.send(pageEvent);
 
     // then
-    assertPageMessageIsRelayedWithNoAdjustments(pageMessage);
+    assertPageEventIsRelayedWithNoAdjustments(pageEvent);
   }
 
   @Test
@@ -353,96 +343,93 @@ class AdjustImgSrcFunctionTest {
     // given
     String pagePath = "/pages/page.html";
     String html = "";
-    Message<Page> pageMessage = createPublishPageMessage(pagePath, html);
+    CloudEvent pageEvent = createPublishPageEvent(pagePath, html);
 
     // when
-    pageChannel.send(pageMessage);
+    pagesChannel.send(pageEvent);
 
     // then
-    assertPageMessageIsRelayedWithNoAdjustments(pageMessage);
+    assertPageEventIsRelayedWithNoAdjustments(pageEvent);
   }
 
   @Test
   void shouldNotAdjustNullPage() {
     // given
     String pagePath = "/pages/null-page.html";
-    Message<Page> pageMessage = createPublishPageMessage(pagePath, null);
+    CloudEvent pageEvent = createPublishPageEvent(pagePath, null);
 
     // when
-    pageChannel.send(pageMessage);
+    pagesChannel.send(pageEvent);
 
     // then
-    assertPageMessageIsRelayedWithNoAdjustments(pageMessage);
+    assertPageEventIsRelayedWithNoAdjustments(pageEvent);
   }
 
   @Test
-  void shouldRelayUnpublishPageMessage() throws IOException {
+  void shouldRelayUnpublishPageEvent() throws IOException {
     // given
     publishOptimizedImage(PNG_FILE);
 
     String pagePath = "/pages/page.html";
-    String html = "<html><img src='%s' /></html>".formatted(PNG_FILE.getPath());
-    Message<Page> pageMessage = createPageIngestionMessage(pagePath, html, UNPUBLISH);
+    CloudEvent pageEvent = createUnpublishPageEvent(pagePath);
 
     // when
-    pageChannel.send(pageMessage);
+    pagesChannel.send(pageEvent);
 
     // then
-    assertPageMessageIsRelayedWithNoAdjustments(pageMessage);
+    assertPageEventIsRelayedWithNoAdjustments(pageEvent);
   }
 
-  private static Message<Page> createPublishPageMessage(String pagePath, String html) {
-    return createPageIngestionMessage(pagePath, html, PUBLISH);
+  private static CloudEvent createPublishPageEvent(String pagePath, String html) {
+    return CloudEventUtils.eventWithData(new Page(html), Page.TYPE_PUBLISHED, pagePath);
   }
 
-  private static Message<Page> createPageIngestionMessage(String pagePath, String html,
-      Action action) {
-    Page payload = Optional.ofNullable(html)
-        .map(Page::new)
-        .orElseGet(() -> new Page((ByteBuffer) null));
-    Metadata metadata = createMetadata(pagePath, action);
-    return Message.of(payload, metadata);
+  private static CloudEvent createPublishAssetEvent(File assetFile) throws IOException {
+    String path = normalizedPath(assetFile);
+    byte[] content = FileUtils.readFileToByteArray(assetFile);
+    return CloudEventUtils.eventWithData(new Asset(content), Asset.TYPE_PUBLISHED, path);
   }
 
-  private static Metadata createMetadata(String resourcePath, Action action) {
-    return Metadata.of(
-        Key.of(resourcePath),
-        EventTime.of(System.currentTimeMillis()),
-        action
-    );
+  private static CloudEvent createUnpublishPageEvent(String pagePath) {
+    return CloudEventUtils.eventWithData(new Page((ByteBuffer) null), Page.TYPE_UNPUBLISHED,
+        pagePath);
   }
 
-  private Message<Page> waitForAdjustedOutputMessage(Message<Page> inputMessage) {
-    Message<Page> publishedMessage = retrievePublishedMessage();
-
-    assertThat(extractPageHtml(publishedMessage))
-        .isNotEqualTo(extractPageHtml(inputMessage));
-
-    assertSameMetadata(inputMessage, publishedMessage);
-
-    return publishedMessage;
+  private static CloudEvent createUnpublishAssetEvent(File assetFile) {
+    return CloudEventUtils.eventWithData(new Asset((ByteBuffer) null), Asset.TYPE_UNPUBLISHED,
+        normalizedPath(assetFile));
   }
 
-  private void assertPageMessageIsRelayedWithNoAdjustments(Message<Page> inputMessage) {
-    Message<Page> publishedMessage = retrievePublishedMessage();
+  private CloudEvent waitForAdjustedOutputEvent(CloudEvent inputEvent) {
+    CloudEvent publishedEvent = retrievePublishedEvent();
 
-    assertThat(extractPageHtml(publishedMessage))
-        .isEqualTo(extractPageHtml(inputMessage));
+    assertThat(extractPageHtml(publishedEvent))
+        .isNotEqualTo(extractPageHtml(inputEvent));
 
-    assertSameMetadata(inputMessage, publishedMessage);
+    assertSameMetadata(inputEvent, publishedEvent);
+
+    return publishedEvent;
   }
 
-  private Message<Page> retrievePublishedMessage() {
-    await().untilAsserted(() ->
-        assertThat(pagesSink.received())
-            .hasSize(1)
+  private void assertPageEventIsRelayedWithNoAdjustments(CloudEvent inputEvent) {
+    CloudEvent publishedEvent = retrievePublishedEvent();
+
+    assertThat(extractPageHtml(publishedEvent))
+        .isEqualTo(extractPageHtml(inputEvent));
+
+    assertSameMetadata(inputEvent, publishedEvent);
+  }
+
+  private CloudEvent retrievePublishedEvent() {
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() ->
+        assertThat(getOutgoingPages()).hasSize(1)
     );
 
-    return Iterables.getOnlyElement(pagesSink.received());
+    return Iterables.getOnlyElement(getOutgoingPages());
   }
 
-  private static String extractPageHtml(Message<Page> message) {
-    return Optional.ofNullable(message.getPayload())
+  private static String extractPageHtml(CloudEvent event) {
+    return Optional.ofNullable(CloudEventUtils.getData(event, Page.class))
         .map(Page::getContent)
         .map(ByteBuffer::array)
         .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
@@ -451,60 +438,54 @@ class AdjustImgSrcFunctionTest {
 
   private void publishOptimizedImage(File imageFile) throws IOException {
     // given
-    Message<Asset> imageMessage = Message.of(
-        new Asset(FileUtils.readFileToByteArray(imageFile)),
-        createMetadata(imageFile.getPath(), PUBLISH)
-    );
+    CloudEvent imageEvent = createPublishAssetEvent(imageFile);
 
     // when
-    imagesChannel.send(imageMessage);
+    assetsChannel.send(imageEvent);
 
     // then: assert optimized image is produced
-    verifyOptimizedImageMessageIsReceived(imageFile, PUBLISH);
+    verifyOptimizedImageEventIsReceived(imageFile, Asset.TYPE_PUBLISHED);
   }
 
   private void unpublishImage(File imageFile) {
     // given
-    Message<Asset> imageMessage = Message.of(
-        null,
-        createMetadata(imageFile.getPath(), UNPUBLISH)
-    );
+    CloudEvent imageEvent = createUnpublishAssetEvent(imageFile);
 
     // when
-    imagesChannel.send(imageMessage);
+    assetsChannel.send(imageEvent);
 
     // then: assert optimized image is unpublished
-    verifyOptimizedImageMessageIsReceived(imageFile, UNPUBLISH);
+    verifyOptimizedImageEventIsReceived(imageFile, Asset.TYPE_UNPUBLISHED);
   }
 
-  private void verifyOptimizedImageMessageIsReceived(File imageFile, Action action) {
+  private void verifyOptimizedImageEventIsReceived(File imageFile, String eventType) {
     String expectedOptimizedImagePath = optimizedImagePathsService
-        .computePathForOptimizedImage(imageFile.getPath());
+        .computePathForOptimizedImage(normalizedPath(imageFile));
 
-    await().untilAsserted(() -> {
-      Stream<? extends Message<Asset>> matchingMessages = imagesSink.received()
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+      Stream<CloudEvent> matchingEvents = optimizedAssetsSink.received()
           .stream()
-          .filter(msg -> extractKey(msg).equals(expectedOptimizedImagePath))
-          .filter(msg -> extractAction(msg).equals(action));
-      assertThat(matchingMessages).hasSize(1);
+          .map(Message::getPayload)
+          .filter(event -> CloudEventUtils.getSubject(event).equals(expectedOptimizedImagePath))
+          .filter(event -> eventType.equals(event.getType()));
+      assertThat(matchingEvents).hasSize(1);
     });
   }
 
-  private static void assertSameMetadata(Message<Page> message1, Message<Page> message2) {
-    assertSameMetadataValues(
-        message1.getMetadata(), message2.getMetadata(),
-        Key.class,
-        Action.class,
-        EventTime.class
-    );
+  private static void assertSameMetadata(CloudEvent event1, CloudEvent event2) {
+    assertThat(event1.getSubject()).isEqualTo(event2.getSubject());
+    assertThat(event1.getType()).isEqualTo(event2.getType());
+    assertThat(event1.getTime()).isEqualTo(event2.getTime());
   }
 
-  private static void assertSameMetadataValues(Metadata metadata1, Metadata metadata2,
-      Class<?>... metadataFieldTypes) {
-    for (Class<?> metadataFieldType : metadataFieldTypes) {
-      assertThat(metadata1.get(metadataFieldType))
-          .isEqualTo(metadata2.get(metadataFieldType));
-    }
+  private List<CloudEvent> getOutgoingPages() {
+    return outgoingPagesSink.received().stream()
+        .map(Message::getPayload)
+        .filter(event -> PAGE_EVENTS.contains(event.getType()))
+        .toList();
   }
 
+  private static String normalizedPath(File file) {
+    return file.getPath().replace('\\', '/');
+  }
 }

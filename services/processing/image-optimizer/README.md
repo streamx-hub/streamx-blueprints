@@ -33,7 +33,7 @@ Note: the pattern is case-insensitive.
 `streamx.blueprints.image-optimizer.optimized-image-file-name-suffix` - a suffix that will be added
 to names of optimized images.
 
-Example value of the configuration property:
+Default value:
 `-optimized`
 
 The above setting will result in generating file name for the optimized image as `image-optimized.webp`, if the input image file is named `image.png`.
@@ -108,6 +108,8 @@ Outgoing channels:
 ```
 MP_MESSAGING_INCOMING_INCOMING-ASSETS_TOPIC: "persistent://streamx/inboxes/assets"
 MP_MESSAGING_OUTGOING_OPTIMIZED-ASSETS_TOPIC: "persistent://streamx/inboxes/assets"
+MP_MESSAGING_INCOMING_INCOMING-PAGES_TOPIC: "persistent://streamx/inboxes/pages"
+MP_MESSAGING_OUTGOING_OUTGOING-PAGES_TOPIC: "persistent://streamx/outboxes/pages"
 STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_OPTIMIZED_FILE_PATHS_PATTERN: ".*(png|gif|jpg|jpeg)$"
 STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_OPTIMIZED_IMAGE_FILE_NAME-SUFFIX: "-optimized"
 STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_ADJUSTED_PAGE_PATHS_PATTERN: ".*"

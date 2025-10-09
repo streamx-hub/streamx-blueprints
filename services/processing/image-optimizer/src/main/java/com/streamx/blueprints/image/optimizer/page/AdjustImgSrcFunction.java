@@ -1,13 +1,12 @@
 package com.streamx.blueprints.image.optimizer.page;
 
-import static dev.streamx.quasar.reactive.messaging.metadata.Action.PUBLISH;
+import static java.util.Objects.requireNonNull;
 
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Page;
+import com.streamx.blueprints.image.optimizer.Channels;
 import com.streamx.blueprints.image.optimizer.configuration.Configuration;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
-import io.smallrye.reactive.messaging.GenericPayload;
+import io.cloudevents.CloudEvent;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -19,9 +18,6 @@ import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class AdjustImgSrcFunction {
-
-  static final String INCOMING_CHANNEL = "incoming-pages";
-  static final String OUTGOING_CHANNEL = "outgoing-pages";
 
   private Pattern lowercasedAdjustedPagePathsPattern;
 
@@ -47,39 +43,45 @@ public class AdjustImgSrcFunction {
    * adjustments to be made, or when the {@code action} is UNPUBLISH - the message is relayed to
    * outgoing channel with no changes
    *
-   * @return The adjusted page message or null if nothing to adjust
+   * @return The adjusted page message or relayed event if nothing to adjust
    */
-  @Incoming(INCOMING_CHANNEL)
-  @Outgoing(OUTGOING_CHANNEL)
-  public GenericPayload<Page> process(Page page, Key key, Action action, EventTime eventTime) {
-    String pagePath = key.getValue();
-    log.tracef("Processing page [%s] with eventTime %s", pagePath, eventTime);
-
-    if (!PUBLISH.equals(action)) {
-      return GenericPayload.of(page);
+  @Incoming(Channels.INCOMING_PAGES)
+  @Outgoing(Channels.OUTGOING_PAGES)
+  public CloudEvent process(CloudEvent event) {
+    String eventType = event.getType();
+    if (!Page.TYPE_PUBLISHED.equals(eventType)) {
+      return event;
     }
+
+    Page page = requireNonNull(CloudEventUtils.getData(event, Page.class));
+    String pagePath = CloudEventUtils.getSubject(event);
+    log.tracef("Processing page [%s] with eventTime %s", pagePath, event.getTime());
 
     if (!lowercasedAdjustedPagePathsPattern.matcher(pagePath.toLowerCase()).matches()) {
       log.tracef("Skipping adjusting incoming page [%s] - not matching path", pagePath);
-      return GenericPayload.of(page);
+      return event;
     }
 
     try {
-      return createAdjustedPagePayload(page);
+      return createAdjustedPageEvent(page, event);
     } catch (Exception e) {
       log.errorf(e, "Error adjusting content of page " + pagePath);
-      return GenericPayload.of(page);
+      return event;
     }
   }
 
-  private GenericPayload<Page> createAdjustedPagePayload(Page page) {
+  private CloudEvent createAdjustedPageEvent(Page page, CloudEvent pageEvent) {
     String pageContent = page.getContentAsString();
     Optional<String> adjustedContent = imgSrcAdjuster.adjustPageContent(pageContent);
     if (adjustedContent.isEmpty()) {
-      return GenericPayload.of(page);
+      return pageEvent;
     }
 
     Page adjustedPage = new Page(adjustedContent.get());
-    return GenericPayload.of(adjustedPage);
+    return CloudEventUtils.eventWithData(
+        adjustedPage,
+        pageEvent.getType(),
+        pageEvent.getSubject(),
+        pageEvent.getTime());
   }
 }

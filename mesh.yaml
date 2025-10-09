@@ -1,15 +1,23 @@
-defaultRegistry: ghcr.io/streamx-com/streamx-blueprints
-defaultImageTag: latest-jvm
+default:
+  image:
+    repository: ghcr.io/streamx-com/streamx-blueprints
+    tag: latest-jvm
 
 sources:
   resources-source:
     outgoing:
-      - topic: "inboxes/resources"
+      - topic: "inboxes/pages"
         produces:
           - "com.streamx.blueprints.page.published.v1"
           - "com.streamx.blueprints.page.unpublished.v1"
+      - topic: "inboxes/web-resources"
+        produces:
           - "com.streamx.blueprints.web-resource.published.v1"
           - "com.streamx.blueprints.web-resource.unpublished.v1"
+      - topic: "inboxes/assets"
+        produces:
+          - "com.streamx.blueprints.asset.published.v1"
+          - "com.streamx.blueprints.asset.unpublished.v1"
       - topic: "inboxes/layouts"
         produces:
           - "com.streamx.blueprints.layout.published.v1"
@@ -37,7 +45,11 @@ descriptors:
       download-requests:
         binding: "http-structured-json"
     outgoing:
-      downloaded-resources:
+      downloaded-pages:
+        binding: "http-structured-json"
+      downloaded-assets:
+        binding: "http-structured-json"
+      downloaded-web-resources:
         binding: "http-structured-json"
 
   composition-engine:
@@ -55,6 +67,19 @@ descriptors:
       outgoing-page-compose-requests:
         binding: "http-structured-json"
 
+  image-optimizer:
+    type: "processing"
+    incoming:
+      incoming-assets:
+        binding: "http-structured-json"
+      incoming-pages:
+        binding: "http-structured-json"
+    outgoing:
+      optimized-assets:
+        binding: "http-structured-json"
+      outgoing-pages:
+        binding: "http-structured-json"
+
   web-server:
     type: "processing"
     incoming:
@@ -63,79 +88,151 @@ descriptors:
 
 ingestion:
   rest-ingestion:
-    environment:
-      QUARKUS_HTTP_AUTH_PERMISSION_BEARER_POLICY: permit
+    containers:
+    - environment:
+        QUARKUS_HTTP_AUTH_PERMISSION_BEARER_POLICY: permit
 
 processing:
+  web-resources-relay:
+    containers:
+      - incoming:
+          incoming-web-resources:
+            topic: inboxes/web-resources
+        outgoing:
+          outgoing-web-resources:
+            topic: relays/web-resources
+        environment:
+          STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
+
+  assets-relay:
+    containers:
+      - incoming:
+          incoming-assets:
+            topic: inboxes/assets
+        outgoing:
+          outgoing-assets:
+            topic: outboxes/assets
+        environment:
+          STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
+
+  fragments-relay:
+    containers:
+      - incoming:
+          incoming-fragments:
+            topic: inboxes/fragments
+        outgoing:
+          outgoing-fragments:
+            topic: relays/fragments
+        environment:
+          STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
+
+  outbox-fragments-relay:
+    containers:
+      - incoming:
+          messages:
+            topic: relays/fragments
+        outgoing:
+          relayed-messages:
+            topic: outboxes/fragments
+        environment:
+          STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
+
+  blueprint-image-optimizer:
+    containers:
+    - image: image-optimizer
+      incoming:
+        incoming-assets:
+          topic: inboxes/assets
+        incoming-pages:
+          topic: inboxes/pages
+      outgoing:
+        optimized-assets:
+          topic: inboxes/assets
+        outgoing-pages:
+          topic: relays/pages
+      environment:
+        STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_OPTIMIZED_FILE_PATHS_PATTERN: ".*(png|gif|jpg|jpeg)$"
+        STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_ADJUSTED_PAGE_PATHS_PATTERN: ".*"
+
   # Instance 1 of external-references-rewriter: process web resources
   blueprint-web-resources-external-references-rewriter:
-    image: external-references-rewriter
-    incoming:
-      incoming-resources:
-        topic: inboxes/resources
-    outgoing:
-      outgoing-resources:
-        topic: relays/resources
-      download-requests:
-        topic: relays/download-requests
-    environment:
-      STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.tech/"
-      STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_PROCESSABLE_PAYLOAD_TYPES: "web-resource"
-      STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_XML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "/*[local-name()='urlset']/*[local-name()='url']/*[local-name()='loc']"
-      STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_YAML_EXTERNAL_RESOURCE_JSONPATH_SELECTORS: "$.indices.*.target"
-      STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_PAGE_TYPE: "page/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_WEB_RESOURCE_TYPE: "web-resource/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_ASSET_TYPE: "asset/external"
+    containers:
+    - image: external-references-rewriter
+      incoming:
+        incoming-resources:
+          topic: relays/web-resources
+      outgoing:
+        outgoing-resources:
+          topic: outboxes/web-resources
+        download-requests:
+          topic: relays/download-requests
+      environment:
+        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.tech/"
+        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_PROCESSABLE_PAYLOAD_TYPES: "web-resource"
+        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_XML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "/*[local-name()='urlset']/*[local-name()='url']/*[local-name()='loc']"
+        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_YAML_EXTERNAL_RESOURCE_JSONPATH_SELECTORS: "$.indices.*.target"
+        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_PAGE_TYPE: "page/external"
+        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_WEB_RESOURCE_TYPE: "web-resource/external"
+        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_ASSET_TYPE: "asset/external"
 
   # Instance 2 of external-references-rewriter: process pages
   blueprint-pages-external-references-rewriter:
-    image: external-references-rewriter
-    incoming:
-      incoming-resources:
-        topic: relays/resources
-    outgoing:
-      outgoing-resources:
-        topic: outboxes/resources
-      download-requests:
-        topic: relays/download-requests
-    environment:
-      STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.tech/"
-      STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_PROCESSABLE_PAYLOAD_TYPES: "page/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_HTML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "//img/@src,//link[@rel='stylesheet']/@href,//script/@src"
-      STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_PAGE_TYPE: "page/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_WEB_RESOURCE_TYPE: "web-resource/external"
-      STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_ASSET_TYPE: "asset/external"
+    containers:
+    - image: external-references-rewriter
+      incoming:
+        incoming-resources:
+          topic: relays/pages
+      outgoing:
+        outgoing-resources:
+          topic: outboxes/pages
+        download-requests:
+          topic: relays/download-requests
+      environment:
+        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.tech/"
+        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_PROCESSABLE_PAYLOAD_TYPES: "page/external"
+        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_HTML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "//img/@src,//link[@rel='stylesheet']/@href,//script/@src"
+        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_PAGE_TYPE: "page/external"
+        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_WEB_RESOURCE_TYPE: "web-resource/external"
+        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_ASSET_TYPE: "asset/external"
 
   blueprint-resource-downloader:
-    image: resource-downloader
-    incoming:
-      download-requests:
-        topic: relays/download-requests
-    outgoing:
-      downloaded-resources:
-        topic: inboxes/resources
+    containers:
+    - image: resource-downloader
+      incoming:
+        download-requests:
+          topic: relays/download-requests
+      outgoing:
+        downloaded-pages:
+          topic: inboxes/pages
+        downloaded-assets:
+          topic: inboxes/assets
+        downloaded-web-resources:
+          topic: inboxes/web-resources
 
   blueprint-composition-engine:
-    image: composition-engine
-    incoming:
-      layouts:
-        topic: inboxes/layouts
-      compositions:
-        topic: inboxes/compositions
-      incoming-page-compose-requests:
-        topic: relays/page-compose-requests
-    outgoing:
-      pages:
-        topic: relays/resources
-      outgoing-page-compose-requests:
-        topic: relays/page-compose-requests
+    containers:
+    - image: composition-engine
+      incoming:
+        layouts:
+          topic: inboxes/layouts
+        compositions:
+          topic: inboxes/compositions
+        incoming-page-compose-requests:
+          topic: relays/page-compose-requests
+      outgoing:
+        pages:
+          topic: relays/pages
+        outgoing-page-compose-requests:
+          topic: relays/page-compose-requests
 
-delivery:
+edge:
   blueprint-web-server:
-    image: web-server
-    incoming:
-      resources:
-        topic: outboxes/resources
-    port: 8081
-    environment:
-      STREAMX_DELIVERY_SERVICE_READINESS_CHECK_ENABLED: "false"
+    containers:
+    - image: web-server
+      incoming:
+        resources:
+          topic: outboxes/pages,outboxes/fragments,outboxes/assets,outboxes/web-resources
+      ports:
+      - "8081:8080"
+      environment:
+        STREAMX_DELIVERY_SERVICE_READINESS_CHECK_ENABLED: "false"

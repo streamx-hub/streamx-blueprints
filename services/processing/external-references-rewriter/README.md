@@ -102,3 +102,4 @@ Incoming channels:
 Outgoing channels:
 
 - `outgoing-resources`
+- `download-requests`
