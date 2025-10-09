@@ -1,6 +1,6 @@
-package dev.streamx.blueprints.sitemap;
+package com.streamx.blueprints.sitemap;
 
-import dev.streamx.blueprints.sitemap.configuration.properties.SitemapGeneratorProperties;
+import com.streamx.blueprints.sitemap.configuration.properties.SitemapGeneratorProperties;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;

@@ -1,4 +1,4 @@
-package dev.streamx.blueprints.sitemap;
+package com.streamx.blueprints.sitemap;
 
 final class Channels {
 

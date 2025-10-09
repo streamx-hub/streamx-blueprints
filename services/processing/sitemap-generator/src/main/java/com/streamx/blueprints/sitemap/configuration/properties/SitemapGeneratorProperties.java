@@ -1,4 +1,4 @@
-package dev.streamx.blueprints.sitemap.configuration.properties;
+package com.streamx.blueprints.sitemap.configuration.properties;
 
 import io.smallrye.config.ConfigMapping;
 import java.util.Map;

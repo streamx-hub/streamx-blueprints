@@ -1,4 +1,4 @@
-package dev.streamx.blueprints.sitemap;
+package com.streamx.blueprints.sitemap;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
