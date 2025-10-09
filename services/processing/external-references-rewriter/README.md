@@ -37,7 +37,7 @@ Optional - specify this only if your service instance is intended to process HTM
 
 
 - `streamx.blueprints.external-references-rewriter.html-external-resource-url-exclusions-pattern`  
-A comma-separated list of regular expressions used to exclude certain external resource URLs (such as images) from processing.
+  A regex pattern to exclude certain URLs (such as images) from being processed.
 Optional — this setting further filters the URLs found by the XPath selectors, limiting which resources are processed.
 
 
@@ -47,7 +47,7 @@ Optional - specify this only if your service instance is intended to process XML
 
 
 - `streamx.blueprints.external-references-rewriter.xml-external-resource-url-exclusions-pattern`  
-A comma-separated list of regular expressions used to exclude certain external resource URLs (such as images) from processing.
+  A regex pattern to exclude certain URLs (such as images) from being processed.
 Optional — this setting further filters the URLs found by the XPath selectors, limiting which resources are processed.
 
 
@@ -57,8 +57,18 @@ Optional - specify this only if your service instance is intended to process JSO
 
 
 - `streamx.blueprints.external-references-rewriter.json-external-resource-url-exclusions-pattern`  
-A comma-separated list of regular expressions used to exclude certain external resource URLs (such as images) from processing.
+  A regex pattern to exclude certain URLs (such as images) from being processed.
 Optional — this setting further filters the URLs found by the JSONPath selectors, limiting which resources are processed.
+
+- `streamx.blueprints.external-references-rewriter.yaml-external-resource-jsonpath-selectors`  
+  Specifies a comma-separated list of JSONPath selectors to locate external resource URLs inside
+  YAML resources (after converting YAML to JSON).
+  Optional - specify this only if your service instance is intended to process YAML resources.
+
+- `streamx.blueprints.external-references-rewriter.yaml-external-resource-url-exclusions-pattern`  
+  A regex pattern to exclude certain URLs from being processed.
+  Optional — this setting further filters the URLs found by the JSONPath selectors, limiting which
+  resources are processed.
 
 
 - `streamx.blueprints.external-references-rewriter.emitted-page-type`  
