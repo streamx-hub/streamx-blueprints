@@ -1,7 +1,7 @@
 package com.streamx.blueprints.rewriter.services;
 
 import com.streamx.blueprints.rewriter.data.ExternalResource;
-import com.streamx.blueprints.rewriter.data.ParentResource;
+import com.streamx.blueprints.rewriter.data.ResourceData;
 import com.streamx.blueprints.rewriter.finders.BaseValuesFinder;
 import com.streamx.blueprints.rewriter.functions.settings.contentprocessing.BaseContentProcessingSettings;
 import io.quarkus.logging.Log;
@@ -34,7 +34,7 @@ public class ExternalResourcesCollector {
     return !resourceSelectors.isEmpty();
   }
 
-  public Set<ExternalResource> collectExternalResources(ParentResource parentResource) {
+  public Set<ExternalResource> collectExternalResources(ResourceData parentResource) {
     Set<String> resourcePaths = valuesFinder
         .findMatchingValues(parentResource.content(), resourceSelectors)
         .stream()
@@ -49,7 +49,7 @@ public class ExternalResourcesCollector {
     return resources;
   }
 
-  private void addResource(String path, ParentResource parent, Set<ExternalResource> resources) {
+  private void addResource(String path, ResourceData parent, Set<ExternalResource> resources) {
     String absoluteUrl = getValidatedAbsoluteUrl(path, parent);
     if (absoluteUrl == null) {
       return;
@@ -71,7 +71,7 @@ public class ExternalResourcesCollector {
   }
 
   @Nullable
-  private String getValidatedAbsoluteUrl(String path, ParentResource parentResource) {
+  private String getValidatedAbsoluteUrl(String path, ResourceData parentResource) {
     String absoluteUrl;
     try {
       absoluteUrl = urlComputationService.computeAbsoluteUrl(parentResource.absoluteUrl(), path);
@@ -101,7 +101,7 @@ public class ExternalResourcesCollector {
   }
 
   @Nullable
-  private String getValidatedStreamxKey(String absoluteUrl, ParentResource parentResource) {
+  private String getValidatedStreamxKey(String absoluteUrl, ResourceData parentResource) {
     String streamxKey;
     try {
       streamxKey = urlComputationService.asStreamxKeyRelativeToConfiguredBaseUrl(absoluteUrl);

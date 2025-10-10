@@ -210,12 +210,18 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
 
     // and: assert content of published events
     assertDownloadedAssets(List.of(
-        new DownloadedResource("/eds/pages/blogs/adventures.jpg", blogImageContent),
-        new DownloadedResource("/eds/eds-index.jpg", edsIndexImageContent),
-        new DownloadedResource("/images/logo.png", logoImageContent),
-        new DownloadedResource("/https_www.goggle.com/streamx-mesh-overview.jpg_par_val.jpg", meshImageContent),
-        new DownloadedResource("/https_www.goggle.com/assets/jcr_content/cloud.svg", cloudImageContent),
-        new DownloadedResource("/stylesheets/styles.css", stylesheetContent.getBytes(UTF_8))
+        new DownloadedResource("/eds/pages/blogs/adventures.jpg",
+            blogImageContent),
+        new DownloadedResource("/eds/eds-index.jpg",
+            edsIndexImageContent),
+        new DownloadedResource("/images/logo.png",
+            logoImageContent),
+        new DownloadedResource("/https_www.goggle.com/streamx-mesh-overview.jpg_par_val.jpg",
+            meshImageContent),
+        new DownloadedResource("/https_www.goggle.com/assets/jcr_content/cloud.svg",
+            cloudImageContent),
+        new DownloadedResource("/stylesheets/styles.css",
+            stylesheetContent.getBytes(UTF_8))
     ));
 
     assertPublishedPage(pageEvents.get(0),
@@ -236,8 +242,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
   }
 
   @Test
-  @SkipVerifyingEachExternalResourceWasDownloadedExactlyOnce
-    // two independent requests in the test
+  @SkipVerifyingEachExternalResourceWasDownloadedExactlyOnce // two independent requests in the test
   void shouldHandleRepublishedPageEditedByUser() {
     // given
     final String pagePath = "/eds/pages/page.html";
@@ -340,10 +345,10 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     assertDownloadedWebResource(0, "/pages/configuration.xml", configurationContent);
     assertPublishedPage(pageEvents.get(0), pagePath,
         """
-        <a href='page2.html'>Page 2</a>
-        <img src='/pages/configuration.xml'>
-        <img src='/pages/page3.html'>
-        """);
+            <a href='page2.html'>Page 2</a>
+            <img src='/pages/configuration.xml'>
+            <img src='/pages/page3.html'>
+            """);
   }
 
   @Test
@@ -449,7 +454,9 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
 
     // then
     assertDownloadedAssets(List.of(
-        new DownloadedResource("/pages/image_20with_20spaces_20and_20invalid_20chars_20like_20_5E.jpg", externalImageContent),
+        new DownloadedResource(
+            "/pages/image_20with_20spaces_20and_20invalid_20chars_20like_20_5E.jpg",
+            externalImageContent),
         new DownloadedResource("/http_server.com/image_20with_20spaces.jpg", externalImageContent),
         new DownloadedResource("/assets/Cube_20Images/cube1.webp", externalImageContent),
         new DownloadedResource("/assets/Cube-Images/cube2.webp", externalImageContent),

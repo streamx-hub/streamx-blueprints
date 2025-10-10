@@ -99,7 +99,7 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     );
 
     // then
-    List<CloudEvent> pageEvents = waitForEventsInSink(EXTERNAL_PAGE, 2);
+    final List<CloudEvent> pageEvents = waitForEventsInSink(EXTERNAL_PAGE, 2);
     waitForDownloadedAssets(4);
 
     // page1 contains links to image1 and image2
