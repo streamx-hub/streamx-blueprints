@@ -2,10 +2,10 @@ package com.streamx.blueprints.composition;
 
 import static com.streamx.blueprints.cloudevents.utils.CloudEventUtils.eventWithData;
 import static com.streamx.blueprints.cloudevents.utils.CloudEventUtils.eventWithoutData;
-import static com.streamx.blueprints.composition.CompositionFunction.INCOMING_COMPOSITIONS_CHANNEL;
-import static com.streamx.blueprints.composition.CompositionFunction.INCOMING_LAYOUTS_CHANNEL;
-import static com.streamx.blueprints.composition.CompositionFunction.INCOMING_PAGE_COMPOSE_REQUESTS_CHANNEL;
-import static com.streamx.blueprints.composition.CompositionFunction.OUTGOING_PAGES_CHANNEL;
+import static com.streamx.blueprints.composition.Channels.INCOMING_COMPOSITIONS;
+import static com.streamx.blueprints.composition.Channels.INCOMING_LAYOUTS;
+import static com.streamx.blueprints.composition.Channels.INCOMING_PAGE_COMPOSE_REQUESTS;
+import static com.streamx.blueprints.composition.Channels.OUTGOING_PAGES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
@@ -58,11 +58,11 @@ class CompositionFunctionTest {
   }
 
   private void initInMemoryObjects() {
-    layoutsSource = connector.source(INCOMING_LAYOUTS_CHANNEL);
-    compositionsSource = connector.source(INCOMING_COMPOSITIONS_CHANNEL);
-    incomingPageComposeRequestsSource = connector.source(INCOMING_PAGE_COMPOSE_REQUESTS_CHANNEL);
+    layoutsSource = connector.source(INCOMING_LAYOUTS);
+    compositionsSource = connector.source(INCOMING_COMPOSITIONS);
+    incomingPageComposeRequestsSource = connector.source(INCOMING_PAGE_COMPOSE_REQUESTS);
 
-    pagesSink = connector.sink(OUTGOING_PAGES_CHANNEL);
+    pagesSink = connector.sink(OUTGOING_PAGES);
     pagesSink.clear();
   }
 

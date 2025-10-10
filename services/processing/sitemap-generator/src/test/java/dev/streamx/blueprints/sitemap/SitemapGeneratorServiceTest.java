@@ -2,27 +2,29 @@ package dev.streamx.blueprints.sitemap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 
-import dev.streamx.blueprints.data.Page;
-import dev.streamx.blueprints.data.WebResource;
-import dev.streamx.metadata.Properties;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
-import dev.streamx.quasar.reactive.messaging.utils.MetadataUtils;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.Page;
+import com.streamx.blueprints.data.WebResource;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectSpy;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
 import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
-import java.util.List;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.TimeZone;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +33,7 @@ import org.junit.jupiter.api.Test;
 class SitemapGeneratorServiceTest {
 
   private static final long EVENT_TIME_INITIAL_VALUE = 1722265416000L;
-  private static final long ONE_DAY_IN_MILIS = 86400000;
+  private static final long ONE_DAY_IN_MILLIS = 86400000;
   private static final AtomicLong EVENT_TIME = new AtomicLong(EVENT_TIME_INITIAL_VALUE);
 
   @Inject
@@ -41,8 +43,11 @@ class SitemapGeneratorServiceTest {
   @Inject
   ProcessPageFunction processPageFunction;
 
-  private InMemorySource<Message<Page>> pages;
-  private InMemorySink<WebResource> sitemapSink;
+  @InjectSpy
+  PublishedPagesStore publishedPagesStore;
+
+  private InMemorySource<CloudEvent> pages;
+  private InMemorySink<CloudEvent> sitemapSink;
 
   @BeforeAll
   static void beforeAll() {
@@ -53,6 +58,11 @@ class SitemapGeneratorServiceTest {
   void setup() {
     pages = connector.source(Channels.INCOMING_PAGES_CHANNEL);
     sitemapSink = connector.sink(Channels.OUTGOING_SITEMAPS_CHANNEL);
+  }
+
+  @AfterEach
+  void clearStore() {
+    publishedPagesStore.clear();
   }
 
   @Test
@@ -102,32 +112,84 @@ class SitemapGeneratorServiceTest {
     cleanUp();
   }
 
+  @Test
+  void shouldPublishSitemapFromPageEventWithNullTime() {
+    // when
+    sendPage("/page.html", Page.TYPE_PUBLISHED, null);
+    requestSitemapGeneration();
+
+    // then
+    assertSitemap("""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        <url>
+        <loc>https://test-domain.com/page.html</loc>
+        </url>
+        </urlset>""");
+    cleanUp();
+  }
+
+  @Test
+  void shouldNotGenerateSitemapFromPageWithNotMatchingEventType() {
+    // when
+    pages.send(
+        CloudEventUtils.eventWithData(
+            new Page("whatever"),
+            "page-edited.v1",
+            "/index.html",
+            OffsetDateTime.now()
+        )
+    );
+
+    // then
+    await().during(Duration.ofMillis(500)).untilAsserted(() ->
+        verify(publishedPagesStore, never()).register(any(), any(), any())
+    );
+
+    // and
+    assertNoSitemap();
+    cleanUp();
+  }
+
+  @Test
+  void shouldNotGenerateSitemapFromPageWithNotMatchingPath() {
+    // when
+    publishPage("page.txt");
+
+    // then
+    assertNoSitemap();
+    cleanUp();
+  }
+
   private void cleanUp() {
     sitemapSink.clear();
     EVENT_TIME.set(EVENT_TIME_INITIAL_VALUE);
   }
 
   private void publishPage(String key) {
-    sendPage(key, Action.PUBLISH);
+    sendPage(key, Page.TYPE_PUBLISHED);
   }
 
   private void unpublishPage(String key) {
-    sendPage(key, Action.UNPUBLISH);
+    sendPage(key, Page.TYPE_UNPUBLISHED);
   }
 
-  private void sendPage(String key, Action action) {
-    AtomicBoolean isAcked = new AtomicBoolean(false);
-    pages.send(Message.of(new Page("whatever"), Metadata.of(
-            Key.of(key),
-            EventTime.of(EVENT_TIME.getAndAdd(ONE_DAY_IN_MILIS)),
-            action))
-        .withAck(() -> {
-          isAcked.set(true);
-          return CompletableFuture.completedFuture(null);
-        }));
-    // Wait till message is acked (processed) as depending on signature of method processing the
-    // message the processing may be synchronous or asynchronous.
-    await().until(isAcked::get);
+  private void sendPage(String key, String eventType) {
+    sendPage(key, eventType, toOffsetDateTime(EVENT_TIME.getAndAdd(ONE_DAY_IN_MILLIS)));
+  }
+
+  private void sendPage(String key, String eventType, OffsetDateTime eventTime) {
+    Page page = new Page("whatever");
+    CloudEvent pageEvent = CloudEventUtils.eventWithData(page, eventType, key, eventTime);
+    pages.send(pageEvent);
+    waitForEventProcessed(key, eventType, eventTime);
+  }
+
+  private void waitForEventProcessed(String key, String eventType, OffsetDateTime eventTime) {
+    await().atMost(Duration.ofSeconds(1)).untilAsserted(() ->
+        verify(publishedPagesStore).register(key, eventTime, eventType)
+    );
+    reset(publishedPagesStore);
   }
 
   /**
@@ -140,17 +202,24 @@ class SitemapGeneratorServiceTest {
   }
 
   private void assertNoSitemap() {
-    List<? extends Message<WebResource>> received = sitemapSink.received();
-    assertThat(received).isEmpty();
+    assertThat(sitemapSink.received()).isEmpty();
   }
 
   private void assertSitemap(String expected) {
-    List<? extends Message<WebResource>> received = sitemapSink.received();
-    assertThat(received).hasSize(1);
-    Message<WebResource> sitemap = received.get(0);
-    assertThat(sitemap.getPayload().getContentAsString()).isEqualTo(expected);
-    assertThat(MetadataUtils.extractAction(sitemap)).isEqualTo(Action.PUBLISH);
-    assertThat(MetadataUtils.extractKey(sitemap)).isEqualTo("sitemap.xml");
-    assertThat(Properties.from(sitemap).getType().orElse(null)).isEqualTo("sitemap-type");
+    assertThat(sitemapSink.received()).hasSize(1);
+
+    CloudEvent sitemapEvent = sitemapSink.received().get(0).getPayload();
+    assertThat(sitemapEvent.getType()).isEqualTo(WebResource.TYPE_PUBLISHED);
+    assertThat(sitemapEvent.getSubject()).isEqualTo("sitemap.xml");
+
+    WebResource sitemap = CloudEventUtils.getData(sitemapEvent, WebResource.class);
+    assertThat(sitemap).isNotNull();
+    assertThat(sitemap.getContentAsString()).isEqualTo(expected);
+    assertThat(sitemap.getType()).isEqualTo("sitemap-type");
+  }
+
+  private static OffsetDateTime toOffsetDateTime(long utcEpochMillis) {
+    Instant instant = Instant.ofEpochMilli(utcEpochMillis);
+    return OffsetDateTime.ofInstant(instant, ZoneOffset.UTC);
   }
 }

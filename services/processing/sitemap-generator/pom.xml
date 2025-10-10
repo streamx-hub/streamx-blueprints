@@ -3,9 +3,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>dev.streamx.blueprints</groupId>
+    <groupId>com.streamx.blueprints</groupId>
     <artifactId>blueprints-project</artifactId>
-    <version>2.0.14-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
+    <relativePath>../../../pom.xml</relativePath>
   </parent>
 
   <artifactId>sitemap-generator</artifactId>
@@ -18,8 +19,16 @@
 
   <dependencies>
     <dependency>
-      <groupId>dev.streamx</groupId>
-      <artifactId>streamx-processing-service</artifactId>
+      <groupId>com.streamx</groupId>
+      <artifactId>reactive-messaging-http-cloudevents</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.streamx.blueprints</groupId>
+      <artifactId>data-model</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.streamx.blueprints</groupId>
+      <artifactId>cloud-events-support</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -28,10 +37,6 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-scheduler</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>dev.streamx.blueprints</groupId>
-      <artifactId>data-model</artifactId>
     </dependency>
     <dependency>
       <groupId>cz.jiripinkas</groupId>
@@ -88,6 +93,10 @@
       <plugin>
         <groupId>${quarkus.platform.group-id}</groupId>
         <artifactId>quarkus-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

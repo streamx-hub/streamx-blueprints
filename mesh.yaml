@@ -67,6 +67,15 @@ descriptors:
       outgoing-page-compose-requests:
         binding: "http-structured-json"
 
+  sitemap-generator:
+    type: "processing"
+    incoming:
+      incoming-pages:
+        binding: "http-structured-json"
+    outgoing:
+      outgoing-sitemaps:
+        binding: "http-structured-json"
+
   image-optimizer:
     type: "processing"
     incoming:
@@ -224,6 +233,21 @@ processing:
           topic: relays/pages
         outgoing-page-compose-requests:
           topic: relays/page-compose-requests
+
+  blueprint-sitemap-generator:
+    containers:
+      - image: sitemap-generator
+        incoming:
+          incoming-pages:
+            topic: relays/pages
+        outgoing:
+          outgoing-sitemaps:
+            topic: outboxes/web-resources
+        environment:
+          STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_BASE_URL: "http://localhost:8081"
+          STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_OUTPUT_KEY: "sitemap.xml"
+          STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_DIRTY_CHECK_INTERVAL: "1s"
+          STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_DIRTY_CHECK_MAX_DIRTY_SEQUENCE_COUNT: "1"
 
 edge:
   blueprint-web-server:

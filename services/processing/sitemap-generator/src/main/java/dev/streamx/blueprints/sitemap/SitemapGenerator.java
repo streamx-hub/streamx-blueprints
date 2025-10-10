@@ -36,9 +36,7 @@ public class SitemapGenerator {
       SitemapEntryData sitemapEntryData) {
     WebPageBuilder builder = WebPage.builder()
         .name(sitemapEntryData.pageName());
-    if (properties.generateLastmodAttribute()
-            && sitemapEntryData.timestamp() != null
-    ) {
+    if (properties.generateLastmodAttribute() && sitemapEntryData.timestamp() != null) {
       builder.lastMod(new Date(sitemapEntryData.timestamp()));
     }
     generator.addPage(builder.build());

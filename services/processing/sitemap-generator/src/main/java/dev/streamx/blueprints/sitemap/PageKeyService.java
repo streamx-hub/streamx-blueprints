@@ -1,7 +1,7 @@
 package dev.streamx.blueprints.sitemap;
 
-import com.google.re2j.Pattern;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 class PageKeyService {
@@ -27,10 +27,6 @@ class PageKeyService {
       return true;
     }
     return patterns.stream()
-        .anyMatch(
-            pattern ->
-                pattern.matcher(key)
-                    .find()
-        );
+        .anyMatch(pattern -> pattern.matcher(key).find());
   }
 }

@@ -1,27 +1,33 @@
 package dev.streamx.blueprints.sitemap;
 
-import dev.streamx.blueprints.data.Page;
-import dev.streamx.blueprints.data.WebResource;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.Page;
+import com.streamx.blueprints.data.WebResource;
 import dev.streamx.blueprints.sitemap.configuration.properties.SitemapGeneratorProperties;
-import dev.streamx.metadata.Properties;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
+import io.cloudevents.CloudEvent;
 import io.quarkus.scheduler.Scheduled;
 import io.quarkus.scheduler.Scheduled.ConcurrentExecution;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.util.Set;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
 
 @ApplicationScoped
 class ProcessPageFunction {
+
+  private static final Set<String> handledEventTypes = Set.of(
+      Page.TYPE_PUBLISHED,
+      Page.TYPE_UNPUBLISHED
+  );
+
+  @Inject
+  PublishedPagesStore publishedPagesStore;
+
   @Inject
   @Channel(Channels.OUTGOING_SITEMAPS_CHANNEL)
-  Emitter<WebResource> emitter;
+  Emitter<CloudEvent> emitter;
 
   @Inject
   DirtySequenceStateManager dirtySequenceStateManager;
@@ -36,8 +42,15 @@ class ProcessPageFunction {
   PageKeyService pageKeyService;
 
   @Incoming(Channels.INCOMING_PAGES_CHANNEL)
-  void processPage(Page message, Key key) {
-    if (pageKeyService.isSupportedKey(key.getValue())) {
+  void processPage(CloudEvent event) {
+    String eventType = event.getType();
+    if (!handledEventTypes.contains(eventType)) {
+      return;
+    }
+
+    String pageKey = CloudEventUtils.getSubject(event);
+    publishedPagesStore.register(pageKey, event.getTime(), event.getType());
+    if (pageKeyService.isSupportedKey(pageKey)) {
       dirtySequenceStateManager.newDirtyResource();
     }
   }
@@ -50,13 +63,10 @@ class ProcessPageFunction {
   public void publishSitemapIfNeeded() {
     if (dirtySequenceStateManager.checkIfActionIsNeededForNewSequence()) {
       WebResource sitemapWebResource = sitemapService.createSitemapResource();
-      Message<WebResource> message = Message.of(sitemapWebResource, Metadata.of(
-          Key.of(configuration.outputKey()),
-          EventTime.of(System.currentTimeMillis()),
-          Action.PUBLISH,
-          Properties.empty().withType(configuration.outputType().orElse(null))
-      ));
-      emitter.send(message);
+      CloudEvent sitemapEvent = CloudEventUtils.eventWithData(
+          sitemapWebResource, WebResource.TYPE_PUBLISHED, configuration.outputKey()
+      );
+      emitter.send(sitemapEvent);
     }
   }
 }

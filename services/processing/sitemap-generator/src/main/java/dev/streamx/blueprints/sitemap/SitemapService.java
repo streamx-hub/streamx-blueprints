@@ -1,20 +1,17 @@
 package dev.streamx.blueprints.sitemap;
 
-import dev.streamx.blueprints.data.WebResource;
+import com.streamx.blueprints.data.WebResource;
 import dev.streamx.blueprints.sitemap.SitemapGenerator.SitemapEntryData;
-import dev.streamx.quasar.reactive.messaging.Store;
-import dev.streamx.quasar.reactive.messaging.Store.Entry;
-import dev.streamx.quasar.reactive.messaging.annotations.FromChannel;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import io.smallrye.reactive.messaging.GenericPayload;
+import dev.streamx.blueprints.sitemap.configuration.properties.SitemapGeneratorProperties;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.util.Optional;
 
 @ApplicationScoped
 public class SitemapService {
 
-  @FromChannel(Channels.INCOMING_PAGES_CHANNEL)
-  Store<PageEntry> pageStore;
+  @Inject
+  PublishedPagesStore publishedPagesStore;
 
   @Inject
   SitemapGenerator sitemapGenerator;
@@ -22,32 +19,29 @@ public class SitemapService {
   @Inject
   PageKeyService pageKeyService;
 
-  public WebResource createSitemapResource() {
+  @Inject
+  SitemapGeneratorProperties configuration;
 
-    var entries = pageStore.entriesWithMetadata()
-        .filter(e -> e.value() != null)
-        .map(Entry::value)
+  public WebResource createSitemapResource() {
+    var entries = publishedPagesStore.getEntries().stream()
         .filter(this::isValidForSitemapGeneration)
         .map(this::generateSitemapEntryData)
         .toList();
 
     String sitemap = sitemapGenerator.generate(entries);
-    return new WebResource(sitemap);
+    String outputType = configuration.outputType().orElse(null);
+    return new WebResource(sitemap, outputType);
   }
 
-  private SitemapEntryData generateSitemapEntryData(GenericPayload<PageEntry> entry) {
-    var timestamp = entry.getMetadata()
-        .get(EventTime.class)
-        .map(EventTime::getValue)
+  private SitemapEntryData generateSitemapEntryData(PublishedPage entry) {
+    Long timestamp = Optional.ofNullable(entry.time())
+        .map(time -> time.toInstant().toEpochMilli())
         .orElse(null);
-    var pageName = entry.getPayload().getPageName();
+    var pageName = entry.pageName();
     return new SitemapEntryData(pageName, timestamp);
   }
 
-  private boolean isValidForSitemapGeneration(GenericPayload<PageEntry> entry) {
-    return entry.getMetadata() != null
-        && entry.getPayload() != null
-        && entry.getPayload().isPublished()
-        && pageKeyService.isSupportedKey(entry.getPayload().getPageName());
+  private boolean isValidForSitemapGeneration(PublishedPage entry) {
+    return pageKeyService.isSupportedKey(entry.pageName());
   }
 }
