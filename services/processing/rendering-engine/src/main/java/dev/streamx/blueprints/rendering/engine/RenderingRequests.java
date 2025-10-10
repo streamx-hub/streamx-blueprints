@@ -1,28 +1,23 @@
 package dev.streamx.blueprints.rendering.engine;
 
 import static dev.streamx.blueprints.rendering.engine.RenderingContexts.isMatchingData;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractAction;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractEventTime;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractKey;
 
-import dev.streamx.blueprints.data.Data;
-import dev.streamx.blueprints.data.RenderingContext;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.Data;
+import com.streamx.blueprints.data.RenderingContext;
 import dev.streamx.blueprints.rendering.engine.converter.PreservedData;
-import dev.streamx.metadata.Properties;
-import dev.streamx.quasar.reactive.messaging.Store;
-import dev.streamx.quasar.reactive.messaging.annotations.FromChannel;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
+import dev.streamx.blueprints.rendering.engine.converter.PreservedDataStore;
+import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -31,37 +26,38 @@ public class RenderingRequests {
   @Inject
   Logger log;
 
-  @FromChannel(Channels.Incoming.DATA)
-  Store<PreservedData> dataStore;
+  @Inject
+  PreservedDataStore dataStore;
 
-  Multi<Message<RenderingRequest>> getFromDataStore(Message<?> incoming,
+  Multi<Message<CloudEvent>> getFromDataStore(Message<CloudEvent> incoming,
       List<KeyedValue<RenderingContext>> renderingContexts) {
     Supplier<Stream<KeyedValue<Data>>> streamSupplier = this::fetchStoredDataContextFromStore;
 
     return getFrom(incoming, renderingContexts, streamSupplier);
   }
 
-  Multi<Message<RenderingRequest>> getFromDataEntries(Message<?> incoming,
+  Multi<Message<CloudEvent>> getFromDataEntries(Message<CloudEvent> incoming,
       List<KeyedValue<RenderingContext>> renderingContexts, List<KeyedValue<Data>> dataEntry) {
     Supplier<Stream<KeyedValue<Data>>> streamSupplier = dataEntry::stream;
 
     return getFrom(incoming, renderingContexts, streamSupplier);
   }
 
-  Multi<Message<RenderingRequest>> getFrom(Message<?> incoming,
+  private Multi<Message<CloudEvent>> getFrom(Message<CloudEvent> incoming,
       List<KeyedValue<RenderingContext>> renderingContexts,
       Supplier<Stream<KeyedValue<Data>>> streamSupplier) {
-    Multi<Message<RenderingRequest>> outgoings;
+    Multi<Message<CloudEvent>> outgoings;
     try {
       AckHandler ackHandler = new AckHandler(incoming);
       if (renderingContexts.isEmpty()) {
         outgoings = Multi.createFrom().empty();
       } else {
+        CloudEvent event = incoming.getPayload();
         log.tracef("Sending outgoing messages after %s of message with key %s",
-            extractAction(incoming), extractKey(incoming));
-        Stream<Message<RenderingRequest>> renderingRequests = calculateRenderingRequestForDataStore(
-            extractEventTime(incoming),
-            extractAction(incoming),
+            event.getType(), CloudEventUtils.getSubject(event));
+        Stream<Message<CloudEvent>> renderingRequests = calculateRenderingRequestForDataStore(
+            event.getTime(),
+            event.getType(),
             ackHandler,
             renderingContexts,
             streamSupplier);
@@ -74,8 +70,8 @@ public class RenderingRequests {
     }
   }
 
-  private Stream<Message<RenderingRequest>> calculateRenderingRequestForDataStore(
-      Long eventTime, Action action,
+  private Stream<Message<CloudEvent>> calculateRenderingRequestForDataStore(
+      OffsetDateTime eventTime, String eventType,
       AckHandler ackHandler,
       List<KeyedValue<RenderingContext>> renderingContexts,
       Supplier<Stream<KeyedValue<Data>>> dataStream) {
@@ -90,17 +86,18 @@ public class RenderingRequests {
           var value = dataContext.context().value();
           var dataKey = dataContext.dataKey();
 
-          return Message.of(
-              new RenderingRequest(
-                  dataKey,
-                  value.getRendererKey(),
-                  value.getOutputKeyTemplate(),
-                  value.getOutputTypeTemplate(),
-                  value.getOutputFormat()),
-              Metadata.of(
-                  Key.of(dataContext.buildKey()),
-                  EventTime.of(eventTime),
-                  action),
+          RenderingRequest renderingRequest = new RenderingRequest(
+              dataKey,
+              value.rendererKey(),
+              value.outputKeyTemplate(),
+              value.outputTypeTemplate(),
+              value.outputFormat()
+          );
+          CloudEvent event = CloudEventUtils.eventWithData(
+              renderingRequest, eventType, dataContext.buildKey(), eventTime
+          );
+
+          return Message.of(event,
               () -> {
                 ackCf.complete(null);
                 return CompletableFuture.completedFuture(null);
@@ -114,18 +111,19 @@ public class RenderingRequests {
   }
 
   private Stream<KeyedValue<Data>> fetchStoredDataContextFromStore() {
-    return dataStore.entriesWithMetadata()
-        .map(entry -> new KeyedValue<>(entry.key(), entry.value().getPayload().getData()));
+    return dataStore.getAll().stream()
+        .map(entry -> new KeyedValue<>(entry.getKey(), entry.getValue().data()));
   }
 
   private boolean skipDataWithNoValue(KeyedValue<?> entry) {
     return entry.value() != null
-        || dataStore.get(entry.key()).getData() != null;
+        || dataStore.get(entry.key()).data() != null;
   }
 
   private String getDataType(String key) {
-    return Properties.from(dataStore.getWithMetadata(key))
-        .getType()
+    return Optional.ofNullable(dataStore.get(key))
+        .map(PreservedData::data)
+        .map(Data::getType)
         .orElse(null);
   }
 

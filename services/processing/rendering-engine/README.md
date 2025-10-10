@@ -1,15 +1,15 @@
 # Blueprint Rendering Engine
 
-Purpose of this service is to generate outgoing resource to one of available outgoing resource
+Purpose of this service is to generate outgoing resource to one of the available outgoing resource
 channels.
 
-The service process incoming renderers, data and rendering contexts. The rendering context defines
+The service processes incoming renderers, data and rendering contexts. The rendering context defines
 what and how should be rendered.
 
 Outgoing resources are generated according to rendering contexts describing what and how should be
 rendered (also referencing data and renderer). The rendering context contains:
 
-- output type - page, fragment or composite (indicates the outgoing channel)
+- output type - page or fragment (indicates the outgoing channel)
 - output key template - template used to generate the outgoing resource key; template is evaluated
   same way as the rendered template, with same data object
 - renderer key - used to find related renderer containing the template, used to generate outgoing

@@ -221,7 +221,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
         new DownloadedResource("/https_www.goggle.com/assets/jcr_content/cloud.svg",
             cloudImageContent),
         new DownloadedResource("/stylesheets/styles.css",
-            stylesheetContent.getBytes(UTF_8))
+            stylesheetContent)
     ));
 
     assertPublishedPage(pageEvents.get(0),

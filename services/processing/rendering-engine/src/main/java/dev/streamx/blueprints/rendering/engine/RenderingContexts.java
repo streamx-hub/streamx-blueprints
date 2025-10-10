@@ -1,15 +1,12 @@
 package dev.streamx.blueprints.rendering.engine;
 
-import static dev.streamx.quasar.reactive.messaging.metadata.Action.PUBLISH;
-
-import dev.streamx.blueprints.data.Renderer;
-import dev.streamx.blueprints.data.RenderingContext;
-import dev.streamx.blueprints.rendering.engine.converter.PreservedRenderingContext;
-import dev.streamx.quasar.reactive.messaging.Store;
-import dev.streamx.quasar.reactive.messaging.annotations.FromChannel;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import io.smallrye.reactive.messaging.GenericPayload;
+import com.streamx.blueprints.data.Renderer;
+import com.streamx.blueprints.data.RenderingContext;
+import dev.streamx.blueprints.rendering.engine.converter.PreservedRenderingContextStore;
+import dev.streamx.blueprints.rendering.engine.converter.RendererEvent;
+import dev.streamx.blueprints.rendering.engine.converter.RendererEventsStore;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.PatternSyntaxException;
@@ -19,15 +16,15 @@ import org.apache.commons.lang3.StringUtils;
 @ApplicationScoped
 public class RenderingContexts {
 
-  @FromChannel(Channels.Incoming.RENDERING_CONTEXTS)
-  Store<PreservedRenderingContext> renderingContextStore;
+  @Inject
+  PreservedRenderingContextStore renderingContextStore;
 
-  @FromChannel(Channels.Incoming.RENDERERS)
-  Store<Renderer> renderersStore;
+  @Inject
+  RendererEventsStore renderersStore;
 
   List<KeyedValue<RenderingContext>> getByRendererKey(String rendererKey) {
     return getPublishedContexts()
-        .filter(entry -> rendererKey.equals(entry.value().getRendererKey()))
+        .filter(entry -> rendererKey.equals(entry.value().rendererKey()))
         .toList();
   }
 
@@ -40,19 +37,17 @@ public class RenderingContexts {
 
   boolean hasRenderer(RenderingContext renderingContext) {
     return Optional.ofNullable(renderingContext)
-        .map(RenderingContext::getRendererKey)
-        .map(key -> renderersStore.getWithMetadata(key))
-        .filter(rendererStoreEntry -> PUBLISH.equals(Action.from(rendererStoreEntry.getMetadata())))
-        .map(GenericPayload::getPayload)
+        .map(RenderingContext::rendererKey)
+        .map(key -> renderersStore.get(key))
+        .filter(rendererEvent -> Renderer.TYPE_PUBLISHED.equals(rendererEvent.eventType()))
+        .map(RendererEvent::renderer)
         .isPresent();
   }
 
   private Stream<KeyedValue<RenderingContext>> getPublishedContexts() {
-    return renderingContextStore.entriesWithMetadata()
-        .filter(entry -> PUBLISH.equals(Action.from(entry.value().getMetadata())))
-        .map(entry -> new KeyedValue<>(entry.key(), Optional.ofNullable(entry.value().getPayload())
-            .map(PreservedRenderingContext::getRenderingContext)
-            .orElse(null)))
+    return renderingContextStore.getAll().stream()
+        .filter(entry -> RenderingContext.TYPE_PUBLISHED.equals(entry.getValue().eventType()))
+        .map(entry -> new KeyedValue<>(entry.getKey(), entry.getValue().renderingContext()))
         .filter(entry -> entry.value() != null);
   }
 
@@ -60,8 +55,8 @@ public class RenderingContexts {
       String dataType) {
     try {
       return hasFilter(renderingContext)
-          && isMatching(renderingContext.getDataKeyMatchPattern(), dataKey)
-          && isMatching(renderingContext.getDataTypeMatchPattern(), dataType);
+          && isMatching(renderingContext.dataKeyMatchPattern(), dataKey)
+          && isMatching(renderingContext.dataTypeMatchPattern(), dataType);
     } catch (PatternSyntaxException e) {
       // ignore invalid patterns
       return false;
@@ -69,8 +64,8 @@ public class RenderingContexts {
   }
 
   private static boolean hasFilter(RenderingContext renderingContext) {
-    return StringUtils.isNotBlank(renderingContext.getDataKeyMatchPattern())
-        || StringUtils.isNotBlank(renderingContext.getDataTypeMatchPattern());
+    return StringUtils.isNotBlank(renderingContext.dataKeyMatchPattern())
+        || StringUtils.isNotBlank(renderingContext.dataTypeMatchPattern());
   }
 
   private static boolean isMatching(String pattern, String value) {

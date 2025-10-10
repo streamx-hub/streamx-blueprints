@@ -56,6 +56,10 @@ public class CloudEventUtils {
     );
   }
 
+  public static <T> T getDataOrThrow(CloudEvent cloudEvent, Class<T> clazz) {
+    return Objects.requireNonNull(getData(cloudEvent, clazz));
+  }
+
   public static String getSubject(CloudEvent cloudEvent) {
     return Objects.requireNonNull(cloudEvent.getSubject());
   }
@@ -91,11 +95,9 @@ public class CloudEventUtils {
   public static Optional<String> getSubjectNamespace(String subject) {
     String value = requireNonNull(subject);
 
-    var indexOfColon = value.indexOf(NAMESPACE_SEPARATOR);
-    if (indexOfColon != -1) {
-      if (indexOfColon != 0) {
-        return Optional.of(value.substring(0, indexOfColon));
-      }
+    var indexOfSeparator = value.indexOf(NAMESPACE_SEPARATOR);
+    if (indexOfSeparator > 0) {
+      return Optional.of(value.substring(0, indexOfSeparator));
     }
     return Optional.empty();
   }
@@ -103,13 +105,11 @@ public class CloudEventUtils {
   public static String getSubjectWithoutNamespace(String subject) {
     String value = requireNonNull(subject);
 
-    var indexOfColon = value.indexOf(NAMESPACE_SEPARATOR);
-    if (indexOfColon != -1) {
-      if (indexOfColon == 0) {
-        return value.substring(NAMESPACE_SEPARATOR.length());
-      } else {
-        return value.substring(indexOfColon + NAMESPACE_SEPARATOR.length());
-      }
+    var indexOfSeparator = value.indexOf(NAMESPACE_SEPARATOR);
+    if (indexOfSeparator == 0) {
+      return value.substring(NAMESPACE_SEPARATOR.length());
+    } else if (indexOfSeparator > 0) {
+      return value.substring(indexOfSeparator + NAMESPACE_SEPARATOR.length());
     }
     return subject;
   }

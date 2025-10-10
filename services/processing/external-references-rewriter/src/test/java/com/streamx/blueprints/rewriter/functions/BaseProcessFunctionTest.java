@@ -1,6 +1,5 @@
 package com.streamx.blueprints.rewriter.functions;
 
-import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -120,7 +119,7 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
   private static void assertPublishedTextResource(CloudEvent event,
       String expectedKey, String expectedContent) {
     assertThat(event.getSubject()).isEqualTo(expectedKey);
-    String content = requireNonNull(CloudEventUtils.getData(event, Resource.class))
+    String content = CloudEventUtils.getDataOrThrow(event, Resource.class)
         .getContentAsString();
     assertThat(content).isEqualTo(expectedContent);
   }

@@ -1,26 +1,11 @@
 package dev.streamx.blueprints.rendering.engine.converter;
 
-import dev.streamx.blueprints.data.Data;
-import org.apache.avro.specific.AvroGenerated;
+import com.streamx.blueprints.data.Data;
 
 /**
  * Designed to keep access to previous version of the {@link Data} in store in case of unpublish
- * using {@link PreservedDataMessageConverter}.
+ * using {@link PreservedDataStore}.
  */
-@AvroGenerated
-public class PreservedData {
+public record PreservedData(Data data, String eventType) {
 
-  private Data data;
-
-  private PreservedData() {
-    // needed for Avro serialization
-  }
-
-  public PreservedData(Data data) {
-    this.data = data;
-  }
-
-  public Data getData() {
-    return data;
-  }
 }

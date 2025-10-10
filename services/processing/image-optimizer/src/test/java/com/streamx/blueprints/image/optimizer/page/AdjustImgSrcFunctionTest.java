@@ -26,10 +26,8 @@ import jakarta.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -429,11 +427,7 @@ class AdjustImgSrcFunctionTest {
   }
 
   private static String extractPageHtml(CloudEvent event) {
-    return Optional.ofNullable(CloudEventUtils.getData(event, Page.class))
-        .map(Page::getContent)
-        .map(ByteBuffer::array)
-        .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
-        .orElse(null);
+    return CloudEventUtils.getDataOrThrow(event, Page.class).getContentAsString();
   }
 
   private void publishOptimizedImage(File imageFile) throws IOException {

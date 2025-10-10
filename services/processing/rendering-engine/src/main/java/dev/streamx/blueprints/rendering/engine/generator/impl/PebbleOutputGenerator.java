@@ -3,8 +3,8 @@ package dev.streamx.blueprints.rendering.engine.generator.impl;
 import dev.streamx.blueprints.rendering.engine.generator.GeneratorException;
 import dev.streamx.blueprints.rendering.engine.generator.OutputGenerator;
 import io.pebbletemplates.pebble.PebbleEngine;
+import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.loader.StringLoader;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -18,11 +18,10 @@ public class PebbleOutputGenerator implements OutputGenerator {
 
   @Override
   public byte[] generate(String template, Map<String, Object> data) throws GeneratorException {
-    PebbleTemplate pebbleTemplate = engine.getTemplate(template);
     StringWriter writer = new StringWriter();
     try {
-      pebbleTemplate.evaluate(writer, data);
-    } catch (IOException e) {
+      engine.getTemplate(template).evaluate(writer, data);
+    } catch (PebbleException | IOException e) {
       throw new GeneratorException("Could not evaluate template", e);
     }
     return writer.toString().getBytes(StandardCharsets.UTF_8);

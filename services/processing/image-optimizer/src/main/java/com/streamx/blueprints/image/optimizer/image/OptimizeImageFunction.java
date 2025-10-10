@@ -1,7 +1,6 @@
 package com.streamx.blueprints.image.optimizer.image;
 
 import static com.streamx.blueprints.image.optimizer.image.ImageOptimizer.OPTIMIZED_IMAGE_EXTENSION;
-import static java.util.Objects.requireNonNull;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Asset;
@@ -81,7 +80,7 @@ public class OptimizeImageFunction {
     OffsetDateTime eventTime = event.getTime();
 
     if (Asset.TYPE_PUBLISHED.equals(eventType)) {
-      Asset asset = requireNonNull(CloudEventUtils.getData(event, Asset.class));
+      Asset asset = CloudEventUtils.getDataOrThrow(event, Asset.class);
       Asset optimizedImage = createOptimizedImage(asset, filePath);
       return CloudEventUtils.eventWithData(optimizedImage, Asset.TYPE_PUBLISHED, optimizedImagePath,
           eventTime);

@@ -1,7 +1,7 @@
 package dev.streamx.blueprints.rendering.engine;
 
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractKey;
-
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Uni;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,26 +9,28 @@ import java.util.concurrent.CompletableFuture;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.jboss.logging.Logger;
 
+// TODO rename packages
 public class AckHandler {
 
-  private final Message<?> incoming;
-  Logger log = Logger.getLogger(AckHandler.class);
+  private static final Logger log = Logger.getLogger(AckHandler.class);
 
-  private final List<Uni<Void>> ackUnisList;
+  private final Message<CloudEvent> incoming;
+  private final String incomingEventKey;
 
-  public AckHandler(Message<?> incoming) {
-    ackUnisList = new ArrayList<>();
+  private final List<Uni<Void>> ackUnisList = new ArrayList<>();
+
+  public AckHandler(Message<CloudEvent> incoming) {
     this.incoming = incoming;
+    this.incomingEventKey = CloudEventUtils.getSubject(incoming.getPayload());
   }
 
   public Uni<Void> handleIncomingMessageAck() {
-    String incomingMessageKey = extractKey(incoming);
     log.tracef(
         "Resolving ack of incoming message with key: %s on outgoing messages stream complete."
             + " Checking %d ack unis.",
-        incomingMessageKey, ackUnisList.size());
+        incomingEventKey, ackUnisList.size());
     if (ackUnisList.isEmpty()) {
-      log.tracef("No ackUnis to check. ACK for message with key: %s", incomingMessageKey);
+      log.tracef("No ackUnis to check. ACK for message with key: %s", incomingEventKey);
       return Uni.createFrom().completionStage(incoming.ack());
     } else {
       return Uni.combine().all().unis(ackUnisList).discardItems()
@@ -38,12 +40,11 @@ public class AckHandler {
   }
 
   private Uni<Void> handleAcknowledgement(Void unused, Throwable throwable) {
-    String incomingMessageKey = extractKey(incoming);
     if (throwable == null) {
-      log.tracef("All ack unis completed. ACK for message with key: %s", incomingMessageKey);
+      log.tracef("All ack unis completed. ACK for message with key: %s", incomingEventKey);
       return Uni.createFrom().completionStage(incoming.ack());
     } else {
-      log.tracef("ACK uni failed. NACK for message with key: %s", incomingMessageKey,
+      log.tracef("ACK uni failed. NACK for message with key: %s", incomingEventKey,
           throwable);
       return Uni.createFrom().completionStage(incoming.nack(throwable));
     }

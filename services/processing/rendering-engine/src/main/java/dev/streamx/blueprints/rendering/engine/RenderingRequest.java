@@ -1,52 +1,21 @@
 package dev.streamx.blueprints.rendering.engine;
 
-import dev.streamx.blueprints.data.RenderingContext.OutputFormat;
-import org.apache.avro.specific.AvroGenerated;
+import com.streamx.blueprints.data.RenderingContext.OutputFormat;
 
 /**
  * This is model dedicated for relay topic used internally by the Rendering Engine to trigger
  * generation of output. Information if the output should be published or unpublished should be
- * passed via {@link dev.streamx.quasar.reactive.messaging.metadata.Action} metadata.
+ * passed via event type.
  */
-@AvroGenerated
-public class RenderingRequest {
+public record RenderingRequest(
+    String dataKey,
+    String rendererKey,
+    String outputKeyTemplate,
+    String outputTypeTemplate,
+    OutputFormat outputFormat) {
 
-  private String dataKey;
-  private String rendererKey;
-  private String outputKeyTemplate;
-  private String outputTypeTemplate;
-  private OutputFormat outputFormat;
-
-  private RenderingRequest() {
-    // needed for Avro serialization
-  }
-
-  public RenderingRequest(String dataKey, String rendererKey, String outputKeyTemplate,
-      String outputTypeTemplate, OutputFormat outputFormat) {
-    this.dataKey = dataKey;
-    this.rendererKey = rendererKey;
-    this.outputKeyTemplate = outputKeyTemplate;
-    this.outputTypeTemplate = outputTypeTemplate;
-    this.outputFormat = outputFormat;
-  }
-
-  public String getDataKey() {
-    return dataKey;
-  }
-
-  public String getRendererKey() {
-    return rendererKey;
-  }
-
-  public String getOutputKeyTemplate() {
-    return outputKeyTemplate;
-  }
-
-  public String getOutputTypeTemplate() {
-    return outputTypeTemplate;
-  }
-
-  public OutputFormat getOutputFormat() {
-    return outputFormat;
-  }
+  public static final String TYPE_PUBLISHED =
+      "com.streamx.blueprints.rendering-request.published.v1";
+  public static final String TYPE_UNPUBLISHED =
+      "com.streamx.blueprints.rendering-request.unpublished.v1";
 }
