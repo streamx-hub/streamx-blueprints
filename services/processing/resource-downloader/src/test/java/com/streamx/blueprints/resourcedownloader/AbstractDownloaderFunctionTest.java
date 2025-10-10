@@ -32,7 +32,9 @@ abstract class AbstractDownloaderFunctionTest {
   protected static final String EMITTED_ASSET_TYPE = "asset/external";
 
   protected InMemorySource<CloudEvent> downloadRequestsChannel;
-  protected InMemorySink<CloudEvent> downloadedResourcesSink;
+  protected InMemorySink<CloudEvent> downloadedPagesSink;
+  protected InMemorySink<CloudEvent> downloadedAssetsSink;
+  protected InMemorySink<CloudEvent> downloadedWebResourcesSink;
 
   @Inject
   @Any
@@ -54,8 +56,12 @@ abstract class AbstractDownloaderFunctionTest {
   @BeforeEach
   void init() {
     downloadRequestsChannel = connector.source(Channels.DOWNLOAD_REQUESTS);
-    downloadedResourcesSink = connector.sink(Channels.DOWNLOADED_RESOURCES);
-    downloadedResourcesSink.clear();
+    downloadedPagesSink = connector.sink(Channels.DOWNLOADED_PAGES);
+    downloadedAssetsSink = connector.sink(Channels.DOWNLOADED_ASSETS);
+    downloadedWebResourcesSink = connector.sink(Channels.DOWNLOADED_WEB_RESOURCES);
+    downloadedPagesSink.clear();
+    downloadedAssetsSink.clear();
+    downloadedWebResourcesSink.clear();
   }
 
   protected void sendDownloadRequest(String url, String emitKey) {
@@ -68,15 +74,28 @@ abstract class AbstractDownloaderFunctionTest {
     downloadRequestsChannel.send(event);
   }
 
-
-  protected List<CloudEvent> waitForSingleDownloadedResource(String payloadType) {
-    return waitForDownloadedResource(payloadType, 1);
+  protected CloudEvent waitForSingleDownloadedPage() {
+    return waitForSingleDownloadedResource(downloadedPagesSink, EMITTED_PAGE_TYPE);
   }
 
-  protected List<CloudEvent> waitForDownloadedResource(String payloadType, int expectedSize) {
+  protected CloudEvent waitForSingleDownloadedAsset() {
+    return waitForSingleDownloadedResource(downloadedAssetsSink, EMITTED_ASSET_TYPE);
+  }
+
+  protected CloudEvent waitForSingleDownloadedWebResource() {
+    return waitForSingleDownloadedResource(downloadedWebResourcesSink, EMITTED_WEB_RESOURCE_TYPE);
+  }
+
+  private CloudEvent waitForSingleDownloadedResource(InMemorySink<CloudEvent> sink,
+      String payloadType) {
+    return waitForDownloadedResources(sink, payloadType, 1).get(0);
+  }
+
+  protected List<CloudEvent> waitForDownloadedResources(InMemorySink<CloudEvent> sink,
+      String payloadType, int expectedSize) {
     AtomicReference<List<CloudEvent>> matchingEventsRef = new AtomicReference<>();
     await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
-      List<CloudEvent> matchingEvents = downloadedResourcesSink.received().stream()
+      List<CloudEvent> matchingEvents = sink.received().stream()
           .map(Message::getPayload)
           .filter(
               event -> CloudEventUtils.getData(event, Resource.class).getType().equals(payloadType))
@@ -88,9 +107,11 @@ abstract class AbstractDownloaderFunctionTest {
   }
 
   protected void assertNoDownloadedResources() {
-    await().during(Duration.ofMillis(300)).untilAsserted(() ->
-        assertThat(downloadedResourcesSink.received()).isEmpty()
-    );
+    await().during(Duration.ofMillis(300)).untilAsserted(() -> {
+      assertThat(downloadedPagesSink.received()).isEmpty();
+      assertThat(downloadedAssetsSink.received()).isEmpty();
+      assertThat(downloadedWebResourcesSink.received()).isEmpty();
+    });
   }
 
   protected void assertEvent(CloudEvent actualEvent, String expectedSubject,

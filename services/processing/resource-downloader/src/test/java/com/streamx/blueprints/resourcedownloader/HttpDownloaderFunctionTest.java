@@ -1,12 +1,9 @@
 package com.streamx.blueprints.resourcedownloader;
 
-import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
-import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.resourcedownloader.testutils.TestWebServer;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import java.io.IOException;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -23,14 +20,14 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
     sendDownloadRequest(imageUrl, imagePath);
 
     // then
-    List<CloudEvent> assetEvents = waitForSingleDownloadedResource(EMITTED_ASSET_TYPE);
-    assertEvent(assetEvents.get(0), imagePath, imageContent);
+    CloudEvent assetEvent = waitForSingleDownloadedAsset();
+    assertEvent(assetEvent, imagePath, imageContent);
 
     // when 2
     sendDownloadRequest(imageUrl, imagePath);
 
     // then: expect no re-download
-    waitForSingleDownloadedResource(EMITTED_ASSET_TYPE);
+    waitForSingleDownloadedAsset();
   }
 
   @Test
@@ -44,14 +41,35 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
     sendDownloadRequest(fileUrl, filePath);
 
     // then
-    List<CloudEvent> webResourceEvents = waitForSingleDownloadedResource(EMITTED_WEB_RESOURCE_TYPE);
-    assertEvent(webResourceEvents.get(0), filePath, fileContent);
+    CloudEvent webResourceEvent = waitForSingleDownloadedWebResource();
+    assertEvent(webResourceEvent, filePath, fileContent);
 
     // when 2
     sendDownloadRequest(fileUrl, filePath);
 
     // then: expect no re-download
-    waitForSingleDownloadedResource(EMITTED_WEB_RESOURCE_TYPE);
+    waitForSingleDownloadedWebResource();
+  }
+
+  @Test
+  void shouldDownloadPageAndSupportLastModifiedHeaders() {
+    // given
+    String relativeUrl = "/index.xml";
+    String pageContent = "<html />";
+    String fileUrl = TestWebServer.uploadPage(relativeUrl, pageContent);
+
+    // when
+    sendDownloadRequest(fileUrl, relativeUrl);
+
+    // then
+    CloudEvent pageEvent = waitForSingleDownloadedPage();
+    assertEvent(pageEvent, relativeUrl, pageContent);
+
+    // when 2
+    sendDownloadRequest(fileUrl, relativeUrl);
+
+    // then: expect no re-download
+    waitForSingleDownloadedPage();
   }
 
   @Test
@@ -65,28 +83,14 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
     sendDownloadRequest(imageUrl, imagePath);
 
     // then
-    List<CloudEvent> assetEvents = waitForSingleDownloadedResource(EMITTED_ASSET_TYPE);
-    assertEvent(assetEvents.get(0), imagePath, imageContent);
+    CloudEvent assetEvent = waitForSingleDownloadedAsset();
+    assertEvent(assetEvent, imagePath, imageContent);
 
     // when 2
     sendDownloadRequest(imageUrl, imagePath);
 
     // then: expect no re-download
-    waitForSingleDownloadedResource(EMITTED_ASSET_TYPE);
-  }
-
-  @Test
-  void shouldSkipProcessingUnexpectedInputEvent() {
-    // when
-    CloudEvent event1 = CloudEventUtils.eventWithData("payload",
-        Page.TYPE_PUBLISHED, "key");
-    httpDownloaderFunction.downloadAndEmit(event1);
-
-    // amd
-    CloudEvent event2 = CloudEventUtils.eventWithoutData(Page.TYPE_PUBLISHED, "key");
-    httpDownloaderFunction.downloadAndEmit(event2);
-
-    // then: expect no exceptions
+    waitForSingleDownloadedAsset();
   }
 
   @Test
