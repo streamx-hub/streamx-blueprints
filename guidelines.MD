@@ -11,8 +11,8 @@
     * Only delivery services should read from outbox topics.
 
 * Incoming channels
-    * If a service handles different types of incoming events in the same way, use a single incoming channel with a comma-separated list of topics
-    * If event types are processed differently, use separate incoming channels, one per topic
+    * If a service handles different types of incoming events in the same way, use a single incoming channel for all the events
+    * If event types are processed differently, use separate incoming channels
 
 * Outgoing channels
     * If a service emits different types of events, and all downstream services are expected to handle them the same way, use a single outgoing channel
