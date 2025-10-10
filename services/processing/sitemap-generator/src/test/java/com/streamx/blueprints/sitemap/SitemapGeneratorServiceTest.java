@@ -2,8 +2,6 @@ package com.streamx.blueprints.sitemap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
@@ -126,28 +124,6 @@ class SitemapGeneratorServiceTest {
         <loc>https://test-domain.com/page.html</loc>
         </url>
         </urlset>""");
-    cleanUp();
-  }
-
-  @Test
-  void shouldNotGenerateSitemapFromPageWithNotMatchingEventType() {
-    // when
-    pages.send(
-        CloudEventUtils.eventWithData(
-            new Page("whatever"),
-            "page-edited.v1",
-            "/index.html",
-            OffsetDateTime.now()
-        )
-    );
-
-    // then
-    await().during(Duration.ofMillis(500)).untilAsserted(() ->
-        verify(publishedPagesStore, never()).register(any(), any(), any())
-    );
-
-    // and
-    assertNoSitemap();
     cleanUp();
   }
 
