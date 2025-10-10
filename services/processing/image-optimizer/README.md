@@ -14,6 +14,9 @@ The page adjustment feature requires its input `incoming-pages` channel and outp
 The service sends the adjusted pages as well as non-adjusted pages to outgoing channel with the same name and metadata as the original page.
 Therefore, StreamX mesh should not define any additional relaying feature for pages.
 
+Note: if the incoming event for the page adjustment feature is not a Page Publish event,
+it will be forwarded to the outgoing channel without processing.
+
 ## Configuration
 
 `streamx.blueprints.image-optimizer.optimized-file-paths-pattern` - a Regular Expression
