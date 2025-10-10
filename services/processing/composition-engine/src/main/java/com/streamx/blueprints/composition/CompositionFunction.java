@@ -24,13 +24,6 @@ import org.jboss.logging.Logger;
 @ApplicationScoped
 public class CompositionFunction {
 
-  static final String INCOMING_LAYOUTS_CHANNEL = "layouts";
-  static final String INCOMING_COMPOSITIONS_CHANNEL = "compositions";
-  static final String OUTGOING_PAGES_CHANNEL = "pages";
-
-  static final String INCOMING_PAGE_COMPOSE_REQUESTS_CHANNEL = "incoming-page-compose-requests";
-  static final String OUTGOING_PAGE_COMPOSE_REQUESTS_CHANNEL = "outgoing-page-compose-requests";
-
   @Inject
   Logger log;
 
@@ -38,8 +31,8 @@ public class CompositionFunction {
 
   Map<String, Composition> compositionsStore = new HashMap<>();
 
-  @Incoming(INCOMING_LAYOUTS_CHANNEL)
-  @Outgoing(OUTGOING_PAGE_COMPOSE_REQUESTS_CHANNEL)
+  @Incoming(Channels.INCOMING_LAYOUTS)
+  @Outgoing(Channels.OUTGOING_PAGE_COMPOSE_REQUESTS)
   @Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
   public Multi<CloudEvent> consumeLayout(CloudEvent layout) {
     if (CloudEventUtils.isPublishingType(layout.getType())) {
@@ -54,8 +47,8 @@ public class CompositionFunction {
     }
   }
 
-  @Incoming(INCOMING_COMPOSITIONS_CHANNEL)
-  @Outgoing(OUTGOING_PAGE_COMPOSE_REQUESTS_CHANNEL)
+  @Incoming(Channels.INCOMING_COMPOSITIONS)
+  @Outgoing(Channels.OUTGOING_PAGE_COMPOSE_REQUESTS)
   public CloudEvent consumeComposition(CloudEvent compositionEvent) {
     String compositionKey = compositionEvent.getSubject();
     if (CloudEventUtils.isPublishingType(compositionEvent.getType())) {
@@ -77,8 +70,8 @@ public class CompositionFunction {
     return null;
   }
 
-  @Incoming(INCOMING_PAGE_COMPOSE_REQUESTS_CHANNEL)
-  @Outgoing(OUTGOING_PAGES_CHANNEL)
+  @Incoming(Channels.INCOMING_PAGE_COMPOSE_REQUESTS)
+  @Outgoing(Channels.OUTGOING_PAGES)
   public CloudEvent generateComposedPageEvent(CloudEvent event) {
     PageComposeRequest request = CloudEventUtils.getData(event, PageComposeRequest.class);
     String compositionKey = request.compositionKey();
