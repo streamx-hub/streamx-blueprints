@@ -71,7 +71,11 @@ abstract class AbstractDownloaderFunctionTest {
     CloudEvent event = CloudEventUtils
         .eventWithData(emitKey, DownloadRequest.EVENT_TYPE, downloadRequest);
 
-    downloadRequestsChannel.send(event);
+    sendDownloadRequest(event);
+  }
+
+  protected void sendDownloadRequest(CloudEvent downloadRequestEvent) {
+    downloadRequestsChannel.send(downloadRequestEvent);
   }
 
   protected CloudEvent waitForSingleDownloadedPage() {
@@ -97,8 +101,10 @@ abstract class AbstractDownloaderFunctionTest {
     await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
       List<CloudEvent> matchingEvents = sink.received().stream()
           .map(Message::getPayload)
-          .filter(event ->
-              CloudEventUtils.getDataOrThrow(event, Resource.class).getType().equals(payloadType))
+          .filter(event -> {
+            Resource resource = CloudEventUtils.getData(event, Resource.class);
+            return resource != null && resource.getType().equals(payloadType);
+          })
           .toList();
       assertThat(matchingEvents).hasSize(expectedSize);
       matchingEventsRef.set(matchingEvents);
@@ -123,7 +129,8 @@ abstract class AbstractDownloaderFunctionTest {
       byte[] expectedContent) {
     assertThat(actualEvent.getSubject()).isEqualTo(expectedSubject);
 
-    Resource resource = CloudEventUtils.getDataOrThrow(actualEvent, Resource.class);
+    Resource resource = CloudEventUtils.getData(actualEvent, Resource.class);
+    assertThat(resource).isNotNull();
     byte[] resourceContent = resource.getContent().array();
     assertThat(resourceContent).isEqualTo(expectedContent);
   }

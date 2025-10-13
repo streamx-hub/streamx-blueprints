@@ -1,9 +1,6 @@
 package com.streamx.blueprints.web.server.storage;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertLinesMatch;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.wildfly.common.Assert.assertFalse;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
@@ -13,7 +10,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
 
@@ -27,27 +24,29 @@ class FileSystemTest {
   FileSystem tested;
 
   @Test
-  void expectEmptyFileCreatedWhenDataIsEmpty() throws IOException {
+  void expectEmptyFileCreatedWhenDataIsEmpty() {
     Path path = Path.of(tempDirectory, "empty.txt");
     UniAssertSubscriber<Void> subscriber =
         tested.writeFile(path, new byte[0])
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
     subscriber.awaitItem();
-    assertTrue(Files.exists(path));
-    assertEquals(0L, Files.size(path));
+    assertThat(path)
+        .exists()
+        .hasSize(0);
   }
 
   @Test
-  void expectFileWithDataCreated() throws IOException {
+  void expectFileWithDataCreated() {
     Path path = Path.of(tempDirectory, "sample.txt");
     UniAssertSubscriber<Void> subscriber =
         tested.writeFile(path, "test-value".getBytes(StandardCharsets.UTF_8))
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
     subscriber.awaitItem();
-    assertTrue(Files.exists(path));
-    assertLinesMatch(List.of("test-value"), Files.readAllLines(path));
+    assertThat(path)
+        .exists()
+        .hasContent("test-value");
   }
 
   @Test
@@ -58,7 +57,7 @@ class FileSystemTest {
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
     subscriber.awaitItem();
-    assertTrue(Files.exists(path));
+    assertThat(path).exists();
   }
 
   @Test
@@ -66,15 +65,16 @@ class FileSystemTest {
     Path path = Path.of(tempDirectory, "file.txt");
 
     Files.writeString(path, "existing-value");
-    assertTrue(Files.exists(path));
+    assertThat(path).exists();
 
     UniAssertSubscriber<Void> subscriber =
         tested.writeFile(path, "new-value".getBytes(StandardCharsets.UTF_8))
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
     subscriber.awaitItem();
-    assertTrue(Files.exists(path));
-    assertLinesMatch(List.of("new-value"), Files.readAllLines(path));
+    assertThat(path)
+        .exists()
+        .hasContent("new-value");
   }
 
   @Test
@@ -82,7 +82,7 @@ class FileSystemTest {
     Path path = Path.of(tempDirectory, "file.txt");
 
     Files.writeString(path, "expectFileDeletedWhenFileExists");
-    assertTrue(Files.exists(path));
+    assertThat(path).exists();
 
     UniAssertSubscriber<Void> subscriber =
         tested.deleteFile(path)
@@ -90,20 +90,17 @@ class FileSystemTest {
 
     subscriber.awaitItem();
 
-    assertFalse(Files.exists(path));
+    assertThat(path).doesNotExist();
   }
 
   @Test
   void expectFailureWhenFileDoesNotExist() {
     Path path = Path.of(tempDirectory, "file.txt");
-
-    assertFalse(Files.exists(path));
+    FileUtils.deleteQuietly(path.toFile());
 
     UniAssertSubscriber<Void> subscriber =
         tested.deleteFile(path)
             .subscribe().withSubscriber(UniAssertSubscriber.create());
-
-    Throwable t = subscriber.awaitFailure().getFailure();
 
     subscriber.awaitFailure().assertFailedWith(FileSystemException.class);
   }

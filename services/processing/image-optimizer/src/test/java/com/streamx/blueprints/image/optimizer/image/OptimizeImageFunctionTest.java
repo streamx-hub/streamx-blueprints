@@ -231,6 +231,19 @@ class OptimizeImageFunctionTest {
     assertImageIsNotPublished();
   }
 
+  @Test
+  void shouldNotOptimizeImageIfNoPayload() {
+    // given
+    String path = JPG_FILE.getPath();
+    CloudEvent event = CloudEventUtils.eventWithoutData(path, Asset.TYPE_PUBLISHED);
+
+    // when
+    channel.send(event);
+
+    // then
+    assertImageIsNotPublished();
+  }
+
   private static CloudEvent createPublishAssetEvent(File assetFile) throws IOException {
     String path = assetFile.getPath();
     byte[] payload = FileUtils.readFileToByteArray(assetFile);

@@ -25,8 +25,6 @@ import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -353,10 +351,10 @@ class AdjustImgSrcFunctionTest {
   }
 
   @Test
-  void shouldNotAdjustNullPage() {
+  void shouldNotAdjustPageEventWithNoPayload() {
     // given
     String pagePath = "/pages/null-page.html";
-    CloudEvent pageEvent = createPublishPageEvent(pagePath, null);
+    CloudEvent pageEvent = CloudEventUtils.eventWithoutData(pagePath, Page.TYPE_PUBLISHED);
 
     // when
     pagesChannel.send(pageEvent);
@@ -428,9 +426,7 @@ class AdjustImgSrcFunctionTest {
 
   private static String extractPageHtml(CloudEvent event) {
     return Optional.ofNullable(CloudEventUtils.getData(event, Page.class))
-        .map(Page::getContent)
-        .map(ByteBuffer::array)
-        .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
+        .map(Page::getContentAsString)
         .orElse(null);
   }
 

@@ -1,10 +1,9 @@
 package com.streamx.blueprints.rendering.engine;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
+import com.google.common.collect.Iterables;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.Fragment;
@@ -85,12 +84,11 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
         RenderingRequest.TYPE_PUBLISHED);
 
     await().until(() -> resourcesSink.received().size() == 1);
-    assertOutput(
+    assertResourceIsProduced(
         "rendering-request-test-generated/" + data.getSubject() + ".html",
         outputEventPublishedType,
         null,
-        "id = " + data.getSubject(),
-        resourcesSink.received().get(0).getPayload());
+        "id = " + data.getSubject());
   }
 
   @Test
@@ -117,12 +115,11 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
         RenderingRequest.TYPE_PUBLISHED);
 
     await().until(() -> resourcesSink.received().size() == 1);
-    assertOutput(
+    assertResourceIsProduced(
         "rendering-request-test-generated/" + data.getSubject() + ".html",
         outputEventPublishedType,
         "output-template-test-" + data.getSubject(),
-        "id = " + data.getSubject(),
-        resourcesSink.received().get(0).getPayload());
+        "id = " + data.getSubject());
     resourcesSink.clear();
 
     dataSource.send(dataEvent(data.getSubject(), Data.TYPE_UNPUBLISHED));
@@ -133,19 +130,19 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
         RenderingRequest.TYPE_UNPUBLISHED);
 
     await().until(() -> resourcesSink.received().size() == 1);
-    assertOutput(
+    assertResourceIsProduced(
         "rendering-request-test-generated/" + data.getSubject() + ".html",
         outputEventUnpublishedType,
         null,
-        null,
-        resourcesSink.received().get(0).getPayload());
+        null);
   }
 
   private void sendRenderingRequest(CloudEvent renderingContextPublishEvent, String dataKey,
       String templateKey, String eventType) {
 
     RenderingContext renderingContext =
-        CloudEventUtils.getDataOrThrow(renderingContextPublishEvent, RenderingContext.class);
+        CloudEventUtils.getData(renderingContextPublishEvent, RenderingContext.class);
+    assertThat(renderingContext).isNotNull();
     String outputKeyTemplate = renderingContext.outputKeyTemplate();
     String outputTypeTemplate = renderingContext.outputTypeTemplate();
 
@@ -155,18 +152,22 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
     renderingRequests.send(renderingRequestEvent(key, eventType, request));
   }
 
-  private void assertOutput(String expectedKey, String expectedEventType, String expectedType,
-      String expectedContent, CloudEvent actual) {
-    assertNotNull(actual);
-    WebResource resource = CloudEventUtils.getDataOrThrow(actual, WebResource.class);
+  private void assertResourceIsProduced(String expectedKey, String expectedEventType,
+      String expectedResourceType, String expectedContent) {
+    CloudEvent actual = Iterables.getOnlyElement(resourcesSink.received()).getPayload();
+    assertThat(actual).isNotNull();
+
+    WebResource resource = CloudEventUtils.getData(actual, WebResource.class);
+    assertThat(resource).isNotNull();
+
     if (expectedContent == null) {
-      assertNull(resource.getContent());
+      assertThat(resource.getContent()).isNull();
     } else {
-      assertEquals(expectedContent, resource.getContentAsString());
+      assertThat(resource.getContentAsString()).isEqualTo(expectedContent);
     }
-    assertEquals(expectedKey, actual.getSubject());
-    assertEquals(expectedType, resource.getType());
-    assertEquals(expectedEventType, actual.getType());
+    assertThat(actual.getSubject()).isEqualTo(expectedKey);
+    assertThat(resource.getType()).isEqualTo(expectedResourceType);
+    assertThat(actual.getType()).isEqualTo(expectedEventType);
   }
 
 }

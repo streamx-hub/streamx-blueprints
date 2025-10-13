@@ -3,7 +3,7 @@ package com.streamx.blueprints.image.optimizer.image;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.fail;
 
 import com.sksamuel.scrimage.webp.WebpWriter;
 import com.streamx.blueprints.image.optimizer.image.exceptions.NotAnImageException;
@@ -157,7 +157,7 @@ class ImageOptimizerTest {
     try {
       return imageOptimizer.asWebpImage(fileBytes);
     } catch (Exception ex) {
-      return fail(ex);
+      return fail("Error optimizing image", ex);
     }
   }
 

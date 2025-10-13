@@ -25,14 +25,19 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import org.apache.commons.lang3.ObjectUtils;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class ProcessRenderingRequestFunction {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
+
+  @Inject
+  Logger log;
 
   @Inject
   RendererEventsStore renderersStore;
@@ -82,36 +87,49 @@ public class ProcessRenderingRequestFunction {
 
   @Incoming(Channels.Incoming.RENDERING_REQUESTS)
   public void process(CloudEvent event) {
-    RenderingRequest request = CloudEventUtils.getDataOrThrow(event, RenderingRequest.class);
+    RenderingRequest request = CloudEventUtils.getData(event, RenderingRequest.class);
+    String subject = event.getSubject();
+    if (request == null) {
+      log.warnf("Skipping processing event [%s] - no content", subject);
+      return;
+    }
 
     PreservedData preservedData = dataStore.get(request.dataKey());
-    RendererEvent renderer = renderersStore.get(request.rendererKey());
+    RendererEvent preservedRenderer = renderersStore.get(request.rendererKey());
     Data data = getValue(preservedData);
-    if (renderer != null && data != null) {
-      boolean isPublish = areAllPublishEvents(event.getType(), preservedData.eventType(),
-          renderer.eventType());
-      if (renderer.renderer() != null || !isPublish) {
-        generateAndEmitOutputEvent(isPublish, request, data, renderer.renderer());
-      }
+
+    if (ObjectUtils.anyNull(preservedRenderer, data)) {
+      log.tracef("Cannot proceed with processing %s, renderer or data is missing", subject);
+      return;
+    }
+
+    Renderer renderer = preservedRenderer.renderer();
+    boolean isUnpublish = isAnyUnpublishEvent(
+        event.getType(),
+        preservedData.eventType(),
+        preservedRenderer.eventType()
+    );
+    if (renderer != null || isUnpublish) {
+      generateAndEmitOutputEvent(isUnpublish, request, data, renderer);
     }
   }
 
-  private void generateAndEmitOutputEvent(boolean isPublish, RenderingRequest request, Data data,
+  private void generateAndEmitOutputEvent(boolean isUnpublish, RenderingRequest request, Data data,
       Renderer renderer) {
     Map<String, Object> dataValue = readValue(data);
-    byte[] outputContent = isPublish ? generateOutputContent(renderer, dataValue) : null;
-    String outputType = isPublish ? generateKey(request.outputTypeTemplate(), dataValue) : null;
+    byte[] outputContent = isUnpublish ? null : generateOutputContent(renderer, dataValue);
+    String outputType = isUnpublish ? null : generateKey(request.outputTypeTemplate(), dataValue);
     String key = generateKey(request.outputKeyTemplate(), dataValue);
 
     ProcessingSettings processingSettings = processingSettingsMap.get(request.outputFormat());
-    String eventType = getEventType(processingSettings, isPublish);
+    String eventType = getEventType(processingSettings, isUnpublish);
     WebResource resource = createResource(processingSettings, outputType, outputContent);
     CloudEvent resourceEvent = CloudEventUtils.eventWithData(key, eventType, resource);
     emit(processingSettings, resourceEvent);
   }
 
-  private String getEventType(ProcessingSettings settings, boolean isPublish) {
-    return isPublish ? settings.publishEventType : settings.unpublishEventType;
+  private String getEventType(ProcessingSettings settings, boolean isUnpublish) {
+    return isUnpublish ? settings.unpublishEventType : settings.publishEventType;
   }
 
   private WebResource createResource(ProcessingSettings settings, String outputType,
@@ -123,14 +141,14 @@ public class ProcessRenderingRequestFunction {
     settings.emitter.send(resourceEvent);
   }
 
-  private boolean areAllPublishEvents(String... relatedEventTypes) {
+  private boolean isAnyUnpublishEvent(String... relatedEventTypes) {
     // If any of latest related event types was unpublish then the output is unpublished.
     for (String eventType : relatedEventTypes) {
       if (CloudEventUtils.isUnpublishingType(eventType)) {
-        return false;
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
   private String generateKey(String template, Map<String, Object> data) {

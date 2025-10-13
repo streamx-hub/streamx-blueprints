@@ -1,6 +1,6 @@
 package com.streamx.blueprints.rendering.engine;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
@@ -69,16 +69,16 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
     String dataKey = "data-type2:1";
     long dataEventTime = System.currentTimeMillis();
     dataSource.send(dataEvent(dataKey, Data.TYPE_UNPUBLISHED, dataEventTime));
-    assertEquals(0, renderingRequestSink.received().size());
+    assertThat(renderingRequestSink.received()).isEmpty();
 
     dataSource.send(dataEvent(dataKey, Data.TYPE_PUBLISHED, dataEventTime));
-    assertEquals(2, renderingRequestSink.received().size());
+    assertThat(renderingRequestSink.received()).hasSize(2);
     assertPublishRequest(context1, dataKey, dataEventTime, Data.TYPE_PUBLISHED);
     assertPublishRequest(context2, dataKey, dataEventTime, Data.TYPE_PUBLISHED);
     renderingRequestSink.clear();
 
     dataSource.send(dataEvent(dataKey, Data.TYPE_UNPUBLISHED, dataEventTime));
-    assertEquals(2, renderingRequestSink.received().size());
+    assertThat(renderingRequestSink.received()).hasSize(2);
     assertUnpublishRequest(context1, dataKey, dataEventTime, Data.TYPE_UNPUBLISHED);
     assertUnpublishRequest(context2, dataKey, dataEventTime, Data.TYPE_UNPUBLISHED);
   }
@@ -117,7 +117,7 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
     String rendererKey = "renderer1-1";
     long rendererEventTime = System.currentTimeMillis();
     renderersSource.send(rendererEvent(rendererKey, Renderer.TYPE_UNPUBLISHED, rendererEventTime));
-    assertEquals(4, renderingRequestSink.received().size());
+    assertThat(renderingRequestSink.received()).hasSize(4);
     assertUnpublishRequest(context1, data1, rendererEventTime, Renderer.TYPE_UNPUBLISHED);
     assertUnpublishRequest(context1, data2, rendererEventTime, Renderer.TYPE_UNPUBLISHED);
     assertUnpublishRequest(context2, data1, rendererEventTime, Renderer.TYPE_UNPUBLISHED);
@@ -125,7 +125,7 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
     renderingRequestSink.clear();
 
     renderersSource.send(rendererEvent(rendererKey, Renderer.TYPE_PUBLISHED, rendererEventTime));
-    assertEquals(4, renderingRequestSink.received().size());
+    assertThat(renderingRequestSink.received()).hasSize(4);
     assertPublishRequest(context1, data1, rendererEventTime, Renderer.TYPE_PUBLISHED);
     assertPublishRequest(context1, data2, rendererEventTime, Renderer.TYPE_PUBLISHED);
     assertPublishRequest(context2, data1, rendererEventTime, Renderer.TYPE_PUBLISHED);
@@ -133,7 +133,7 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
     renderingRequestSink.clear();
 
     renderersSource.send(rendererEvent(rendererKey, Renderer.TYPE_UNPUBLISHED, rendererEventTime));
-    assertEquals(4, renderingRequestSink.received().size());
+    assertThat(renderingRequestSink.received()).hasSize(4);
     assertUnpublishRequest(context1, data1, rendererEventTime, Renderer.TYPE_UNPUBLISHED);
     assertUnpublishRequest(context1, data2, rendererEventTime, Renderer.TYPE_UNPUBLISHED);
     assertUnpublishRequest(context2, data1, rendererEventTime, Renderer.TYPE_UNPUBLISHED);
@@ -163,18 +163,18 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
     CloudEvent contextUnpublish = renderingContextEvent(
         contextKey, RenderingContext.TYPE_UNPUBLISHED, eventTime, null);
     renderingContextsSource.send(contextUnpublish);
-    assertEquals(0, renderingRequestSink.received().size());
+    assertThat(renderingRequestSink.received()).isEmpty();
 
     CloudEvent contextPublish = renderingContextEvent(
         contextKey, RenderingContext.TYPE_PUBLISHED, eventTime, context);
     renderingContextsSource.send(contextPublish);
-    assertEquals(2, renderingRequestSink.received().size());
+    assertThat(renderingRequestSink.received()).hasSize(2);
     assertPublishRequest(contextPublish, data1, eventTime, RenderingContext.TYPE_PUBLISHED);
     assertPublishRequest(contextPublish, data2, eventTime, RenderingContext.TYPE_PUBLISHED);
     renderingRequestSink.clear();
 
     renderingContextsSource.send(contextUnpublish);
-    assertEquals(2, renderingRequestSink.received().size());
+    assertThat(renderingRequestSink.received()).hasSize(2);
     assertUnpublishRequest(contextPublish, data1, eventTime, RenderingContext.TYPE_UNPUBLISHED);
     assertUnpublishRequest(contextPublish, data2, eventTime, RenderingContext.TYPE_UNPUBLISHED);
   }
@@ -219,7 +219,7 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
     dataSource.send(dataEvent(dataKey, Data.TYPE_PUBLISHED, dataEventTime,
         "test-type/4"));
 
-    assertEquals(1, renderingRequestSink.received().size());
+    assertThat(renderingRequestSink.received()).hasSize(1);
     assertPublishRequest(context1, dataKey, dataEventTime, Data.TYPE_PUBLISHED);
   }
 
@@ -234,7 +234,8 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
   private CloudEvent createRequest(CloudEvent contextEvent, String dataKey, String eventType,
       long eventTime) {
     String expectedRequestKey = contextEvent.getSubject() + ":::" + dataKey;
-    RenderingContext context = CloudEventUtils.getDataOrThrow(contextEvent, RenderingContext.class);
+    RenderingContext context = CloudEventUtils.getData(contextEvent, RenderingContext.class);
+    assertThat(context).isNotNull();
     return CloudEventUtils.eventWithData(
         expectedRequestKey,
         eventType,
@@ -271,18 +272,21 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
 
   private void assertRenderingRequest(CloudEvent expectedEvent, String expectedRequestEventType) {
     CloudEvent actualEvent = findRenderingRequestByKey(expectedEvent.getSubject());
-    assertEquals(expectedEvent.getSubject(), actualEvent.getSubject());
-    assertEquals(expectedEvent.getTime(), actualEvent.getTime());
-    assertEquals(expectedRequestEventType, actualEvent.getType());
+    assertThat(actualEvent.getSubject()).isEqualTo(expectedEvent.getSubject());
+    assertThat(actualEvent.getTime()).isEqualTo(expectedEvent.getTime());
+    assertThat(actualEvent.getType()).isEqualTo(expectedRequestEventType);
 
-    var actualRequest = CloudEventUtils.getDataOrThrow(actualEvent, RenderingRequest.class);
-    var expectedRequest = CloudEventUtils.getDataOrThrow(expectedEvent, RenderingRequest.class);
+    var actualRequest = CloudEventUtils.getData(actualEvent, RenderingRequest.class);
+    assertThat(actualRequest).isNotNull();
 
-    assertEquals(expectedRequest.dataKey(), actualRequest.dataKey());
-    assertEquals(expectedRequest.rendererKey(), actualRequest.rendererKey());
-    assertEquals(expectedRequest.outputKeyTemplate(), actualRequest.outputKeyTemplate());
-    assertEquals(expectedRequest.outputTypeTemplate(), actualRequest.outputTypeTemplate());
-    assertEquals(expectedRequest.outputFormat(), actualRequest.outputFormat());
+    var expectedRequest = CloudEventUtils.getData(expectedEvent, RenderingRequest.class);
+    assertThat(expectedRequest).isNotNull();
+
+    assertThat(actualRequest.dataKey()).isEqualTo(expectedRequest.dataKey());
+    assertThat(actualRequest.rendererKey()).isEqualTo(expectedRequest.rendererKey());
+    assertThat(actualRequest.outputKeyTemplate()).isEqualTo(expectedRequest.outputKeyTemplate());
+    assertThat(actualRequest.outputTypeTemplate()).isEqualTo(expectedRequest.outputTypeTemplate());
+    assertThat(actualRequest.outputFormat()).isSameAs(expectedRequest.outputFormat());
   }
 
   private CloudEvent findRenderingRequestByKey(String key) {
