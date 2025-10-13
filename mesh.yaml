@@ -26,6 +26,18 @@ sources:
         produces:
           - "com.streamx.blueprints.composition.published.v1"
           - "com.streamx.blueprints.composition.unpublished.v1"
+      - topic: "inboxes/data"
+        produces:
+          - "com.streamx.blueprints.data.published.v1"
+          - "com.streamx.blueprints.data.unpublished.v1"
+      - topic: "inboxes/renderers"
+        produces:
+          - "com.streamx.blueprints.renderer.published.v1"
+          - "com.streamx.blueprints.renderer.unpublished.v1"
+      - topic: "inboxes/rendering-contexts"
+        produces:
+          - "com.streamx.blueprints.rendering-context.published.v1"
+          - "com.streamx.blueprints.rendering-context.unpublished.v1"
 
 descriptors:
   external-references-rewriter:
@@ -50,6 +62,25 @@ descriptors:
       downloaded-assets:
         binding: "http-structured-json"
       downloaded-web-resources:
+        binding: "http-structured-json"
+
+  rendering-engine:
+    type: "processing"
+    incoming:
+      data:
+        binding: "http-structured-json"
+      renderers:
+        binding: "http-structured-json"
+      rendering-contexts:
+        binding: "http-structured-json"
+      incoming-rendering-requests:
+        binding: "http-structured-json"
+    outgoing:
+      outgoing-rendering-requests:
+        binding: "http-structured-json"
+      pages:
+        binding: "http-structured-json"
+      fragments:
         binding: "http-structured-json"
 
   composition-engine:
@@ -217,6 +248,26 @@ processing:
           topic: inboxes/assets
         downloaded-web-resources:
           topic: inboxes/web-resources
+
+  blueprint-rendering-engine:
+    containers:
+      - image: rendering-engine
+        incoming:
+          data:
+            topic: inboxes/data
+          renderers:
+            topic: inboxes/renderers
+          rendering-contexts:
+            topic: inboxes/rendering-contexts
+          incoming-rendering-requests:
+            topic: relays/rendering-requests
+        outgoing:
+          outgoing-rendering-requests:
+            topic: relays/rendering-requests
+          pages:
+            topic: relays/pages
+          fragments:
+            topic: relays/fragments
 
   blueprint-composition-engine:
     containers:

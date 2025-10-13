@@ -188,8 +188,7 @@ class SitemapGeneratorServiceTest {
     assertThat(sitemapEvent.getType()).isEqualTo(WebResource.TYPE_PUBLISHED);
     assertThat(sitemapEvent.getSubject()).isEqualTo("sitemap.xml");
 
-    WebResource sitemap = CloudEventUtils.getData(sitemapEvent, WebResource.class);
-    assertThat(sitemap).isNotNull();
+    WebResource sitemap = CloudEventUtils.getDataOrThrow(sitemapEvent, WebResource.class);
     assertThat(sitemap.getContentAsString()).isEqualTo(expected);
     assertThat(sitemap.getType()).isEqualTo("sitemap-type");
   }

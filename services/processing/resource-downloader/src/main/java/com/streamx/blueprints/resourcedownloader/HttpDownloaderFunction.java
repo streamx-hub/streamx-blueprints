@@ -1,7 +1,5 @@
 package com.streamx.blueprints.resourcedownloader;
 
-import static java.util.Objects.requireNonNull;
-
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.DownloadRequest;
 import io.cloudevents.CloudEvent;
@@ -73,7 +71,7 @@ public class HttpDownloaderFunction {
 
   @Incoming(Channels.DOWNLOAD_REQUESTS)
   public void process(CloudEvent event) {
-    DownloadRequest request = requireNonNull(CloudEventUtils.getData(event, DownloadRequest.class));
+    DownloadRequest request = CloudEventUtils.getDataOrThrow(event, DownloadRequest.class);
     log.tracef("Processing download request: %s", request);
 
     downloadAndEmit(request);

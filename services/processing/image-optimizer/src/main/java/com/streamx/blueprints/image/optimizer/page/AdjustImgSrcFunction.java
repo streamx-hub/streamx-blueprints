@@ -1,7 +1,5 @@
 package com.streamx.blueprints.image.optimizer.page;
 
-import static java.util.Objects.requireNonNull;
-
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.image.optimizer.Channels;
@@ -53,7 +51,7 @@ public class AdjustImgSrcFunction {
       return event;
     }
 
-    Page page = requireNonNull(CloudEventUtils.getData(event, Page.class));
+    Page page = CloudEventUtils.getDataOrThrow(event, Page.class);
     String pagePath = CloudEventUtils.getSubject(event);
     log.tracef("Processing page [%s] with eventTime %s", pagePath, event.getTime());
 

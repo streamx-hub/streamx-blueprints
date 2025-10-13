@@ -97,8 +97,8 @@ abstract class AbstractDownloaderFunctionTest {
     await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
       List<CloudEvent> matchingEvents = sink.received().stream()
           .map(Message::getPayload)
-          .filter(
-              event -> CloudEventUtils.getData(event, Resource.class).getType().equals(payloadType))
+          .filter(event ->
+              CloudEventUtils.getDataOrThrow(event, Resource.class).getType().equals(payloadType))
           .toList();
       assertThat(matchingEvents).hasSize(expectedSize);
       matchingEventsRef.set(matchingEvents);
@@ -123,9 +123,7 @@ abstract class AbstractDownloaderFunctionTest {
       byte[] expectedContent) {
     assertThat(actualEvent.getSubject()).isEqualTo(expectedSubject);
 
-    Resource resource = CloudEventUtils.getData(actualEvent, Resource.class);
-    assertThat(resource).isNotNull();
-
+    Resource resource = CloudEventUtils.getDataOrThrow(actualEvent, Resource.class);
     byte[] resourceContent = resource.getContent().array();
     assertThat(resourceContent).isEqualTo(expectedContent);
   }
