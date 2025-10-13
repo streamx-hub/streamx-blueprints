@@ -1,20 +1,17 @@
 package com.streamx.blueprints.json.aggregator;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.json.aggregator.configuration.Configuration;
 import com.streamx.blueprints.json.aggregator.stores.DataStore;
 import com.streamx.blueprints.json.aggregator.stores.PreservedData;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,94 +27,75 @@ public class ProcessDataFunction extends AbstractFunction {
   DataStore store;
 
   @Override
-  protected int expectedKeyPartsCount() {
-    return 2;
+  public DataStore getStore() {
+    return store;
+  }
+
+  @Override
+  protected boolean requiresHashInKey() {
+    return false;
   }
 
   @Incoming(Channels.DATA)
   @Outgoing(Channels.AGGREGATED_DATA)
   Multi<Message<CloudEvent>> process(Message<CloudEvent> message) {
-    CloudEvent event = message.getPayload();
-    Data data = CloudEventUtils.getData(event, Data.class);
-    String eventType = event.getType();
-    String key = CloudEventUtils.getSubject(event);
-    OffsetDateTime eventTime = event.getTime();
+    return processDataMessage(message);
+  }
 
-    store.register(data, eventType, key);
-    log.tracef("Processing message [%s]", key);
-
-    try {
-      if (!accept(key, eventTime)) {
-        log.tracef("Skipping invalid incoming message key=%s", key);
-        message.ack();
-        return Multi.createFrom().empty();
-      }
-
-      List<Message<CloudEvent>> resultMessages = new LinkedList<>();
-      String[] keyParts = key.split(KEY_SEPARATOR);
-      String id = keyParts[ID_POSITION];
-      String namespace = keyParts[NAMESPACE_POSITION];
-      List<Configuration> matchingConfigurations = getConfigurations(namespace);
-      for (Configuration config : matchingConfigurations) {
-        String masterNamespace = config.masterNamespace();
-        PreservedData masterResource = determineMasterResource(masterNamespace, data, namespace, id,
-            eventType);
-        if (masterResource != null || Data.TYPE_UNPUBLISHED.equals(eventType)) {
-          handleResourceMerging(eventTime, id, namespace, masterResource, config, eventType, key)
-              .ifPresent(resultMessages::add);
-        } else {
-          log.tracef("No master resource present for [%s]. Skipping processing.", id);
-        }
-      }
-      return Multi.createFrom().iterable(resultMessages)
-          .onCompletion()
-          .call(() -> Uni.createFrom().completionStage(message.ack()));
-    } catch (Exception e) {
-      message.nack(e);
-      return Multi.createFrom().empty();
+  @Override
+  protected Optional<Message<CloudEvent>> createMessageForConfig(Configuration config,
+      Data data, DataKey key, String eventType, OffsetDateTime eventTime) {
+    String masterNamespace = config.masterNamespace();
+    PreservedData masterResource = determineMasterResource(masterNamespace, data, key,
+        eventType);
+    if (masterResource != null || Data.TYPE_UNPUBLISHED.equals(eventType)) {
+      return handleResourceMerging(eventTime, key, masterResource, config, eventType);
+    } else {
+      log.tracef("No master resource present for [%s]. Skipping processing.", key.id());
+      return Optional.empty();
     }
   }
 
-  private PreservedData determineMasterResource(String masterNamespace, Data data, String namespace,
-      String id, String eventType) {
-    return masterNamespace.equals(namespace)
+  private PreservedData determineMasterResource(String masterNamespace, Data data, DataKey key,
+      String eventType) {
+    return masterNamespace.equals(key.namespace())
         ? new PreservedData(data, eventType)
-        : store.get(masterNamespace + KEY_SEPARATOR + id);
+        : store.get(DataKey.fromNamespaceAndId(masterNamespace, key.id()));
   }
 
-  private Optional<Message<CloudEvent>> handleResourceMerging(OffsetDateTime eventTime, String id,
-      String namespace, PreservedData masterResource, Configuration config, String eventType,
-      String key) {
+  private Optional<Message<CloudEvent>> handleResourceMerging(OffsetDateTime eventTime,
+      DataKey key, PreservedData masterResource, Configuration config, String eventType) {
     if (Data.TYPE_UNPUBLISHED.equals(eventType)) {
-      return unmergeResources(eventTime, key, id, namespace, masterResource, config);
+      return unmergeResources(eventTime, key, masterResource, config);
     }
-    return Optional.of(mergeResources(eventTime, id, supportedNamespacesByConfig.get(config),
+    return Optional.of(mergeResources(eventTime, key.id(),
+        supportedNamespacesByConfig.get(config),
         config.outputNamespace(), getOutputType(config, masterResource)));
   }
 
-  private Optional<Message<CloudEvent>> unmergeResources(OffsetDateTime eventTime, String key,
-      String id, String namespace, PreservedData masterResource, Configuration config) {
+  private Optional<Message<CloudEvent>> unmergeResources(OffsetDateTime eventTime, DataKey key,
+      PreservedData masterResource, Configuration config) {
     if (masterResource == null || masterResource.data() == null) {
-      if (!namespace.equals(config.masterNamespace())) {
+      if (!key.namespace().equals(config.masterNamespace())) {
         log.tracef("Not updating master resource since it's not available at [%s]", key);
         return Optional.empty();
       } else {
         log.tracef("Unpublishing master resource at [%s]", key);
-        return Optional.of(createUnpublishMessage(id, eventTime, config.outputNamespace()));
+        return Optional.of(createUnpublishMessage(key.id(), eventTime, config.outputNamespace()));
       }
     } else {
       log.tracef("Unpublishing optional resource at [%s]", key);
       Set<String> namespacesToMerge = new LinkedHashSet<>(supportedNamespacesByConfig.get(config));
-      namespacesToMerge.remove(namespace);
-      return Optional.of(mergeResources(eventTime, id, namespacesToMerge, config.outputNamespace(),
-          getOutputType(config, masterResource)));
+      namespacesToMerge.remove(key.namespace());
+      return Optional.of(mergeResources(eventTime, key.id(), namespacesToMerge,
+          config.outputNamespace(), getOutputType(config, masterResource)));
     }
   }
 
   private Message<CloudEvent> mergeResources(OffsetDateTime eventTime, String id,
       Set<String> namespacesToMerge, String outputNamespace, String outputType) {
     List<Data> resourcesToMerge = namespacesToMerge.stream()
-        .map(namespace -> store.get(namespace + KEY_SEPARATOR + id))
+        .map(namespace -> store.get(DataKey.fromNamespaceAndId(namespace, id)))
         .filter(Objects::nonNull)
         .filter(resource -> !Data.TYPE_UNPUBLISHED.equals(resource.eventType()))
         .map(PreservedData::data)
