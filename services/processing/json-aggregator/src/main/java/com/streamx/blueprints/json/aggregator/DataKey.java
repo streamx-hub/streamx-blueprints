@@ -7,12 +7,8 @@ public record DataKey(String namespace, String id, @Nullable String hash, String
 
   private static final String KEY_SEPARATOR = ":";
 
-  boolean hasNamespace() {
-    return StringUtils.isNotEmpty(namespace);
-  }
-
-  boolean hasId() {
-    return StringUtils.isNotEmpty(id);
+  boolean hasNamespaceAndId() {
+    return StringUtils.isNoneEmpty(namespace, id);
   }
 
   boolean hasHash() {

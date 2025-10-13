@@ -122,7 +122,7 @@ abstract class AbstractFunction {
       return false;
     }
     DataKey dataKey = DataKey.fromKey(key);
-    if (!dataKey.hasNamespace() || !dataKey.hasId()) {
+    if (!dataKey.hasNamespaceAndId()) {
       return false;
     }
     if (requiresHashInKey() && !dataKey.hasHash()) {
