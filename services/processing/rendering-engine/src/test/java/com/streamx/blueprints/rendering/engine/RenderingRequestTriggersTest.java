@@ -245,7 +245,7 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
             context.outputKeyTemplate(),
             context.outputTypeTemplate(),
             context.outputFormat()),
-        toOffsetDateTime(eventTime));
+        CloudEventUtils.toOffsetDateTime(eventTime));
   }
 
   private void assertPublishRequest(CloudEvent context, CloudEvent sourceEvent, long eventTime,

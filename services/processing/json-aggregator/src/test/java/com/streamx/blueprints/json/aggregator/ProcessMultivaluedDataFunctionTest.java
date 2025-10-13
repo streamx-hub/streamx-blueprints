@@ -1,15 +1,12 @@
 package com.streamx.blueprints.json.aggregator;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import dev.streamx.blueprints.data.Data;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
 import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -22,24 +19,24 @@ class ProcessMultivaluedDataFunctionTest extends ProcessDataFunctionBaseTest {
   @Any
   InMemoryConnector connector;
 
-  InMemorySource<Message<Data>> dataSource;
+  InMemorySource<CloudEvent> dataSource;
 
-  InMemorySink<Data> multiValuedSink;
+  InMemorySink<CloudEvent> multiValuedSink;
 
   @Override
-  protected InMemorySink<Data> getDataSink() {
+  protected InMemorySink<CloudEvent> getDataSink() {
     return multiValuedSink;
   }
 
   @Override
-  protected InMemorySource<Message<Data>> getDataSource() {
+  protected InMemorySource<CloudEvent> getDataSource() {
     return dataSource;
   }
 
   @BeforeEach
   void beforeEach() {
-    dataSource = connector.source(AbstractFunction.CHANNEL_MULTIVALUED_DATA);
-    multiValuedSink = connector.sink(AbstractFunction.CHANNEL_AGGREGATED_MULTIVALUED_DATA);
+    dataSource = connector.source(Channels.MULTIVALUED_DATA);
+    multiValuedSink = connector.sink(Channels.AGGREGATED_MULTIVALUED_DATA);
     multiValuedSink.clear();
   }
 

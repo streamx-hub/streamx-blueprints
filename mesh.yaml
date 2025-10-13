@@ -120,6 +120,19 @@ descriptors:
       outgoing-pages:
         binding: "http-structured-json"
 
+  json-aggregator:
+    type: "processing"
+    incoming:
+      data:
+        binding: "http-structured-json"
+      multivalued-data:
+        binding: "http-structured-json"
+    outgoing:
+      aggregated-data:
+        binding: "http-structured-json"
+      aggregated-multivalued-data:
+        binding: "http-structured-json"
+
   web-server:
     type: "processing"
     incoming:
@@ -194,6 +207,30 @@ processing:
         STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_OPTIMIZED_FILE_PATHS_PATTERN: ".*(png|gif|jpg|jpeg)$"
         STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_ADJUSTED_PAGE_PATHS_PATTERN: ".*"
 
+  blueprint-json-aggregator:
+    containers:
+      - image: json-aggregator
+        incoming:
+          data:
+            topic: inboxes/data
+          multivalued-data:
+            topic: inboxes/data
+        outgoing:
+          aggregated-data:
+            topic: relays/aggregated-data
+          aggregated-multivalued-data:
+            topic: relays/data
+        environment:
+          STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_0__MASTER_NAMESPACE: "pim"
+          STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_0__OPTIONAL_NAMESPACES: "price,reviews"
+          STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_0__OUTPUT_NAMESPACE: "product"
+          STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_1__MASTER_NAMESPACE: "review"
+          STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_1__OUTPUT_NAMESPACE: "reviews"
+          STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_2__MASTER_NAMESPACE: "default_product"
+          STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_2__OUTPUT_NAMESPACE: "product"
+          STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_3__MASTER_NAMESPACE: "default_category"
+          STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_3__OUTPUT_NAMESPACE: "category"
+
   # Instance 1 of external-references-rewriter: process web resources
   blueprint-web-resources-external-references-rewriter:
     containers:
@@ -254,7 +291,7 @@ processing:
       - image: rendering-engine
         incoming:
           data:
-            topic: inboxes/data
+            topic: relays/aggregated-data
           renderers:
             topic: inboxes/renderers
           rendering-contexts:

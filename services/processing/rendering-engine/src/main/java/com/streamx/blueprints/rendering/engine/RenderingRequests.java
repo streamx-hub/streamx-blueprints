@@ -15,7 +15,6 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.jboss.logging.Logger;
@@ -31,21 +30,21 @@ public class RenderingRequests {
 
   Multi<Message<CloudEvent>> getFromDataStore(Message<CloudEvent> incoming,
       List<KeyedValue<RenderingContext>> renderingContexts) {
-    Supplier<Stream<KeyedValue<Data>>> streamSupplier = this::fetchStoredDataContextFromStore;
+    Stream<KeyedValue<Data>> dataStream = fetchStoredDataContextFromStore();
 
-    return getFrom(incoming, renderingContexts, streamSupplier);
+    return getFrom(incoming, renderingContexts, dataStream);
   }
 
   Multi<Message<CloudEvent>> getFromDataEntries(Message<CloudEvent> incoming,
       List<KeyedValue<RenderingContext>> renderingContexts, List<KeyedValue<Data>> dataEntry) {
-    Supplier<Stream<KeyedValue<Data>>> streamSupplier = dataEntry::stream;
+    Stream<KeyedValue<Data>> dataStream = dataEntry.stream();
 
-    return getFrom(incoming, renderingContexts, streamSupplier);
+    return getFrom(incoming, renderingContexts, dataStream);
   }
 
   private Multi<Message<CloudEvent>> getFrom(Message<CloudEvent> incoming,
       List<KeyedValue<RenderingContext>> renderingContexts,
-      Supplier<Stream<KeyedValue<Data>>> streamSupplier) {
+      Stream<KeyedValue<Data>> dataStream) {
     Multi<Message<CloudEvent>> outgoings;
     try {
       AckHandler ackHandler = new AckHandler(incoming);
@@ -60,7 +59,7 @@ public class RenderingRequests {
             event.getType(),
             ackHandler,
             renderingContexts,
-            streamSupplier);
+            dataStream);
         outgoings = Multi.createFrom().items(renderingRequests);
       }
       return outgoings.onCompletion().call(ackHandler::handleIncomingMessageAck);
@@ -74,8 +73,8 @@ public class RenderingRequests {
       OffsetDateTime eventTime, String eventType,
       AckHandler ackHandler,
       List<KeyedValue<RenderingContext>> renderingContexts,
-      Supplier<Stream<KeyedValue<Data>>> dataStream) {
-    return dataStream.get()
+      Stream<KeyedValue<Data>> dataStream) {
+    return dataStream
         .filter(this::skipDataWithNoValue)
         .flatMap(
             data -> findMatchingContextsByDataKeyPattern(data.key(), getDataType(data.key()),

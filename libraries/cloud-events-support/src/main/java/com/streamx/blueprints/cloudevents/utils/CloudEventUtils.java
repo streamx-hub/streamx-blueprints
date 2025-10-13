@@ -11,8 +11,10 @@ import io.cloudevents.core.data.PojoCloudEventData;
 import io.cloudevents.jackson.JsonCloudEventData;
 import io.cloudevents.lang.Nullable;
 import java.net.URI;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -143,5 +145,10 @@ public class CloudEventUtils {
 
   private static OffsetDateTime getNow() {
     return OffsetDateTime.now(DEFAULT_ZONE);
+  }
+
+  public static OffsetDateTime toOffsetDateTime(long utcEpochMillis) {
+    Instant instant = Instant.ofEpochMilli(utcEpochMillis);
+    return OffsetDateTime.ofInstant(instant, ZoneOffset.UTC);
   }
 }

@@ -1,23 +1,18 @@
 package com.streamx.blueprints.json.aggregator;
 
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractAction;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractEventTime;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractKey;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.streamx.blueprints.data.Data;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.json.aggregator.configuration.Configuration;
-import dev.streamx.metadata.Properties;
-import dev.streamx.quasar.reactive.messaging.Store;
-import dev.streamx.quasar.reactive.messaging.annotations.FromChannel;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
+import com.streamx.blueprints.json.aggregator.stores.DataStore;
+import com.streamx.blueprints.json.aggregator.stores.PreservedData;
+import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import io.smallrye.reactive.messaging.GenericPayload;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,50 +22,54 @@ import java.util.Set;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class ProcessDataFunction extends AbstractFunction {
 
   @Inject
-  @FromChannel(CHANNEL_DATA)
-  Store<Data> store;
+  DataStore store;
 
-  @Inject
-  Logger log;
+  @Override
+  protected int expectedKeyPartsCount() {
+    return 2;
+  }
 
-  @Incoming(CHANNEL_DATA)
-  @Outgoing(CHANNEL_AGGREGATED_DATA)
-  Multi<Message<Data>> process(Message<Data> message) {
-    String key = extractKey(message);
+  @Incoming(Channels.DATA)
+  @Outgoing(Channels.AGGREGATED_DATA)
+  Multi<Message<CloudEvent>> process(Message<CloudEvent> message) {
+    CloudEvent event = message.getPayload();
+    Data data = CloudEventUtils.getData(event, Data.class);
+    String eventType = event.getType();
+    String key = CloudEventUtils.getSubject(event);
+    OffsetDateTime eventTime = event.getTime();
+
+    store.register(data, eventType, key);
     log.tracef("Processing message [%s]", key);
-    Action action = extractAction(message);
-    Long eventTime = extractEventTime(message);
+
     try {
-      if (!accept(key, action, eventTime)) {
+      if (!accept(key, eventTime)) {
         log.tracef("Skipping invalid incoming message key=%s", key);
         message.ack();
         return Multi.createFrom().empty();
       }
 
-      List<Message<Data>> resultMessages = new LinkedList<>();
+      List<Message<CloudEvent>> resultMessages = new LinkedList<>();
       String[] keyParts = key.split(KEY_SEPARATOR);
       String id = keyParts[ID_POSITION];
       String namespace = keyParts[NAMESPACE_POSITION];
       List<Configuration> matchingConfigurations = getConfigurations(namespace);
       for (Configuration config : matchingConfigurations) {
         String masterNamespace = config.masterNamespace();
-        GenericPayload<Data> masterResource = masterNamespace.equals(namespace)
-            ? GenericPayload.from(message)
-            : store.getWithMetadata(masterNamespace + KEY_SEPARATOR + id);
-        if (masterResource != null || Action.UNPUBLISH.equals(action)) {
-          handleResourceMerging(eventTime, id, namespace, masterResource, config, action, key)
+        PreservedData masterResource = determineMasterResource(masterNamespace, data, namespace, id,
+            eventType);
+        if (masterResource != null || Data.TYPE_UNPUBLISHED.equals(eventType)) {
+          handleResourceMerging(eventTime, id, namespace, masterResource, config, eventType, key)
               .ifPresent(resultMessages::add);
         } else {
           log.tracef("No master resource present for [%s]. Skipping processing.", id);
         }
       }
-      return Multi.createFrom().items(resultMessages.stream())
+      return Multi.createFrom().iterable(resultMessages)
           .onCompletion()
           .call(() -> Uni.createFrom().completionStage(message.ack()));
     } catch (Exception e) {
@@ -79,24 +78,26 @@ public class ProcessDataFunction extends AbstractFunction {
     }
   }
 
-  private boolean accept(String key, Action action, Long eventTime) {
-    return super.accept(key) && action != null && eventTime != null
-        && key.split(KEY_SEPARATOR).length == 2;
+  private PreservedData determineMasterResource(String masterNamespace, Data data, String namespace,
+      String id, String eventType) {
+    return masterNamespace.equals(namespace)
+        ? new PreservedData(data, eventType)
+        : store.get(masterNamespace + KEY_SEPARATOR + id);
   }
 
-  private Optional<Message<Data>> handleResourceMerging(long eventTime, String id,
-      String namespace, GenericPayload<Data> masterResource, Configuration config, Action action,
+  private Optional<Message<CloudEvent>> handleResourceMerging(OffsetDateTime eventTime, String id,
+      String namespace, PreservedData masterResource, Configuration config, String eventType,
       String key) {
-    if (Action.UNPUBLISH.equals(action)) {
+    if (Data.TYPE_UNPUBLISHED.equals(eventType)) {
       return unmergeResources(eventTime, key, id, namespace, masterResource, config);
     }
     return Optional.of(mergeResources(eventTime, id, supportedNamespacesByConfig.get(config),
         config.outputNamespace(), getOutputType(config, masterResource)));
   }
 
-  private Optional<Message<Data>> unmergeResources(long eventTime, String key,
-      String id, String namespace, GenericPayload<Data> masterResource, Configuration config) {
-    if (masterResource == null || masterResource.getPayload() == null) {
+  private Optional<Message<CloudEvent>> unmergeResources(OffsetDateTime eventTime, String key,
+      String id, String namespace, PreservedData masterResource, Configuration config) {
+    if (masterResource == null || masterResource.data() == null) {
       if (!namespace.equals(config.masterNamespace())) {
         log.tracef("Not updating master resource since it's not available at [%s]", key);
         return Optional.empty();
@@ -113,20 +114,19 @@ public class ProcessDataFunction extends AbstractFunction {
     }
   }
 
-  private Message<Data> mergeResources(long eventTime, String id, Set<String> namespacesToMerge,
-      String outputNamespace, String outputType) {
+  private Message<CloudEvent> mergeResources(OffsetDateTime eventTime, String id,
+      Set<String> namespacesToMerge, String outputNamespace, String outputType) {
     List<Data> resourcesToMerge = namespacesToMerge.stream()
-        .map(namespace -> store.getWithMetadata(namespace + KEY_SEPARATOR + id))
+        .map(namespace -> store.get(namespace + KEY_SEPARATOR + id))
         .filter(Objects::nonNull)
-        .filter(resource -> !Action.UNPUBLISH.equals(Action.from(resource.getMetadata())))
-        .map(GenericPayload::getPayload)
+        .filter(resource -> !Data.TYPE_UNPUBLISHED.equals(resource.eventType()))
+        .map(PreservedData::data)
         .toList();
-    ObjectMapper mapper = new ObjectMapper();
     try {
-      JsonNode merged = mapper.createObjectNode();
+      JsonNode merged = objectMapper.createObjectNode();
       for (Data resource : resourcesToMerge) {
-        JsonNode jsonToMerge = mapper.readTree(resource.getContentAsString());
-        merged = mapper.readerForUpdating(merged).readTree(jsonToMerge.toString());
+        JsonNode jsonToMerge = objectMapper.readTree(resource.getContentAsString());
+        merged = objectMapper.readerForUpdating(merged).readTree(jsonToMerge.toString());
       }
       String mergedJson = merged.toString();
       log.tracef("Merged json for [%s] %s", id, mergedJson);
@@ -136,11 +136,11 @@ public class ProcessDataFunction extends AbstractFunction {
     }
   }
 
-  private String getOutputType(Configuration config, GenericPayload<Data> masterResource) {
+  private String getOutputType(Configuration config, PreservedData masterResource) {
     return config.outputType().orElse(
         Optional.ofNullable(masterResource)
-            .map(Properties::from)
-            .flatMap(Properties::getType)
+            .map(PreservedData::data)
+            .map(Data::getType)
             .orElse(null));
   }
 }

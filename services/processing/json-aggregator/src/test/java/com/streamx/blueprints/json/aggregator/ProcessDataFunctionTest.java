@@ -1,13 +1,12 @@
 package com.streamx.blueprints.json.aggregator;
 
-import dev.streamx.blueprints.data.Data;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
 import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -26,24 +25,24 @@ class ProcessDataFunctionTest extends ProcessDataFunctionBaseTest {
   @Any
   InMemoryConnector connector;
 
-  InMemorySource<Message<Data>> dataSource;
+  InMemorySource<CloudEvent> dataSource;
 
-  InMemorySink<Data> dataSink;
+  InMemorySink<CloudEvent> dataSink;
 
   @Override
-  protected InMemorySource<Message<Data>> getDataSource() {
+  protected InMemorySource<CloudEvent> getDataSource() {
     return dataSource;
   }
 
   @Override
-  public InMemorySink<Data> getDataSink() {
+  public InMemorySink<CloudEvent> getDataSink() {
     return dataSink;
   }
 
   @BeforeEach
   void beforeEach() {
-    dataSource = connector.source(AbstractFunction.CHANNEL_DATA);
-    dataSink = connector.sink(AbstractFunction.CHANNEL_AGGREGATED_DATA);
+    dataSource = connector.source(Channels.DATA);
+    dataSink = connector.sink(Channels.AGGREGATED_DATA);
     dataSink.clear();
   }
 

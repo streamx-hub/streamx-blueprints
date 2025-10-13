@@ -1,61 +1,49 @@
 package com.streamx.blueprints.json.aggregator;
 
-import static dev.streamx.quasar.reactive.messaging.metadata.Action.PUBLISH;
-import static dev.streamx.quasar.reactive.messaging.metadata.Action.UNPUBLISH;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractAction;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractEventTime;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractKey;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import dev.streamx.blueprints.data.Data;
-import dev.streamx.metadata.Properties;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
-import dev.streamx.quasar.reactive.messaging.utils.MetadataUtils;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.Data;
+import io.cloudevents.CloudEvent;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
 import io.smallrye.reactive.messaging.memory.InMemorySource;
 import java.time.Duration;
 import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
 
 abstract class ProcessDataFunctionBaseTest {
 
-  protected abstract InMemorySource<Message<Data>> getDataSource();
+  protected abstract InMemorySource<CloudEvent> getDataSource();
 
-  protected abstract InMemorySink<Data> getDataSink();
+  protected abstract InMemorySink<CloudEvent> getDataSink();
 
   protected void publish(String key, String type, String payload) {
-    Message<Data> message = Message.of(new Data(payload),
-        Metadata.of(
-            Key.of(key),
-            EventTime.of(1L),
-            PUBLISH,
-            Properties.empty().withType(type)));
-    getDataSource().send(message);
+    CloudEvent event = CloudEventUtils.eventWithData(
+        key,
+        Data.TYPE_PUBLISHED,
+        new Data(payload, type),
+        CloudEventUtils.toOffsetDateTime(1L)
+    );
+    getDataSource().send(event);
   }
 
   protected void publish(String key, String payload) {
-    Message<Data> message = Message.of(new Data(payload),
-        Metadata.of(
-            Key.of(key),
-            EventTime.of(1L),
-            PUBLISH));
-    getDataSource().send(message);
+    publish(key, null, payload);
   }
 
   protected void unpublish(String key) {
-    Message<Data> message = Message.of(null,
-        Metadata.of(
-            Key.of(key),
-            EventTime.of(1L),
-            UNPUBLISH));
-    getDataSource().send(message);
+    CloudEvent event = CloudEventUtils.eventWithoutData(
+        key,
+        Data.TYPE_UNPUBLISHED,
+        CloudEventUtils.toOffsetDateTime(1L)
+    );
+    getDataSource().send(event);
   }
 
-  protected Message<Data> findByKey(String key) {
+  protected CloudEvent findByKey(String key) {
     return getDataSink().received().stream()
-        .filter(msg -> key.equals(extractKey(msg)))
+        .map(Message::getPayload)
+        .filter(msg -> key.equals(msg.getSubject()))
         .reduce((first, second) -> second)
         .orElse(null);
   }
@@ -64,31 +52,30 @@ abstract class ProcessDataFunctionBaseTest {
     await().atMost(Duration.ofSeconds(2)).untilAsserted(() ->
         assertThat(getDataSink().received())
             .describedAs("Current messages: " + getDataSink().received().stream()
-                .map(MetadataUtils::extractKey).toList())
+                .map(Message::getPayload)
+                .map(CloudEvent::getSubject).toList())
             .hasSize(count)
     );
   }
 
   protected void assertPublished(String key, String expectedType, String expectedPayload) {
-    Message<Data> data = findByKey(key);
+    CloudEvent event = findByKey(key);
+    assertThat(event).isNotNull();
+    Data data = CloudEventUtils.getData(event, Data.class);
     assertThat(data).isNotNull();
-    assertThat(data.getPayload()).isNotNull();
-    assertThat(data.getPayload().getContentAsString()).isEqualTo(expectedPayload);
-    assertThat(extractAction(data)).isSameAs(PUBLISH);
-    if (expectedType == null) {
-      assertThat(Properties.from(data).getType()).isEmpty();
-    } else {
-      assertThat(Properties.from(data).getType()).hasValue(expectedType);
-    }
-    assertThat(extractEventTime(data)).isOne();
+    assertThat(data.getContentAsString()).isEqualTo(expectedPayload);
+    assertThat(event.getType()).isEqualTo(Data.TYPE_PUBLISHED);
+    assertThat(data.getType()).isEqualTo(expectedType);
+    assertThat(event.getTime()).isEqualTo(CloudEventUtils.toOffsetDateTime(1));
   }
 
   protected void assertUnpublished(String key) {
-    Message<Data> data = findByKey(key);
-    assertThat(data).isNotNull();
-    assertThat(data.getPayload()).isNull();
-    assertThat(extractAction(data)).isSameAs(UNPUBLISH);
-    assertThat(extractEventTime(data)).isOne();
+    CloudEvent event = findByKey(key);
+    assertThat(event).isNotNull();
+    Data data = CloudEventUtils.getData(event, Data.class);
+    assertThat(data).isNull();
+    assertThat(event.getType()).isSameAs(Data.TYPE_UNPUBLISHED);
+    assertThat(event.getTime()).isEqualTo(CloudEventUtils.toOffsetDateTime(1));
   }
 
   protected void assertNoResultMessageWasSent() {

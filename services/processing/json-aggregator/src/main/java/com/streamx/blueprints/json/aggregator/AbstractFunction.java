@@ -1,14 +1,14 @@
 package com.streamx.blueprints.json.aggregator;
 
-import dev.streamx.blueprints.data.Data;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.json.aggregator.configuration.AggregatorConfiguration;
 import com.streamx.blueprints.json.aggregator.configuration.Configuration;
-import dev.streamx.metadata.Properties;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
+import io.cloudevents.CloudEvent;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
+import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -17,26 +17,26 @@ import java.util.Map.Entry;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
+import org.jboss.logging.Logger;
 
 abstract class AbstractFunction {
-
-  public static final String CHANNEL_DATA = "data";
-
-  public static final String CHANNEL_MULTIVALUED_DATA = "multivalued-data";
-  public static final String CHANNEL_AGGREGATED_DATA = "aggregated-data";
-
-  public static final String CHANNEL_AGGREGATED_MULTIVALUED_DATA = "aggregated-multivalued-data";
 
   protected static final int NAMESPACE_POSITION = 0;
   protected static final int ID_POSITION = 1;
   protected static final String KEY_SEPARATOR = ":";
 
+  protected static final ObjectMapper objectMapper = new ObjectMapper();
+
   @Inject
-  protected AggregatorConfiguration aggregatorConfig;
+  Logger log;
+
+  @Inject
+  AggregatorConfiguration aggregatorConfig;
 
   protected final Map<Configuration, Set<String>> supportedNamespacesByConfig
       = new LinkedHashMap<>();
+
+  protected abstract int expectedKeyPartsCount();
 
   @PostConstruct
   void init() {
@@ -51,30 +51,39 @@ abstract class AbstractFunction {
     }
   }
 
-  protected static Message<Data> createPublishMessage(String id, long eventTime,
+  protected Message<CloudEvent> createPublishMessage(String id, OffsetDateTime eventTime,
       String outputNamespace, String outputType, String payload) {
+    String key = outputNamespace + KEY_SEPARATOR + id;
+    log.tracef("Creating Data Publish message with key %s and outputType %s", key, outputType);
     return Message.of(
-        new Data(payload),
-        Metadata.of(
-            Key.of(outputNamespace + KEY_SEPARATOR + id),
-            Action.PUBLISH,
-            EventTime.of(eventTime),
-            Properties.empty().withType(outputType)));
+        CloudEventUtils.eventWithData(
+            key,
+            Data.TYPE_PUBLISHED,
+            new Data(payload, outputType),
+            eventTime
+        )
+    );
   }
 
-  protected static Message<Data> createUnpublishMessage(String id, long eventTime,
+  protected Message<CloudEvent> createUnpublishMessage(String id, OffsetDateTime eventTime,
       String outputNamespace) {
+    String key = outputNamespace + KEY_SEPARATOR + id;
+    log.tracef("Creating Data Unpublish message with key %s", key);
     return Message.of(
-        null,
-        Metadata.of(
-            Key.of(outputNamespace + KEY_SEPARATOR + id),
-            Action.UNPUBLISH,
-            EventTime.of(eventTime)));
+        CloudEventUtils.eventWithoutData(
+            key,
+            Data.TYPE_UNPUBLISHED,
+            eventTime
+        )
+    );
   }
 
-  protected boolean accept(String key) {
+  protected boolean accept(String key, OffsetDateTime eventTime) {
+    if (eventTime == null) {
+      return false;
+    }
     String[] keyParts = key.split(KEY_SEPARATOR);
-    if (keyParts.length < 2) {
+    if (keyParts.length != expectedKeyPartsCount()) {
       return false;
     }
     String id = keyParts[ID_POSITION];

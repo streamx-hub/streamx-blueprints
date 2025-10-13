@@ -18,9 +18,7 @@ import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
-import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -209,8 +207,7 @@ public abstract class WebResourcesAccessTestBase {
 
   private <T> void sendEvent(String subject, T payload, String type) {
     InMemorySource<CloudEvent> pages = connector.source(WebServerSink.CHANNEL);
-    OffsetDateTime eventTime = OffsetDateTime.ofInstant(
-        Instant.ofEpochMilli(EVENT_TIME.getAndIncrement()), ZoneOffset.UTC);
+    OffsetDateTime eventTime = CloudEventUtils.toOffsetDateTime(EVENT_TIME.getAndIncrement());
     CloudEvent event = payload == null
         ? CloudEventUtils.eventWithoutData(subject, type, eventTime)
         : CloudEventUtils.eventWithData(subject, type, payload, eventTime);
