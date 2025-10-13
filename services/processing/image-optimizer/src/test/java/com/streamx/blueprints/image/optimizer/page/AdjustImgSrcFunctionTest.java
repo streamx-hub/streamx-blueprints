@@ -26,8 +26,10 @@ import jakarta.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -379,23 +381,21 @@ class AdjustImgSrcFunctionTest {
   }
 
   private static CloudEvent createPublishPageEvent(String pagePath, String html) {
-    return CloudEventUtils.eventWithData(new Page(html), Page.TYPE_PUBLISHED, pagePath);
+    return CloudEventUtils.eventWithData(pagePath, Page.TYPE_PUBLISHED, new Page(html));
   }
 
   private static CloudEvent createPublishAssetEvent(File assetFile) throws IOException {
     String path = normalizedPath(assetFile);
     byte[] content = FileUtils.readFileToByteArray(assetFile);
-    return CloudEventUtils.eventWithData(new Asset(content), Asset.TYPE_PUBLISHED, path);
+    return CloudEventUtils.eventWithData(path, Asset.TYPE_PUBLISHED, new Asset(content));
   }
 
   private static CloudEvent createUnpublishPageEvent(String pagePath) {
-    return CloudEventUtils.eventWithData(new Page((ByteBuffer) null), Page.TYPE_UNPUBLISHED,
-        pagePath);
+    return CloudEventUtils.eventWithoutData(pagePath, Page.TYPE_UNPUBLISHED);
   }
 
   private static CloudEvent createUnpublishAssetEvent(File assetFile) {
-    return CloudEventUtils.eventWithData(new Asset((ByteBuffer) null), Asset.TYPE_UNPUBLISHED,
-        normalizedPath(assetFile));
+    return CloudEventUtils.eventWithoutData(normalizedPath(assetFile), Asset.TYPE_UNPUBLISHED);
   }
 
   private CloudEvent waitForAdjustedOutputEvent(CloudEvent inputEvent) {
@@ -427,7 +427,11 @@ class AdjustImgSrcFunctionTest {
   }
 
   private static String extractPageHtml(CloudEvent event) {
-    return CloudEventUtils.getDataOrThrow(event, Page.class).getContentAsString();
+    return Optional.ofNullable(CloudEventUtils.getData(event, Page.class))
+        .map(Page::getContent)
+        .map(ByteBuffer::array)
+        .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
+        .orElse(null);
   }
 
   private void publishOptimizedImage(File imageFile) throws IOException {

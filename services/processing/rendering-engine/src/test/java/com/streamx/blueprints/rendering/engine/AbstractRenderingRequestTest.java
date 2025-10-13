@@ -66,9 +66,8 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
     String templateKey = "rendering-request-test-resource-renderer";
     CloudEvent data = dataEvent("rendering-request-test-data-type1:1", Data.TYPE_PUBLISHED);
     CloudEvent renderingContextPublishEvent =
-        renderingContextEvent(
+        renderingContextPublishEvent(
             "rendering-request-test-resources-rendering-context",
-            RenderingContext.TYPE_PUBLISHED,
             new RenderingContext(templateKey, "rendering-request-test-data-type1:.*",
                 null,
                 "rendering-request-test-generated/{{id}}.html",
@@ -99,9 +98,8 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
     String templateKey = "rendering-request-test-resource-renderer";
     CloudEvent data = dataEvent("rendering-request-test-data-type2:1", Data.TYPE_PUBLISHED);
     CloudEvent renderingContextPublishEvent =
-        renderingContextEvent(
+        renderingContextPublishEvent(
             "rendering-request-test-resources-rendering-context",
-            RenderingContext.TYPE_PUBLISHED,
             new RenderingContext(templateKey, "rendering-request-test-data-type2:.*",
                 null,
                 "rendering-request-test-generated/{{id}}.html",

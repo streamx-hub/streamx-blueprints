@@ -52,7 +52,7 @@ class ProcessPageFunction {
     if (dirtySequenceStateManager.checkIfActionIsNeededForNewSequence()) {
       WebResource sitemapWebResource = sitemapService.createSitemapResource();
       CloudEvent sitemapEvent = CloudEventUtils.eventWithData(
-          sitemapWebResource, WebResource.TYPE_PUBLISHED, configuration.outputKey()
+          configuration.outputKey(), WebResource.TYPE_PUBLISHED, sitemapWebResource
       );
       emitter.send(sitemapEvent);
     }

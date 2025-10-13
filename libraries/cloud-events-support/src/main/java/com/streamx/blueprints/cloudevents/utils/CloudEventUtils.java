@@ -114,47 +114,35 @@ public class CloudEventUtils {
     return subject;
   }
 
-  public static CloudEvent eventWithData(Object data, String type, String subject) {
-    return eventWithData(data, type, subject, getNow());
+  public static CloudEvent eventWithData(String subject, String type, Object data) {
+    return eventWithData(subject, type, data, getNow());
   }
 
-  public static CloudEvent eventWithData(Object data, String type, String subject,
+  public static CloudEvent eventWithData(String subject, String type, Object data,
       OffsetDateTime time) {
-    return builderWithJsonData(data)
-        .withType(type)
-        .withSubject(subject)
-        .withTime(time)
-        .build();
-  }
-
-  public static CloudEvent eventWithoutData(String type, String subject) {
-    return eventWithoutData(type, subject, getNow());
-  }
-
-  public static CloudEvent eventWithoutData(String type, String subject, OffsetDateTime time) {
-    return builder()
-        .withType(type)
-        .withSubject(subject)
-        .withTime(time)
-        .build();
-  }
-
-  public static CloudEventBuilder builderWithJsonData(Object data) {
-    return baseBuilder()
+    return baseBuilder(subject, type, time)
         .withDataContentType("application/json")
-        .withData(PojoCloudEventData.wrap(data, objectMapper::writeValueAsBytes));
+        .withData(PojoCloudEventData.wrap(data, objectMapper::writeValueAsBytes))
+        .build();
   }
 
-  public static CloudEventBuilder builder() {
-    return baseBuilder()
-        .withoutData();
+  public static CloudEvent eventWithoutData(String subject, String type) {
+    return eventWithoutData(subject, type, getNow());
   }
 
-  private static io.cloudevents.core.v1.CloudEventBuilder baseBuilder() {
+  public static CloudEvent eventWithoutData(String subject, String type, OffsetDateTime time) {
+    return baseBuilder(subject, type, time)
+        .build();
+  }
+
+  private static io.cloudevents.core.v1.CloudEventBuilder baseBuilder(String subject, String type,
+      OffsetDateTime time) {
     return CloudEventBuilder.v1()
         .withId(UUID.randomUUID().toString())
         .withSource(DEFAULT_SOURCE)
-        .withTime(getNow());
+        .withSubject(subject)
+        .withType(type)
+        .withTime(time);
   }
 
   private static OffsetDateTime getNow() {

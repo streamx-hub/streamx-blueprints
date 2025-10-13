@@ -14,7 +14,7 @@ public class Resource extends Typed {
   private final ByteBuffer content;
 
   public Resource(ByteBuffer content) {
-    this.content = content;
+    this(content, null);
   }
 
   public Resource(byte[] content) {
@@ -27,8 +27,8 @@ public class Resource extends Typed {
 
   @JsonCreator
   public Resource(@JsonProperty("content") ByteBuffer content, @JsonProperty("type") String type) {
+    super(type);
     this.content = content;
-    this.type = type;
   }
 
   public Resource(byte[] content, String type) {

@@ -156,7 +156,7 @@ class SitemapGeneratorServiceTest {
 
   private void sendPage(String key, String eventType, OffsetDateTime eventTime) {
     Page page = new Page("whatever");
-    CloudEvent pageEvent = CloudEventUtils.eventWithData(page, eventType, key, eventTime);
+    CloudEvent pageEvent = CloudEventUtils.eventWithData(key, eventType, page, eventTime);
     pages.send(pageEvent);
     waitForEventProcessed(key, eventType, eventTime);
   }

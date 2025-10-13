@@ -168,7 +168,6 @@ public class ProcessResourceFunction {
     log.tracef("Publishing resource %s with all external links adjusted to local paths",
         resourceStreamxKey);
 
-    return CloudEventUtils.eventWithData(adjustedResource,
-        event.getType(), resource.streamxKey());
+    return CloudEventUtils.eventWithData(resource.streamxKey(), event.getType(), adjustedResource);
   }
 }

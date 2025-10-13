@@ -82,7 +82,7 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
   }
 
   private <T extends Resource> CloudEvent sendToChannel(String path, T resource, String eventType) {
-    CloudEvent event = CloudEventUtils.eventWithData(resource, eventType, path);
+    CloudEvent event = CloudEventUtils.eventWithData(path, eventType, resource);
     resourcesChannel.send(event);
     return event;
   }

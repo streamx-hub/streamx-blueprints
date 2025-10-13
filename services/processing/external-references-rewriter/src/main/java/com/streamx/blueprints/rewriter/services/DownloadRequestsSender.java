@@ -38,9 +38,9 @@ public class DownloadRequestsSender {
     log.tracef("Sending download request for %s", absoluteUrl);
 
     CloudEvent cloudEvent = CloudEventUtils.eventWithData(
-        downloadRequest,
+        streamxKey,
         DownloadRequest.EVENT_TYPE,
-        streamxKey);
+        downloadRequest);
 
     downloadRequestEmitter.send(cloudEvent);
   }

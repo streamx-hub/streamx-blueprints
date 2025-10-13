@@ -35,9 +35,8 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
   @Test
   void testDataProcessing() {
     // given
-    CloudEvent context1 = renderingContextEvent(
+    CloudEvent context1 = renderingContextPublishEvent(
         "context2-1",
-        RenderingContext.TYPE_PUBLISHED,
         new RenderingContext(
             "renderer2-1",
             "data-type2:.*",
@@ -46,9 +45,8 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
             "data-type2-context2-1-output-type-pattern-{{id}}",
             OutputFormat.PAGE
         ));
-    CloudEvent context2 = renderingContextEvent(
+    CloudEvent context2 = renderingContextPublishEvent(
         "context2-2",
-        RenderingContext.TYPE_PUBLISHED,
         new RenderingContext(
             "renderer2-2",
             "data-type2:.*",
@@ -92,9 +90,8 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
     CloudEvent data2 = dataEvent("data-type1:2", Data.TYPE_PUBLISHED);
     dataSource.send(data1);
     dataSource.send(data2);
-    CloudEvent context1 = renderingContextEvent(
+    CloudEvent context1 = renderingContextPublishEvent(
         "context1-1",
-        RenderingContext.TYPE_PUBLISHED,
         new RenderingContext(
             "renderer1-1",
             "data-type1:.*",
@@ -103,9 +100,8 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
             null,
             OutputFormat.PAGE
         ));
-    CloudEvent context2 = renderingContextEvent(
+    CloudEvent context2 = renderingContextPublishEvent(
         "context1-2",
-        RenderingContext.TYPE_PUBLISHED,
         new RenderingContext(
             "renderer1-1",
             "data-type1:.*",
@@ -186,9 +182,8 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
   @Test
   void testMatchingDataKeyAndTypeAgainstContextDataMatchPatterns() {
     // given
-    CloudEvent context1 = renderingContextEvent(
+    CloudEvent context1 = renderingContextPublishEvent(
         "context4-1",
-        RenderingContext.TYPE_PUBLISHED,
         new RenderingContext(
             "renderer4-1",
             "data-type4:.*",
@@ -197,9 +192,8 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
             null,
             OutputFormat.PAGE
         ));
-    CloudEvent context2 = renderingContextEvent(
+    CloudEvent context2 = renderingContextPublishEvent(
         "context4-should-be-ignored-because-none-data-match-pattern",
-        RenderingContext.TYPE_PUBLISHED,
         new RenderingContext(
             "renderer4-1",
             " ",
@@ -242,14 +236,14 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
     String expectedRequestKey = contextEvent.getSubject() + ":::" + dataKey;
     RenderingContext context = CloudEventUtils.getDataOrThrow(contextEvent, RenderingContext.class);
     return CloudEventUtils.eventWithData(
+        expectedRequestKey,
+        eventType,
         new RenderingRequest(
             dataKey,
             context.rendererKey(),
             context.outputKeyTemplate(),
             context.outputTypeTemplate(),
             context.outputFormat()),
-        eventType,
-        expectedRequestKey,
         toOffsetDateTime(eventTime));
   }
 

@@ -69,7 +69,7 @@ abstract class AbstractDownloaderFunctionTest {
         EMITTED_PAGE_TYPE, EMITTED_WEB_RESOURCE_TYPE, EMITTED_ASSET_TYPE);
 
     CloudEvent event = CloudEventUtils
-        .eventWithData(downloadRequest, DownloadRequest.EVENT_TYPE, emitKey);
+        .eventWithData(emitKey, DownloadRequest.EVENT_TYPE, downloadRequest);
 
     downloadRequestsChannel.send(event);
   }
