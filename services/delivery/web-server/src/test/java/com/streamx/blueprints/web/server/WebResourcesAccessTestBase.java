@@ -148,9 +148,9 @@ public abstract class WebResourcesAccessTestBase {
   @Test
   void shouldSkipProcessingMessageWithUnexpectedPayload() {
     // given
-    String file = "/directory/file.html";
+    String filePath = "/directory/file.html";
     Object payload = new Object();
-    CloudEvent cloudEvent = CloudEventUtils.eventWithData(payload, "unexpected", file);
+    CloudEvent cloudEvent = CloudEventUtils.eventWithData(filePath, "unexpected", payload);
 
     // when
     webServerSink.consume(cloudEvent);
@@ -212,8 +212,8 @@ public abstract class WebResourcesAccessTestBase {
     OffsetDateTime eventTime = OffsetDateTime.ofInstant(
         Instant.ofEpochMilli(EVENT_TIME.getAndIncrement()), ZoneOffset.UTC);
     CloudEvent event = payload == null
-        ? CloudEventUtils.eventWithoutData(type, subject, eventTime)
-        : CloudEventUtils.eventWithData(payload, type, subject, eventTime);
+        ? CloudEventUtils.eventWithoutData(subject, type, eventTime)
+        : CloudEventUtils.eventWithData(subject, type, payload, eventTime);
     pages.send(event);
   }
 

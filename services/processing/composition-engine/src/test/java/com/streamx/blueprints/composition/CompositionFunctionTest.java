@@ -427,22 +427,22 @@ class CompositionFunctionTest {
   }
 
   private void publishLayout(String key, String type, String content) {
-    layoutsSource.send(eventWithData(new Layout(content, type), Layout.TYPE_PUBLISHED, key));
+    layoutsSource.send(eventWithData(key, Layout.TYPE_PUBLISHED, new Layout(content, type)));
   }
 
   private void unpublishLayout(String key) {
-    layoutsSource.send(eventWithoutData(Layout.TYPE_UNPUBLISHED, key));
+    layoutsSource.send(eventWithoutData(key, Layout.TYPE_UNPUBLISHED));
   }
 
   private void publishComposition(String key, String content, String layoutKey) {
     compositionsSource.send(
-        eventWithData(new Composition(content, null, layoutKey),
-            Composition.TYPE_PUBLISHED, key));
+        eventWithData(key, Composition.TYPE_PUBLISHED,
+            new Composition(content, null, layoutKey)));
   }
 
   private void unpublishComposition(String key) {
     compositionsSource.send(
-        eventWithoutData(Composition.TYPE_UNPUBLISHED, key));
+        eventWithoutData(key, Composition.TYPE_UNPUBLISHED));
   }
 
   private void assertSingleOutgoingPublishPage(String expectedKey, String expectedContent) {

@@ -82,11 +82,11 @@ public class OptimizeImageFunction {
     if (Asset.TYPE_PUBLISHED.equals(eventType)) {
       Asset asset = CloudEventUtils.getDataOrThrow(event, Asset.class);
       Asset optimizedImage = createOptimizedImage(asset, filePath);
-      return CloudEventUtils.eventWithData(optimizedImage, Asset.TYPE_PUBLISHED, optimizedImagePath,
+      return CloudEventUtils.eventWithData(optimizedImagePath, Asset.TYPE_PUBLISHED, optimizedImage,
           eventTime);
     }
     if (Asset.TYPE_UNPUBLISHED.equals(eventType)) {
-      return CloudEventUtils.eventWithoutData(Asset.TYPE_UNPUBLISHED, optimizedImagePath,
+      return CloudEventUtils.eventWithoutData(optimizedImagePath, Asset.TYPE_UNPUBLISHED,
           eventTime);
     }
 

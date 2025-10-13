@@ -94,7 +94,7 @@ public class RenderingRequests {
               value.outputFormat()
           );
           CloudEvent event = CloudEventUtils.eventWithData(
-              renderingRequest, eventType, dataContext.buildKey(), eventTime
+              dataContext.buildKey(), eventType, renderingRequest, eventTime
           );
 
           return Message.of(event,

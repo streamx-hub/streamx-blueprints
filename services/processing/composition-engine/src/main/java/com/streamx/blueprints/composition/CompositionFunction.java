@@ -55,16 +55,16 @@ public class CompositionFunction {
       Composition composition = CloudEventUtils.getData(compositionEvent, Composition.class);
       compositionsStore.put(compositionKey, composition);
       return CloudEventUtils.eventWithData(
-          new PageComposeRequest(compositionKey, composition.getLayoutKey()),
-          PageComposeRequest.TYPE_PUBLISHED,
           compositionKey,
+          PageComposeRequest.TYPE_PUBLISHED,
+          new PageComposeRequest(compositionKey, composition.getLayoutKey()),
           compositionEvent.getTime());
     } else if (CloudEventUtils.isUnpublishingType(compositionEvent.getType())) {
       compositionsStore.remove(compositionKey);
       return CloudEventUtils.eventWithData(
-          new PageComposeRequest(compositionKey, null),
-          PageComposeRequest.TYPE_UNPUBLISHED,
           compositionKey,
+          PageComposeRequest.TYPE_UNPUBLISHED,
+          new PageComposeRequest(compositionKey, null),
           compositionEvent.getTime());
     }
     return null;
@@ -83,12 +83,12 @@ public class CompositionFunction {
 
       if (ableToGeneratePage(layout, layoutKey, composition, compositionKey)) {
         Page page = composePage(composition, layout);
-        return CloudEventUtils.eventWithData(page, Page.TYPE_PUBLISHED,
-            compositionKey, event.getTime());
+        return CloudEventUtils.eventWithData(compositionKey, Page.TYPE_PUBLISHED, page,
+            event.getTime());
       }
     } else if (PageComposeRequest.TYPE_UNPUBLISHED.equals(event.getType())) {
-      return CloudEventUtils.eventWithoutData(Page.TYPE_UNPUBLISHED,
-          compositionKey, event.getTime());
+      return CloudEventUtils.eventWithoutData(compositionKey, Page.TYPE_UNPUBLISHED,
+          event.getTime());
     }
     return null;
   }
@@ -106,9 +106,9 @@ public class CompositionFunction {
         .map(Entry::getKey)
         .map(compositionKey ->
             CloudEventUtils.eventWithData(
-                new PageComposeRequest(compositionKey, layoutKey),
-                type,
                 compositionKey,
+                type,
+                new PageComposeRequest(compositionKey, layoutKey),
                 layout.getTime()));
   }
 

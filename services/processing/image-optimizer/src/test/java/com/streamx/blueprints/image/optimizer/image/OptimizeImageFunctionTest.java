@@ -208,7 +208,7 @@ class OptimizeImageFunctionTest {
     // given
     String path = JPG_FILE.getPath();
     Asset asset = new Asset(new byte[]{0, 1, 2});
-    CloudEvent event = CloudEventUtils.eventWithData(asset, Data.TYPE_PUBLISHED, path);
+    CloudEvent event = CloudEventUtils.eventWithData(path, Data.TYPE_PUBLISHED, asset);
 
     // when
     channel.send(event);
@@ -222,7 +222,7 @@ class OptimizeImageFunctionTest {
     // given
     String path = JPG_FILE.getPath();
     Data data = new Data(new byte[]{0, 1, 2});
-    CloudEvent event = CloudEventUtils.eventWithData(data, Data.TYPE_PUBLISHED, path);
+    CloudEvent event = CloudEventUtils.eventWithData(path, Data.TYPE_PUBLISHED, data);
 
     // when
     channel.send(event);
@@ -234,12 +234,11 @@ class OptimizeImageFunctionTest {
   private static CloudEvent createPublishAssetEvent(File assetFile) throws IOException {
     String path = assetFile.getPath();
     byte[] payload = FileUtils.readFileToByteArray(assetFile);
-    return CloudEventUtils.eventWithData(new Asset(payload), Asset.TYPE_PUBLISHED, path);
+    return CloudEventUtils.eventWithData(path, Asset.TYPE_PUBLISHED, new Asset(payload));
   }
 
   private static CloudEvent createUnpublishAssetEvent(File assetFile) {
-    return CloudEventUtils.eventWithData(new Asset((ByteBuffer) null), Asset.TYPE_UNPUBLISHED,
-        assetFile.getPath());
+    return CloudEventUtils.eventWithoutData(assetFile.getPath(), Asset.TYPE_UNPUBLISHED);
   }
 
   private CloudEvent assertEventIsProcessed(CloudEvent inputEvent) {

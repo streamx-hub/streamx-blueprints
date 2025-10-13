@@ -87,7 +87,7 @@ public class ResourceEmitter {
     log.tracef("Emitting %s at key %s with event type %s and payload type %s", payloadClass, key,
         eventType, payloadType);
 
-    CloudEvent cloudEvent = CloudEventUtils.eventWithData(payload, eventType, key);
+    CloudEvent cloudEvent = CloudEventUtils.eventWithData(key, eventType, payload);
     emitter.send(cloudEvent);
   }
 

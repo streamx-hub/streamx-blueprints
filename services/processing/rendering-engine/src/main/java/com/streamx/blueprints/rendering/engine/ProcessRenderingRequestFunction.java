@@ -106,7 +106,7 @@ public class ProcessRenderingRequestFunction {
     ProcessingSettings processingSettings = processingSettingsMap.get(request.outputFormat());
     String eventType = getEventType(processingSettings, isPublish);
     WebResource resource = createResource(processingSettings, outputType, outputContent);
-    CloudEvent resourceEvent = CloudEventUtils.eventWithData(resource, eventType, key);
+    CloudEvent resourceEvent = CloudEventUtils.eventWithData(key, eventType, resource);
     emit(processingSettings, resourceEvent);
   }
 

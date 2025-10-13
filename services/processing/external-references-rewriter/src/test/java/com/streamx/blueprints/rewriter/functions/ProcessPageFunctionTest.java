@@ -594,7 +594,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     String pagePath = "/eds/pages/page.html";
 
     // when
-    CloudEvent event = CloudEventUtils.eventWithoutData(Page.TYPE_PUBLISHED, pagePath);
+    CloudEvent event = CloudEventUtils.eventWithoutData(pagePath, Page.TYPE_PUBLISHED);
     resourcesChannel.send(event);
 
     // then
