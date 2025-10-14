@@ -38,27 +38,22 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
   @Inject
   MockWebClientsFactory mockWebClientsFactory;
 
+  private final CloseableHttpResponse headHttpResponse = mock(CloseableHttpResponse.class);
+  private final StatusLine headStatusLine = mock(StatusLine.class);
+  private final CloseableHttpResponse getHttpResponse = mock(CloseableHttpResponse.class);
+  private final StatusLine getStatusLine = mock(StatusLine.class);
   private CloseableHttpClient httpClient;
-  private CloseableHttpResponse headHttpResponse;
-  private StatusLine headStatusLine;
-  private CloseableHttpResponse getHttpResponse;
-  private StatusLine getStatusLine;
-
 
   @BeforeEach
   void doInit() throws IOException {
     super.init();
     httpClient = mockWebClientsFactory.httpClient();
-    headHttpResponse = mock(CloseableHttpResponse.class);
     when(httpClient.execute(any(HttpHead.class))).thenReturn(headHttpResponse);
-    headStatusLine = mock(StatusLine.class);
     when(headHttpResponse.getStatusLine()).thenReturn(headStatusLine);
     when(headHttpResponse.getFirstHeader(HttpHeaders.LAST_MODIFIED))
         .thenReturn(new BasicHeader(HttpHeaders.LAST_MODIFIED, TEST_LAST_MODIFIED_HEADER_VALUE));
 
-    getHttpResponse = mock(CloseableHttpResponse.class);
     when(httpClient.execute(any(HttpGet.class))).thenReturn(getHttpResponse);
-    getStatusLine = mock(StatusLine.class);
     when(getHttpResponse.getStatusLine()).thenReturn(getStatusLine);
   }
 
@@ -84,14 +79,14 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     sendDownloadRequest(testContentUrl, testPath);
 
     // then
-    CloudEvent webResourceEvent = waitForSingleDownloadedWebResource();
-    assertEvent(webResourceEvent, testPath, testContent);
+    CloudEvent webResourceEvent = waitForSingleDownloadedWebResource(testPath);
+    assertEventContent(webResourceEvent, testContent);
 
     // when 2
     sendDownloadRequest(testContentUrl, testPath);
 
     // then: expect no re-download
-    waitForSingleDownloadedWebResource();
+    waitForSingleDownloadedWebResource(testPath);
     verify(httpClient, atLeast(3)).execute(any(HttpHead.class));
     verify(httpClient, atLeast(1)).execute(any(HttpGet.class));
     verify(httpEntity, times(1)).getContent();
@@ -118,16 +113,16 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
         new ByteArrayInputStream(testContent.getBytes()));
     // when
     sendDownloadRequest(testContentUrl, testPath);
-    // when
+    // when 2
     sendDownloadRequest(testContentUrl, testPath);
     // when 3
     sendDownloadRequest(testContentUrl, testPath);
 
     // then
-    List<CloudEvent> webResourceEvents = waitForDownloadedResources(downloadedWebResourcesSink,
-        EMITTED_WEB_RESOURCE_TYPE, 2);
-    assertEvent(webResourceEvents.get(0), testPath, testContent);
-    assertEvent(webResourceEvents.get(1), testPath, testContent);
+    List<CloudEvent> webResourceEvents = waitForDownloadedResources(testPath,
+        downloadedWebResourcesSink, EMITTED_WEB_RESOURCE_TYPE, 2);
+    assertEventContent(webResourceEvents.get(0), testContent);
+    assertEventContent(webResourceEvents.get(1), testContent);
 
     // then: expect no re-download
     verify(httpClient, atLeast(3)).execute(any(HttpHead.class));

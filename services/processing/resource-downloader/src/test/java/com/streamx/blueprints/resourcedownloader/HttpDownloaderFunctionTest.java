@@ -22,14 +22,14 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
     sendDownloadRequest(imageUrl, imagePath);
 
     // then
-    CloudEvent assetEvent = waitForSingleDownloadedAsset();
-    assertEvent(assetEvent, imagePath, imageContent);
+    CloudEvent assetEvent = waitForSingleDownloadedAsset(imagePath);
+    assertEventContent(assetEvent, imageContent);
 
     // when 2
     sendDownloadRequest(imageUrl, imagePath);
 
     // then: expect no re-download
-    waitForSingleDownloadedAsset();
+    waitForSingleDownloadedAsset(imagePath);
   }
 
   @Test
@@ -43,14 +43,14 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
     sendDownloadRequest(fileUrl, filePath);
 
     // then
-    CloudEvent webResourceEvent = waitForSingleDownloadedWebResource();
-    assertEvent(webResourceEvent, filePath, fileContent);
+    CloudEvent webResourceEvent = waitForSingleDownloadedWebResource(filePath);
+    assertEventContent(webResourceEvent, fileContent);
 
     // when 2
     sendDownloadRequest(fileUrl, filePath);
 
     // then: expect no re-download
-    waitForSingleDownloadedWebResource();
+    waitForSingleDownloadedWebResource(filePath);
   }
 
   @Test
@@ -64,14 +64,14 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
     sendDownloadRequest(fileUrl, relativeUrl);
 
     // then
-    CloudEvent pageEvent = waitForSingleDownloadedPage();
-    assertEvent(pageEvent, relativeUrl, pageContent);
+    CloudEvent pageEvent = waitForSingleDownloadedPage(relativeUrl);
+    assertEventContent(pageEvent, pageContent);
 
     // when 2
     sendDownloadRequest(fileUrl, relativeUrl);
 
     // then: expect no re-download
-    waitForSingleDownloadedPage();
+    waitForSingleDownloadedPage(relativeUrl);
   }
 
   @Test
@@ -85,14 +85,14 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
     sendDownloadRequest(imageUrl, imagePath);
 
     // then
-    CloudEvent assetEvent = waitForSingleDownloadedAsset();
-    assertEvent(assetEvent, imagePath, imageContent);
+    CloudEvent assetEvent = waitForSingleDownloadedAsset(imagePath);
+    assertEventContent(assetEvent, imageContent);
 
     // when 2
     sendDownloadRequest(imageUrl, imagePath);
 
     // then: expect no re-download
-    waitForSingleDownloadedAsset();
+    waitForSingleDownloadedAsset(imagePath);
   }
 
   @Test

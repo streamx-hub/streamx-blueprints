@@ -1,5 +1,6 @@
 package com.streamx.blueprints.rendering.engine;
 
+import static com.streamx.blueprints.cloudevents.utils.CloudEventUtils.toOffsetDateTime;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
@@ -10,9 +11,6 @@ import io.cloudevents.CloudEvent;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 
 abstract class AbstractRenderEngineTest {
 
@@ -69,10 +67,5 @@ abstract class AbstractRenderEngineTest {
   protected CloudEvent renderingRequestEvent(String key, String eventType,
       RenderingRequest request) {
     return CloudEventUtils.eventWithData(key, eventType, request, toOffsetDateTime(1));
-  }
-
-  protected static OffsetDateTime toOffsetDateTime(long utcEpochMillis) {
-    Instant instant = Instant.ofEpochMilli(utcEpochMillis);
-    return OffsetDateTime.ofInstant(instant, ZoneOffset.UTC);
   }
 }

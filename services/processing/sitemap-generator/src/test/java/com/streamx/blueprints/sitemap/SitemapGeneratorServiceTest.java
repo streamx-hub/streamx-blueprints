@@ -17,9 +17,7 @@ import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.AfterEach;
@@ -151,7 +149,8 @@ class SitemapGeneratorServiceTest {
   }
 
   private void sendPage(String key, String eventType) {
-    sendPage(key, eventType, toOffsetDateTime(EVENT_TIME.getAndAdd(ONE_DAY_IN_MILLIS)));
+    long eventTime = EVENT_TIME.getAndAdd(ONE_DAY_IN_MILLIS);
+    sendPage(key, eventType, CloudEventUtils.toOffsetDateTime(eventTime));
   }
 
   private void sendPage(String key, String eventType, OffsetDateTime eventTime) {
@@ -194,8 +193,4 @@ class SitemapGeneratorServiceTest {
     assertThat(sitemap.getType()).isEqualTo("sitemap-type");
   }
 
-  private static OffsetDateTime toOffsetDateTime(long utcEpochMillis) {
-    Instant instant = Instant.ofEpochMilli(utcEpochMillis);
-    return OffsetDateTime.ofInstant(instant, ZoneOffset.UTC);
-  }
 }
