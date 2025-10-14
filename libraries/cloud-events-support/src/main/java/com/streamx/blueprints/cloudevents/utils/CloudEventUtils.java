@@ -15,9 +15,14 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 public class CloudEventUtils {
@@ -58,10 +63,6 @@ public class CloudEventUtils {
     );
   }
 
-  public static String getSubject(CloudEvent cloudEvent) {
-    return Objects.requireNonNull(cloudEvent.getSubject());
-  }
-
   private static <T> T parseJsonCloudEventData(JsonCloudEventData jsonData, Class<T> clazz) {
     try {
       return objectMapper.treeToValue(jsonData.getNode(), clazz);
@@ -88,6 +89,10 @@ public class CloudEventUtils {
 
   public static boolean isUnpublishingType(String type) {
     return type.contains(UNPUBLISH_TYPE_SEARCH_TERM);
+  }
+
+  public static String getSubject(CloudEvent cloudEvent) {
+    return Objects.requireNonNull(cloudEvent.getSubject());
   }
 
   public static Optional<String> getSubjectNamespace(String subject) {
@@ -118,7 +123,12 @@ public class CloudEventUtils {
 
   public static CloudEvent eventWithData(String subject, String type, Object data,
       OffsetDateTime time) {
-    return baseBuilder(subject, type, time)
+    return eventWithData(subject, type, data, time, Collections.emptyMap());
+  }
+
+  public static CloudEvent eventWithData(String subject, String type, Object data,
+      OffsetDateTime time, Map<String, Object> extensions) {
+    return baseBuilder(subject, type, time, extensions)
         .withDataContentType("application/json")
         .withData(PojoCloudEventData.wrap(data, objectMapper::writeValueAsBytes))
         .build();
@@ -129,18 +139,60 @@ public class CloudEventUtils {
   }
 
   public static CloudEvent eventWithoutData(String subject, String type, OffsetDateTime time) {
-    return baseBuilder(subject, type, time)
+    return eventWithoutData(subject, type, time, Collections.emptyMap());
+  }
+
+  public static CloudEvent eventWithoutData(String subject, String type, OffsetDateTime time,
+      Map<String, Object> extensions) {
+    return baseBuilder(subject, type, time, extensions)
         .build();
   }
 
   private static io.cloudevents.core.v1.CloudEventBuilder baseBuilder(String subject, String type,
-      OffsetDateTime time) {
-    return CloudEventBuilder.v1()
+      OffsetDateTime time, Map<String, Object> extensions) {
+    var builder = CloudEventBuilder.v1()
         .withId(UUID.randomUUID().toString())
         .withSource(DEFAULT_SOURCE)
         .withSubject(subject)
         .withType(type)
         .withTime(time);
+    addExtensions(extensions, builder);
+    return builder;
+  }
+
+  private static void addExtensions(Map<String, Object> extensions,
+      io.cloudevents.core.v1.CloudEventBuilder builder) {
+    for (var extension : extensions.entrySet()) {
+      String key = extension.getKey();
+      Object value = extension.getValue();
+      if (value == null) {
+        builder.withoutExtension(key);
+      } else if (value instanceof String s) {
+        builder.withExtension(key, s);
+      } else if (value instanceof Integer i) {
+        builder.withExtension(key, i);
+      } else if (value instanceof Number n) {
+        builder.withExtension(key, n);
+      } else if (value instanceof Boolean b) {
+        builder.withExtension(key, b);
+      } else if (value instanceof URI u) {
+        builder.withExtension(key, u);
+      } else if (value instanceof OffsetDateTime o) {
+        builder.withExtension(key, o);
+      } else if (value instanceof byte[] b) {
+        builder.withExtension(key, b);
+      } else {
+        builder.withExtension(key, value.toString());
+      }
+    }
+  }
+
+  public static Map<String, Object> collectExtensions(CloudEvent event) {
+    Map<String, Object> extensionsMap = new LinkedHashMap<>();
+    for (String extensionName : event.getExtensionNames()) {
+      extensionsMap.put(extensionName, event.getExtension(extensionName));
+    }
+    return extensionsMap;
   }
 
   private static OffsetDateTime getNow() {

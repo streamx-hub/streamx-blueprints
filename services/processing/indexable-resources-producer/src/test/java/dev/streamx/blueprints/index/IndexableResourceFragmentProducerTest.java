@@ -1,26 +1,15 @@
 package dev.streamx.blueprints.index;
 
-import static dev.streamx.blueprints.index.IndexableResourceFragmentProducer.CHANNEL_FRAGMENTS;
-import static dev.streamx.blueprints.index.IndexableResourceFragmentProducer.CHANNEL_INDEXABLE_RESOURCE_FRAGMENTS;
-import static dev.streamx.quasar.reactive.messaging.metadata.Action.PUBLISH;
-import static dev.streamx.quasar.reactive.messaging.metadata.Action.UNPUBLISH;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractAction;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractEventTime;
-import static dev.streamx.quasar.reactive.messaging.utils.MetadataUtils.extractKey;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.streamx.blueprints.data.Fragment;
-import dev.streamx.blueprints.data.IndexableResourceFragment;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.Fragment;
+import com.streamx.blueprints.data.IndexableResourceFragment;
 import dev.streamx.blueprints.index.IndexableResourceFragmentProducer.IndexableResourceFragmentContent;
-import dev.streamx.metadata.Properties;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
@@ -28,16 +17,16 @@ import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.io.IOException;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
+import java.time.Duration;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 public class IndexableResourceFragmentProducerTest {
 
-  InMemorySource<Message<Fragment>> fragmentsSource;
-  InMemorySink<IndexableResourceFragment> indexableResourceFragmentSink;
+  private InMemorySource<CloudEvent> fragmentsSource;
+  private InMemorySink<CloudEvent> indexableResourceFragmentSink;
 
   @Inject
   @Any
@@ -48,106 +37,120 @@ public class IndexableResourceFragmentProducerTest {
 
   @BeforeEach
   void beforeEach() {
-    fragmentsSource = connector.source(CHANNEL_FRAGMENTS);
-    indexableResourceFragmentSink = connector.sink(CHANNEL_INDEXABLE_RESOURCE_FRAGMENTS);
+    fragmentsSource = connector.source(Channels.INCOMING_FRAGMENTS);
+    indexableResourceFragmentSink = connector.sink(Channels.INDEXABLE_RESOURCE_FRAGMENTS);
     indexableResourceFragmentSink.clear();
   }
 
   @Test
   void expectFragmentBeProcessed() {
     String payload = "Fragment";
-    var result = getResourceFromFragmentWithContent(payload);
-    assertEquals(payload, result);
-  }
-
-  @Test
-  void expectNonIndexableFragmentBeProcessed() {
-    String payload = "Fragment";
-
-    String key = "/fragment/test.html";
-    Long eventTime = 1L;
-
-    var properties = Properties.of(
-        IndexableResourceFragmentProducer.MESSAGE_PN_INDEXABLE, Boolean.FALSE.toString()
-    );
-
-    var message = getResourceFrom(
-        Message.of(new Fragment(payload), Metadata.of(
-            Key.of(key),
-            EventTime.of(eventTime),
-            PUBLISH,
-            properties
-        ))
-    );
-
-    assertNotNull(message);
-    assertNull(message.getPayload());
-    assertEquals(key, extractKey(message));
-    assertEquals(eventTime, extractEventTime(message));
-    assertEquals(UNPUBLISH, extractAction(message));
-    assertEquals(properties, extractProperties(message));
+    String result = getResourceFromFragmentWithContent(payload);
+    assertThat(result).isEqualTo(payload);
   }
 
   @Test
   void expectNonAsciiPayloadBeProcessed() {
     String payload = new String(new byte[]{1, 2, 3}, UTF_8);
-    var result = getResourceFromFragmentWithContent(payload);
-    assertEquals(payload, result);
+    String result = getResourceFromFragmentWithContent(payload);
+    assertThat(result).isEqualTo(payload);
   }
 
   @Test
-  void expectPageUnpublishBeProcessed() {
-    String key = "/test.html";
-    Long eventTime = 1L;
-    Action action = UNPUBLISH;
+  void expectNonIndexableFragmentBeProcessed() {
+    // given
+    CloudEvent fragmentEvent = CloudEventUtils.eventWithData(
+        "/fragment/test.html",
+        Fragment.TYPE_PUBLISHED,
+        new Fragment("Fragment"),
+        CloudEventUtils.toOffsetDateTime(1),
+        Map.of(AbstractIndexableResourceProducer.EXTENSION_NAME_INDEXABLE, Boolean.FALSE)
+    );
 
-    var message = getResourceFrom(Message.of(null, Metadata.of(
-        Key.of(key),
-        EventTime.of(eventTime),
-        action)));
+    // when
+    CloudEvent resultEvent = getResourceFrom(fragmentEvent);
 
-    assertNotNull(message);
-    assertNull(message.getPayload());
-    assertEquals(key, extractKey(message));
-    assertEquals(eventTime, extractEventTime(message));
-    assertEquals(action, extractAction(message));
+    // then
+    assertThat(resultEvent).isNotNull();
+    assertThat(resultEvent.getData()).isNull();
+    assertThat(resultEvent.getSubject()).isEqualTo(fragmentEvent.getSubject());
+    assertThat(resultEvent.getTime()).isEqualTo(fragmentEvent.getTime());
+    assertThat(resultEvent.getType()).isEqualTo(IndexableResourceFragment.TYPE_UNPUBLISHED);
+    assertThat(resultEvent.getExtensionNames()).isEqualTo(fragmentEvent.getExtensionNames());
+  }
+
+  @Test
+  void expectFragmentUnpublishBeProcessed() {
+    // given
+    CloudEvent fragmentEvent = CloudEventUtils.eventWithoutData(
+        "/test.html",
+        Fragment.TYPE_UNPUBLISHED,
+        CloudEventUtils.toOffsetDateTime(1)
+    );
+
+    // when
+    CloudEvent resultEvent = getResourceFrom(fragmentEvent);
+
+    // then
+    assertThat(resultEvent).isNotNull();
+    assertThat(resultEvent.getData()).isNull();
+    assertThat(resultEvent.getSubject()).isEqualTo(fragmentEvent.getSubject());
+    assertThat(resultEvent.getTime()).isEqualTo(fragmentEvent.getTime());
+    assertThat(resultEvent.getType()).isEqualTo(IndexableResourceFragment.TYPE_UNPUBLISHED);
+  }
+
+  @Test
+  void shouldSkipProcessingFragmentPublishedWithoutContent() {
+    // given
+    CloudEvent fragmentEvent = CloudEventUtils.eventWithoutData(
+        "/fragment/test.html",
+        Fragment.TYPE_PUBLISHED
+    );
+
+    // when & then
+    assertNoResourceFrom(fragmentEvent);
   }
 
   private String getResourceFromFragmentWithContent(String payload) {
-    String key = "/fragment/test.html";
-    Long eventTime = 1L;
-    Action action = PUBLISH;
+    // given
+    CloudEvent fragmentEvent = CloudEventUtils.eventWithData(
+        "/fragment/test.html",
+        Fragment.TYPE_PUBLISHED,
+        new Fragment(payload),
+        CloudEventUtils.toOffsetDateTime(1)
+    );
 
-    var resource = getResourceFrom(
-        Message.of(new Fragment(payload), Metadata.of(
-            Key.of(key),
-            EventTime.of(eventTime),
-            action)));
+    // when
+    CloudEvent resultEvent = getResourceFrom(fragmentEvent);
 
-    assertNotNull(resource);
-    assertNotNull(resource.getPayload());
-    assertEquals(key, extractKey(resource));
-    assertEquals(eventTime, extractEventTime(resource));
-    assertEquals(action, extractAction(resource));
+    // then
+    assertThat(resultEvent).isNotNull();
+    assertThat(resultEvent.getSubject()).isEqualTo(fragmentEvent.getSubject());
+    assertThat(resultEvent.getTime()).isEqualTo(fragmentEvent.getTime());
+    assertThat(resultEvent.getType()).isEqualTo(IndexableResourceFragment.TYPE_PUBLISHED);
 
-    var indexableResourceFragment = resource.getPayload();
+    IndexableResourceFragment indexableResourceFragment = CloudEventUtils
+        .getData(resultEvent, IndexableResourceFragment.class);
+    assertThat(indexableResourceFragment).isNotNull();
 
-    byte[] array = indexableResourceFragment.getContent().array();
+    String json = indexableResourceFragment.getContentAsString();
     try {
-      var content =  objectMapper.readValue(array, IndexableResourceFragmentContent.class);
-      return content.getContent();
+      return objectMapper.readValue(json, IndexableResourceFragmentContent.class).content();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private Message<IndexableResourceFragment> getResourceFrom(Message<Fragment> message) {
-    fragmentsSource.send(message);
+  private CloudEvent getResourceFrom(CloudEvent fragmentEvent) {
+    fragmentsSource.send(fragmentEvent);
     await().until(() -> indexableResourceFragmentSink.received().size() == 1);
-    return indexableResourceFragmentSink.received().get(0);
+    return indexableResourceFragmentSink.received().get(0).getPayload();
   }
 
-  private static <T> T extractProperties(Message<?> message) {
-    return message == null ? null : (T) Properties.from(message);
+  private void assertNoResourceFrom(CloudEvent fragmentEvent) {
+    fragmentsSource.send(fragmentEvent);
+    await()
+        .during(Duration.ofMillis(500))
+        .untilAsserted(() -> assertThat(indexableResourceFragmentSink.received()).isEmpty());
   }
 }

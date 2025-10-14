@@ -3,39 +3,36 @@ package dev.streamx.blueprints.index;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.streamx.blueprints.data.IndexableResource;
-import dev.streamx.blueprints.data.Page;
-import dev.streamx.content.parser.urlinclude.UrlInclude;
-import dev.streamx.content.parser.urlinclude.UrlIncludeCollector;
-import dev.streamx.content.parser.urlinclude.UrlIncludeRemover;
-import dev.streamx.metadata.Properties;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.IndexableResource;
+import com.streamx.blueprints.data.Page;
+import com.streamx.blueprints.data.Resource;
+import com.streamx.content.parser.urlinclude.UrlInclude;
+import com.streamx.content.parser.urlinclude.UrlIncludeCollector;
+import com.streamx.content.parser.urlinclude.UrlIncludeRemover;
+import io.cloudevents.CloudEvent;
 import io.quarkus.runtime.util.StringUtil;
 import io.quarkus.tika.TikaContent;
 import io.quarkus.tika.TikaMetadata;
 import io.quarkus.tika.TikaParser;
-import io.smallrye.reactive.messaging.GenericPayload;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class IndexableResourceProducer extends AbstractIndexableResourceProducer {
 
-  public static final String CHANNEL_PAGES = "pages";
-  public static final String CHANNEL_INDEXABLE_RESOURCES = "indexable-resources";
+  private static final UrlIncludeCollector urlIncludeCollector = new UrlIncludeCollector();
+  private static final UrlIncludeRemover urlIncludeRemover = new UrlIncludeRemover();
 
   @Inject
   Logger log;
@@ -43,85 +40,86 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
   @Inject
   TikaParser parser;
 
-  @Inject
-  ObjectMapper objectMapper;
+  @Incoming(Channels.INCOMING_PAGES)
+  @Outgoing(Channels.INDEXABLE_RESOURCES)
+  public CloudEvent produceFrom(CloudEvent event) {
+    Page page = CloudEventUtils.getData(event, Page.class);
+    String key = CloudEventUtils.getSubject(event);
+    String eventType = event.getType();
+    OffsetDateTime eventTime = event.getTime();
 
-  @Inject
-  UrlIncludeCollector urlIncludeCollector;
+    log.tracef("Processing of incoming page with key=%s eventType=%s eventTime=%s",
+        key, eventType, eventTime);
 
-  @Inject
-  UrlIncludeRemover urlIncludeRemover;
-
-  @Incoming(CHANNEL_PAGES)
-  @Outgoing(CHANNEL_INDEXABLE_RESOURCES)
-  public GenericPayload<IndexableResource> produceFrom(Page payload, Key key, Action action,
-      EventTime eventTime, Properties properties) {
-    log.tracef("Processing of incoming key=%s action=%s eventTime=%s payload=%s",
-        key, action, eventTime, payload);
-    boolean indexable = isIndexable(properties);
-    if (indexable && Action.PUBLISH.equals(action)) {
-      return GenericPayload.of(getIndexableResource(payload, key.getValue(), action));
-    } else {
-      return GenericPayload.of((IndexableResource) null)
-          .withMetadata(Metadata.of(Action.UNPUBLISH));
+    boolean indexable = isIndexable(event);
+    if (indexable && Page.TYPE_PUBLISHED.equals(eventType)) {
+      if (Resource.isEmpty(page)) {
+        log.warnf("Skipping processing empty incoming page %s", key);
+        return null;
+      }
+      return CloudEventUtils.eventWithData(
+          key,
+          IndexableResource.TYPE_PUBLISHED,
+          getIndexableResource(page, key),
+          eventTime,
+          CloudEventUtils.collectExtensions(event)
+      );
     }
+    return CloudEventUtils.eventWithoutData(
+        key,
+        IndexableResource.TYPE_UNPUBLISHED,
+        eventTime,
+        CloudEventUtils.collectExtensions(event)
+    );
   }
 
-  private IndexableResource getIndexableResource(Page page, String key, Action action) {
-    if (Action.UNPUBLISH.equals(action)) {
-      return null;
-    } else {
-      String title = null;
-      String content = null;
-      if (hasContent(page)) {
-        var indexableResourceContent = getIndexableResource(page);
-        title = indexableResourceContent.getTitle();
-        content = indexableResourceContent.getContent();
-      }
-      var resourceTitle = StringUtil.isNullOrEmpty(title) ? key : title;
-      var sourceResourceContent = StringUtil.isNullOrEmpty(content) ? key : content;
-      var urlIncludes = urlIncludeCollector.collect(
-          ByteBuffer.wrap(sourceResourceContent.getBytes(StandardCharsets.UTF_8)));
+  private IndexableResource getIndexableResource(Page page, String key) {
+    String title = null;
+    String content = null;
+    if (hasContent(page)) {
+      var indexableResourceContent = getIndexableResource(page);
+      title = indexableResourceContent.title();
+      content = indexableResourceContent.content();
+    }
+    var resourceTitle = StringUtil.isNullOrEmpty(title) ? key : title;
+    var sourceResourceContent = StringUtil.isNullOrEmpty(content) ? key : content;
+    var urlIncludes = urlIncludeCollector.collect(
+        ByteBuffer.wrap(sourceResourceContent.getBytes(StandardCharsets.UTF_8)));
 
-      var resourceContent = dropUrlIncludes(sourceResourceContent);
-      var indexableResourceContent = new IndexableResourceContent(resourceTitle, resourceContent);
+    var resourceContent = dropUrlIncludes(sourceResourceContent);
+    var indexableResourceContent = new IndexableResourceContent(resourceTitle, resourceContent);
 
-      var fragments = urlIncludes.stream()
-          .map(UrlInclude::url)
-          .collect(Collectors.toSet());
+    var fragments = urlIncludes.stream()
+        .map(UrlInclude::url)
+        .collect(Collectors.toSet());
 
-      log.tracef("Generated indexableResource fragments=%s payload=%s",
-          fragments, indexableResourceContent);
+    log.tracef("Generated indexableResource fragments=%s payload=%s",
+        fragments, indexableResourceContent);
 
-      try {
-        byte[] bytes = objectMapper.writeValueAsBytes(indexableResourceContent);
+    try {
+      byte[] bytes = objectMapper.writeValueAsBytes(indexableResourceContent);
 
-        return new IndexableResource(bytes, fragments);
-      } catch (JsonProcessingException e) {
-        throw new RuntimeException("Payload could not be serialized.", e);
-      }
+      return new IndexableResource(bytes, fragments);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Payload could not be serialized.", e);
     }
   }
 
   private IndexableResourceContent getIndexableResource(Page page) {
-    try (var input = new ByteArrayInputStream(page.getContent().array())) {
-      String title = null;
-      String body;
-      TikaContent content = parser.parse(input);
-      TikaMetadata metadata = content.getMetadata();
+    var input = new ByteArrayInputStream(page.getContent().array());
+    String title = null;
+    TikaContent content = parser.parse(input);
+    TikaMetadata metadata = content.getMetadata();
 
-      List<String> titleMetadataValues = metadata.getValues("dc:title");
-      if (titleMetadataValues != null && !titleMetadataValues.isEmpty()) {
-        title = titleMetadataValues.get(0);
-      }
-      body = content.getText();
-
-      log.tracef("Parsed page title and content.", title, body);
-
-      return new IndexableResourceContent(title, body);
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to parse metadata", e);
+    List<String> titleMetadataValues = metadata.getValues("dc:title");
+    if (titleMetadataValues != null && !titleMetadataValues.isEmpty()) {
+      title = titleMetadataValues.get(0);
     }
+    String body = content.getText();
+
+    log.tracef("Parsed page title and content.", title, body);
+
+    return new IndexableResourceContent(title, body);
   }
 
   private String dropUrlIncludes(String sourceResourceContent) {
@@ -135,33 +133,7 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
     return page != null && page.getContent() != null && page.getContent().array().length != 0;
   }
 
-  static final class IndexableResourceContent {
+  record IndexableResourceContent(String title, String content) {
 
-    private String title;
-    private String content;
-
-    public IndexableResourceContent() {
-    }
-
-    public IndexableResourceContent(String title, String content) {
-      this.title = title;
-      this.content = content;
-    }
-
-    public String getTitle() {
-      return title;
-    }
-
-    public void setTitle(String title) {
-      this.title = title;
-    }
-
-    public String getContent() {
-      return content;
-    }
-
-    public void setContent(String content) {
-      this.content = content;
-    }
   }
 }

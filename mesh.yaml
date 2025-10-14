@@ -40,6 +40,32 @@ sources:
           - "com.streamx.blueprints.rendering-context.unpublished.v1"
 
 descriptors:
+  image-optimizer:
+    type: "processing"
+    incoming:
+      incoming-assets:
+        binding: "http-structured-json"
+      incoming-pages:
+        binding: "http-structured-json"
+    outgoing:
+      optimized-assets:
+        binding: "http-structured-json"
+      outgoing-pages:
+        binding: "http-structured-json"
+
+  json-aggregator:
+    type: "processing"
+    incoming:
+      data:
+        binding: "http-structured-json"
+      multivalued-data:
+        binding: "http-structured-json"
+    outgoing:
+      aggregated-data:
+        binding: "http-structured-json"
+      aggregated-multivalued-data:
+        binding: "http-structured-json"
+
   external-references-rewriter:
     type: "processing"
     incoming:
@@ -107,30 +133,17 @@ descriptors:
       outgoing-sitemaps:
         binding: "http-structured-json"
 
-  image-optimizer:
+  indexable-resources-producer:
     type: "processing"
     incoming:
-      incoming-assets:
+      pages:
         binding: "http-structured-json"
-      incoming-pages:
-        binding: "http-structured-json"
-    outgoing:
-      optimized-assets:
-        binding: "http-structured-json"
-      outgoing-pages:
-        binding: "http-structured-json"
-
-  json-aggregator:
-    type: "processing"
-    incoming:
-      data:
-        binding: "http-structured-json"
-      multivalued-data:
+      fragments:
         binding: "http-structured-json"
     outgoing:
-      aggregated-data:
+      indexable-resources:
         binding: "http-structured-json"
-      aggregated-multivalued-data:
+      indexable-resource-fragments:
         binding: "http-structured-json"
 
   web-server:
@@ -336,6 +349,22 @@ processing:
           STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_OUTPUT_KEY: "sitemap.xml"
           STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_DIRTY_CHECK_INTERVAL: "1s"
           STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_DIRTY_CHECK_MAX_DIRTY_SEQUENCE_COUNT: "1"
+
+  blueprint-indexable-resources-producer:
+    containers:
+      - image: indexable-resources-producer
+        incoming:
+          pages:
+            topic: relays/pages
+          fragments:
+            topic: relays/fragments
+        outgoing:
+          indexable-resources:
+            topic: outboxes/indexable-resources
+          indexable-resource-fragments:
+            topic: outboxes/indexable-resource-fragments
+        environment:
+          STREAMX_BLUEPRINTS_INDEXABLE_RESOURCES_PRODUCER_INDEX_FRAGMENTS: "true"
 
 edge:
   blueprint-web-server:

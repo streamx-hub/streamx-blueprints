@@ -4,6 +4,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Asset;
 import com.streamx.blueprints.data.Composition;
@@ -21,16 +22,23 @@ import io.cloudevents.CloudEvent;
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.ThreadUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.pulsar.client.api.Message;
+import org.apache.pulsar.client.api.MessageId;
+import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.Reader;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -193,8 +201,34 @@ public class StreamxMeshIntegrationTest {
   }
 
   @Test
+  // TODO: before merging, remove this class from repo
+  // TODO: before merging, rename packages to com.streamx
+  // TODO: before merging, remove test dependencies from pom.xml
+  void shouldProduceIndexableResources() throws Exception {
+    // given
+    String pageHtml = """
+        <head>
+            <title>Title</title>
+        </head>
+        <body>
+            <h1>H1</h1>
+            <h2>H2</h2>
+            <p>Paragraph</p>
+        </body>
+        """;
+
+    // when
+    send("/hello-page.html", new Page(pageHtml), Page.TYPE_PUBLISHED);
+
+    // then
+    List<String> resultJsons = readAllJsonsFromTopic("indexable-resources");
+    assertThat(resultJsons).contains("""
+        {"title":"Title","content":"Title\\n\\n\\n    H1\\n\\n    H2\\n\\n    Paragraph"}""");
+  }
+
+  @Test
   void shouldRenderPageFromAggregatedData() throws Exception {
-    // given:
+    // given
     final int productId = 1;
     final int productPrice = 200;
     final String productType = "product/variant";
@@ -290,5 +324,28 @@ public class StreamxMeshIntegrationTest {
       throws IOException {
     String actualContent = assertUrlsIsAccessible(url);
     assertThat(actualContent.lines()).containsSubsequence(expectedContentLines);
+  }
+
+  private static List<String> readAllJsonsFromTopic(String topic) throws Exception {
+    List<String> result = new LinkedList<>();
+    String fullTopic = "persistent://streamx/outboxes/" + topic;
+
+    try (PulsarClient client = PulsarClient.builder().serviceUrl("pulsar://localhost:6650").build();
+        Reader<byte[]> reader = client.newReader().topic(fullTopic)
+            .startMessageId(MessageId.earliest).create()) {
+
+      while (reader.hasMessageAvailable()) {
+        Message<byte[]> msg = reader.readNext();
+        String payload = new String(msg.getData());
+        String json = "{" + StringUtils.substringBetween(payload, "{", "}") + "}";
+
+        String base64Content = new ObjectMapper().readTree(json).get("content").asText();
+        byte[] decoded = Base64.getDecoder().decode(base64Content);
+        String content = new String(decoded, UTF_8);
+        result.add(content);
+      }
+    }
+
+    return result;
   }
 }

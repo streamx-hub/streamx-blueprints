@@ -1,66 +1,61 @@
 package dev.streamx.blueprints.index;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.streamx.blueprints.data.Fragment;
-import dev.streamx.blueprints.data.IndexableResourceFragment;
-import dev.streamx.metadata.Properties;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
-import io.smallrye.reactive.messaging.GenericPayload;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.Fragment;
+import com.streamx.blueprints.data.IndexableResourceFragment;
+import com.streamx.blueprints.data.Resource;
+import io.cloudevents.CloudEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import java.time.OffsetDateTime;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class IndexableResourceFragmentProducer extends AbstractIndexableResourceProducer {
 
-  public static final String CHANNEL_FRAGMENTS = "fragments";
-  public static final String CHANNEL_INDEXABLE_RESOURCE_FRAGMENTS = "indexable-resource-fragments";
-
-  public static final String PN_INDEX_FRAGMENTS =
-      "streamx.blueprints.indexable-resources-producer.index-fragments";
-
   @Inject
   Logger log;
 
   @Inject
-  ObjectMapper objectMapper;
+  Configuration configuration;
 
-  @ConfigProperty(name = PN_INDEX_FRAGMENTS, defaultValue = "false")
-  boolean indexFragmentsByDefault;
+  @Incoming(Channels.INCOMING_FRAGMENTS)
+  @Outgoing(Channels.INDEXABLE_RESOURCE_FRAGMENTS)
+  public CloudEvent produceFrom(CloudEvent event) {
+    Fragment fragment = CloudEventUtils.getData(event, Fragment.class);
+    String key = CloudEventUtils.getSubject(event);
+    String eventType = event.getType();
+    OffsetDateTime eventTime = event.getTime();
 
-  @Incoming(CHANNEL_FRAGMENTS)
-  @Outgoing(CHANNEL_INDEXABLE_RESOURCE_FRAGMENTS)
-  public GenericPayload<IndexableResourceFragment> produceFrom(
-      Fragment payload,
-      Key key,
-      Action action,
-      EventTime eventTime,
-      Properties properties) {
-    if (log.isTraceEnabled()) {
-      log.tracef(
-          "Processing of incoming fragment with "
-              + "key=%s action=%s eventTime=%s payload=%s, properties=%s",
-          key, action, eventTime, payload, properties);
+    log.tracef("Processing of incoming fragment with key=%s eventType=%s eventTime=%s",
+        key, eventType, eventTime);
+
+    boolean indexable = isIndexable(event);
+    if (indexable && Fragment.TYPE_PUBLISHED.equals(eventType)) {
+      if (Resource.isEmpty(fragment)) {
+        log.warnf("Skipping processing empty incoming fragment %s", key);
+        return null;
+      }
+      return CloudEventUtils.eventWithData(
+          key,
+          IndexableResourceFragment.TYPE_PUBLISHED,
+          createIndexableResourceFragment(fragment),
+          eventTime,
+          CloudEventUtils.collectExtensions(event)
+      );
     }
-
-    boolean indexable = isIndexable(properties);
-
-    if (indexable && Action.PUBLISH.equals(action)) {
-      return GenericPayload.of(createPublishedFragmentContent(payload));
-    } else {
-      return GenericPayload.of((IndexableResourceFragment) null)
-          .withMetadata(Metadata.of(Action.UNPUBLISH));
-    }
+    return CloudEventUtils.eventWithoutData(
+        key,
+        IndexableResourceFragment.TYPE_UNPUBLISHED,
+        eventTime,
+        CloudEventUtils.collectExtensions(event)
+    );
   }
 
-  private IndexableResourceFragment createPublishedFragmentContent(Fragment fragment) {
+  private IndexableResourceFragment createIndexableResourceFragment(Fragment fragment) {
     try {
       var content = fragment.getContentAsString();
       var fragmentContent = new IndexableResourceFragmentContent(content);
@@ -74,25 +69,10 @@ public class IndexableResourceFragmentProducer extends AbstractIndexableResource
 
   @Override
   protected boolean isIndexableDefault() {
-    return indexFragmentsByDefault;
+    return configuration.indexFragments();
   }
 
-  static final class IndexableResourceFragmentContent {
-    private String content;
+  record IndexableResourceFragmentContent(String content) {
 
-    public IndexableResourceFragmentContent() {
-    }
-
-    public IndexableResourceFragmentContent(String content) {
-      this.content = content;
-    }
-
-    public String getContent() {
-      return content;
-    }
-
-    public void setContent(String content) {
-      this.content = content;
-    }
   }
 }
