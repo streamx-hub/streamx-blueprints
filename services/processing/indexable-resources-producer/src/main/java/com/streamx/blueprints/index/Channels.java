@@ -1,4 +1,4 @@
-package dev.streamx.blueprints.index;
+package com.streamx.blueprints.index;
 
 public final class Channels {
 

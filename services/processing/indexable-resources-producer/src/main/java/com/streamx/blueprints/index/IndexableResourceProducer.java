@@ -1,4 +1,4 @@
-package dev.streamx.blueprints.index;
+package com.streamx.blueprints.index;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -18,7 +18,6 @@ import io.quarkus.tika.TikaParser;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;

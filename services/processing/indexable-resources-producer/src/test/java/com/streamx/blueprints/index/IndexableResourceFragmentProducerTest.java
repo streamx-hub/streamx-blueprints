@@ -1,4 +1,4 @@
-package dev.streamx.blueprints.index;
+package com.streamx.blueprints.index;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Fragment;
 import com.streamx.blueprints.data.IndexableResourceFragment;
-import dev.streamx.blueprints.index.IndexableResourceFragmentProducer.IndexableResourceFragmentContent;
+import com.streamx.blueprints.index.IndexableResourceFragmentProducer.IndexableResourceFragmentContent;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;

@@ -1,4 +1,4 @@
-package dev.streamx.blueprints.index;
+package com.streamx.blueprints.index;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;

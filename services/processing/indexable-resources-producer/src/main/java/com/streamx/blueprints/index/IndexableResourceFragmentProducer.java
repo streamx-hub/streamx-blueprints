@@ -1,4 +1,4 @@
-package dev.streamx.blueprints.index;
+package com.streamx.blueprints.index;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;

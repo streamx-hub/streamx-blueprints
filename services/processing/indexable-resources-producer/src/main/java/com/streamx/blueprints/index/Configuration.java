@@ -1,4 +1,4 @@
-package dev.streamx.blueprints.index;
+package com.streamx.blueprints.index;
 
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
