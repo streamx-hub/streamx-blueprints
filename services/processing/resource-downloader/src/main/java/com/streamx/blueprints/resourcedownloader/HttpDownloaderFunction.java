@@ -71,7 +71,12 @@ public class HttpDownloaderFunction {
 
   @Incoming(Channels.DOWNLOAD_REQUESTS)
   public void process(CloudEvent event) {
-    DownloadRequest request = CloudEventUtils.getDataOrThrow(event, DownloadRequest.class);
+    DownloadRequest request = CloudEventUtils.getData(event, DownloadRequest.class);
+    if (request == null) {
+      log.warnf("Received an empty DownloadRequest with key %s", event.getSubject());
+      return;
+    }
+
     log.tracef("Processing download request: %s", request);
 
     downloadAndEmit(request);

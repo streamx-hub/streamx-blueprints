@@ -119,9 +119,12 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
   private static void assertPublishedTextResource(CloudEvent event,
       String expectedKey, String expectedContent) {
     assertThat(event.getSubject()).isEqualTo(expectedKey);
-    String content = CloudEventUtils.getDataOrThrow(event, Resource.class)
-        .getContentAsString();
-    assertThat(content).isEqualTo(expectedContent);
+
+    Resource resource = CloudEventUtils.getData(event, Resource.class);
+    assertThat(resource)
+        .isNotNull()
+        .extracting(Resource::getContentAsString)
+        .isEqualTo(expectedContent);
   }
 
   protected static void assertSameEvents(CloudEvent actual, CloudEvent expected) {

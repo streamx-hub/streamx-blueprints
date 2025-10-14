@@ -59,4 +59,8 @@ public class Resource extends Typed {
   private static String contentAsString(ByteBuffer content) {
     return content == null ? null : new String(content.array(), UTF_8);
   }
+
+  public static boolean isEmpty(Resource resource) {
+    return resource == null || resource.content == null;
+  }
 }

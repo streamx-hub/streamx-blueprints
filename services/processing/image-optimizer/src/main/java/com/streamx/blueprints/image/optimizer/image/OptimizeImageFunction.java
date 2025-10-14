@@ -4,6 +4,7 @@ import static com.streamx.blueprints.image.optimizer.image.ImageOptimizer.OPTIMI
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Asset;
+import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.image.optimizer.Channels;
 import com.streamx.blueprints.image.optimizer.configuration.Configuration;
 import com.streamx.blueprints.image.optimizer.image.exceptions.ImageOptimizationException;
@@ -80,7 +81,11 @@ public class OptimizeImageFunction {
     OffsetDateTime eventTime = event.getTime();
 
     if (Asset.TYPE_PUBLISHED.equals(eventType)) {
-      Asset asset = CloudEventUtils.getDataOrThrow(event, Asset.class);
+      Asset asset = CloudEventUtils.getData(event, Asset.class);
+      if (Resource.isEmpty(asset)) {
+        log.warnf("Skipping optimizing [%s] - no content", filePath);
+        return null;
+      }
       Asset optimizedImage = createOptimizedImage(asset, filePath);
       return CloudEventUtils.eventWithData(optimizedImagePath, Asset.TYPE_PUBLISHED, optimizedImage,
           eventTime);

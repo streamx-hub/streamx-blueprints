@@ -1,7 +1,6 @@
 package com.streamx.blueprints.sitemap;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
@@ -57,5 +56,13 @@ class DirtySequenceStateManagerTest {
         isActionNeededSequence2,
         "Action should be needed if there is sequence without dirty resources"
     );
+  }
+
+  private void assertTrue(boolean condition, String messageOnAssertionFailure) {
+    assertThat(condition).as(messageOnAssertionFailure).isTrue();
+  }
+
+  private void assertFalse(boolean condition, String messageOnAssertionFailure) {
+    assertThat(condition).as(messageOnAssertionFailure).isFalse();
   }
 }

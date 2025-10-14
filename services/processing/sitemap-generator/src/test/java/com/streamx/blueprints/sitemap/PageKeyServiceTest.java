@@ -1,7 +1,6 @@
 package com.streamx.blueprints.sitemap;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +14,7 @@ class PageKeyServiceTest {
 
     boolean isSupportedForAnyKey = service.isSupportedKey("anyKey");
 
-    assertTrue(isSupportedForAnyKey);
+    assertThat(isSupportedForAnyKey).isTrue();
   }
 
   @Test
@@ -24,7 +23,7 @@ class PageKeyServiceTest {
 
     boolean isSupported = service.isSupportedKey("/anyKey.html");
 
-    assertTrue(isSupported);
+    assertThat(isSupported).isTrue();
   }
 
   @Test
@@ -33,7 +32,7 @@ class PageKeyServiceTest {
 
     boolean isSupported = service.isSupportedKey("/anyKey.js");
 
-    assertFalse(isSupported);
+    assertThat(isSupported).isFalse();
   }
 
   @Test
@@ -42,6 +41,6 @@ class PageKeyServiceTest {
 
     boolean isSupported = service.isSupportedKey("/anyKey.js");
 
-    assertTrue(isSupported);
+    assertThat(isSupported).isTrue();
   }
 }

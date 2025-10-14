@@ -1,5 +1,7 @@
 package com.streamx.blueprints.resourcedownloader;
 
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.DownloadRequest;
 import com.streamx.blueprints.resourcedownloader.testutils.TestWebServer;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
@@ -91,6 +93,19 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
 
     // then: expect no re-download
     waitForSingleDownloadedAsset();
+  }
+
+  @Test
+  void shouldSkipProcessingEmptyDownloadRequest() {
+    // given
+    String pageRelativeUrl = "/pages/null-payload-page.html";
+
+    // when
+    var event = CloudEventUtils.eventWithoutData(pageRelativeUrl, DownloadRequest.EVENT_TYPE);
+    sendDownloadRequest(event);
+
+    // then
+    assertNoDownloadedResources();
   }
 
   @Test

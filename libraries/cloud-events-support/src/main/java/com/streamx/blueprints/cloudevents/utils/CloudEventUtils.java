@@ -56,10 +56,6 @@ public class CloudEventUtils {
     );
   }
 
-  public static <T> T getDataOrThrow(CloudEvent cloudEvent, Class<T> clazz) {
-    return Objects.requireNonNull(getData(cloudEvent, clazz));
-  }
-
   public static String getSubject(CloudEvent cloudEvent) {
     return Objects.requireNonNull(cloudEvent.getSubject());
   }

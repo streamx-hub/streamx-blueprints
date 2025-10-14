@@ -2,6 +2,7 @@ package com.streamx.blueprints.image.optimizer.page;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Page;
+import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.image.optimizer.Channels;
 import com.streamx.blueprints.image.optimizer.configuration.Configuration;
 import io.cloudevents.CloudEvent;
@@ -51,8 +52,13 @@ public class AdjustImgSrcFunction {
       return event;
     }
 
-    Page page = CloudEventUtils.getDataOrThrow(event, Page.class);
     String pagePath = CloudEventUtils.getSubject(event);
+    Page page = CloudEventUtils.getData(event, Page.class);
+    if (Resource.isEmpty(page)) {
+      log.warnf("Skipping adjusting incoming page [%s] - no content", pagePath);
+      return event;
+    }
+
     log.tracef("Processing page [%s] with eventTime %s", pagePath, event.getTime());
 
     if (!lowercasedAdjustedPagePathsPattern.matcher(pagePath.toLowerCase()).matches()) {
