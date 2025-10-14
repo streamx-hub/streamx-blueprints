@@ -15,6 +15,7 @@
 
   <modules>
     <module>composition-engine</module>
+    <module>data-collector</module>
     <module>external-references-rewriter</module>
     <module>image-optimizer</module>
     <module>indexable-resources-producer</module>
