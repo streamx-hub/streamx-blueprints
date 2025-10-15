@@ -2,7 +2,6 @@ package com.streamx.blueprints.data.collector;
 
 import com.streamx.blueprints.data.collector.configuration.ServiceConfigMapping;
 import com.streamx.blueprints.data.collector.configuration.ServiceConfigMapping.WebResources;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
 import io.quarkus.runtime.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -37,16 +36,16 @@ public class WebResourcesService {
         String.join(", ", filters.stream().map(Pattern::toString).toList()));
   }
 
-  boolean isMatchingFilter(Key key) {
-    return filters.stream().anyMatch(predicate -> predicate.matcher(key.getValue()).matches());
+  boolean isMatchingFilter(String key) {
+    return filters.stream().anyMatch(predicate -> predicate.matcher(key).matches());
   }
 
-  String mapToWebResourceKey(Key dataKey) {
+  String mapToWebResourceKey(String dataKey) {
     String prefix = serviceConfiguration.webResources()
         .map(WebResources::outgoingPrefix)
         .filter(Optional::isPresent)
         .map(Optional::get)
         .orElse("");
-    return prefix + dataKey.getValue() + ".json";
+    return prefix + dataKey + ".json";
   }
 }

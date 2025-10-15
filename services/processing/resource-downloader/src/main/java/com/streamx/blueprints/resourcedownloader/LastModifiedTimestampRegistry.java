@@ -8,10 +8,10 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -51,8 +51,7 @@ public class LastModifiedTimestampRegistry {
   @Inject
   CloseableHttpClient httpClient;
 
-  // TODO: migrate to the equivalent of blueprints 1.x Store<LastModifiedTimestamp>
-  private final Map<String, LastModifiedTimestamp> timestampsStore = new HashMap<>();
+  private final Map<String, LastModifiedTimestamp> timestampsStore = new ConcurrentHashMap<>();
 
   private int headTimeoutMillis;
 
@@ -61,7 +60,7 @@ public class LastModifiedTimestampRegistry {
     headTimeoutMillis = configuration.headTimeoutMilliseconds();
   }
 
-  public synchronized void store(DownloadRequest request) {
+  public void store(DownloadRequest request) {
     String url = request.url();
 
     HttpHead headRequest = prepareHttpHeadRequest(url);

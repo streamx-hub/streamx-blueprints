@@ -1,74 +1,149 @@
 package com.streamx.blueprints.data.collector;
 
-import static dev.streamx.quasar.reactive.messaging.metadata.Action.PUBLISH;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import dev.streamx.blueprints.data.Data;
-import dev.streamx.blueprints.data.WebResource;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.Data;
+import com.streamx.blueprints.data.Page;
+import com.streamx.blueprints.data.WebResource;
+import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
 import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
+import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 public class WebResourceProducingTest {
 
+  private static final String DEFAULT_KEY = "collected:test";
+  private static final String DEFAULT_CONTENT = "{\"key\": \"value\"}";
+
   @Inject
   @Any
   InMemoryConnector connector;
 
-  InMemorySource<Message<Data>> dataSource;
-  InMemorySink<WebResource> webResourceSink;
+  InMemorySource<CloudEvent> dataSource;
+  InMemorySink<CloudEvent> webResourceSink;
 
   @BeforeEach
   void beforeEach() {
     dataSource = connector.source(Channels.Incoming.DATA);
     webResourceSink = connector.sink(Channels.Outgoing.WEB_RESOURCES);
+    webResourceSink.clear();
   }
 
   @Test
   void shouldProduceWebResource() {
-    String key = "collected:test";
-    long eventTime = 1L;
-    Action action = PUBLISH;
-    String content = "\"some json\"";
-    Message<Data> data = Message.of(new Data(content),
-        Metadata.of(Key.of(key), EventTime.of(eventTime), action));
+    // given
+    CloudEvent dataEvent = createPublishDataEvent(DEFAULT_KEY);
 
-    dataSource.send(data);
+    // when
+    dataSource.send(dataEvent);
 
-    await().until(() -> !webResourceSink.received().isEmpty());
-    Message<WebResource> result = webResourceSink.received().get(0);
-    assertEquals(content, result.getPayload().getContentAsString());
+    // then
+    CloudEvent result = waitForSingleResultEvent();
+    WebResource resource = CloudEventUtils.getData(result, WebResource.class);
+    assertThat(resource).isNotNull();
+    assertThat(resource.getContentAsString()).isEqualTo(DEFAULT_CONTENT);
     // configured prefix + incoming data key + json extension
-    assertEquals("_data/" + key + ".json", result.getMetadata().get(Key.class).get().getValue());
-    assertEquals(eventTime, result.getMetadata().get(EventTime.class).get().getValue());
-    assertEquals(action, result.getMetadata().get(Action.class).get());
+    assertThat(result.getSubject()).isEqualTo("_data/" + DEFAULT_KEY + ".json");
+    assertThat(result.getTime()).isEqualTo(dataEvent.getTime());
+    assertThat(result.getType()).isEqualTo(WebResource.TYPE_PUBLISHED);
+  }
+
+  @Test
+  void shouldUnpublishProducedWebResource() {
+    // given
+    CloudEvent publishDataEvent = createPublishDataEvent(DEFAULT_KEY);
+    dataSource.send(publishDataEvent);
+    waitForSingleResultEvent();
+    webResourceSink.clear();
+
+    // when
+    CloudEvent unpublishDataEvent = createUnpublishDataEvent(DEFAULT_KEY);
+    dataSource.send(unpublishDataEvent);
+
+    // when
+    CloudEvent result = waitForSingleResultEvent();
+    assertThat(result.getData()).isNull();
+    assertThat(result.getSubject()).isEqualTo("_data/" + DEFAULT_KEY + ".json");
+    assertThat(result.getTime()).isEqualTo(unpublishDataEvent.getTime());
+    assertThat(result.getType()).isEqualTo(WebResource.TYPE_UNPUBLISHED);
   }
 
   @Test
   void shouldNotProduceWebResourceIfKeyDoesNotMachPrefix() {
-    String key = "collected:test";
-    Message<Data> data = Message.of(new Data("\"some json\""),
-        Metadata.of(Key.of(key), EventTime.of(1L), PUBLISH));
+    // given
+    CloudEvent dataEvent1 = createPublishDataEvent("not-matching-the-filter");
+    CloudEvent dataEvent2 = createPublishDataEvent(DEFAULT_KEY);
 
-    dataSource.send(data.addMetadata(Key.of("not-matching-the-filter"))); // should be skipped
-    dataSource.send(data);
+    // when
+    dataSource.send(dataEvent1); // should be skipped
+    dataSource.send(dataEvent2);
 
-    await().until(() -> !webResourceSink.received().isEmpty());
-    Message<WebResource> result = webResourceSink.received().get(0);
+    // then
+    CloudEvent result = waitForSingleResultEvent();
     // configured prefix + incoming data key + json extension
-    assertEquals("_data/" + key + ".json", result.getMetadata().get(Key.class).get().getValue());
+    assertThat(result.getSubject()).isEqualTo("_data/" + DEFAULT_KEY + ".json");
+  }
+
+  @Test
+  void shouldNotProduceWebResourceIfNoPayloadInIncomingDataEvent() {
+    // given
+    CloudEvent dataEvent = CloudEventUtils.eventWithoutData(DEFAULT_KEY, Data.TYPE_PUBLISHED);
+
+    // when
+    dataSource.send(dataEvent);
+
+    // then
+    assertNoResultEvents();
+  }
+
+  @Test
+  void shouldNotProduceWebResourceIfWrongTypeOfIncomingEvent() {
+    // given
+    CloudEvent dataEvent = CloudEventUtils.eventWithData(
+        DEFAULT_KEY, Page.TYPE_PUBLISHED, new Data(DEFAULT_CONTENT));
+
+    // when
+    dataSource.send(dataEvent);
+
+    // then
+    assertNoResultEvents();
+  }
+
+  private static CloudEvent createPublishDataEvent(String key) {
+    return CloudEventUtils.eventWithData(
+        key,
+        Data.TYPE_PUBLISHED,
+        new Data(DEFAULT_CONTENT),
+        CloudEventUtils.toOffsetDateTime(1)
+    );
+  }
+
+  private static CloudEvent createUnpublishDataEvent(String key) {
+    return CloudEventUtils.eventWithoutData(
+        key,
+        Data.TYPE_UNPUBLISHED,
+        CloudEventUtils.toOffsetDateTime(1)
+    );
+  }
+
+  private CloudEvent waitForSingleResultEvent() {
+    await().atMost(Duration.ofSeconds(3))
+        .untilAsserted(() -> assertThat(webResourceSink.received()).hasSize(1));
+    return webResourceSink.received().get(0).getPayload();
+  }
+
+  private void assertNoResultEvents() {
+    await().during(Duration.ofMillis(300))
+        .untilAsserted(() -> assertThat(webResourceSink.received()).isEmpty());
   }
 
 }

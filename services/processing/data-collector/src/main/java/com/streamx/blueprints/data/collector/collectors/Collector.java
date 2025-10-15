@@ -1,26 +1,19 @@
 package com.streamx.blueprints.data.collector.collectors;
 
-import dev.streamx.blueprints.data.Data;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
 import java.util.List;
 
 public interface Collector {
 
-  /**
-   * Process the data and action. Returns flag if the collector output might be affected by the
-   * processed data.
-   *
-   * @return true if the collector output might be affected by the processed data, false otherwise
-   */
-  boolean process(Key key, Data data, Action action);
+  default void acceptDataKey(String key) {
+
+  }
 
   List<CollectedOutput> collect();
 
-  record CollectedOutput(Key key, String type, Data data) {
+  record CollectedOutput(String key, String dataContent, String dataType) {
 
-    public CollectedOutput(Key key, Data data) {
-      this(key, null, data);
+    public CollectedOutput(String key, String dataContent) {
+      this(key, dataContent, null);
     }
   }
 

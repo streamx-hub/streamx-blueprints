@@ -1,24 +1,24 @@
 package com.streamx.blueprints.data.collector;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.collector.collectors.Collector.CollectedOutput;
 import com.streamx.blueprints.data.collector.configuration.ServiceConfigMapping;
-import dev.streamx.blueprints.data.Data;
-import dev.streamx.metadata.Properties;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
+import com.streamx.blueprints.data.collector.stores.PublishedDataStore;
+import io.cloudevents.CloudEvent;
 import java.util.List;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.jboss.logging.Logger;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,10 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class TriggerTest {
 
   @Mock
-  private Emitter<Data> dataEmitter;
-
-  @Mock
-  private Logger log;
+  private Emitter<CloudEvent> dataEmitter;
 
   @Mock
   private Collectors collectors;
@@ -46,6 +43,17 @@ class TriggerTest {
 
   @InjectMocks
   private ProcessDataFunction cut;
+
+  @BeforeAll
+  static void setApplicationName() {
+    System.setProperty("quarkus.application.name", TriggerTest.class.getSimpleName());
+  }
+
+  @BeforeEach
+  void injectIrrelevantMocks() {
+    cut.log = mock(Logger.class);
+    cut.dataStore = mock(PublishedDataStore.class);
+  }
 
   @Test
   void shouldNotTriggerGeneration() {
@@ -102,24 +110,25 @@ class TriggerTest {
   }
 
   void mockCollectorsAcceptingAnyData() {
-    when(collectors.processData(any(), any(), any(), any())).thenReturn(true);
+    when(collectors.processData(any(), any(), any())).thenReturn(true);
   }
 
   void mockCollectorsReturningCollectedData() {
     when(collectors.collect()).thenReturn(
-        List.of(new CollectedOutput(Key.of("collected-data"), new Data("any-content"))));
+        List.of(new CollectedOutput("collected-data", "any-content")));
   }
 
   void verifyCollectedDataEmitted() {
-    verify(dataEmitter).send(ArgumentMatchers.<Message>any());
+    verify(dataEmitter).send(any(CloudEvent.class));
   }
 
   private void simulateProcessingDataEvent() {
-    cut.process(new Data("any-content"),
-        Key.of("any-key"),
-        Action.PUBLISH,
-        EventTime.of(1L),
-        Properties.empty());
+    cut.process(CloudEventUtils.eventWithData(
+        "any-key",
+        Data.TYPE_PUBLISHED,
+        new Data("any-content"),
+        CloudEventUtils.toOffsetDateTime(1)
+    ));
   }
 
   private void initializeMaxDirtySequenceCount(Long value) {

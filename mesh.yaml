@@ -146,6 +146,17 @@ descriptors:
       indexable-resource-fragments:
         binding: "http-structured-json"
 
+  data-collector:
+    type: "processing"
+    incoming:
+      data:
+        binding: "http-structured-json"
+    outgoing:
+      collected-data:
+        binding: "http-structured-json"
+      web-resources:
+        binding: "http-structured-json"
+
   web-server:
     type: "processing"
     incoming:
@@ -225,9 +236,9 @@ processing:
       - image: json-aggregator
         incoming:
           data:
-            topic: inboxes/data
+            topic: relays/data
           multivalued-data:
-            topic: inboxes/data
+            topic: relays/data
         outgoing:
           aggregated-data:
             topic: relays/aggregated-data
@@ -285,6 +296,26 @@ processing:
         STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_WEB_RESOURCE_TYPE: "web-resource/external"
         STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_ASSET_TYPE: "asset/external"
 
+  # Instance 3 of external-references-rewriter: process data
+  blueprint-data-external-references-rewriter:
+    containers:
+      - image: external-references-rewriter
+        incoming:
+          incoming-resources:
+            topic: inboxes/data
+        outgoing:
+          outgoing-resources:
+            topic: relays/data
+          download-requests:
+            topic: relays/download-requests
+        environment:
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.tech/"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_PROCESSABLE_PAYLOAD_TYPES: "product/simple,category"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_JSON_EXTERNAL_RESOURCE_JSONPATH_SELECTORS: "$..attributes[?(@.name=='small_image' || @.name=='thumbnail')].values.*.value,$..attributes[?(@.name=='small_image' || @.name=='thumbnail')].values.*.label,$..primaryImage.url,$..gallery.*.url"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_PAGE_TYPE: "page/external"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_WEB_RESOURCE_TYPE: "web-resource/external"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_ASSET_TYPE: "asset/external"
+
   blueprint-resource-downloader:
     containers:
     - image: resource-downloader
@@ -304,7 +335,7 @@ processing:
       - image: rendering-engine
         incoming:
           data:
-            topic: relays/aggregated-data
+            topic: relays/aggregated-data,relays/collected-data
           renderers:
             topic: inboxes/renderers
           rendering-contexts:
@@ -334,6 +365,29 @@ processing:
           topic: relays/pages
         outgoing-page-compose-requests:
           topic: relays/page-compose-requests
+
+  blueprint-data-collector:
+    containers:
+      - image: data-collector
+        incoming:
+          data:
+            topic: relays/aggregated-data,relays/collected-data
+        outgoing:
+          collected-data:
+            topic: relays/collected-data
+          web-resources:
+            topic: outboxes/web-resources
+        environment:
+          STREAMX_BLUEPRINTS_DATA_COLLECTOR_WEB-RESOURCES_FILTERS: "collected_.*"
+          STREAMX_BLUEPRINTS_DATA-COLLECTOR_DIRTY-CHECK_MAX-DIRTY-SEQUENCE-COUNT: "0"
+          STREAMX_BLUEPRINTS_DATA-COLLECTOR_DIRTY-CHECK_DELAY: "1s"
+          STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_DATA_KEY_MATCH_PATTERN: "product:.*"
+          STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_COLLECTOR: "aggregate-by-property-value"
+          STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_OUTPUT-KEY-PREFIX: "collected_products_cheapest-by-category_"
+          STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_GROUP-BY: "categories/name"
+          STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_SORT-BY: "price/value"
+          STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_SORT-MODE: "asc"
+          STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_MAX: "8"
 
   blueprint-sitemap-generator:
     containers:

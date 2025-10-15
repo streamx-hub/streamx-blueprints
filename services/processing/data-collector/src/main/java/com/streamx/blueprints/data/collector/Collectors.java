@@ -1,15 +1,12 @@
 package com.streamx.blueprints.data.collector;
 
+import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.collector.collectors.Collector;
 import com.streamx.blueprints.data.collector.collectors.Collector.CollectedOutput;
 import com.streamx.blueprints.data.collector.collectors.CollectorFactory;
 import com.streamx.blueprints.data.collector.collectors.DataFilter;
 import com.streamx.blueprints.data.collector.configuration.CollectionConfiguration;
 import com.streamx.blueprints.data.collector.configuration.ServiceConfigMapping;
-import dev.streamx.blueprints.data.Data;
-import dev.streamx.metadata.Properties;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
 import io.quarkus.arc.All;
 import io.quarkus.runtime.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -19,6 +16,7 @@ import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.ObjectUtils;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -65,28 +63,29 @@ public class Collectors {
   private DataFilter createDataFilter(CollectionConfiguration configuration) {
     String dataKeyMatchPatternValue = configuration.dataKeyMatchPattern().orElse(null);
     String dataTypeMatchPatternValue = configuration.dataTypeMatchPattern().orElse(null);
-    if (dataKeyMatchPatternValue == null && dataTypeMatchPatternValue == null) {
+    if (ObjectUtils.allNull(dataKeyMatchPatternValue, dataTypeMatchPatternValue)) {
       throw new IllegalStateException(
-          "Match pattern for key or data must be set for configuration " + configuration);
+          "Match pattern for data key or type must be set for configuration " + configuration);
     }
-    Pattern dataKeyMatchPattern =
-        dataKeyMatchPatternValue != null ? Pattern.compile(dataKeyMatchPatternValue) : null;
-    Pattern dataTypeMatchPattern =
-        dataTypeMatchPatternValue != null ? Pattern.compile(dataTypeMatchPatternValue) : null;
+    Pattern dataKeyMatchPattern = compilePattern(dataKeyMatchPatternValue);
+    Pattern dataTypeMatchPattern = compilePattern(dataTypeMatchPatternValue);
     return new PatternsDataFilter(dataKeyMatchPattern, dataTypeMatchPattern);
   }
 
-  public boolean processData(Key key, Data data, Action action, Properties properties) {
-    log.tracef("Processing data [key=%s] [action=%s]", key, action);
+  private Pattern compilePattern(String patternValue) {
+    return Optional.ofNullable(patternValue).map(Pattern::compile).orElse(null);
+  }
+
+  public boolean processData(String key, Data data, String eventType) {
+    log.tracef("Processing data [key=%s] [eventType=%s]", key, eventType);
+    String dataType = Optional.ofNullable(data).map(Data::getType).orElse(null);
     AtomicBoolean dirty = new AtomicBoolean(false);
     collections.stream()
-        .filter(collection -> collection.dataFilter.test(key.getValue(),
-            properties.getType().orElse(null)))
+        .filter(collection -> collection.dataFilter.test(key, dataType))
         .forEach(collection -> {
-          if (collection.collector.process(key, data, action)) {
-            collection.dirty.set(true);
-            dirty.set(true);
-          }
+          collection.collector.acceptDataKey(key);
+          collection.dirty.set(true);
+          dirty.set(true);
         });
     return dirty.get();
   }
@@ -98,8 +97,8 @@ public class Collectors {
         .flatMap(collection -> collection.collector.collect().stream()
             .map(collectedOutput -> new CollectedOutput(
                 collectedOutput.key(),
-                collection.outputType.orElse(collectedOutput.type()),
-                collectedOutput.data())))
+                collectedOutput.dataContent(),
+                collection.outputType.orElse(collectedOutput.dataType()))))
         .toList();
   }
 
