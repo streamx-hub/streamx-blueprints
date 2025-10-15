@@ -39,7 +39,7 @@ abstract class AbstractIndexableResourceProducer<T extends WebResource> {
         incomingType, key, eventType, eventTime);
 
     boolean indexable = isIndexable(event);
-    if (indexable && settings.incomingPublishedEventType().equals(eventType)) {
+    if (shouldPublish(indexable, eventType, settings)) {
       if (Resource.isEmpty(resource)) {
         log.warnf("Skipping processing empty incoming %s %s", incomingType, key);
         return null;
@@ -52,7 +52,7 @@ abstract class AbstractIndexableResourceProducer<T extends WebResource> {
       );
     }
 
-    if (!indexable || settings.incomingUnpublishedEventType().equals(eventType)) {
+    if (shouldUnpublish(indexable, eventType, settings)) {
       return CloudEventUtils.eventWithoutData(
           key,
           settings.outgoingUnpublishedEventType(),
@@ -62,6 +62,16 @@ abstract class AbstractIndexableResourceProducer<T extends WebResource> {
 
     log.warnf("Skipping processing event %s with unexpected type: %s", key, eventType);
     return null;
+  }
+
+  private static <T extends WebResource> boolean shouldPublish(boolean indexable,
+      String eventType, ProducerSettings<T> settings) {
+    return indexable && settings.incomingPublishedEventType().equals(eventType);
+  }
+
+  private static <T extends WebResource> boolean shouldUnpublish(boolean indexable,
+      String eventType, ProducerSettings<T> settings) {
+    return !indexable || settings.incomingUnpublishedEventType().equals(eventType);
   }
 
   private boolean isIndexable(CloudEvent event) {
