@@ -43,15 +43,13 @@ public class IndexableResourceFragmentProducer extends AbstractIndexableResource
           key,
           IndexableResourceFragment.TYPE_PUBLISHED,
           createIndexableResourceFragment(fragment),
-          eventTime,
-          CloudEventUtils.collectExtensions(event)
+          eventTime
       );
     }
     return CloudEventUtils.eventWithoutData(
         key,
         IndexableResourceFragment.TYPE_UNPUBLISHED,
-        eventTime,
-        CloudEventUtils.collectExtensions(event)
+        eventTime
     );
   }
 

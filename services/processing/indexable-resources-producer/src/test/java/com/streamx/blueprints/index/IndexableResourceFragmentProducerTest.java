@@ -76,7 +76,6 @@ public class IndexableResourceFragmentProducerTest {
     assertThat(resultEvent.getSubject()).isEqualTo(fragmentEvent.getSubject());
     assertThat(resultEvent.getTime()).isEqualTo(fragmentEvent.getTime());
     assertThat(resultEvent.getType()).isEqualTo(IndexableResourceFragment.TYPE_UNPUBLISHED);
-    assertThat(resultEvent.getExtensionNames()).isEqualTo(fragmentEvent.getExtensionNames());
   }
 
   @Test

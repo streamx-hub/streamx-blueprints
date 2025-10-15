@@ -60,15 +60,13 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
           key,
           IndexableResource.TYPE_PUBLISHED,
           getIndexableResource(page, key),
-          eventTime,
-          CloudEventUtils.collectExtensions(event)
+          eventTime
       );
     }
     return CloudEventUtils.eventWithoutData(
         key,
         IndexableResource.TYPE_UNPUBLISHED,
-        eventTime,
-        CloudEventUtils.collectExtensions(event)
+        eventTime
     );
   }
 
