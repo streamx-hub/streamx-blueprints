@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.data.Page;
+import com.streamx.blueprints.data.WebResource;
 import com.streamx.blueprints.index.IndexableResourceProducer.IndexableResourceContent;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
@@ -282,6 +283,19 @@ public class IndexableResourceProducerTest {
     CloudEvent pageEvent = CloudEventUtils.eventWithoutData(
         DEFAULT_KEY,
         Page.TYPE_PUBLISHED
+    );
+
+    // when & then
+    assertNoResourceFrom(pageEvent);
+  }
+
+  @Test
+  void shouldSkipProcessingEventWithUnexpectedType() {
+    // given
+    CloudEvent pageEvent = CloudEventUtils.eventWithData(
+        DEFAULT_KEY,
+        WebResource.TYPE_PUBLISHED,
+        new Page("content")
     );
 
     // when & then

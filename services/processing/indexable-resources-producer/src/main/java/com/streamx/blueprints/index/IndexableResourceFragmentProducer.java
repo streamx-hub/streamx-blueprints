@@ -46,11 +46,17 @@ public class IndexableResourceFragmentProducer extends AbstractIndexableResource
           eventTime
       );
     }
-    return CloudEventUtils.eventWithoutData(
-        key,
-        IndexableResourceFragment.TYPE_UNPUBLISHED,
-        eventTime
-    );
+
+    if (!indexable || Fragment.TYPE_UNPUBLISHED.equals(eventType)) {
+      return CloudEventUtils.eventWithoutData(
+          key,
+          IndexableResourceFragment.TYPE_UNPUBLISHED,
+          eventTime
+      );
+    }
+
+    log.warnf("Skipping processing event %s with unexpected type: %s", key, eventType);
+    return null;
   }
 
   private IndexableResourceFragment createIndexableResourceFragment(Fragment fragment) {

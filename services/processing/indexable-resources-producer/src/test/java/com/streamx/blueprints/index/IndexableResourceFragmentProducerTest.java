@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Fragment;
 import com.streamx.blueprints.data.IndexableResourceFragment;
+import com.streamx.blueprints.data.WebResource;
 import com.streamx.blueprints.index.IndexableResourceFragmentProducer.IndexableResourceFragmentContent;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
@@ -108,6 +109,19 @@ public class IndexableResourceFragmentProducerTest {
 
     // when & then
     assertNoResourceFrom(fragmentEvent);
+  }
+
+  @Test
+  void shouldSkipProcessingEventWithUnexpectedType() {
+    // given
+    CloudEvent pageEvent = CloudEventUtils.eventWithData(
+        "/fragment/test.html",
+        WebResource.TYPE_PUBLISHED,
+        new Fragment("content")
+    );
+
+    // when & then
+    assertNoResourceFrom(pageEvent);
   }
 
   private String getResourceFromFragmentWithContent(String payload) {
