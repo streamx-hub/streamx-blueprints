@@ -3,10 +3,8 @@ package com.streamx.blueprints.index;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.data.Page;
-import com.streamx.blueprints.data.Resource;
 import com.streamx.content.parser.urlinclude.UrlInclude;
 import com.streamx.content.parser.urlinclude.UrlIncludeCollector;
 import com.streamx.content.parser.urlinclude.UrlIncludeRemover;
@@ -20,67 +18,43 @@ import jakarta.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.jboss.logging.Logger;
 
 @ApplicationScoped
-public class IndexableResourceProducer extends AbstractIndexableResourceProducer {
+public class IndexableResourceProducer extends AbstractIndexableResourceProducer<Page> {
 
   private static final UrlIncludeCollector urlIncludeCollector = new UrlIncludeCollector();
   private static final UrlIncludeRemover urlIncludeRemover = new UrlIncludeRemover();
 
   @Inject
-  Logger log;
-
-  @Inject
   TikaParser parser;
+
+  @Override
+  protected ProducerSettings<Page> producerSettings() {
+    return new ProducerSettings<>(
+        Page.class,
+        Page.TYPE_PUBLISHED,
+        Page.TYPE_UNPUBLISHED,
+        IndexableResource.TYPE_PUBLISHED,
+        IndexableResource.TYPE_UNPUBLISHED
+    );
+  }
 
   @Incoming(Channels.INCOMING_PAGES)
   @Outgoing(Channels.INDEXABLE_RESOURCES)
   public CloudEvent produceFrom(CloudEvent event) {
-    Page page = CloudEventUtils.getData(event, Page.class);
-    String key = CloudEventUtils.getSubject(event);
-    String eventType = event.getType();
-    OffsetDateTime eventTime = event.getTime();
-
-    log.tracef("Processing of incoming page with key=%s eventType=%s eventTime=%s",
-        key, eventType, eventTime);
-
-    boolean indexable = isIndexable(event);
-    if (indexable && Page.TYPE_PUBLISHED.equals(eventType)) {
-      if (Resource.isEmpty(page)) {
-        log.warnf("Skipping processing empty incoming page %s", key);
-        return null;
-      }
-      return CloudEventUtils.eventWithData(
-          key,
-          IndexableResource.TYPE_PUBLISHED,
-          getIndexableResource(page, key),
-          eventTime
-      );
-    }
-
-    if (!indexable || Page.TYPE_UNPUBLISHED.equals(eventType)) {
-      return CloudEventUtils.eventWithoutData(
-          key,
-          IndexableResource.TYPE_UNPUBLISHED,
-          eventTime
-      );
-    }
-
-    log.warnf("Skipping processing event %s with unexpected type: %s", key, eventType);
-    return null;
+    return produceIndexableResourceFromEvent(event);
   }
 
-  private IndexableResource getIndexableResource(Page page, String key) {
+  @Override
+  protected Object produceIndexableResource(Page incomingPage, String key) {
     String title = null;
     String content = null;
-    if (hasContent(page)) {
-      var indexableResourceContent = getIndexableResource(page);
+    if (hasContent(incomingPage)) {
+      var indexableResourceContent = getIndexableResource(incomingPage);
       title = indexableResourceContent.title();
       content = indexableResourceContent.content();
     }
