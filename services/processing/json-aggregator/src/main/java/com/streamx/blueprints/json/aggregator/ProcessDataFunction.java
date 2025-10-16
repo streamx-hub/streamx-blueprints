@@ -10,7 +10,6 @@ import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.io.IOException;
-import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -43,13 +42,13 @@ public class ProcessDataFunction extends AbstractFunction {
   }
 
   @Override
-  protected Optional<Message<CloudEvent>> createMessageForConfig(Configuration config,
-      Data data, DataKey key, String eventType, OffsetDateTime eventTime) {
+  protected Optional<CloudEvent> createEventForConfig(Configuration config, CloudEvent inputEvent,
+      Data data, DataKey key) {
     String masterNamespace = config.masterNamespace();
-    PreservedData masterResource = determineMasterResource(masterNamespace, data, key,
-        eventType);
+    String eventType = inputEvent.getType();
+    PreservedData masterResource = determineMasterResource(masterNamespace, data, key, eventType);
     if (masterResource != null || Data.TYPE_UNPUBLISHED.equals(eventType)) {
-      return handleResourceMerging(eventTime, key, masterResource, config, eventType);
+      return handleResourceMerging(inputEvent, key, masterResource, config);
     } else {
       log.tracef("No master resource present for [%s]. Skipping processing.", key.id());
       return Optional.empty();
@@ -63,17 +62,16 @@ public class ProcessDataFunction extends AbstractFunction {
         : store.get(DataKey.fromNamespaceAndId(masterNamespace, key.id()));
   }
 
-  private Optional<Message<CloudEvent>> handleResourceMerging(OffsetDateTime eventTime,
-      DataKey key, PreservedData masterResource, Configuration config, String eventType) {
-    if (Data.TYPE_UNPUBLISHED.equals(eventType)) {
-      return unmergeResources(eventTime, key, masterResource, config);
+  private Optional<CloudEvent> handleResourceMerging(CloudEvent inputEvent, DataKey key,
+      PreservedData masterResource, Configuration config) {
+    if (Data.TYPE_UNPUBLISHED.equals(inputEvent.getType())) {
+      return unmergeResources(inputEvent, key, masterResource, config);
     }
-    return Optional.of(mergeResources(eventTime, key.id(),
-        supportedNamespacesByConfig.get(config),
+    return Optional.of(mergeResources(inputEvent, key.id(), supportedNamespacesByConfig.get(config),
         config.outputNamespace(), getOutputType(config, masterResource)));
   }
 
-  private Optional<Message<CloudEvent>> unmergeResources(OffsetDateTime eventTime, DataKey key,
+  private Optional<CloudEvent> unmergeResources(CloudEvent inputEvent, DataKey key,
       PreservedData masterResource, Configuration config) {
     if (masterResource == null || masterResource.data() == null) {
       if (!key.namespace().equals(config.masterNamespace())) {
@@ -81,18 +79,18 @@ public class ProcessDataFunction extends AbstractFunction {
         return Optional.empty();
       } else {
         log.tracef("Unpublishing master resource at [%s]", key);
-        return Optional.of(createUnpublishMessage(key.id(), eventTime, config.outputNamespace()));
+        return Optional.of(createUnpublishEvent(inputEvent, key.id(), config.outputNamespace()));
       }
     } else {
       log.tracef("Unpublishing optional resource at [%s]", key);
       Set<String> namespacesToMerge = new LinkedHashSet<>(supportedNamespacesByConfig.get(config));
       namespacesToMerge.remove(key.namespace());
-      return Optional.of(mergeResources(eventTime, key.id(), namespacesToMerge,
+      return Optional.of(mergeResources(inputEvent, key.id(), namespacesToMerge,
           config.outputNamespace(), getOutputType(config, masterResource)));
     }
   }
 
-  private Message<CloudEvent> mergeResources(OffsetDateTime eventTime, String id,
+  private CloudEvent mergeResources(CloudEvent inputEvent, String id,
       Set<String> namespacesToMerge, String outputNamespace, String outputType) {
     List<Data> resourcesToMerge = namespacesToMerge.stream()
         .map(namespace -> store.get(DataKey.fromNamespaceAndId(namespace, id)))
@@ -108,7 +106,7 @@ public class ProcessDataFunction extends AbstractFunction {
       }
       String mergedJson = merged.toString();
       log.tracef("Merged json for [%s] %s", id, mergedJson);
-      return createPublishMessage(id, eventTime, outputNamespace, outputType, mergedJson);
+      return createPublishEvent(inputEvent, id, outputNamespace, outputType, mergedJson);
     } catch (IOException e) {
       throw new RuntimeException("Unable to deserialize payload", e);
     }

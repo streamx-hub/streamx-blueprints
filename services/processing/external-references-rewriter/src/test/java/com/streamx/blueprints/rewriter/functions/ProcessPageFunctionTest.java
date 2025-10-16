@@ -1,5 +1,6 @@
 package com.streamx.blueprints.rewriter.functions;
 
+import static com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils.assertSameEvents;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -12,6 +13,7 @@ import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -30,19 +32,25 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     );
 
     // when
-    publishPage(pagePath, pageContent);
+    publishPageWithExtension(pagePath, pageContent,
+        Map.of("indexable", "true", "category", "blogs"));
 
     // then: wait for expected events to be published
     waitForDownloadedAssets(1);
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
+    CloudEvent editedPageEvent = pageEvents.get(0);
 
     // and: assert content of published events
     assertDownloadedAsset(0,
         "/image-_.jpg",
         imageContent);
-    assertPublishedPage(pageEvents.get(0),
+    assertPublishedPage(editedPageEvent,
         "/page.html",
         "⭐<img src='/image-_.jpg'>⭐");
+
+    // and: assert extensions are rewritten to outgoing edited page event
+    assertThat(editedPageEvent.getExtension("indexable")).isEqualTo("true");
+    assertThat(editedPageEvent.getExtension("category")).isEqualTo("blogs");
   }
 
   @Test

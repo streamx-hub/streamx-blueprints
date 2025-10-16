@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.data.Page;
@@ -233,12 +234,11 @@ public class IndexableResourceProducerTest {
     // given
     String payload = "Not Indexable Content";
 
-    CloudEvent pageEvent = CloudEventUtils.eventWithData(
+    CloudEvent pageEvent = CloudEventTestUtils.cloudEventWithExtensions(
         DEFAULT_KEY,
         Page.TYPE_PUBLISHED,
         new Page(payload),
-        CloudEventUtils.toOffsetDateTime(System.currentTimeMillis()),
-        Map.of(AbstractIndexableResourceProducer.EXTENSION_NAME_INDEXABLE, Boolean.TRUE)
+        Map.of(AbstractIndexableResourceProducer.EXTENSION_NAME_INDEXABLE, "true")
     );
 
     // when
@@ -258,12 +258,11 @@ public class IndexableResourceProducerTest {
     // given
     String payload = "Not Indexable Content";
 
-    CloudEvent pageEvent = CloudEventUtils.eventWithData(
+    CloudEvent pageEvent = CloudEventTestUtils.cloudEventWithExtensions(
         DEFAULT_KEY,
         Page.TYPE_PUBLISHED,
         new Page(payload),
-        CloudEventUtils.toOffsetDateTime(System.currentTimeMillis()),
-        Map.of(AbstractIndexableResourceProducer.EXTENSION_NAME_INDEXABLE, Boolean.FALSE)
+        Map.of(AbstractIndexableResourceProducer.EXTENSION_NAME_INDEXABLE, "false")
     );
 
     // when
