@@ -1,0 +1,56 @@
+package com.streamx.blueprints.index;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.streamx.blueprints.data.Fragment;
+import com.streamx.blueprints.data.IndexableResourceFragment;
+import io.cloudevents.CloudEvent;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+
+@ApplicationScoped
+public class IndexableResourceFragmentProducer extends AbstractIndexableResourceProducer<Fragment> {
+
+  @Inject
+  Configuration configuration;
+
+  @Override
+  protected ProducerSettings<Fragment> producerSettings() {
+    return new ProducerSettings<>(
+        Fragment.class,
+        Fragment.TYPE_PUBLISHED,
+        Fragment.TYPE_UNPUBLISHED,
+        IndexableResourceFragment.TYPE_PUBLISHED,
+        IndexableResourceFragment.TYPE_UNPUBLISHED
+     );
+  }
+
+  @Incoming(Channels.INCOMING_FRAGMENTS)
+  @Outgoing(Channels.INDEXABLE_RESOURCE_FRAGMENTS)
+  public CloudEvent produceFrom(CloudEvent event) {
+    return produceIndexableResourceFromEvent(event);
+  }
+
+  @Override
+  protected Object produceIndexableResource(Fragment incomingFragment, String key) {
+    try {
+      var content = incomingFragment.getContentAsString();
+      var fragmentContent = new IndexableResourceFragmentContent(content);
+      var bytes = objectMapper.writeValueAsBytes(fragmentContent);
+
+      return new IndexableResourceFragment(bytes);
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException("Payload could not be serialized.", e);
+    }
+  }
+
+  @Override
+  protected boolean isIndexableDefault() {
+    return configuration.indexFragments();
+  }
+
+  record IndexableResourceFragmentContent(String content) {
+
+  }
+}

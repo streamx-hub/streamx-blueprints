@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <groupId>com.streamx.blueprints</groupId>
     <artifactId>blueprints-project</artifactId>
@@ -8,8 +9,12 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>external-references-rewriter</artifactId>
-  <name>StreamX Blueprints : External References Rewriter</name>
+  <artifactId>indexable-resources-producer</artifactId>
+  <name>StreamX Blueprints : Indexable Resources Producer</name>
+
+  <properties>
+    <tika.version>2.0.2</tika.version>
+  </properties>
 
   <dependencies>
     <dependency>
@@ -25,41 +30,18 @@
       <artifactId>cloud-events-support</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-client</artifactId>
+      <groupId>io.quarkiverse.tika</groupId>
+      <artifactId>quarkus-tika</artifactId>
+      <version>${tika.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.jsoup</groupId>
-      <artifactId>jsoup</artifactId>
-      <version>1.21.1</version>
+      <groupId>com.streamx</groupId>
+      <artifactId>content-parser</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.jayway.jsonpath</groupId>
-      <artifactId>json-path</artifactId>
-      <version>2.9.0</version>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.dataformat</groupId>
-      <artifactId>jackson-dataformat-yaml</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-text</artifactId>
-      <version>1.14.0</version>
-    </dependency>
-
     <!-- Test dependencies -->
     <dependency>
-      <groupId>com.streamx.blueprints</groupId>
-      <artifactId>cloud-events-support</artifactId>
-      <version>${project.version}</version>
-      <classifier>tests</classifier>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-junit5-mockito</artifactId>
+      <artifactId>quarkus-junit5</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -78,7 +60,6 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
   <build>
     <plugins>
       <plugin>

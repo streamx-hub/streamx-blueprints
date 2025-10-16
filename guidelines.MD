@@ -9,6 +9,7 @@
     * Service should have one responsibility. Break down service in to smaller single responsibility services.
     * Services should not relay data. We have dedicated service for that. Only generated and modified data should be emitted from service.
     * Only delivery services should read from outbox topics.
+    * It's recommended to place all channel names used by a service into a Channels class as constants, making it easier to review the service's scope at a glance.
 
 * Incoming channels
     * If a service handles different types of incoming events in the same way, use a single incoming channel for all the events
