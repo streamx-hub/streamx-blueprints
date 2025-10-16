@@ -14,8 +14,6 @@ Generates sitemap from exposed pages.
 `streamx.blueprints.sitemap-generator.dirty-check.delay` - when first new publications should be checked
 `streamx.blueprints.sitemap-generator.dirty-check.max-dirty-sequence-count` - how long wait for new publications to make batch sitemap update
 
-`pulsar.client.serviceUrl` - Pulsar service URL
-
 ### Channels
 
 Incoming channels:

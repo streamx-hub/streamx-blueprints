@@ -35,9 +35,6 @@
     <!-- CLoudEvents -->
     <cloudevents-impl.version>4.0.1</cloudevents-impl.version>
 
-    <!--  Pulsar client version override  -->
-    <pulsar.client.version>4.0.0</pulsar.client.version>
-
     <!-- Quarkus -->
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
