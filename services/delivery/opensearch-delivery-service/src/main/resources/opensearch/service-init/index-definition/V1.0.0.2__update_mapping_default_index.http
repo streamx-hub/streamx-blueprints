@@ -1,0 +1,24 @@
+PUT /default/_mapping
+
+{
+  "properties": {
+    "fragments": {
+      "type": "nested",
+      "properties": {
+        "key": {
+          "type": "keyword"
+        },
+        "eventTime": {
+          "type": "long"
+        },
+        "payload": {
+          "properties": {
+            "content": {
+              "type": "text"
+            }
+          }
+        }
+      }
+    }
+  }
+}

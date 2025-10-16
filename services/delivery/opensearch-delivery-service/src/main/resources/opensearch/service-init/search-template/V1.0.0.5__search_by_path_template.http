@@ -1,0 +1,9 @@
+POST /_scripts/path
+Content-Type: application/json
+
+{
+  "script": {
+    "lang": "mustache",
+    "source": " {\"_source\": [\"_id\",\"payload.title\",\"fragments.*\",\"type\",\"namespace\"], \"query\":{\"ids\":{ \"values\":[\"{{path}}\"]}}, \"track_scores\": true}"
+  }
+}

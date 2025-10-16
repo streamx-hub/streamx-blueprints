@@ -1,0 +1,7 @@
+PUT /default/_settings
+
+{
+    "index" : {
+        "refresh_interval" : "10ms"
+    }
+}

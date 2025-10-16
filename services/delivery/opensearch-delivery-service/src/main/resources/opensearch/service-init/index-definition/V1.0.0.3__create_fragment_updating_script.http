@@ -1,0 +1,9 @@
+PUT /_scripts/updateFragments
+Content-Type: application/json
+
+{
+  "script": {
+    "source": "for (fragment in ctx._source.fragments) { if (fragment.key == params.key && fragment.eventTime < params.eventTime) {fragment.eventTime = params.eventTime;fragment.payload = params.payload;}}",
+    "lang": "painless"
+  }
+}
