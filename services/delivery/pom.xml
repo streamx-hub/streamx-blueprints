@@ -14,7 +14,7 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>opensearch-delivery-service</module>
+    <module>opensearch-sink</module>
     <module>web-server</module>
   </modules>
 
