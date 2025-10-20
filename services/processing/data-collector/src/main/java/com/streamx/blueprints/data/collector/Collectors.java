@@ -83,9 +83,10 @@ public class Collectors {
     collections.stream()
         .filter(collection -> collection.dataFilter.test(key, dataType))
         .forEach(collection -> {
-          collection.collector.acceptDataKey(key);
-          collection.dirty.set(true);
-          dirty.set(true);
+          if (collection.collector.process(key, data, eventType)) {
+            collection.dirty.set(true);
+            dirty.set(true);
+          }
         });
     return dirty.get();
   }

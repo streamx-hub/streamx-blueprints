@@ -80,6 +80,12 @@ public class AggregateByPropertyValueCollector implements Collector {
   }
 
   @Override
+  public boolean process(String key, Data data, String eventType) {
+    // Always recalculate collected data after data update.
+    return true;
+  }
+
+  @Override
   public List<CollectedOutput> collect() {
     long startTime = System.currentTimeMillis();
 
