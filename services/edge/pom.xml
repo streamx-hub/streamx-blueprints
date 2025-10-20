@@ -9,8 +9,8 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>delivery</artifactId>
-  <name>Blueprints : Delivery Services</name>
+  <artifactId>edge</artifactId>
+  <name>Blueprints : Edge Services</name>
   <packaging>pom</packaging>
 
   <modules>

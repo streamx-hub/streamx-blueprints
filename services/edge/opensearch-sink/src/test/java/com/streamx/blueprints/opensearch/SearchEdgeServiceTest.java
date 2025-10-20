@@ -20,7 +20,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class SearchDeliveryServiceTest extends SearchDeliveryServiceTestBase {
+class SearchEdgeServiceTest extends SearchEdgeServiceTestBase {
 
   @BeforeAll
   void setupTestOpensearch() {

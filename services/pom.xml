@@ -15,7 +15,7 @@
 
   <modules>
     <module>processing</module>
-    <module>delivery</module>
+    <module>edge</module>
   </modules>
 
 </project>

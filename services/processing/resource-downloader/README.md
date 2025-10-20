@@ -86,7 +86,7 @@ Defines the timeout (in milliseconds) for the HTTP GET request used to download 
 - `streamx.blueprints.resource-downloader.repeat-interval-millis`
   Defines the time (in milliseconds) between resource that matches `url-repeating-pattern`, will be
   requested for download, and if changed
-  new version of it will be stored at the delivery service.
+  new version of it will be stored at the edge service.
   **Default**: 30000 milliseconds
 
 

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 @TestProfile(TypeNotRequiredProfile.class)
-public class TypeNotRequiredTest extends SearchDeliveryServiceTestBase {
+public class TypeNotRequiredTest extends SearchEdgeServiceTestBase {
 
   @Test
   void shouldIndexResourceWithoutType() {

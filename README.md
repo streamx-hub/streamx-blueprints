@@ -14,7 +14,7 @@ The following are recommended directories:
 * [data](./data/README.md) - sample data should be placed here
 * [mesh](./mesh/README.md) - resources required to configure and run StreamX Mesh
 * [scripts](./scripts/README.md) - all useful scripts and resources should be placed here
-* [services](./services/README.md) - your StreamX Processing and Delivery Services (as well as other Maven modules) should be placed here
+* [services](./services/README.md) - your StreamX Processing and Edge Services (as well as other Maven modules) should be placed here
 
 ## Prerequisites
 
@@ -86,7 +86,8 @@ streamx batch publish data
 ```
 
 To see results of publication - visit:
-* [Generated pages](http://localhost:8081/products.html) 
+* [Generated pages](http://localhost:8081/products.html)
+<!-- TODO: there is no graphql-delivery-service in the project. Maybe switch the Readme to some existing service? -->
 * [GraphQL Console](http://localhost:8084/q/graphql-ui/) and launch some queries (details in [GraphqlDeliveryService](./services/graphql-delivery-service/README.md))
 
 For more information, visit [StreamX CLI Reference](https://www.streamx.dev/guides/streamx-command-line-interface-reference.html#_streamx_batch).

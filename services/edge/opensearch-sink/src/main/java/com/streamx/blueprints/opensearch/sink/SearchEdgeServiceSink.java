@@ -16,7 +16,7 @@ import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
-public class SearchDeliveryServiceSink {
+public class SearchEdgeServiceSink {
 
   @ConfigProperty(
       name = "streamx.blueprints.opensearch-sink.type-required",

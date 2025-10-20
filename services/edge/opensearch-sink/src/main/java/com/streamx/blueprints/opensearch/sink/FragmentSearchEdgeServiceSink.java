@@ -13,7 +13,7 @@ import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
-public class FragmentSearchDeliveryServiceSink {
+public class FragmentSearchEdgeServiceSink {
 
   @Inject
   Logger log;
