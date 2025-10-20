@@ -15,7 +15,7 @@
 
   <modules>
     <module>opensearch-sink</module>
-    <module>web-server</module>
+    <module>web-server-sink</module>
   </modules>
 
 </project>

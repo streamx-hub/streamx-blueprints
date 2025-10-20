@@ -1,4 +1,4 @@
-package com.streamx.blueprints.web.server;
+package com.streamx.blueprints.web.server.sink;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

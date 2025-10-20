@@ -1,4 +1,4 @@
-package com.streamx.blueprints.web.server;
+package com.streamx.blueprints.web.server.sink;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;

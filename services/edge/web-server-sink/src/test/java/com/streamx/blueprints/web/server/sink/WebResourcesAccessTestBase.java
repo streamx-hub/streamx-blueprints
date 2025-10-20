@@ -1,4 +1,4 @@
-package com.streamx.blueprints.web.server;
+package com.streamx.blueprints.web.server.sink;
 
 import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;

@@ -10,8 +10,8 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>web-server</artifactId>
-  <name>StreamX Blueprints : Web Server</name>
+  <artifactId>web-server-sink</artifactId>
+  <name>StreamX Blueprints : Web Server Sink</name>
 
   <dependencies>
     <dependency>

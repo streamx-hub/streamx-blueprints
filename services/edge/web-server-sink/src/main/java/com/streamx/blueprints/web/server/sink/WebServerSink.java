@@ -1,4 +1,4 @@
-package com.streamx.blueprints.web.server;
+package com.streamx.blueprints.web.server.sink;
 
 import static com.streamx.blueprints.cloudevents.utils.CloudEventUtils.isPublishingType;
 import static com.streamx.blueprints.cloudevents.utils.CloudEventUtils.isUnpublishingType;
