@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.ImmutableList;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -19,6 +18,8 @@ import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -119,7 +120,7 @@ class JsonPathFilter {
   private boolean filterObjectNode(ObjectNode node, Set<JsonNodeWrapper> nodesFromJsonPaths) {
     boolean anyChildFoundInJsonPaths = false;
 
-    for (String fieldName : ImmutableList.copyOf(node.fieldNames())) {
+    for (String fieldName : asList(node.fieldNames())) {
       anyChildFoundInJsonPaths =
            filterObjectProperty(node, fieldName, nodesFromJsonPaths)
                || anyChildFoundInJsonPaths;
@@ -213,7 +214,7 @@ class JsonPathFilter {
     }
 
     private static void replaceIntNodeInObjectNode(ObjectNode node) {
-      for (String fieldName : ImmutableList.copyOf(node.fieldNames())) {
+      for (String fieldName : asList(node.fieldNames())) {
         replaceIntNodeInObjectProperty(node, fieldName);
       }
     }
@@ -226,5 +227,13 @@ class JsonPathFilter {
         replaceIntNode(child);
       }
     }
+  }
+
+  private static List<String> asList(Iterator<String> iterator) {
+    List<String> result = new LinkedList<>();
+    while (iterator.hasNext()) {
+      result.add(iterator.next());
+    }
+    return result;
   }
 }

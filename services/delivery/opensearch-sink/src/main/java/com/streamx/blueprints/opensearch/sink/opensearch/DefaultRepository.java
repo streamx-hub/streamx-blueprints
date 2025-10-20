@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.streamx.blueprints.opensearch.sink.index.model.DefaultDocument;
 import com.streamx.blueprints.opensearch.sink.index.model.Fragment;
 import com.streamx.blueprints.opensearch.sink.index.model.SearchIndexStorageException;
-import com.streamx.blueprints.opensearch.sink.utils.ExceptionUtils;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -43,9 +42,7 @@ public class DefaultRepository {
 
   public Uni<JsonNode> searchByTemplate(String searchTemplateId,
       MultivaluedMap<String, String> queryParameters) {
-    if (log.isTraceEnabled()) {
-      log.tracef("Search by %s template with params: %s", searchTemplateId, queryParameters);
-    }
+    log.tracef("Search by %s template with params: %s", searchTemplateId, queryParameters);
     String requestBody = createSearchByTemplateRequestBody(searchTemplateId,
         queryParameters);
     return searchByTemplate(searchTemplateId, requestBody);
@@ -58,9 +55,7 @@ public class DefaultRepository {
     Request request = new Request("GET", endpoint);
     request.setJsonEntity(requestBody);
 
-    if (log.isTraceEnabled()) {
-      log.tracef("Search by %s template with request body: %s", searchTemplateId, requestBody);
-    }
+    log.tracef("Search by %s template with request body: %s", searchTemplateId, requestBody);
 
     return sendAsync(request)
         .map(response -> mapResponseToJson(request, response));
@@ -101,7 +96,7 @@ public class DefaultRepository {
           %s
           """.formatted(indexCommand, payload);
     } catch (JsonProcessingException e) {
-      throw ExceptionUtils.sneakyThrow(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -119,7 +114,7 @@ public class DefaultRepository {
           %s
           """.formatted(deleteCommand);
     } catch (JsonProcessingException e) {
-      throw ExceptionUtils.sneakyThrow(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -162,7 +157,7 @@ public class DefaultRepository {
           .map(response -> mapResponseToJson(request, response))
           .map(response -> objectMapper.convertValue(response, UpdateResult.class));
     } catch (JsonProcessingException e) {
-      throw ExceptionUtils.sneakyThrow(e);
+      throw new RuntimeException(e);
     }
   }
 

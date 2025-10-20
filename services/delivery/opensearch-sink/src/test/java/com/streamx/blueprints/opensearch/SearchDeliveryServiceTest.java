@@ -3,8 +3,7 @@ package com.streamx.blueprints.opensearch;
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 
-import dev.streamx.blueprints.data.IndexableResourceFragment;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
+import com.streamx.blueprints.data.IndexableResourceFragment;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
@@ -65,8 +64,8 @@ class SearchDeliveryServiceTest extends SearchDeliveryServiceTestBase {
   @ParameterizedTest
   void shouldTreatWhitespaceAsPhraseSeparatorAndLastTermMayBePrefixed(String phrase) {
     var firstFragment = new IndexableResourceFragment(
-        "{\"content\":\"fragment separated\"}");
-    sendFragment(firstFragment, Action.PUBLISH);
+        "{\"content\":\"fragment separated\"}", "any-type");
+    publishFragment(firstFragment);
     await().until(() -> getSearchResultByQuery(phrase), VALIDATE_NO_RESULTS);
 
     var firstResource = new ExampleIndexableResourceContent(
@@ -78,7 +77,7 @@ class SearchDeliveryServiceTest extends SearchDeliveryServiceTestBase {
     await().until(() -> getSearchResultByQuery(phrase), resultsPresent);
 
     unpublishResource();
-    sendFragment(null, Action.UNPUBLISH);
+    unpublishFragment();
     await().until(() -> getSearchResultByQuery(phrase), VALIDATE_NO_RESULTS);
   }
 
@@ -180,19 +179,19 @@ class SearchDeliveryServiceTest extends SearchDeliveryServiceTestBase {
     validateSearchResultsFor(firstResource);
     validateNoFragmentSearchResults("fragment");
 
-    var firstFragment = new IndexableResourceFragment(fragment);
-    sendFragment(firstFragment, Action.PUBLISH);
+    var firstFragment = new IndexableResourceFragment(fragment, "any-type");
+    publishFragment(firstFragment);
 
     validateFragmentSearchResults("Fragment");
 
     var updatedFragment = "{\"content\":\"updatedfragment\"}";
-    var secondFragment = new IndexableResourceFragment(updatedFragment);
-    sendFragment(secondFragment, Action.PUBLISH);
+    var secondFragment = new IndexableResourceFragment(updatedFragment, "any-type");
+    publishFragment(secondFragment);
 
     validateNoFragmentSearchResults("fragment");
     validateFragmentSearchResults("updatedfragment");
 
-    sendFragment(null, Action.UNPUBLISH);
+    unpublishFragment();
 
     validateSearchResultsFor(firstResource);
     validateNoFragmentSearchResults("updatedfragment");
@@ -208,8 +207,8 @@ class SearchDeliveryServiceTest extends SearchDeliveryServiceTestBase {
     validateNoSearchResultsForTestKey();
     validateNoSearchResultsFor(fragment);
 
-    var firstFragment = new IndexableResourceFragment(fragment);
-    sendFragment(firstFragment, Action.PUBLISH);
+    var firstFragment = new IndexableResourceFragment(fragment, "any-type");
+    publishFragment(firstFragment);
 
     var firstResource = new ExampleIndexableResourceContent("Title1", "Content1");
     var firstResourceFragments = Set.of(TEST_FRAGMENT_KEY);
@@ -217,7 +216,7 @@ class SearchDeliveryServiceTest extends SearchDeliveryServiceTestBase {
     validateSearchResultsFor(firstResource);
     validateFragmentSearchResults("fragment");
 
-    sendFragment(null, Action.UNPUBLISH);
+    unpublishFragment();
     unpublishResource();
     validateNoSearchResultsFor(firstResource);
     validateNoSearchResultsForTestKey();

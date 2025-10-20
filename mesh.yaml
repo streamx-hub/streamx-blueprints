@@ -158,9 +158,17 @@ descriptors:
         binding: "http-structured-json"
 
   web-server:
-    type: "processing"
+    type: "edge"
     incoming:
       resources:
+        binding: "http-structured-json"
+
+  opensearch-sink:
+    type: "edge"
+    incoming:
+      indexable-resources:
+        binding: "http-structured-json"
+      indexable-resource-fragments:
         binding: "http-structured-json"
 
 ingestion:
@@ -431,3 +439,36 @@ edge:
       - "8081:8080"
       environment:
         STREAMX_DELIVERY_SERVICE_READINESS_CHECK_ENABLED: "false"
+
+  blueprint-opensearch-sink:
+    volumes:
+      - name: "repository-volume"
+    containers:
+    - image: opensearch-sink
+      incoming:
+        indexable-resources:
+          topic: outboxes/indexable-resources
+        indexable-resource-fragments:
+          topic: outboxes/indexable-resource-fragments
+      ports:
+        - "8082:8080"
+      volumes:
+        - "repository-volume:/usr/share/opensearch/data"
+      volumesFrom:
+        configs:
+          - "opensearch/service-init:/deployments/opensearch/service-init"
+      environment:
+        QUARKUS_ELASTICSEARCH_HOSTS: "blueprint-opensearch-sink.opensearch:9200"
+        STREAMX_BLUEPRINTS_OPENSEARCH-SINK_MIGRATION-SCRIPT-LOCATIONS: "classpath:opensearch/service-init,file:opensearch/service-init"
+        STREAMX_DELIVERY_SERVICE_READINESS_CHECK_ENABLED: "false"
+    - name: "opensearch"
+      image: "docker.io/opensearchproject/opensearch:2.16.0"
+      ports:
+        - "9201:9200"
+        - "9301:9300"
+      volumes:
+        - "repository-volume:/usr/share/opensearch/data"
+      environment:
+        DISABLE_SECURITY_PLUGIN: "true"
+        OPENSEARCH_INITIAL_ADMIN_PASSWORD: "myStrongPassword123@456"
+        discovery.type: "single-node"

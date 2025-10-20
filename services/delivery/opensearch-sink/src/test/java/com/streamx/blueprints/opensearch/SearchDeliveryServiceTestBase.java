@@ -1,18 +1,15 @@
 package com.streamx.blueprints.opensearch;
 
-import static com.streamx.blueprints.opensearch.sink.FragmentSearchDeliveryServiceSink.CHANNEL_INDEXABLE_RESOURCE_FRAGMENTS;
-import static com.streamx.blueprints.opensearch.sink.SearchDeliveryServiceSink.CHANNEL_INDEXABLE_RESOURCES;
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.streamx.blueprints.data.IndexableResource;
-import dev.streamx.blueprints.data.IndexableResourceFragment;
-import dev.streamx.metadata.Properties;
-import dev.streamx.quasar.reactive.messaging.metadata.Action;
-import dev.streamx.quasar.reactive.messaging.metadata.EventTime;
-import dev.streamx.quasar.reactive.messaging.metadata.Key;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.IndexableResource;
+import com.streamx.blueprints.data.IndexableResourceFragment;
+import com.streamx.blueprints.opensearch.sink.Channels;
+import io.cloudevents.CloudEvent;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
@@ -21,8 +18,6 @@ import jakarta.inject.Inject;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.eclipse.microprofile.reactive.messaging.Metadata;
 
 public class SearchDeliveryServiceTestBase {
 
@@ -57,8 +52,8 @@ public class SearchDeliveryServiceTestBase {
   }
 
   void validateNoSearchResultsFor(ExampleIndexableResourceContent content) {
-    await().until(() -> getSearchResultByQuery(content.getTitle()), VALIDATE_NO_RESULTS);
-    await().until(() -> getSearchResultByQuery(content.getContent()), VALIDATE_NO_RESULTS);
+    await().until(() -> getSearchResultByQuery(content.title()), VALIDATE_NO_RESULTS);
+    await().until(() -> getSearchResultByQuery(content.content()), VALIDATE_NO_RESULTS);
   }
 
   void validateNoSearchResultsFor(String content) {
@@ -74,19 +69,19 @@ public class SearchDeliveryServiceTestBase {
       return size > 0
           && TEST_KEY.equalsIgnoreCase(path)
           && TEST_TYPE.equalsIgnoreCase(type)
-          && content.getTitle().equalsIgnoreCase(title);
+          && content.title().equalsIgnoreCase(title);
     };
 
     await().until(() -> getSearchResultByPath(TEST_KEY), validateIndexedResource);
-    await().until(() -> getSearchResultByQuery(content.getContent()),
+    await().until(() -> getSearchResultByQuery(content.content()),
         (response) -> validateIndexedResource.test(response)
             && stringJsonPath(response, FIRST_CONTENT_HIGHLIGHT).toLowerCase()
-            .contains(content.getContent().toLowerCase())
+            .contains(content.content().toLowerCase())
     );
-    await().until(() -> getSearchResultByQuery(content.getTitle()),
+    await().until(() -> getSearchResultByQuery(content.title()),
         (response) -> validateIndexedResource.test(response)
             && stringJsonPath(response, FIRST_TITLE_HIGHLIGHT).toLowerCase()
-            .contains(content.getTitle().toLowerCase())
+            .contains(content.title().toLowerCase())
     );
     validateNotEmptySearchByTypeResults(TEST_TYPE);
   }
@@ -137,46 +132,61 @@ public class SearchDeliveryServiceTestBase {
     return response.path(jsonPath);
   }
 
-  <T> void publishResource(T content) {
+  protected void publishResource(TestResource content) {
     publishResource(content, TEST_TYPE);
   }
 
-  <T> void publishResource(T content, String testType) {
-    send(content, Action.PUBLISH, Set.of(), testType);
+  protected void publishResource(TestResource content, String testType) {
+    send(content, IndexableResource.TYPE_PUBLISHED, Set.of(), testType);
   }
 
-  <T> void publishResource(T content, Set<String> fragmentKeys) {
-    send(content, Action.PUBLISH, fragmentKeys, TEST_TYPE);
+  protected void publishResource(TestResource content, Set<String> fragmentKeys) {
+    send(content, IndexableResource.TYPE_PUBLISHED, fragmentKeys, TEST_TYPE);
   }
 
   void unpublishResource() {
-    send(null, Action.UNPUBLISH, null, null);
+    send(null, IndexableResource.TYPE_UNPUBLISHED, null, null);
   }
 
-  <T> void send(T content,
-      Action action, Set<String> fragmentKeys, String type) {
+  private void send(TestResource content, String eventType, Set<String> fragmentKeys, String type) {
     try {
       var bytes = objectMapper.writeValueAsBytes(content);
-      var indexableResource = new IndexableResource(bytes, fragmentKeys);
+      var indexableResource = new IndexableResource(bytes, type, fragmentKeys);
 
-      connector.source(CHANNEL_INDEXABLE_RESOURCES)
-          .send(Message.of(indexableResource, Metadata.of(
-              Key.of(TEST_KEY),
-              EventTime.of(eventTimeGenerator.getAndIncrement()),
-              Properties.empty().withType(type),
-              action)));
+      connector.source(Channels.INDEXABLE_RESOURCES)
+          .send(CloudEventUtils.eventWithData(
+              TEST_KEY,
+              eventType,
+              indexableResource,
+              CloudEventUtils.toOffsetDateTime(eventTimeGenerator.getAndIncrement())
+          ));
     } catch (JsonProcessingException e) {
       throw new RuntimeException(e);
     }
   }
 
-  void sendFragment(IndexableResourceFragment fragment, Action action) {
-    long eventTime = eventTimeGenerator.getAndIncrement();
-    connector.source(CHANNEL_INDEXABLE_RESOURCE_FRAGMENTS)
-        .send(Message.of(fragment, Metadata.of(
-            Key.of(TEST_FRAGMENT_KEY),
-            EventTime.of(eventTime),
-            action)));
+  protected void publishFragment(IndexableResourceFragment fragment) {
+    CloudEvent publishEvent = CloudEventUtils.eventWithData(
+        TEST_FRAGMENT_KEY,
+        IndexableResourceFragment.TYPE_PUBLISHED,
+        fragment,
+        CloudEventUtils.toOffsetDateTime(eventTimeGenerator.getAndIncrement())
+    );
+    sendFragment(publishEvent);
+  }
+
+  protected void unpublishFragment() {
+    CloudEvent unpublishEvent = CloudEventUtils.eventWithoutData(
+        TEST_FRAGMENT_KEY,
+        IndexableResourceFragment.TYPE_UNPUBLISHED,
+        CloudEventUtils.toOffsetDateTime(eventTimeGenerator.getAndIncrement())
+    );
+    sendFragment(unpublishEvent);
+  }
+
+  private void sendFragment(CloudEvent fragmentEvent) {
+    connector.source(Channels.INDEXABLE_RESOURCE_FRAGMENTS)
+        .send(fragmentEvent);
   }
 
   ExtractableResponse<Response> getSearchResultByQuery(String query) {

@@ -1,5 +1,7 @@
 package com.streamx.blueprints.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.nio.ByteBuffer;
 import java.util.Set;
 
@@ -15,13 +17,20 @@ public class IndexableResource extends Resource {
 
   private final Set<String> fragmentKeys;
 
-  public IndexableResource(ByteBuffer content, Set<String> fragmentKeys) {
-    super(content);
+  @JsonCreator
+  public IndexableResource(@JsonProperty("content") ByteBuffer content,
+      @JsonProperty("type") String type, @JsonProperty("fragmentKeys") Set<String> fragmentKeys) {
+    super(content, type);
     this.fragmentKeys = fragmentKeys;
   }
 
-  public IndexableResource(byte[] content, Set<String> fragmentKeys) {
-    super(content);
+  public IndexableResource(byte[] content, String type, Set<String> fragmentKeys) {
+    super(content, type);
+    this.fragmentKeys = fragmentKeys;
+  }
+
+  public IndexableResource(String content, String type, Set<String> fragmentKeys) {
+    super(content, type);
     this.fragmentKeys = fragmentKeys;
   }
 

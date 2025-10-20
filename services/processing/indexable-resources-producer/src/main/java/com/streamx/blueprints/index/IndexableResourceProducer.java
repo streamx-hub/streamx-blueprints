@@ -76,7 +76,7 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
     try {
       byte[] bytes = objectMapper.writeValueAsBytes(indexableResourceContent);
 
-      return new IndexableResource(bytes, fragments);
+      return new IndexableResource(bytes, incomingPage.getType(), fragments);
     } catch (JsonProcessingException e) {
       throw new RuntimeException("Payload could not be serialized.", e);
     }

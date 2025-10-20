@@ -1,6 +1,7 @@
 package com.streamx.blueprints.opensearch.sink.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.senacor.elasticsearch.evolution.core.ElasticsearchEvolution;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
@@ -21,7 +22,7 @@ public class OpensearchConfig {
 
   @ApplicationScoped
   ObjectMapper objectMapper() {
-    return new ObjectMapper();
+    return new ObjectMapper().registerModule(new JavaTimeModule());
   }
 
   @ApplicationScoped
