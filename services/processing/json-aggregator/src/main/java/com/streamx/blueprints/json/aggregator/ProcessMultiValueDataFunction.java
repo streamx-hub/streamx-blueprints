@@ -10,7 +10,6 @@ import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
 import jakarta.inject.Inject;
 import java.io.IOException;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,13 +39,13 @@ public class ProcessMultiValueDataFunction extends AbstractFunction {
   }
 
   @Override
-  protected Optional<Message<CloudEvent>> createMessageForConfig(Configuration config,
-      Data data, DataKey key, String eventType, OffsetDateTime eventTime) {
-    return Optional.of(mergeMultivaluedResources(eventTime, key.id(), key.namespace(), config));
+  protected Optional<CloudEvent> createEventForConfig(Configuration config, CloudEvent inputEvent,
+      Data data, DataKey key) {
+    return Optional.of(mergeMultivaluedResources(inputEvent, key.id(), key.namespace(), config));
   }
 
-  private Message<CloudEvent> mergeMultivaluedResources(OffsetDateTime eventTime, String id,
-      String namespace, Configuration config) {
+  private CloudEvent mergeMultivaluedResources(CloudEvent inputEvent, String id, String namespace,
+      Configuration config) {
     String baseJson = "{\"" + config.outputNamespace() + "\": []}";
     try {
       JsonNode jsonNode = objectMapper.readTree(baseJson);
@@ -63,7 +62,7 @@ public class ProcessMultiValueDataFunction extends AbstractFunction {
       }
       String merged = objectMapper.writeValueAsString(jsonNode);
       log.tracef("Merged json for [%s] %s", id, merged);
-      return createPublishMessage(id, eventTime, config.outputNamespace(),
+      return createPublishEvent(inputEvent, id, config.outputNamespace(),
           config.outputType().orElse(null), merged);
     } catch (IOException e) {
       throw new RuntimeException("Unable to deserialize payload", e);

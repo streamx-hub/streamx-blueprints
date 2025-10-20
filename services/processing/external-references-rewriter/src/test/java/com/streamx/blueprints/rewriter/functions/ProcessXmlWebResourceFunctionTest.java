@@ -1,5 +1,6 @@
 package com.streamx.blueprints.rewriter.functions;
 
+import static com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils.assertSameEvents;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import io.cloudevents.CloudEvent;

@@ -78,20 +78,17 @@ class ProcessDataFunction {
         log.warnf("Skipping processing publish event %s with no payload", key);
         return null;
       }
-      return CloudEventUtils.eventWithData(
-          publishKey,
-          WebResource.TYPE_PUBLISHED,
-          new WebResource(data.getContent()),
-          eventTime
-      );
+      return CloudEventUtils.eventCopyWithData(dataEvent, new WebResource(data.getContent()))
+          .withSubject(publishKey)
+          .withType(WebResource.TYPE_PUBLISHED)
+          .build();
     }
 
     if (Data.TYPE_UNPUBLISHED.equals(eventType)) {
-      return CloudEventUtils.eventWithoutData(
-          publishKey,
-          WebResource.TYPE_UNPUBLISHED,
-          eventTime
-      );
+      return CloudEventUtils.eventCopyWithoutData(dataEvent)
+          .withSubject(publishKey)
+          .withType(WebResource.TYPE_UNPUBLISHED)
+          .build();
     }
 
     log.warnf("Skipping processing event %s of unexpected type: %s", key, eventType);

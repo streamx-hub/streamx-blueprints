@@ -82,10 +82,6 @@ public class AdjustImgSrcFunction {
     }
 
     Page adjustedPage = new Page(adjustedContent.get());
-    return CloudEventUtils.eventWithData(
-        pageEvent.getSubject(),
-        pageEvent.getType(),
-        adjustedPage,
-        pageEvent.getTime());
+    return CloudEventUtils.eventCopyWithData(pageEvent, adjustedPage).build();
   }
 }

@@ -40,8 +40,8 @@ abstract class AbstractFunction {
 
   protected abstract boolean requiresHashInKey();
 
-  protected abstract Optional<Message<CloudEvent>> createMessageForConfig(Configuration config,
-      Data data, DataKey dataKey, String eventType, OffsetDateTime eventTime);
+  protected abstract Optional<CloudEvent> createEventForConfig(Configuration config,
+      CloudEvent inputEvent, Data data, DataKey dataKey);
 
   @PostConstruct
   void init() {
@@ -73,14 +73,13 @@ abstract class AbstractFunction {
         return Multi.createFrom().empty();
       }
 
-      List<Message<CloudEvent>> resultMessages = new LinkedList<>();
+      List<CloudEvent> resultEvents = new LinkedList<>();
       DataKey dataKey = DataKey.fromKey(key);
       List<Configuration> matchingConfigurations = getConfigurations(dataKey.namespace());
       for (Configuration config : matchingConfigurations) {
-        createMessageForConfig(config, data, dataKey, eventType, eventTime)
-            .ifPresent(resultMessages::add);
+        createEventForConfig(config, event, data, dataKey).ifPresent(resultEvents::add);
       }
-      return Multi.createFrom().iterable(resultMessages)
+      return Multi.createFrom().items(resultEvents.stream().map(Message::of))
           .onCompletion()
           .call(() -> Uni.createFrom().completionStage(message.ack()));
     } catch (Exception e) {
@@ -89,34 +88,27 @@ abstract class AbstractFunction {
     }
   }
 
-  protected Message<CloudEvent> createPublishMessage(String id, OffsetDateTime eventTime,
-      String outputNamespace, String outputType, String payload) {
+  protected CloudEvent createPublishEvent(CloudEvent inputEvent, String id, String outputNamespace,
+      String outputType, String payload) {
     String key = DataKey.fromNamespaceAndId(outputNamespace, id);
     log.tracef("Creating Data Publish message with key %s and outputType %s", key, outputType);
-    return Message.of(
-        CloudEventUtils.eventWithData(
-            key,
-            Data.TYPE_PUBLISHED,
-            new Data(payload, outputType),
-            eventTime
-        )
-    );
+    return CloudEventUtils.eventCopyWithData(inputEvent, new Data(payload, outputType))
+        .withSubject(key)
+        .withType(Data.TYPE_PUBLISHED)
+        .build();
   }
 
-  protected Message<CloudEvent> createUnpublishMessage(String id, OffsetDateTime eventTime,
+  protected CloudEvent createUnpublishEvent(CloudEvent inputEvent, String id,
       String outputNamespace) {
     String key = DataKey.fromNamespaceAndId(outputNamespace, id);
     log.tracef("Creating Data Unpublish message with key %s", key);
-    return Message.of(
-        CloudEventUtils.eventWithoutData(
-            key,
-            Data.TYPE_UNPUBLISHED,
-            eventTime
-        )
-    );
+    return CloudEventUtils.eventCopyWithoutData(inputEvent)
+        .withSubject(key)
+        .withType(Data.TYPE_UNPUBLISHED)
+        .build();
   }
 
-  protected boolean accept(String key, OffsetDateTime eventTime) {
+  private boolean accept(String key, OffsetDateTime eventTime) {
     if (eventTime == null) {
       return false;
     }
@@ -131,7 +123,7 @@ abstract class AbstractFunction {
         .anyMatch(supportedNamespaces -> supportedNamespaces.contains(dataKey.namespace()));
   }
 
-  protected List<Configuration> getConfigurations(String namespace) {
+  private List<Configuration> getConfigurations(String namespace) {
     return supportedNamespacesByConfig.entrySet().stream()
         .filter(entry -> entry.getValue().contains(namespace))
         .map(Entry::getKey).toList();

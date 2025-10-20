@@ -12,7 +12,6 @@ import io.cloudevents.CloudEvent;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.time.OffsetDateTime;
 import java.util.regex.Pattern;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -78,7 +77,6 @@ public class OptimizeImageFunction {
   private CloudEvent createOptimizedImageEvent(CloudEvent event, String filePath) {
     String optimizedImagePath = optimizedImagePathsService.computePathForOptimizedImage(filePath);
     String eventType = event.getType();
-    OffsetDateTime eventTime = event.getTime();
 
     if (Asset.TYPE_PUBLISHED.equals(eventType)) {
       Asset asset = CloudEventUtils.getData(event, Asset.class);
@@ -87,12 +85,14 @@ public class OptimizeImageFunction {
         return null;
       }
       Asset optimizedImage = createOptimizedImage(asset, filePath);
-      return CloudEventUtils.eventWithData(optimizedImagePath, Asset.TYPE_PUBLISHED, optimizedImage,
-          eventTime);
+      return CloudEventUtils.eventCopyWithData(event, optimizedImage)
+          .withSubject(optimizedImagePath)
+          .build();
     }
     if (Asset.TYPE_UNPUBLISHED.equals(eventType)) {
-      return CloudEventUtils.eventWithoutData(optimizedImagePath, Asset.TYPE_UNPUBLISHED,
-          eventTime);
+      return CloudEventUtils.eventCopyWithoutData(event)
+          .withSubject(optimizedImagePath)
+          .build();
     }
 
     log.tracef("Skipping optimizing incoming file [%s] - unsupported event type %s", filePath,

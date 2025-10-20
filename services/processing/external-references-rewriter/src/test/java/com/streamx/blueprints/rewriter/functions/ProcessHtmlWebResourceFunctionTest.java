@@ -1,5 +1,7 @@
 package com.streamx.blueprints.rewriter.functions;
 
+import static com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils.assertSameEvents;
+
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import java.util.List;

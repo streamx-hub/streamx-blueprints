@@ -18,7 +18,9 @@ import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.microprofile.reactive.messaging.Message;
@@ -65,6 +67,11 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
     return sendToChannel(path, new Page(content, payloadType), Page.TYPE_PUBLISHED);
   }
 
+  protected CloudEvent publishPageWithExtension(String path, String content,
+      Map<String, String> extensions) {
+    return sendToChannel(path, new Page(content, PAGE), Page.TYPE_PUBLISHED, extensions);
+  }
+
   protected CloudEvent publishWebResource(String path, String content) {
     return publishWebResource(path, content, WEB_RESOURCE);
   }
@@ -82,7 +89,13 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
   }
 
   private <T extends Resource> CloudEvent sendToChannel(String path, T resource, String eventType) {
-    CloudEvent event = CloudEventUtils.eventWithData(path, eventType, resource);
+    return sendToChannel(path, resource, eventType, Collections.emptyMap());
+  }
+
+  private <T extends Resource> CloudEvent sendToChannel(String path, T resource, String eventType,
+      Map<String, String> extensions) {
+    CloudEvent event = CloudEventTestUtils
+        .cloudEventWithExtensions(path, eventType, resource, extensions);
     resourcesChannel.send(event);
     return event;
   }
@@ -125,9 +138,5 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
         .isNotNull()
         .extracting(Resource::getContentAsString)
         .isEqualTo(expectedContent);
-  }
-
-  protected static void assertSameEvents(CloudEvent actual, CloudEvent expected) {
-    CloudEventTestUtils.assertEventsData(expected, actual);
   }
 }
