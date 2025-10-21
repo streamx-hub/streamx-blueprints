@@ -39,7 +39,7 @@ public class IndexableResourceFragmentProducer extends AbstractIndexableResource
       var fragmentContent = new IndexableResourceFragmentContent(content);
       var bytes = objectMapper.writeValueAsBytes(fragmentContent);
 
-      return new IndexableResourceFragment(bytes);
+      return new IndexableResourceFragment(bytes, incomingFragment.getType());
     } catch (JsonProcessingException e) {
       throw new RuntimeException("Payload could not be serialized.", e);
     }

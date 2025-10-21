@@ -1,5 +1,7 @@
 package com.streamx.blueprints.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.nio.ByteBuffer;
 
 /**
@@ -12,15 +14,17 @@ public class IndexableResourceFragment extends Resource {
   public static final String TYPE_UNPUBLISHED =
       "com.streamx.blueprints.indexable-resource-fragment.unpublished.v1";
 
-  public IndexableResourceFragment(ByteBuffer content) {
-    super(content);
+  @JsonCreator
+  public IndexableResourceFragment(@JsonProperty("content") ByteBuffer content,
+      @JsonProperty("type") String type) {
+    super(content, type);
   }
 
-  public IndexableResourceFragment(byte[] content) {
-    super(content);
+  public IndexableResourceFragment(byte[] content, String type) {
+    super(content, type);
   }
 
-  public IndexableResourceFragment(String content) {
-    super(content);
+  public IndexableResourceFragment(String content, String type) {
+    super(content, type);
   }
 }

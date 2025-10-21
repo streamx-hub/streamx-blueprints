@@ -1,0 +1,62 @@
+{
+  "took": 145,
+  "timed_out": false,
+  "hits": {
+    "total": {
+      "value": 30,
+      "relation": "eq"
+    },
+    "max_score": 1.6081625,
+    "hits": [
+      {
+        "_id": "key274",
+        "_score": 1.6081625,
+        "_source": {
+          "title": "Title"
+        },
+        "highlight": {
+          "title": [
+            "\u003cem\u003etitle\u003c/em\u003e."
+          ],
+          "content": [
+            "\u003cem\u003etitle\u003c/em\u003e."
+          ]
+        }
+      },
+      {
+        "_id": "key278",
+        "_score": 1.6080049,
+        "_source": {
+          "title": "Title"
+        },
+        "highlight": {
+          "title": [
+            "com/\u003cem\u003estreamx\u003c/em\u003e-dev/\u003cem\u003estreamx\u003c/em\u003e-docs-resources."
+          ],
+          "content": [
+            "com/\u003cem\u003estreamx\u003c/em\u003e-dev/\u003cem\u003estreamx\u003c/em\u003e-docs-resources.git"
+          ]
+        }
+      },
+      {
+        "_id": "key262",
+        "_score": 1.4243473,
+        "_source": {
+          "title": " Ingestion StreamX CLI allows you to populate the StreamX Mesh with data."
+        },
+        "highlight": {
+          "title": [
+            "Ingestion \u003cem\u003eStreamX\u003c/em\u003e CLI allows you to populate the \u003cem\u003eStreamX\u003c/em\u003e Mesh with data."
+          ],
+          "content": [
+            "Ingestion \u003cem\u003eStreamX\u003c/em\u003e CLI allows you to populate the \u003cem\u003eStreamX\u003c/em\u003e Mesh with data.",
+            "There are also two configuration sources specific to \u003cem\u003eStreamX\u003c/em\u003e CLI: \u003cem\u003eStreamX\u003c/em\u003e Options and \u003cem\u003eStreamX\u003c/em\u003e Home.",
+            "/\u003cem\u003estreamx\u003c/em\u003e-docs-resources.git Step 2: Run the \u003cem\u003eStreamX\u003c/em\u003e Mesh Our example \u003cem\u003eStreamX\u003c/em\u003e Mesh is set up to combine",
+            "\u003cem\u003eStreamX\u003c/em\u003e.",
+            "\u003cem\u003eStreamX\u003c/em\u003e Service Extension \u003cem\u003eStreamX\u003c/em\u003e Service requires the \u003cem\u003eStreamX\u003c/em\u003e Service Extension dependency."
+          ]
+        }
+      }
+    ]
+  }
+}
