@@ -4,6 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 
 import com.streamx.blueprints.data.IndexableResourceFragment;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
@@ -20,6 +21,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@QuarkusTestResource(OpenSearchContainer.class)
 class SearchEdgeServiceTest extends SearchEdgeServiceTestBase {
 
   @BeforeAll
