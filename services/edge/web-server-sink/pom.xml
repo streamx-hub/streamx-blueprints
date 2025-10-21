@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.streamx.blueprints</groupId>
+    <artifactId>edge</artifactId>
+    <version>3.0.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>web-server-sink</artifactId>
+  <name>StreamX Blueprints : Web Server Sink</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.streamx</groupId>
+      <artifactId>reactive-messaging-http-cloudevents</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.streamx.blueprints</groupId>
+      <artifactId>cloud-events-support</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.streamx.blueprints</groupId>
+      <artifactId>data-model</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.streamx</groupId>
+      <artifactId>content-parser</artifactId>
+      <version>${streamx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.reactivemessaging.http</groupId>
+      <artifactId>quarkus-reactive-messaging-http</artifactId>
+      <version>${quarkus-reactive-messaging-http.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+    </dependency>
+
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>io.smallrye.reactive</groupId>
+      <artifactId>smallrye-reactive-messaging-in-memory</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5-mockito</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
