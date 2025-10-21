@@ -4,9 +4,9 @@
 
   <parent>
     <groupId>com.streamx.blueprints</groupId>
-    <artifactId>blueprints-project</artifactId>
+    <artifactId>processing</artifactId>
     <version>3.0.0-SNAPSHOT</version>
-    <relativePath>../../../pom.xml</relativePath>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>indexable-resources-producer</artifactId>
