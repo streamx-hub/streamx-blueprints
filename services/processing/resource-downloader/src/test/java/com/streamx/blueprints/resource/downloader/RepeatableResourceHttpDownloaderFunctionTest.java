@@ -1,4 +1,4 @@
-package com.streamx.blueprints.resourcedownloader;
+package com.streamx.blueprints.resource.downloader;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
@@ -7,8 +7,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.streamx.blueprints.resourcedownloader.mock.MockWebClientsFactory;
-import com.streamx.blueprints.resourcedownloader.testutils.TestWebServer;
+import com.streamx.blueprints.resource.downloader.mock.MockWebClientsFactory;
+import com.streamx.blueprints.resource.downloader.testutils.TestWebServer;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;

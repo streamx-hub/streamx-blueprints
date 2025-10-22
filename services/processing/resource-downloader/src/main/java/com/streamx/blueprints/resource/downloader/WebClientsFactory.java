@@ -1,4 +1,4 @@
-package com.streamx.blueprints.resourcedownloader;
+package com.streamx.blueprints.resource.downloader;
 
 import io.quarkus.arc.DefaultBean;
 import jakarta.enterprise.context.Dependent;

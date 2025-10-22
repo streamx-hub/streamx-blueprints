@@ -1,4 +1,4 @@
-package com.streamx.blueprints.resourcedownloader;
+package com.streamx.blueprints.resource.downloader;
 
 import com.streamx.blueprints.data.DownloadRequest;
 import jakarta.annotation.PostConstruct;
