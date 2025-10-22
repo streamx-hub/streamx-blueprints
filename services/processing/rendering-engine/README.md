@@ -1,4 +1,4 @@
-# Blueprint Rendering Engine
+# Rendering Engine
 
 Purpose of this service is to generate outgoing resource to one of the available outgoing resource
 channels.

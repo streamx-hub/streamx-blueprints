@@ -4,7 +4,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.nio.ByteBuffer;
 
-public class Data extends Resource {
+/**
+ * Represents a generic object containing JSON data
+ */
+public class Data extends JsonResource {
 
   public static final String TYPE_PUBLISHED = "com.streamx.blueprints.data.published.v1";
   public static final String TYPE_UNPUBLISHED = "com.streamx.blueprints.data.unpublished.v1";

@@ -1,4 +1,4 @@
-# Blueprint Sitemap Generating Service
+# Sitemap Generating Service
 
 Generates sitemap from exposed pages.
 

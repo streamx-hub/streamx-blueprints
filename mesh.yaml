@@ -90,6 +90,15 @@ descriptors:
       downloaded-web-resources:
         binding: "http-structured-json"
 
+  event-converter:
+    type: "processing"
+    incoming:
+      resources:
+        binding: "http-structured-json"
+    outgoing:
+      indexable-resources:
+        binding: "http-structured-json"
+
   rendering-engine:
     type: "processing"
     incoming:
@@ -337,6 +346,16 @@ processing:
           topic: inboxes/assets
         downloaded-web-resources:
           topic: inboxes/web-resources
+
+  blueprint-event-converter:
+    containers:
+    - image: event-converter
+      incoming:
+        resources:
+          topic: relays/data,relays/aggregated-data
+      outgoing:
+        indexable-resources:
+          topic: outboxes/indexable-resources
 
   blueprint-rendering-engine:
     containers:
