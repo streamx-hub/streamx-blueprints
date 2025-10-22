@@ -11,7 +11,7 @@ public class StartupServiceProxy extends StartupService {
 
   @Override
   protected void setup(@Observes @Priority(PRIORITY) StartupEvent event) {
-    if (DockerUtils.isDockerAvailable()) {
+    if (DockerUtils.isDockerAvailable) {
       migrate();
     }
   }

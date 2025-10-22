@@ -16,11 +16,9 @@ public class OpenSearchContainer implements QuarkusTestResourceLifecycleManager 
       .withEnv("discovery.type", "single-node")
       .withExposedPorts(EXPOSED_PORT);
 
-  private final boolean isDockerAvailable = DockerUtils.isDockerAvailable();
-
   @Override
   public Map<String, String> start() {
-    if (isDockerAvailable) {
+    if (DockerUtils.isDockerAvailable) {
       container.start();
 
       String host = container.getHost();
@@ -32,7 +30,7 @@ public class OpenSearchContainer implements QuarkusTestResourceLifecycleManager 
 
   @Override
   public void stop() {
-    if (isDockerAvailable) {
+    if (DockerUtils.isDockerAvailable) {
       container.stop();
     }
   }

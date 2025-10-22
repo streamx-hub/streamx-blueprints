@@ -7,12 +7,13 @@ import org.testcontainers.DockerClientFactory;
 final class DockerUtils {
 
   private static final Logger log = LoggerFactory.getLogger(OpenSearchContainer.class);
+  static final boolean isDockerAvailable = isDockerAvailable();
 
   private DockerUtils() {
     // no instances
   }
 
-  public static boolean isDockerAvailable() {
+  private static boolean isDockerAvailable() {
     try {
       DockerClientFactory.instance().client();
       return true;

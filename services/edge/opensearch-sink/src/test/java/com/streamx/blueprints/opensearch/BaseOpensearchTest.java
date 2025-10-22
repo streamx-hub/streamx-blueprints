@@ -11,7 +11,7 @@ public abstract class BaseOpensearchTest {
   @BeforeAll
   static void assumeDockerIsAvailable() {
     assumeTrue(
-        DockerUtils.isDockerAvailable(),
+        DockerUtils.isDockerAvailable,
         "Not able to run opensearch docker container"
     );
   }
