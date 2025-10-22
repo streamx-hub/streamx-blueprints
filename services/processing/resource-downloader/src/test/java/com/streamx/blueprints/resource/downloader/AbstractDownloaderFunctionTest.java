@@ -1,4 +1,4 @@
-package com.streamx.blueprints.resourcedownloader;
+package com.streamx.blueprints.resource.downloader;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -7,7 +7,7 @@ import static org.awaitility.Awaitility.await;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.DownloadRequest;
 import com.streamx.blueprints.data.Resource;
-import com.streamx.blueprints.resourcedownloader.testutils.TestWebServer;
+import com.streamx.blueprints.resource.downloader.testutils.TestWebServer;
 import io.cloudevents.CloudEvent;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;

@@ -1,8 +1,8 @@
-package com.streamx.blueprints.resourcedownloader;
+package com.streamx.blueprints.resource.downloader;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.DownloadRequest;
-import com.streamx.blueprints.resourcedownloader.testutils.TestWebServer;
+import com.streamx.blueprints.resource.downloader.testutils.TestWebServer;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import java.io.IOException;

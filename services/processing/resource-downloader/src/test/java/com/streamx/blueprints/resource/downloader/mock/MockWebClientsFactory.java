@@ -1,4 +1,4 @@
-package com.streamx.blueprints.resourcedownloader.mock;
+package com.streamx.blueprints.resource.downloader.mock;
 
 import static org.mockito.Mockito.mock;
 

@@ -1,4 +1,4 @@
-package com.streamx.blueprints.resourcedownloader.testutils;
+package com.streamx.blueprints.resource.downloader.testutils;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
