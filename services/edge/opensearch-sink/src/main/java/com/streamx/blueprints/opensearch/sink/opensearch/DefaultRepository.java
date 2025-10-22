@@ -133,10 +133,11 @@ public class DefaultRepository {
           new IndexCommand(new IndexEntry(DEFAULT_INDEX_NAME, path))
       );
       String payload = objectMapper.writeValueAsString(defaultDocument);
+      String singleLinePayload = payload.replaceAll("\\r?\\n", "");
       return """
           %s
           %s
-          """.formatted(indexCommand, payload);
+          """.formatted(indexCommand, singleLinePayload);
     } catch (JsonProcessingException e) {
       throw new RuntimeException(e);
     }

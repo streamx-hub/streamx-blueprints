@@ -37,6 +37,9 @@ public class CloudEventUtils {
     // no instance
   }
 
+  /**
+   * @throws IllegalStateException when the event's data cannot be converted to the provided type
+   */
   @Nullable
   public static <T> T getData(CloudEvent cloudEvent, Class<T> clazz) {
     CloudEventData cloudEventData = cloudEvent.getData();

@@ -1,4 +1,4 @@
-# Blueprint Web Server
+# Web Server Sink
 
 Stores and serves pages, fragments, assets and web resources via HTTP at path resolved from Quasar key metadata value:
 `<namespace>/<key-without-namespace>`
