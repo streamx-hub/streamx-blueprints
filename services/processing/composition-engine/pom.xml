@@ -16,7 +16,6 @@
     <dependency>
       <groupId>com.streamx</groupId>
       <artifactId>content-parser</artifactId>
-      <version>${streamx.version}</version>
     </dependency>
   </dependencies>
 
