@@ -4,12 +4,12 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 
+import com.streamx.blueprints.opensearch.BaseOpensearchTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-class DefaultRepositoryTest {
-
+class DefaultRepositoryTest extends BaseOpensearchTest {
 
   @Test
   void testSearchByTemplateWithRequestParams() {

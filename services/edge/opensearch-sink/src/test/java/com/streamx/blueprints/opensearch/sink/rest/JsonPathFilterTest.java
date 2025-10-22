@@ -5,22 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.streamx.blueprints.opensearch.NoOpensearchProfile;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.TestProfile;
-import jakarta.inject.Inject;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-@QuarkusTest
-@TestProfile(NoOpensearchProfile.class)
 class JsonPathFilterTest {
 
-  @Inject
-  ObjectMapper objectMapper;
-
-  @Inject
-  JsonPathFilter uut;
+  private static final ObjectMapper objectMapper = new ObjectMapper();
+  private final JsonPathFilter uut = new JsonPathFilter();
 
   @Test
   void shouldReturnEmptyJsonNodeForNoJsonPathSpecified() {

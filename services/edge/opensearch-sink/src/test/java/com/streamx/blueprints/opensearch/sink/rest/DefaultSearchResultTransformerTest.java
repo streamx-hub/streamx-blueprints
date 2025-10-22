@@ -3,15 +3,12 @@ package com.streamx.blueprints.opensearch.sink.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.streamx.blueprints.opensearch.NoOpensearchProfile;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-@TestProfile(NoOpensearchProfile.class)
 class DefaultSearchResultTransformerTest {
 
   @Inject

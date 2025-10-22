@@ -1,12 +1,23 @@
 package com.streamx.blueprints.opensearch;
 
+import static org.mockito.Mockito.doReturn;
+
+import com.streamx.blueprints.opensearch.sink.SearchEdgeServiceSink;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.junit.mockito.InjectSpy;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-@TestProfile(TypeNotRequiredProfile.class)
 public class TypeNotRequiredTest extends SearchEdgeServiceTestBase {
+
+  @InjectSpy
+  SearchEdgeServiceSink sink;
+
+  @BeforeEach
+  void configureService() {
+    doReturn(false).when(sink).isTypeRequired();
+  }
 
   @Test
   void shouldIndexResourceWithoutType() {

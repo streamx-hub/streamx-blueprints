@@ -40,7 +40,7 @@ public class SearchEdgeServiceSink {
     log.tracef("Indexing resource: key %s, event type %s, event time %s, resource type %s",
         key, eventType, eventTime, resourceType);
 
-    if (isUnpublish(eventType) || StringUtils.isNotBlank(resourceType) || !typeRequired) {
+    if (isUnpublish(eventType) || StringUtils.isNotBlank(resourceType) || !isTypeRequired()) {
       return updateIndex(key, eventType, resource, resourceType);
     }
     return Uni.createFrom().voidItem();
@@ -59,6 +59,10 @@ public class SearchEdgeServiceSink {
 
     log.tracef("Skipping storing of page with event type %s", eventType);
     return Uni.createFrom().voidItem();
+  }
+
+  public boolean isTypeRequired() {
+    return typeRequired;
   }
 
   private static boolean isPublish(String eventType) {
