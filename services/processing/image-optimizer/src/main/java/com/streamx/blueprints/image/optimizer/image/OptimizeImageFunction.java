@@ -103,7 +103,7 @@ public class OptimizeImageFunction {
   private Asset createOptimizedImage(Asset originalImage, String filePath) {
     try {
       byte[] optimizedImageBytes = imageOptimizer.asWebpImage(
-          originalImage.getContent().array()
+          originalImage.getContentAsBytes()
       );
       return new Asset(optimizedImageBytes);
     } catch (Exception e) {

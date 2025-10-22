@@ -83,7 +83,7 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
   }
 
   private IndexableResourceContent getIndexableResource(Page page) {
-    var input = new ByteArrayInputStream(page.getContent().array());
+    var input = new ByteArrayInputStream(page.getContentAsBytes());
     String title = null;
     TikaContent content = parser.parse(input);
     TikaMetadata metadata = content.getMetadata();

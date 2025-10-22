@@ -87,11 +87,10 @@ public class WebServerSink {
   }
 
   private <T extends Resource> byte[] getDataToStore(T resource, boolean isHtmlResource) {
-    ByteBuffer content = resource.getContent();
     if (isHtmlResource) {
-      return urlIncludeReplacer.replace(content).array();
+      return urlIncludeReplacer.replace(resource.getContent()).array();
     } else {
-      return content.array();
+      return resource.getContentAsBytes();
     }
   }
 

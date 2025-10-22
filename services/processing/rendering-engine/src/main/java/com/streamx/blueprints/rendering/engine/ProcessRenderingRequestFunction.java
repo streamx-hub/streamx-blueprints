@@ -181,7 +181,7 @@ public class ProcessRenderingRequestFunction {
 
   private Map<String, Object> readValue(Data data) {
     try {
-      return objectMapper.readValue(data.getContent().array(), new TypeReference<>() {
+      return objectMapper.readValue(data.getContentAsBytes(), new TypeReference<>() {
       });
     } catch (IOException e) {
       throw new IllegalStateException("Cannot parse data", e);
