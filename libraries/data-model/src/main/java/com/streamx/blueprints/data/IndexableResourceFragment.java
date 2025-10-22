@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.nio.ByteBuffer;
 
 /**
- * Represents fragment to be indexed in search.
+ * Represents JSON fragment to be indexed in search.
  */
-public class IndexableResourceFragment extends Resource {
+public class IndexableResourceFragment extends JsonResource {
 
   public static final String TYPE_PUBLISHED =
       "com.streamx.blueprints.indexable-resource-fragment.published.v1";

@@ -6,9 +6,9 @@ import java.nio.ByteBuffer;
 import java.util.Set;
 
 /**
- * Represents data to be indexed in search.
+ * Represents JSON data to be indexed in search.
  */
-public class IndexableResource extends Resource {
+public class IndexableResource extends JsonResource {
 
   public static final String TYPE_PUBLISHED =
       "com.streamx.blueprints.indexable-resource.published.v1";
