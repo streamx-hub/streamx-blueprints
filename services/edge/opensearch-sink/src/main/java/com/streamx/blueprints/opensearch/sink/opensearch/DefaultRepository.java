@@ -29,7 +29,49 @@ import org.jboss.logging.Logger;
 @ApplicationScoped
 public class DefaultRepository {
 
-  public static final String DEFAULT_INDEX_NAME = "default";
+  private static final String DEFAULT_INDEX_NAME = "default";
+
+  private static final String UPDATE_SECTION_TEMPLATE = """
+      {
+        "bool": {
+          "must": [{
+            "nested": {
+              "path": "fragments",
+              "query": {
+                "bool": {
+                  "must": [{
+                    "term": {
+                      "fragments.key": %s
+                    }
+                  }, {
+                    "range": {
+                      "fragments.eventTime": {
+                        "lt": %s
+                      }
+                    }
+                  }]
+                }
+              }
+            }
+          }]
+        }
+      }
+      """;
+
+
+  private static final String UPDATE_FRAGMENTS_BY_QUERY_COMMAND_TEMPLATE = """
+      {
+        "query": %s,
+        "script" : {
+          "id": "updateFragments",
+          "params" : {
+            "key" : %s,
+            "eventTime": %s,
+            "payload": %s
+          }
+        }
+      }
+      """;
 
   @Inject
   Logger log;
@@ -147,8 +189,9 @@ public class DefaultRepository {
       var eventTime = objectMapper.writeValueAsString(fragment.eventTime());
       var payload = fragment.payload();
 
-      var querySection = createUpdateSection(key, eventTime);
-      var jsonEntity = createUpdateFragmentsByQueryCommand(querySection, key, eventTime, payload);
+      var querySection = UPDATE_SECTION_TEMPLATE.formatted(key, eventTime);
+      var jsonEntity = UPDATE_FRAGMENTS_BY_QUERY_COMMAND_TEMPLATE.formatted(querySection, key,
+          eventTime, payload);
 
       request.setJsonEntity(jsonEntity);
       request.addParameter("conflicts", "proceed");
@@ -159,51 +202,6 @@ public class DefaultRepository {
     } catch (JsonProcessingException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private static String createUpdateFragmentsByQueryCommand(String querySection,
-      String key, String eventTime, String payload) {
-    return """
-        {
-          "query": %s,
-          "script" : {
-            "id": "updateFragments",
-            "params" : {
-              "key" : %s,
-              "eventTime": %s,
-              "payload": %s
-            }
-          }
-        }
-        """.formatted(querySection, key, eventTime, payload);
-  }
-
-  private static String createUpdateSection(String key, String eventTime) {
-    return """
-        {
-            "bool": {
-              "must": [{
-                "nested": {
-                  "path": "fragments",
-                  "query": {
-                    "bool": {
-                      "must": [{
-                        "term": {
-                          "fragments.key": %s
-                        }
-                      }, {
-                        "range": {
-                          "fragments.eventTime": {
-                            "lt": %s
-                          }
-                        }
-                      }]
-                    }
-                  }
-                }
-              }]
-            }
-          }""".formatted(key, eventTime);
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
@@ -241,10 +239,14 @@ public class DefaultRepository {
     var completableFuture = new CompletableFuture<Response>();
 
     var responseListener = new CompletableFutureResponseListener(completableFuture);
-    var cancellable = client.performRequestAsync(request, responseListener);
+    var cancellable = getClient().performRequestAsync(request, responseListener);
 
     return Uni.createFrom().completionStage(completableFuture)
         .onCancellation().invoke(cancellable::cancel);
+  }
+
+  public RestClient getClient() {
+    return client;
   }
 
   private static class CompletableFutureResponseListener implements ResponseListener {

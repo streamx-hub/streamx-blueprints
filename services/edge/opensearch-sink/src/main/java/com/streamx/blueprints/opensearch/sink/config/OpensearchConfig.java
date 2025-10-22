@@ -18,7 +18,7 @@ public class OpensearchConfig {
   @ConfigProperty(name = PN_MIGRATION_SCRIPTS_LOCATIONS,
       defaultValue = "classpath:opensearch/service-init"
   )
-  List<String> migrationScriptsLocation;
+  List<String> migrationScriptsLocations;
 
   @ApplicationScoped
   ObjectMapper objectMapper() {
@@ -26,9 +26,9 @@ public class OpensearchConfig {
   }
 
   @ApplicationScoped
-  ElasticsearchEvolution elasticsearchEvolution(RestClient client) {
+  public ElasticsearchEvolution elasticsearchEvolution(RestClient client) {
     return ElasticsearchEvolution.configure()
-        .setLocations(migrationScriptsLocation)
+        .setLocations(migrationScriptsLocations)
         .load(client);
   }
 }

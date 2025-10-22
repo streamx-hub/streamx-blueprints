@@ -6,7 +6,7 @@ import org.testcontainers.DockerClientFactory;
 
 final class DockerUtils {
 
-  private static final Logger log = LoggerFactory.getLogger(OpenSearchContainer.class);
+  private static final Logger log = LoggerFactory.getLogger(OpensearchContainer.class);
   static final boolean isDockerAvailable = isDockerAvailable();
 
   private DockerUtils() {
