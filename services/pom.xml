@@ -18,4 +18,49 @@
     <module>edge</module>
   </modules>
 
+  <dependencies>
+    <dependency>
+      <groupId>com.streamx</groupId>
+      <artifactId>reactive-messaging-http-cloudevents</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.streamx.blueprints</groupId>
+      <artifactId>data-model</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.streamx.blueprints</groupId>
+      <artifactId>cloud-events-support</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-container-image-docker</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-health</artifactId>
+    </dependency>
+
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>io.smallrye.reactive</groupId>
+      <artifactId>smallrye-reactive-messaging-in-memory</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5-mockito</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
 </project>

@@ -16,25 +16,8 @@
   <dependencies>
     <dependency>
       <groupId>com.streamx</groupId>
-      <artifactId>reactive-messaging-http-cloudevents</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.streamx.blueprints</groupId>
-      <artifactId>cloud-events-support</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.streamx.blueprints</groupId>
-      <artifactId>data-model</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.streamx</groupId>
       <artifactId>content-parser</artifactId>
       <version>${streamx.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkiverse.reactivemessaging.http</groupId>
-      <artifactId>quarkus-reactive-messaging-http</artifactId>
-      <version>${quarkus-reactive-messaging-http.version}</version>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
@@ -43,33 +26,8 @@
 
     <!-- Test dependencies -->
     <dependency>
-      <groupId>io.smallrye.reactive</groupId>
-      <artifactId>smallrye-reactive-messaging-in-memory</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-junit5</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-junit5-mockito</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>io.rest-assured</groupId>
       <artifactId>rest-assured</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.awaitility</groupId>
-      <artifactId>awaitility</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
