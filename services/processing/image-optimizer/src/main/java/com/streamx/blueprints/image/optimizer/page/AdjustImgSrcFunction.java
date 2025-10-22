@@ -36,11 +36,11 @@ public class AdjustImgSrcFunction {
   }
 
   /**
-   * Receives the page from incoming channel and if the {@code action} is PUBLISH - adjusts all
-   * values of img src tags to use optimized version of the images, if such optimized images are
-   * available. The adjusted page is published to the outgoing channel. When there are no
-   * adjustments to be made, or when the {@code action} is UNPUBLISH - the message is relayed to
-   * outgoing channel with no changes
+   * Receives the page from incoming channel and if the {@code eventType} is Page.TYPE_PUBLISHED -
+   * adjusts all values of img src tags to use optimized version of the images, if such optimized
+   * images are available. The adjusted page is published to the outgoing channel. When there are no
+   * adjustments to be made, or when the {@code eventType} is Page.TYPE_UNPUBLISHED - the message is
+   * relayed to the outgoing channel with no changes
    *
    * @return The adjusted page message or relayed event if nothing to adjust
    */
@@ -67,21 +67,23 @@ public class AdjustImgSrcFunction {
     }
 
     try {
-      return createAdjustedPageEvent(page, event);
+      return createAdjustedPageEvent(page, pagePath, event);
     } catch (Exception e) {
-      log.errorf(e, "Error adjusting content of page " + pagePath);
+      log.errorf(e, "Error adjusting content of page %s", pagePath);
       return event;
     }
   }
 
-  private CloudEvent createAdjustedPageEvent(Page page, CloudEvent pageEvent) {
+  private CloudEvent createAdjustedPageEvent(Page page, String pagePath, CloudEvent pageEvent) {
     String pageContent = page.getContentAsString();
     Optional<String> adjustedContent = imgSrcAdjuster.adjustPageContent(pageContent);
     if (adjustedContent.isEmpty()) {
+      log.tracef("Relaying page %s with no adjustments", pagePath);
       return pageEvent;
     }
 
     Page adjustedPage = new Page(adjustedContent.get());
+    log.tracef("Publishing adjusted page %s", pagePath);
     return CloudEventUtils.eventCopyWithData(pageEvent, adjustedPage).build();
   }
 }

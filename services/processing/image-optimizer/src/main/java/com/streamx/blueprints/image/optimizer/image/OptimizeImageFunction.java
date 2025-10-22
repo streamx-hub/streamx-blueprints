@@ -31,7 +31,7 @@ public class OptimizeImageFunction {
   Configuration configuration;
 
   @Inject
-  AssetEventTypeStore assetActionStore;
+  AssetEventTypeStore assetEventTypeStore;
 
   @Inject
   OptimizedImagePathsService optimizedImagePathsService;
@@ -59,7 +59,7 @@ public class OptimizeImageFunction {
     String filePath = CloudEventUtils.getSubject(event);
     log.tracef("Processing %s", filePath);
 
-    assetActionStore.registerAsset(filePath, event.getType());
+    assetEventTypeStore.registerAsset(filePath, event.getType());
 
     if (filePath.endsWith(optimizedImageFileNameSuffixAndExtension)) {
       log.tracef("Skipping already optimized image [%s]", filePath);
