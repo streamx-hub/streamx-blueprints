@@ -5,12 +5,15 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nullable;
 import java.nio.ByteBuffer;
 
 /**
  * Represents object containing content.
  */
 public class Resource extends Typed {
+
+  @Nullable
   private final ByteBuffer content;
 
   public Resource(ByteBuffer content) {
@@ -46,6 +49,11 @@ public class Resource extends Typed {
   @JsonIgnore
   public String getContentAsString() {
     return contentAsString(content);
+  }
+
+  @JsonIgnore
+  public byte[] getContentAsBytes() {
+    return content == null ? null : content.array();
   }
 
   private static ByteBuffer wrapBytes(byte[] content) {

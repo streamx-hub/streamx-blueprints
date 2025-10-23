@@ -126,7 +126,7 @@ abstract class AbstractDownloaderFunctionTest {
   protected void assertEventContent(CloudEvent actualEvent, byte[] expectedContent) {
     Resource resource = CloudEventUtils.getData(actualEvent, Resource.class);
     assertThat(resource).isNotNull();
-    byte[] resourceContent = resource.getContent().array();
+    byte[] resourceContent = resource.getContentAsBytes();
     assertThat(resourceContent).isEqualTo(expectedContent);
   }
 
