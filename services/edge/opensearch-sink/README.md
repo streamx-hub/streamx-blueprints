@@ -91,8 +91,8 @@ Incoming channels:
 1.Security plugin disabled:
 * Opensearch Sink Service environmental variables:
 ```
-MP_MESSAGING_INCOMING_INDEXABLE-RESOURCES_TOPIC: "persistent://streamx/outboxes/indexable-resources"
-MP_MESSAGING_INCOMING_INDEXABLE-RESOURCE-FRAGMENTS_TOPIC: "persistent://streamx/outboxes/indexable-resource-fragments"
+MP_MESSAGING_INCOMING_INDEXABLE-RESOURCES_REF: "persistent://streamx/outbox.indexable-resources"
+MP_MESSAGING_INCOMING_INDEXABLE-RESOURCE-FRAGMENTS_REF: "persistent://streamx/outbox.indexable-resource-fragments"
 QUARKUS_ELASTICSEARCH_HOSTS: "localhost:9200"
 ```
 * Opensearch environmental variables:
@@ -105,8 +105,8 @@ discovery.type: "single-node"
 2.Security plugin enabled:
 * Opensearch Sink Service environmental variables:
 ```
-MP_MESSAGING_INCOMING_INDEXABLE-RESOURCES_TOPIC: "persistent://streamx/outboxes/indexable-resources"
-MP_MESSAGING_INCOMING_INDEXABLE-RESOURCE-FRAGMENTS_TOPIC: "persistent://streamx/outboxes/indexable-resource-fragments"
+MP_MESSAGING_INCOMING_INDEXABLE-RESOURCES_REF: "persistent://streamx/outbox.indexable-resources"
+MP_MESSAGING_INCOMING_INDEXABLE-RESOURCE-FRAGMENTS_REF: "persistent://streamx/outbox.indexable-resource-fragments"
 QUARKUS_ELASTICSEARCH_USERNAME: "admin"
 QUARKUS_ELASTICSEARCH_PASSWORD: "myStrongPassword123@456"
 QUARKUS_ELASTICSEARCH_HOSTS: "localhost:9200"

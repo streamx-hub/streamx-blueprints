@@ -6,35 +6,35 @@ default:
 sources:
   resources-source:
     outgoing:
-      - topic: "inboxes/pages"
+      - ref: "inbox.pages"
         produces:
           - "com.streamx.blueprints.page.published.v1"
           - "com.streamx.blueprints.page.unpublished.v1"
-      - topic: "inboxes/web-resources"
+      - ref: "inbox.web-resources"
         produces:
           - "com.streamx.blueprints.web-resource.published.v1"
           - "com.streamx.blueprints.web-resource.unpublished.v1"
-      - topic: "inboxes/assets"
+      - ref: "inbox.assets"
         produces:
           - "com.streamx.blueprints.asset.published.v1"
           - "com.streamx.blueprints.asset.unpublished.v1"
-      - topic: "inboxes/layouts"
+      - ref: "inbox.layouts"
         produces:
           - "com.streamx.blueprints.layout.published.v1"
           - "com.streamx.blueprints.layout.unpublished.v1"
-      - topic: "inboxes/compositions"
+      - ref: "inbox.compositions"
         produces:
           - "com.streamx.blueprints.composition.published.v1"
           - "com.streamx.blueprints.composition.unpublished.v1"
-      - topic: "inboxes/data"
+      - ref: "inbox.data"
         produces:
           - "com.streamx.blueprints.data.published.v1"
           - "com.streamx.blueprints.data.unpublished.v1"
-      - topic: "inboxes/renderers"
+      - ref: "inbox.renderers"
         produces:
           - "com.streamx.blueprints.renderer.published.v1"
           - "com.streamx.blueprints.renderer.unpublished.v1"
-      - topic: "inboxes/rendering-contexts"
+      - ref: "inbox.rendering-contexts"
         produces:
           - "com.streamx.blueprints.rendering-context.published.v1"
           - "com.streamx.blueprints.rendering-context.unpublished.v1"
@@ -183,18 +183,18 @@ descriptors:
 ingestion:
   rest-ingestion:
     containers:
-    - environment:
-        QUARKUS_HTTP_AUTH_PERMISSION_BEARER_POLICY: permit
+      - environment:
+          QUARKUS_HTTP_AUTH_PERMISSION_BEARER_POLICY: permit
 
 processing:
   web-resources-relay:
     containers:
       - incoming:
           incoming-web-resources:
-            topic: inboxes/web-resources
+            ref: inbox.web-resources
         outgoing:
           outgoing-web-resources:
-            topic: relays/web-resources
+            ref: relay.web-resources
         environment:
           STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
 
@@ -202,10 +202,10 @@ processing:
     containers:
       - incoming:
           incoming-assets:
-            topic: inboxes/assets
+            ref: inbox.assets
         outgoing:
           outgoing-assets:
-            topic: outboxes/assets
+            ref: outbox.assets
         environment:
           STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
 
@@ -213,10 +213,10 @@ processing:
     containers:
       - incoming:
           incoming-fragments:
-            topic: inboxes/fragments
+            ref: inbox.fragments
         outgoing:
           outgoing-fragments:
-            topic: relays/fragments
+            ref: relay.fragments
         environment:
           STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
 
@@ -224,43 +224,43 @@ processing:
     containers:
       - incoming:
           messages:
-            topic: relays/fragments
+            ref: relay.fragments
         outgoing:
           relayed-messages:
-            topic: outboxes/fragments
+            ref: outbox.fragments
         environment:
           STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
 
   blueprint-image-optimizer:
     containers:
-    - image: image-optimizer
-      incoming:
-        incoming-assets:
-          topic: inboxes/assets
-        incoming-pages:
-          topic: inboxes/pages
-      outgoing:
-        optimized-assets:
-          topic: inboxes/assets
-        outgoing-pages:
-          topic: relays/pages
-      environment:
-        STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_OPTIMIZED_FILE_PATHS_PATTERN: ".*(png|gif|jpg|jpeg)$"
-        STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_ADJUSTED_PAGE_PATHS_PATTERN: ".*"
+      - image: image-optimizer
+        incoming:
+          incoming-assets:
+            ref: inbox.assets
+          incoming-pages:
+            ref: inbox.pages
+        outgoing:
+          optimized-assets:
+            ref: inbox.assets
+          outgoing-pages:
+            ref: relay.pages
+        environment:
+          STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_OPTIMIZED_FILE_PATHS_PATTERN: ".*(png|gif|jpg|jpeg)$"
+          STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_ADJUSTED_PAGE_PATHS_PATTERN: ".*"
 
   blueprint-json-aggregator:
     containers:
       - image: json-aggregator
         incoming:
           data:
-            topic: relays/data
+            ref: relay.data
           multivalued-data:
-            topic: relays/data
+            ref: relay.data
         outgoing:
           aggregated-data:
-            topic: relays/aggregated-data
+            ref: relay.aggregated-data
           aggregated-multivalued-data:
-            topic: relays/data
+            ref: relay.data
         environment:
           STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_0__MASTER_NAMESPACE: "pim"
           STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_0__OPTIONAL_NAMESPACES: "price,reviews"
@@ -275,43 +275,43 @@ processing:
   # Instance 1 of external-references-rewriter: process web resources
   blueprint-web-resources-external-references-rewriter:
     containers:
-    - image: external-references-rewriter
-      incoming:
-        incoming-resources:
-          topic: relays/web-resources
-      outgoing:
-        outgoing-resources:
-          topic: outboxes/web-resources
-        download-requests:
-          topic: relays/download-requests
-      environment:
-        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.tech/"
-        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_PROCESSABLE_PAYLOAD_TYPES: "web-resource"
-        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_XML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "/*[local-name()='urlset']/*[local-name()='url']/*[local-name()='loc']"
-        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_YAML_EXTERNAL_RESOURCE_JSONPATH_SELECTORS: "$.indices.*.target"
-        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_PAGE_TYPE: "page/external"
-        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_WEB_RESOURCE_TYPE: "web-resource/external"
-        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_ASSET_TYPE: "asset/external"
+      - image: external-references-rewriter
+        incoming:
+          incoming-resources:
+            ref: relay.web-resources
+        outgoing:
+          outgoing-resources:
+            ref: outbox.web-resources
+          download-requests:
+            ref: relay.download-requests
+        environment:
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.tech/"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_PROCESSABLE_PAYLOAD_TYPES: "web-resource"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_XML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "/*[local-name()='urlset']/*[local-name()='url']/*[local-name()='loc']"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_YAML_EXTERNAL_RESOURCE_JSONPATH_SELECTORS: "$.indices.*.target"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_PAGE_TYPE: "page/external"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_WEB_RESOURCE_TYPE: "web-resource/external"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_ASSET_TYPE: "asset/external"
 
   # Instance 2 of external-references-rewriter: process pages
   blueprint-pages-external-references-rewriter:
     containers:
-    - image: external-references-rewriter
-      incoming:
-        incoming-resources:
-          topic: relays/pages
-      outgoing:
-        outgoing-resources:
-          topic: outboxes/pages
-        download-requests:
-          topic: relays/download-requests
-      environment:
-        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.tech/"
-        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_PROCESSABLE_PAYLOAD_TYPES: "page/external"
-        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_HTML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "//img/@src,//link[@rel='stylesheet']/@href,//script/@src"
-        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_PAGE_TYPE: "page/external"
-        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_WEB_RESOURCE_TYPE: "web-resource/external"
-        STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_ASSET_TYPE: "asset/external"
+      - image: external-references-rewriter
+        incoming:
+          incoming-resources:
+            ref: relay.pages
+        outgoing:
+          outgoing-resources:
+            ref: outbox.pages
+          download-requests:
+            ref: relay.download-requests
+        environment:
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.tech/"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_PROCESSABLE_PAYLOAD_TYPES: "page/external"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_HTML_EXTERNAL_RESOURCE_XPATH_SELECTORS: "//img/@src,//link[@rel='stylesheet']/@href,//script/@src"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_PAGE_TYPE: "page/external"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_WEB_RESOURCE_TYPE: "web-resource/external"
+          STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_ASSET_TYPE: "asset/external"
 
   # Instance 3 of external-references-rewriter: process data
   blueprint-data-external-references-rewriter:
@@ -319,12 +319,12 @@ processing:
       - image: external-references-rewriter
         incoming:
           incoming-resources:
-            topic: inboxes/data
+            ref: inbox.data
         outgoing:
           outgoing-resources:
-            topic: relays/data
+            ref: relay.data
           download-requests:
-            topic: relays/download-requests
+            ref: relay.download-requests
         environment:
           STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_BASE_URL_FOR_RELATIVE_PATHS: "https://www.streamx.tech/"
           STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_PROCESSABLE_PAYLOAD_TYPES: "product/simple,category"
@@ -335,75 +335,75 @@ processing:
 
   blueprint-resource-downloader:
     containers:
-    - image: resource-downloader
-      incoming:
-        download-requests:
-          topic: relays/download-requests
-      outgoing:
-        downloaded-pages:
-          topic: inboxes/pages
-        downloaded-assets:
-          topic: inboxes/assets
-        downloaded-web-resources:
-          topic: inboxes/web-resources
+      - image: resource-downloader
+        incoming:
+          download-requests:
+            ref: relay.download-requests
+        outgoing:
+          downloaded-pages:
+            ref: inbox.pages
+          downloaded-assets:
+            ref: inbox.assets
+          downloaded-web-resources:
+            ref: inbox.web-resources
 
   blueprint-event-converter:
     containers:
-    - image: event-converter
-      incoming:
-        resources:
-          topic: relays/data,relays/aggregated-data
-      outgoing:
-        indexable-resources:
-          topic: outboxes/indexable-resources
+      - image: event-converter
+        incoming:
+          resources:
+            ref: relay.data,relay.aggregated-data
+        outgoing:
+          indexable-resources:
+            ref: outbox.indexable-resources
 
   blueprint-rendering-engine:
     containers:
       - image: rendering-engine
         incoming:
           data:
-            topic: relays/aggregated-data,relays/collected-data
+            ref: relay.aggregated-data,relay.collected-data
           renderers:
-            topic: inboxes/renderers
+            ref: inbox.renderers
           rendering-contexts:
-            topic: inboxes/rendering-contexts
+            ref: inbox.rendering-contexts
           incoming-rendering-requests:
-            topic: relays/rendering-requests
+            ref: relay.rendering-requests
         outgoing:
           outgoing-rendering-requests:
-            topic: relays/rendering-requests
+            ref: relay.rendering-requests
           pages:
-            topic: relays/pages
+            ref: relay.pages
           fragments:
-            topic: relays/fragments
+            ref: relay.fragments
 
   blueprint-composition-engine:
     containers:
-    - image: composition-engine
-      incoming:
-        layouts:
-          topic: inboxes/layouts
-        compositions:
-          topic: inboxes/compositions
-        incoming-page-compose-requests:
-          topic: relays/page-compose-requests
-      outgoing:
-        pages:
-          topic: relays/pages
-        outgoing-page-compose-requests:
-          topic: relays/page-compose-requests
+      - image: composition-engine
+        incoming:
+          layouts:
+            ref: inbox.layouts
+          compositions:
+            ref: inbox.compositions
+          incoming-page-compose-requests:
+            ref: relay.page-compose-requests
+        outgoing:
+          pages:
+            ref: relay.pages
+          outgoing-page-compose-requests:
+            ref: relay.page-compose-requests
 
   blueprint-data-collector:
     containers:
       - image: data-collector
         incoming:
           data:
-            topic: relays/aggregated-data,relays/collected-data
+            ref: relay.aggregated-data,relay.collected-data
         outgoing:
           collected-data:
-            topic: relays/collected-data
+            ref: relay.collected-data
           web-resources:
-            topic: outboxes/web-resources
+            ref: outbox.web-resources
         environment:
           STREAMX_BLUEPRINTS_DATA_COLLECTOR_WEB-RESOURCES_FILTERS: "collected_.*"
           STREAMX_BLUEPRINTS_DATA-COLLECTOR_DIRTY-CHECK_MAX-DIRTY-SEQUENCE-COUNT: "0"
@@ -421,10 +421,10 @@ processing:
       - image: sitemap-generator
         incoming:
           incoming-pages:
-            topic: relays/pages
+            ref: relay.pages
         outgoing:
           outgoing-sitemaps:
-            topic: outboxes/web-resources
+            ref: outbox.web-resources
         environment:
           STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_BASE_URL: "http://localhost:8081"
           STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_OUTPUT_KEY: "sitemap.xml"
@@ -436,59 +436,59 @@ processing:
       - image: indexable-resources-producer
         incoming:
           pages:
-            topic: relays/pages
+            ref: relay.pages
           fragments:
-            topic: relays/fragments
+            ref: relay.fragments
         outgoing:
           indexable-resources:
-            topic: outboxes/indexable-resources
+            ref: outbox.indexable-resources
           indexable-resource-fragments:
-            topic: outboxes/indexable-resource-fragments
+            ref: outbox.indexable-resource-fragments
         environment:
           STREAMX_BLUEPRINTS_INDEXABLE_RESOURCES_PRODUCER_INDEX_FRAGMENTS: "true"
 
 edge:
   blueprint-web-server:
     containers:
-    - image: web-server
-      incoming:
-        resources:
-          topic: outboxes/pages,outboxes/fragments,outboxes/assets,outboxes/web-resources
-      ports:
-      - "8081:8080"
-      environment:
-        # TODO change to STREAMX_EDGE_SERVICE_READINESS_CHECK_ENABLED: "false"
-        STREAMX_DELIVERY_SERVICE_READINESS_CHECK_ENABLED: "false"
+      - image: web-server
+        incoming:
+          resources:
+            ref: outbox.pages,outbox.fragments,outbox.assets,outbox.web-resources
+        ports:
+          - "8081:8080"
+        environment:
+          # TODO change to STREAMX_EDGE_SERVICE_READINESS_CHECK_ENABLED: "false"
+          STREAMX_DELIVERY_SERVICE_READINESS_CHECK_ENABLED: "false"
 
   blueprint-opensearch-sink:
     volumes:
       - name: "repository-volume"
     containers:
-    - image: opensearch-sink
-      incoming:
-        indexable-resources:
-          topic: outboxes/indexable-resources
-        indexable-resource-fragments:
-          topic: outboxes/indexable-resource-fragments
-      ports:
-        - "8082:8080"
-      volumes:
-        - "repository-volume:/usr/share/opensearch/data"
-      volumesFrom:
-        configs:
-          - "opensearch/service-init:/deployments/opensearch/service-init"
-      environment:
-        QUARKUS_ELASTICSEARCH_HOSTS: "blueprint-opensearch-sink.opensearch:9200"
-        STREAMX_BLUEPRINTS_OPENSEARCH-SINK_MIGRATION-SCRIPT-LOCATIONS: "classpath:opensearch/service-init,file:opensearch/service-init"
-        STREAMX_DELIVERY_SERVICE_READINESS_CHECK_ENABLED: "false"
-    - name: "opensearch"
-      image: "docker.io/opensearchproject/opensearch:2.16.0"
-      ports:
-        - "9201:9200"
-        - "9301:9300"
-      volumes:
-        - "repository-volume:/usr/share/opensearch/data"
-      environment:
-        DISABLE_SECURITY_PLUGIN: "true"
-        OPENSEARCH_INITIAL_ADMIN_PASSWORD: "myStrongPassword123@456"
-        discovery.type: "single-node"
+      - image: opensearch-sink
+        incoming:
+          indexable-resources:
+            ref: outbox.indexable-resources
+          indexable-resource-fragments:
+            ref: outbox.indexable-resource-fragments
+        ports:
+          - "8082:8080"
+        volumes:
+          - "repository-volume:/usr/share/opensearch/data"
+        volumesFrom:
+          configs:
+            - "opensearch/service-init:/deployments/opensearch/service-init"
+        environment:
+          QUARKUS_ELASTICSEARCH_HOSTS: "blueprint-opensearch-sink.opensearch:9200"
+          STREAMX_BLUEPRINTS_OPENSEARCH-SINK_MIGRATION-SCRIPT-LOCATIONS: "classpath:opensearch/service-init,file:opensearch/service-init"
+          STREAMX_DELIVERY_SERVICE_READINESS_CHECK_ENABLED: "false"
+      - name: "opensearch"
+        image: "docker.io/opensearchproject/opensearch:2.16.0"
+        ports:
+          - "9201:9200"
+          - "9301:9300"
+        volumes:
+          - "repository-volume:/usr/share/opensearch/data"
+        environment:
+          DISABLE_SECURITY_PLUGIN: "true"
+          OPENSEARCH_INITIAL_ADMIN_PASSWORD: "myStrongPassword123@456"
+          discovery.type: "single-node"

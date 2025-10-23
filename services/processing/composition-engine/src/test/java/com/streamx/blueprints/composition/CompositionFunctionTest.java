@@ -67,8 +67,8 @@ class CompositionFunctionTest {
   }
 
   private void simulateEmittedPageComposeRequestIsSentToIncomingChannel() {
-    // CompositionFunction should be configured to use the same topic for channels for both incoming
-    // and outgoing PageComposeRequests. Since InMemoryConnector operates on channels, not topics,
+    // CompositionFunction should be configured to use the same ref for channels for both incoming
+    // and outgoing PageComposeRequests. Since InMemoryConnector operates on channels, not refs,
     // it's not able to perform that. Simulate this manually here:
     doAnswer(invocationOnMock -> {
       @SuppressWarnings("unchecked")

@@ -66,10 +66,10 @@ Outgoing channels:
 ### Example environment variables config
 
 ```
-MP_MESSAGING_INCOMING_DATA_TOPIC: "persistent://streamx/inboxes/data"
-MP_MESSAGING_INCOMING_MULTIVALUED-DATA_TOPIC: "persistent://streamx/inboxes/data"
-MP_MESSAGING_OUTGOING_AGGREGATED-DATA_TOPIC: "persistent://streamx/relays/aggregated-data"
-MP_MESSAGING_OUTGOING_AGGREGATED-MULTIVALUED-DATA_TOPIC: "persistent://streamx/inboxes/data"
+MP_MESSAGING_INCOMING_DATA_REF: "persistent://streamx/inbox.data"
+MP_MESSAGING_INCOMING_MULTIVALUED-DATA_REF: "persistent://streamx/inbox.data"
+MP_MESSAGING_OUTGOING_AGGREGATED-DATA_REF: "persistent://streamx/relay.aggregated-data"
+MP_MESSAGING_OUTGOING_AGGREGATED-MULTIVALUED-DATA_REF: "persistent://streamx/inbox.data"
 STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_0__MASTER_NAMESPACE: "pim"
 STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_0__OPTIONAL_NAMESPACES: "price,reviews"
 STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_0__OUTPUT_TYPE: "product/variant"

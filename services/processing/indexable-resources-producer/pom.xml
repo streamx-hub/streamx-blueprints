@@ -13,7 +13,7 @@
   <name>StreamX Blueprints : Indexable Resources Producer</name>
 
   <properties>
-    <tika.version>2.0.2</tika.version>
+    <tika.version>2.1.0</tika.version>
   </properties>
 
   <dependencies>
@@ -37,16 +37,4 @@
     </dependency>
   </dependencies>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>${quarkus.platform.group-id}</groupId>
-        <artifactId>quarkus-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
 </project>

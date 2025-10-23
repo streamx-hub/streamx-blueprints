@@ -109,10 +109,10 @@ Outgoing channels:
 ### Example environment variables config
 
 ```
-MP_MESSAGING_INCOMING_INCOMING-ASSETS_TOPIC: "persistent://streamx/inboxes/assets"
-MP_MESSAGING_OUTGOING_OPTIMIZED-ASSETS_TOPIC: "persistent://streamx/inboxes/assets"
-MP_MESSAGING_INCOMING_INCOMING-PAGES_TOPIC: "persistent://streamx/inboxes/pages"
-MP_MESSAGING_OUTGOING_OUTGOING-PAGES_TOPIC: "persistent://streamx/outboxes/pages"
+MP_MESSAGING_INCOMING_INCOMING-ASSETS_REF: "persistent://streamx/inbox.assets"
+MP_MESSAGING_OUTGOING_OPTIMIZED-ASSETS_REF: "persistent://streamx/inbox.assets"
+MP_MESSAGING_INCOMING_INCOMING-PAGES_REF: "persistent://streamx/inbox.pages"
+MP_MESSAGING_OUTGOING_OUTGOING-PAGES_REF: "persistent://streamx/outbox.pages"
 STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_OPTIMIZED_FILE_PATHS_PATTERN: ".*(png|gif|jpg|jpeg)$"
 STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_OPTIMIZED_IMAGE_FILE_NAME-SUFFIX: "-optimized"
 STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_ADJUSTED_PAGE_PATHS_PATTERN: ".*"

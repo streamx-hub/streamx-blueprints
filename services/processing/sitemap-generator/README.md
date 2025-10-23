@@ -26,8 +26,8 @@ Outgoing channels:
 
 ```
 STREAMX_BLUEPRINTS_SITEMAP-GENERATOR_MATCH-KEY-PATTERNS_PATTERN1: "/*.html"
-MP_MESSAGING_INCOMING_INCOMING-PAGES_TOPIC: "persistent://streamx/inboxes/pages"
-MP_MESSAGING_OUTGOING_OUTGOING-SITEMAPS_TOPIC: "persistent://streamx/outboxes/web-resources"
+MP_MESSAGING_INCOMING_INCOMING-PAGES_REF: "persistent://streamx/inbox.pages"
+MP_MESSAGING_OUTGOING_OUTGOING-SITEMAPS_REF: "persistent://streamx/outbox.web-resources"
 STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_BASE_URL: "http://localhost:8081"
 STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_OUTPUT_KEY: "sitemap.xml"
 ```

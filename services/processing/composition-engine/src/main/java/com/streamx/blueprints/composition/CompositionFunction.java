@@ -4,6 +4,7 @@ import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Composition;
 import com.streamx.blueprints.data.Layout;
 import com.streamx.blueprints.data.Page;
+import com.streamx.blueprints.data.Resource;
 import com.streamx.content.parser.datainsert.DataInsertHandler;
 import com.streamx.content.parser.datainsert.Segment;
 import com.streamx.content.parser.datainsert.SegmentDefineHandler;
@@ -11,6 +12,7 @@ import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,9 +37,10 @@ public class CompositionFunction {
   @Outgoing(Channels.OUTGOING_PAGE_COMPOSE_REQUESTS)
   @Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
   public Multi<CloudEvent> consumeLayout(CloudEvent layout) {
-    if (CloudEventUtils.isPublishingType(layout.getType())) {
+    String eventType = layout.getType();
+    if (Layout.TYPE_PUBLISHED.equals(eventType)) {
       layoutsStore.put(layout.getSubject(), CloudEventUtils.getData(layout, Layout.class));
-    } else if (CloudEventUtils.isUnpublishingType(layout.getType())) {
+    } else if (Layout.TYPE_UNPUBLISHED.equals(eventType)) {
       layoutsStore.remove(layout.getSubject());
     }
     try {
@@ -51,22 +54,33 @@ public class CompositionFunction {
   @Outgoing(Channels.OUTGOING_PAGE_COMPOSE_REQUESTS)
   public CloudEvent consumeComposition(CloudEvent compositionEvent) {
     String compositionKey = compositionEvent.getSubject();
-    if (CloudEventUtils.isPublishingType(compositionEvent.getType())) {
+    String eventType = compositionEvent.getType();
+    OffsetDateTime eventTime = compositionEvent.getTime();
+
+    if (Composition.TYPE_PUBLISHED.equals(eventType)) {
       Composition composition = CloudEventUtils.getData(compositionEvent, Composition.class);
+      if (Resource.isEmpty(composition)) {
+        log.warnf("Skipping processing empty incoming composition %s", compositionKey);
+        return null;
+      }
       compositionsStore.put(compositionKey, composition);
       return CloudEventUtils.eventWithData(
           compositionKey,
           PageComposeRequest.TYPE_PUBLISHED,
           new PageComposeRequest(compositionKey, composition.getLayoutKey()),
-          compositionEvent.getTime());
-    } else if (CloudEventUtils.isUnpublishingType(compositionEvent.getType())) {
+          eventTime);
+    }
+
+    if (CloudEventUtils.isUnpublishingType(eventType)) {
       compositionsStore.remove(compositionKey);
       return CloudEventUtils.eventWithData(
           compositionKey,
           PageComposeRequest.TYPE_UNPUBLISHED,
           new PageComposeRequest(compositionKey, null),
-          compositionEvent.getTime());
+          eventTime);
     }
+
+    log.warnf("Skipping processing event %s of unexpected type: %s", compositionKey, eventType);
     return null;
   }
 

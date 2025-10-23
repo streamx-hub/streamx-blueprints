@@ -5,10 +5,10 @@
     * Do not use processing/edge service in image names
     * Service name should be short and describe service functionality - not the characteristics
     * Do not configure outgoing channels to "write back" to incoming channels
-    * Topics should have short and meaningful names
+    * Channel refs should have short and meaningful names
     * Service should have one responsibility. Break down service in to smaller single responsibility services.
     * Services should not relay data. We have dedicated service for that. Only generated and modified data should be emitted from service.
-    * Only edge services should read from outbox topics.
+    * Only edge services should read from outbox refs.
     * It's recommended to place all channel names used by a service into a Channels class as constants, making it easier to review the service's scope at a glance.
 
 * Incoming channels

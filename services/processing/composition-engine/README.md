@@ -68,9 +68,9 @@ Note: for the service to function correctly, the source (e.g. Pulsar topic) assi
 ### Example environment variables config
 
 ```
-MP_MESSAGING_INCOMING_LAYOUTS_TOPIC: "persistent://streamx/inboxes/layouts"
-MP_MESSAGING_INCOMING_COMPOSITIONS_TOPIC: "persistent://streamx/inboxes/compositions"
-MP_MESSAGING_INCOMING_INCOMING-PAGE-COMPOSE-REQUESTS_TOPIC: "persistent://streamx/relays/page-compose-requests"
-MP_MESSAGING_OUTGOING_PAGES_TOPIC: "persistent://streamx/outboxes/pages"
-MP_MESSAGING_OUTGOING_OUTGOING-PAGE-COMPOSE-REQUESTS_TOPIC: "persistent://streamx/relays/page-compose-requests"
+MP_MESSAGING_INCOMING_LAYOUTS_REF: "persistent://streamx/inbox.layouts"
+MP_MESSAGING_INCOMING_COMPOSITIONS_REF: "persistent://streamx/inbox.compositions"
+MP_MESSAGING_INCOMING_INCOMING-PAGE-COMPOSE-REQUESTS_REF: "persistent://streamx/relay.page-compose-requests"
+MP_MESSAGING_OUTGOING_PAGES_REF: "persistent://streamx/outbox.pages"
+MP_MESSAGING_OUTGOING_OUTGOING-PAGE-COMPOSE-REQUESTS_REF: "persistent://streamx/relay.page-compose-requests"
 ```

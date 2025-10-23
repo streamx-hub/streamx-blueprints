@@ -23,7 +23,7 @@ Outgoing channels:
 ### Example environment variables config
 
 ```
-MP_MESSAGING_INCOMING_PAGES_TOPIC: "persistent://streamx/inboxes/pages"
-MP_MESSAGING_OUTGOING_INDEXABLE-RESOURCES_TOPIC: "persistent://streamx/outboxes/indexable-resources"
-MP_MESSAGING_OUTGOING_INDEXABLE-RESOURCE_FRAGMENTS_TOPIC: "persistent://streamx/outboxes/indexable-resource-fragments"
+MP_MESSAGING_INCOMING_PAGES_REF: "persistent://streamx/inbox.pages"
+MP_MESSAGING_OUTGOING_INDEXABLE-RESOURCES_REF: "persistent://streamx/outbox.indexable-resources"
+MP_MESSAGING_OUTGOING_INDEXABLE-RESOURCE_FRAGMENTS_REF: "persistent://streamx/outbox.indexable-resource-fragments"
 ```
