@@ -1,6 +1,6 @@
 package com.streamx.blueprints.data;
 
-import io.cloudevents.lang.Nullable;
+import jakarta.annotation.Nullable;
 
 /**
  * Represents configuration defining what should be rendered. Relates to {@link Renderer} and

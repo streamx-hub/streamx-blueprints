@@ -13,22 +13,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.streamx</groupId>
-      <artifactId>reactive-messaging-http-cloudevents</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.streamx.blueprints</groupId>
-      <artifactId>data-model</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.streamx.blueprints</groupId>
-      <artifactId>cloud-events-support</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-client</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
       <version>1.21.1</version>
@@ -55,26 +39,6 @@
       <version>${project.version}</version>
       <classifier>tests</classifier>
       <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-junit5-mockito</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.awaitility</groupId>
-      <artifactId>awaitility</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.smallrye.reactive</groupId>
-      <artifactId>smallrye-reactive-messaging-in-memory</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
