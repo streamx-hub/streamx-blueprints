@@ -166,7 +166,7 @@ descriptors:
       web-resources:
         binding: "http-structured-json"
 
-  web-server:
+  web-server-sink:
     type: "edge"
     incoming:
       resources:
@@ -448,9 +448,9 @@ processing:
           STREAMX_BLUEPRINTS_INDEXABLE_RESOURCES_PRODUCER_INDEX_FRAGMENTS: "true"
 
 edge:
-  blueprint-web-server:
+  blueprint-web-server-sink:
     containers:
-      - image: web-server
+      - image: web-server-sink
         incoming:
           resources:
             ref: outbox.pages,outbox.fragments,outbox.assets,outbox.web-resources
