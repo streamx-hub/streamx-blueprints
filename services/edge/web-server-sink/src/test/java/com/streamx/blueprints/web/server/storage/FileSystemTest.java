@@ -106,7 +106,7 @@ class FileSystemTest {
   }
 
   private Path getPathToStorageFile(String relativePath) {
-    return Path.of(configuration.storageRootDirectory(), "empty.txt");
+    return Path.of(configuration.storageRootDirectory(), relativePath);
   }
 
 }
