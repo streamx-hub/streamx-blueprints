@@ -41,7 +41,7 @@ by unpublishing of the previous context first.
 Processing of the incoming renderers, data and rendering contexts is not producing the outputs
 events directly. Instead, the rendering requests events are created and processed by the service
 using `incoming-rendering-requests` and `outgoing-rendering-requests` which should correspond to
-same relay topic.
+same relay ref.
 
 This approach is used to avoid unneeded outputs regenerations and single output generation per event
 processing.
@@ -55,12 +55,12 @@ Incoming channels:
 - `renderers`
 - `data`
 - `rendering-contexts`
-- `incoming-rendering-requests` - should be configured to same relay topic
+- `incoming-rendering-requests` - should be configured to same relay ref
   as `outgoing-rendering-requests` channel
 
 Outgoing channels:
 
-- `outgoing-rendering-requests` - should be configured to same relay topic
+- `outgoing-rendering-requests` - should be configured to same relay ref
   as `incoming-rendering-requests` channel
 - `pages` - generated content of 'page' output type
 - `fragments` - generated content of 'fragment' output type
@@ -68,11 +68,11 @@ Outgoing channels:
 ### Example environment variables config
 
 ```
-MP_MESSAGING_INCOMING_DATA_TOPIC: "persistent://streamx/inboxes/data"
-MP_MESSAGING_INCOMING_RENDERERS_TOPIC: "persistent://streamx/inboxes/renderers"
-MP_MESSAGING_INCOMING_RENDERING-CONTEXTS_TOPIC: "persistent://streamx/inboxes/rendering-contexts"
-MP_MESSAGING_INCOMING_INCOMING-RENDERING-REQUESTS_TOPIC: "persistent://streamx/relays/rendering-requests"
-MP_MESSAGING_OUTGOING_OUTGOING-RENDERING-REQUESTS_TOPIC: "persistent://streamx/relays/rendering-requests"
-MP_MESSAGING_OUTGOING_PAGES_TOPIC: "persistent://streamx/inboxes/pages"
-MP_MESSAGING_OUTGOING_FRAGMENTS_TOPIC: "persistent://streamx/inboxes/fragments"
+MP_MESSAGING_INCOMING_DATA_REF: "persistent://streamx/inbox.data"
+MP_MESSAGING_INCOMING_RENDERERS_REF: "persistent://streamx/inbox.renderers"
+MP_MESSAGING_INCOMING_RENDERING-CONTEXTS_REF: "persistent://streamx/inbox.rendering-contexts"
+MP_MESSAGING_INCOMING_INCOMING-RENDERING-REQUESTS_REF: "persistent://streamx/relay.rendering-requests"
+MP_MESSAGING_OUTGOING_OUTGOING-RENDERING-REQUESTS_REF: "persistent://streamx/relay.rendering-requests"
+MP_MESSAGING_OUTGOING_PAGES_REF: "persistent://streamx/inbox.pages"
+MP_MESSAGING_OUTGOING_FRAGMENTS_REF: "persistent://streamx/inbox.fragments"
 ```

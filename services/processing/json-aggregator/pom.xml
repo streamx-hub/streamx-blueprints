@@ -11,16 +11,4 @@
   <artifactId>json-aggregator</artifactId>
   <name>StreamX Blueprints : Json Data Aggregator</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>${quarkus.platform.group-id}</groupId>
-        <artifactId>quarkus-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
 </project>

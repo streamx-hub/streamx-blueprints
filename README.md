@@ -87,7 +87,7 @@ cd mesh
 streamx run
 ```
 
-Finally make sure that the `application-streamx-mesh-debug.properties` file in the debugged service reflects the mesh configuration (topics configuration, exposed port, etc.). 
+Finally make sure that the `application-streamx-mesh-debug.properties` file in the debugged service reflects the mesh configuration (refs configuration, exposed port, etc.). 
 Then run the debugged service with the `streamx-mesh-debug` profile, e.g. for `rendering-engine` run the following command:
 ```shell
 cd services/processing/rendering-engine

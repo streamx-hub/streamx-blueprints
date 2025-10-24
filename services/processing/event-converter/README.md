@@ -21,6 +21,6 @@ Outgoing channel: `indexable-resource`
 ### Example environment variables config
 
 ```
-MP_MESSAGING_INCOMING_RESOURCES_TOPIC: "persistent://streamx/inboxes/data"
-MP_MESSAGING_OUTGOING_INDEXABLE-RESOURCES_TOPIC: "persistent://streamx/outboxes/indexable-resources"
+MP_MESSAGING_INCOMING_RESOURCES_REF: "persistent://streamx/inbox.data"
+MP_MESSAGING_OUTGOING_INDEXABLE-RESOURCES_REF: "persistent://streamx/outbox.indexable-resources"
 ```

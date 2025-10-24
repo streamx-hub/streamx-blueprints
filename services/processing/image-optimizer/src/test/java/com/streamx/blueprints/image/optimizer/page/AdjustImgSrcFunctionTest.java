@@ -75,10 +75,10 @@ class AdjustImgSrcFunctionTest {
   }
 
   @BeforeEach
-  void simulateOptimizedImagesArePublishedToInputTopic() {
+  void simulateOptimizedImagesArePublishedToInputRef() {
     // OptimizeImageFunction should be configured to send events with optimized images
-    // to the same topic as the topic where the original image events were initially read from.
-    // Since InMemoryConnector operates on channels, not topics, it's not able to reproduce that.
+    // to the same ref as the ref where the original image events were initially read from.
+    // Since InMemoryConnector operates on channels, not refs, it's not able to reproduce that.
     // Simulate this operation manually here:
     doAnswer(invocationOnMock -> {
       String optimizedImagePath = invocationOnMock.getArgument(0, String.class);

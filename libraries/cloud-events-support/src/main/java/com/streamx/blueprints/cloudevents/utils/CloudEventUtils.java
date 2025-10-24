@@ -28,8 +28,11 @@ public class CloudEventUtils {
 
   private static final String UNPUBLISH_TYPE_SEARCH_TERM = ".unpublished.";
 
-  private static final URI DEFAULT_SOURCE = URI.create(
-      ConfigProvider.getConfig().getValue("quarkus.application.name", String.class));
+  private static final URI DEFAULT_SOURCE = ConfigProvider.getConfig()
+      .getOptionalValue("quarkus.application.name", String.class)
+      .map(URI::create)
+      .orElse(null);
+
   private static final ZoneId DEFAULT_ZONE = ZoneOffset.UTC;
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
