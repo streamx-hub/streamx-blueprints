@@ -2,8 +2,6 @@ package com.streamx.blueprints.image.optimizer.image;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 
 import com.google.common.collect.Iterables;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
@@ -22,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,13 +43,8 @@ class OptimizeImageFunctionTest {
     return List.of(PNG_FILE, JPG_FILE, GIF_FILE);
   }
 
-  private final List<String> rejectedImagesPaths = new ArrayList<>();
-
   private InMemorySource<CloudEvent> channel;
   private InMemorySink<CloudEvent> sink;
-
-  @InjectSpy
-  OptimizeImageFunction optimizeImageFunction;
 
   @InjectSpy
   AssetEventTypeStore assetEventTypeStore;
@@ -66,19 +58,6 @@ class OptimizeImageFunctionTest {
     channel = connector.source(Channels.INCOMING_ASSETS);
     sink = connector.sink(Channels.OPTIMIZED_ASSETS);
     sink.clear();
-  }
-
-  @BeforeEach
-  void configureOptimizeImageFunctionToSaveRejectedImagesToList() {
-    doAnswer(invocationOnMock -> {
-      try {
-        return invocationOnMock.callRealMethod();
-      } catch (Exception ex) {
-        CloudEvent event = invocationOnMock.getArgument(0);
-        rejectedImagesPaths.add(event.getSubject());
-        throw ex;
-      }
-    }).when(optimizeImageFunction).process(any(CloudEvent.class));
   }
 
   @ParameterizedTest
@@ -149,7 +128,7 @@ class OptimizeImageFunctionTest {
     channel.send(optimizedImageEvent);
 
     // then
-    assertImageIsNotPublishedDueToValidationNotPassed();
+    assertImageIsNotPublished();
   }
 
   @Test
@@ -161,7 +140,7 @@ class OptimizeImageFunctionTest {
     channel.send(textFileEvent);
 
     // then
-    assertImageIsNotPublishedDueToValidationNotPassed();
+    assertImageIsNotPublished();
   }
 
   @Test
@@ -174,7 +153,7 @@ class OptimizeImageFunctionTest {
     channel.send(testFileEvent);
 
     // then
-    assertImageIsNotPublishedDueToValidationNotPassed();
+    assertImageIsNotPublished();
   }
 
   @Test
@@ -187,7 +166,7 @@ class OptimizeImageFunctionTest {
     channel.send(testFileEvent);
 
     // then
-    assertImageIsNotPublishedDueToException(testFileEvent);
+    assertImageIsNotPublished();
   }
 
   @Test
@@ -200,7 +179,7 @@ class OptimizeImageFunctionTest {
     channel.send(testFileEvent);
 
     // then
-    assertImageIsNotPublishedDueToValidationNotPassed();
+    assertImageIsNotPublished();
   }
 
   @Test
@@ -266,17 +245,6 @@ class OptimizeImageFunctionTest {
     });
 
     return Iterables.getOnlyElement(sink.received()).getPayload();
-  }
-
-  private void assertImageIsNotPublishedDueToValidationNotPassed() {
-    assertImageIsNotPublished();
-    assertThat(rejectedImagesPaths).isEmpty();
-  }
-
-  private void assertImageIsNotPublishedDueToException(CloudEvent inputEvent) {
-    assertImageIsNotPublished();
-    assertThat(rejectedImagesPaths).hasSize(1);
-    assertThat(rejectedImagesPaths.get(0)).isEqualTo(inputEvent.getSubject());
   }
 
   private void assertImageIsNotPublished() {

@@ -7,8 +7,8 @@ import com.streamx.blueprints.data.Asset;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.image.optimizer.Channels;
 import com.streamx.blueprints.image.optimizer.configuration.Configuration;
-import com.streamx.blueprints.image.optimizer.image.exceptions.ImageOptimizationException;
 import io.cloudevents.CloudEvent;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -86,29 +86,31 @@ public class OptimizeImageFunction {
         return null;
       }
       Asset optimizedImage = createOptimizedImage(asset, filePath);
-      return CloudEventUtils.eventCopyWithData(event, optimizedImage)
-          .withSubject(optimizedImagePath)
-          .build();
-    }
-    if (Asset.TYPE_UNPUBLISHED.equals(eventType)) {
+      if (optimizedImage != null) {
+        return CloudEventUtils.eventCopyWithData(event, optimizedImage)
+            .withSubject(optimizedImagePath)
+            .build();
+      }
+    } else if (Asset.TYPE_UNPUBLISHED.equals(eventType)) {
       return CloudEventUtils.eventCopyWithoutData(event)
           .withSubject(optimizedImagePath)
           .build();
+    } else {
+      log.tracef("Skipping optimizing incoming file [%s] - unsupported event type %s", filePath,
+          eventType);
     }
 
-    log.tracef("Skipping optimizing incoming file [%s] - unsupported event type %s", filePath,
-        eventType);
     return null;
   }
 
+  @Nullable
   private Asset createOptimizedImage(Asset originalImage, String filePath) {
     try {
-      byte[] optimizedImageBytes = imageOptimizer.asWebpImage(
-          originalImage.getContentAsBytes()
-      );
+      byte[] optimizedImageBytes = imageOptimizer.asWebpImage(originalImage.getContentAsBytes());
       return new Asset(optimizedImageBytes);
-    } catch (Exception e) {
-      throw new ImageOptimizationException("Error processing file " + filePath, e);
+    } catch (Throwable t) {
+      log.errorf(t, "Error processing file %s", filePath);
+      return null;
     }
   }
 }
