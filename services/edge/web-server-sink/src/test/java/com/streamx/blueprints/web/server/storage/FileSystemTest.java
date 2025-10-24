@@ -2,6 +2,7 @@ package com.streamx.blueprints.web.server.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.streamx.blueprints.web.server.Configuration;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import io.vertx.core.file.FileSystemException;
@@ -11,21 +12,20 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.commons.io.FileUtils;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 class FileSystemTest {
 
-  @ConfigProperty(name = "streamx.blueprints.web.resources.directory")
-  String tempDirectory;
+  @Inject
+  Configuration configuration;
 
   @Inject
   FileSystem tested;
 
   @Test
   void expectEmptyFileCreatedWhenDataIsEmpty() {
-    Path path = Path.of(tempDirectory, "empty.txt");
+    Path path = getPathToStorageFile("empty.txt");
     UniAssertSubscriber<Void> subscriber =
         tested.writeFile(path, new byte[0])
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -38,7 +38,7 @@ class FileSystemTest {
 
   @Test
   void expectFileWithDataCreated() {
-    Path path = Path.of(tempDirectory, "sample.txt");
+    Path path = getPathToStorageFile("sample.txt");
     UniAssertSubscriber<Void> subscriber =
         tested.writeFile(path, "test-value".getBytes(StandardCharsets.UTF_8))
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -51,7 +51,7 @@ class FileSystemTest {
 
   @Test
   void expectFileAndParendDirectoriesCreated() {
-    Path path = Path.of(tempDirectory, "some/directory/test.txt");
+    Path path = getPathToStorageFile("some/directory/test.txt");
     UniAssertSubscriber<Void> subscriber =
         tested.writeFile(path, new byte[0])
             .subscribe().withSubscriber(UniAssertSubscriber.create());
@@ -62,7 +62,7 @@ class FileSystemTest {
 
   @Test
   void expectFileOverwrittenWhenAlreadyExists() throws IOException {
-    Path path = Path.of(tempDirectory, "file.txt");
+    Path path = getPathToStorageFile("file.txt");
 
     Files.writeString(path, "existing-value");
     assertThat(path).exists();
@@ -79,7 +79,7 @@ class FileSystemTest {
 
   @Test
   void expectFileDeletedWhenFileExists() throws IOException {
-    Path path = Path.of(tempDirectory, "file.txt");
+    Path path = getPathToStorageFile("file.txt");
 
     Files.writeString(path, "expectFileDeletedWhenFileExists");
     assertThat(path).exists();
@@ -95,7 +95,7 @@ class FileSystemTest {
 
   @Test
   void expectFailureWhenFileDoesNotExist() {
-    Path path = Path.of(tempDirectory, "file.txt");
+    Path path = getPathToStorageFile("file.txt");
     FileUtils.deleteQuietly(path.toFile());
 
     UniAssertSubscriber<Void> subscriber =
@@ -103,6 +103,10 @@ class FileSystemTest {
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
     subscriber.awaitFailure().assertFailedWith(FileSystemException.class);
+  }
+
+  private Path getPathToStorageFile(String relativePath) {
+    return Path.of(configuration.storageRootDirectory(), "empty.txt");
   }
 
 }

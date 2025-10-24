@@ -10,7 +10,11 @@ import static org.mockito.Mockito.verify;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Asset;
+import com.streamx.blueprints.data.Fragment;
 import com.streamx.blueprints.data.Page;
+import com.streamx.blueprints.data.Resource;
+import com.streamx.blueprints.data.WebResource;
+import com.streamx.blueprints.web.server.Channels;
 import com.streamx.blueprints.web.server.storage.FileSystemResourceStorage;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.mockito.InjectSpy;
@@ -55,7 +59,7 @@ public abstract class WebResourcesAccessTestBase {
     String publishedContent = publish(subject, Page::new);
 
     // then
-    await().until(() -> canAccessViaHttp(expectedPath, publishedContent));
+    assertCanAccessViaHttp(expectedPath, publishedContent);
   }
 
 
@@ -64,13 +68,13 @@ public abstract class WebResourcesAccessTestBase {
   void shouldNotAccessUnpublishedPage(String subject, String expectedPath) {
     // given
     String publishedContent = publish(subject, Page::new);
-    await().until(() -> canAccessViaHttp(expectedPath, publishedContent));
+    assertCanAccessViaHttp(expectedPath, publishedContent);
 
     // when
     unpublish(subject);
 
     // then
-    await().until(() -> cannotAccessViaHttp(expectedPath));
+    assertCannotAccessViaHttp(expectedPath);
   }
 
   @Test
@@ -82,7 +86,7 @@ public abstract class WebResourcesAccessTestBase {
     makeSurePublicationProcessed();
 
     // then
-    await().until(() -> cannotAccessViaHttp("/unsupported.ext"));
+    assertCannotAccessViaHttp("/unsupported.ext");
   }
 
   @Test
@@ -92,34 +96,78 @@ public abstract class WebResourcesAccessTestBase {
     String directory = "/directory";
 
     String publishedContent = publish(file, Page::new);
-    await().until(() -> canAccessViaHttp(file, publishedContent));
+    assertCanAccessViaHttp(file, publishedContent);
 
     // when
     unpublish(directory);
     makeSurePublicationProcessed();
 
     // then
-    await().until(() -> canAccessViaHttp(file, publishedContent));
+    assertCanAccessViaHttp(file, publishedContent);
   }
 
   @Test
   void shouldAppendIndexHtmlWhenStoringPageThatHasPathEndingWithSlash() {
+    verifyStoragePath(
+        "blogs/pages/",
+        "/blogs/pages/index.html",
+        new Page("Some content"),
+        Page.TYPE_PUBLISHED,
+        Page.TYPE_UNPUBLISHED
+    );
+  }
+
+  @Test
+  void shouldAppendIndexHtmlWhenStoringFragmentThatHasPathEndingWithSlash() {
+    verifyStoragePath(
+        "blogs/fragments/",
+        "/blogs/fragments/index.html",
+        new Fragment("Some content"),
+        Fragment.TYPE_PUBLISHED,
+        Fragment.TYPE_UNPUBLISHED
+    );
+  }
+
+  @Test
+  void shouldNotAppendIndexHtmlWhenStoringWebResourceThatHasPathEndingWithSlash() {
+    verifyStoragePath(
+        "blogs/web-resources/",
+        "/blogs/web-resources",
+        new WebResource("Some content"),
+        WebResource.TYPE_PUBLISHED,
+        WebResource.TYPE_UNPUBLISHED
+    );
+  }
+
+  @Test
+  void shouldNotAppendIndexHtmlWhenStoringAssetThatHasPathEndingWithSlash() {
+    verifyStoragePath(
+        "blogs/assets/",
+        "/blogs/assets",
+        new Asset(new byte[]{0, 1, 2}),
+        Asset.TYPE_PUBLISHED,
+        Asset.TYPE_UNPUBLISHED
+    );
+  }
+
+  private <T extends Resource> void verifyStoragePath(
+      String subject, String expectedPath, T resource,
+      String publishEventType, String unpublishEventType
+  ) {
     // given
-    String subject = "blogs/pages/";
-    String expectedPath = getExpectedDefaultNamespace() + "/blogs/pages/index.html";
-    String expectedContent = "Some content";
+    String expectedFullPath = getExpectedDefaultNamespace() + expectedPath;
 
     // when
-    publishPage(subject, new Page(expectedContent));
+    publish(subject, resource, publishEventType);
 
     // then
-    await().until(() -> canAccessViaHttp(expectedPath, expectedContent));
+    assertCanAccessViaHttp(expectedFullPath, resource.getContentAsString());
 
     // when
-    unpublishPage(subject);
+    unpublish(subject, unpublishEventType);
 
     // then
-    await().until(() -> cannotAccessViaHttp(expectedPath));
+    assertCannotAccessViaHttp(expectedPath);
   }
 
   @Test
@@ -133,13 +181,13 @@ public abstract class WebResourcesAccessTestBase {
     publish(subject, content -> new Asset(assetContent.getBytes(UTF_8)));
 
     // then
-    await().until(() -> canAccessViaHttp(expectedPath, assetContent));
+    assertCanAccessViaHttp(expectedPath, assetContent);
 
     // when
     unpublish(subject);
 
     // then
-    await().until(() -> cannotAccessViaHttp(expectedPath));
+    assertCannotAccessViaHttp(expectedPath);
   }
 
 
@@ -179,7 +227,7 @@ public abstract class WebResourcesAccessTestBase {
   private void makeSurePublicationProcessed() {
     String synchronisationFile = "/sync.txt";
     String syncContent = publish(synchronisationFile, Page::new);
-    await().until(() -> canAccessViaHttp(synchronisationFile, syncContent));
+    assertCanAccessViaHttp(synchronisationFile, syncContent);
   }
 
   private <T> String publish(String subject, Function<String, T> createPayloadFn) {
@@ -190,7 +238,11 @@ public abstract class WebResourcesAccessTestBase {
   }
 
   private <T> void publish(String subject, T payload) {
-    sendEvent(subject, payload, "com.streamx.blueprints.any.published.v1");
+    publish(subject, payload, "com.streamx.blueprints.any.published.v1");
+  }
+
+  private <T> void publish(String subject, T payload, String eventType) {
+    sendEvent(subject, payload, eventType);
   }
 
   private <T> void publishPage(String subject, T payload) {
@@ -202,11 +254,15 @@ public abstract class WebResourcesAccessTestBase {
   }
 
   private void unpublish(String subject) {
-    sendEvent(subject, null, "com.streamx.blueprints.any.unpublished.v1");
+    unpublish(subject, "com.streamx.blueprints.any.unpublished.v1");
+  }
+
+  private void unpublish(String subject, String eventType) {
+    sendEvent(subject, null, eventType);
   }
 
   private <T> void sendEvent(String subject, T payload, String type) {
-    InMemorySource<CloudEvent> pages = connector.source(WebServerSink.CHANNEL);
+    InMemorySource<CloudEvent> pages = connector.source(Channels.RESOURCES);
     OffsetDateTime eventTime = CloudEventUtils.toOffsetDateTime(EVENT_TIME.getAndIncrement());
     CloudEvent event = payload == null
         ? CloudEventUtils.eventWithoutData(subject, type, eventTime)
@@ -214,31 +270,24 @@ public abstract class WebResourcesAccessTestBase {
     pages.send(event);
   }
 
-  private boolean canAccessViaHttp(String path, String content) {
-    try {
-      given().basePath("/")
-          .when()
-          .get(path)
-          .then()
-          .statusCode(200)
-          .body(containsString(content));
-    } catch (AssertionError err) {
-      return false;
-    }
-    return true;
+  private static void assertCanAccessViaHttp(String path, String content) {
+    await().untilAsserted(() ->
+        given().basePath("/")
+            .when()
+            .get(path)
+            .then()
+            .statusCode(200)
+            .body(containsString(content)));
   }
 
-  private boolean cannotAccessViaHttp(String path) {
-    try {
-      given().basePath("/")
-          .when()
-          .get(path)
-          .then()
-          .statusCode(404);
-    } catch (AssertionError err) {
-      return false;
-    }
-    return true;
+  private static void assertCannotAccessViaHttp(String path) {
+    await().untilAsserted(() ->
+        given().basePath("/")
+            .when()
+            .get(path)
+            .then()
+            .statusCode(404)
+    );
   }
 
 }

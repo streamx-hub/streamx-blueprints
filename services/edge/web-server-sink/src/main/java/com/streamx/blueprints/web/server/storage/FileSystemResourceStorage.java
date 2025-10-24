@@ -2,6 +2,7 @@ package com.streamx.blueprints.web.server.storage;
 
 import static java.util.Objects.requireNonNull;
 
+import com.streamx.blueprints.web.server.Configuration;
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.file.FileSystemException;
 import jakarta.annotation.PostConstruct;
@@ -10,7 +11,6 @@ import jakarta.inject.Inject;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -19,9 +19,8 @@ public class FileSystemResourceStorage {
   @Inject
   Logger log;
 
-  @ConfigProperty(name = "streamx.blueprints.web.resources.directory",
-      defaultValue = "/tmp/streamx")
-  String storageRootDirectory;
+  @Inject
+  Configuration configuration;
 
   @Inject
   FileSystem fs;
@@ -29,8 +28,8 @@ public class FileSystemResourceStorage {
   @PostConstruct
   void init() {
     log.infof(
-        "Stating with options: streamx.blueprints.web.resources.directory=%s",
-        storageRootDirectory);
+        "Starting with options: storage root directory=%s",
+        configuration.storageRootDirectory());
   }
 
   public Uni<Void> add(String path, byte[] data) {
@@ -61,7 +60,7 @@ public class FileSystemResourceStorage {
   }
 
   public String getStorageRootDirectory() {
-    return storageRootDirectory;
+    return configuration.storageRootDirectory();
   }
 
   private boolean isNoSuchFileException(Throwable throwable) {
@@ -76,7 +75,7 @@ public class FileSystemResourceStorage {
 
   private Path storagePath(String path) {
     validatePath(path);
-    return Path.of(storageRootDirectory, path);
+    return Path.of(configuration.storageRootDirectory(), path);
   }
 
   private void validatePath(String path) {
