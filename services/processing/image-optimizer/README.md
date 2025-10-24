@@ -76,10 +76,6 @@ Default value: `false`.
 `cwebp` parameter equivalent: `-noalpha`
 Default value: `false`.
 
-`streamx.blueprints.image-optimizer.webp-conversion-multi-thread` - should the processing be performed in multiple threads.
-`cwebp` parameter equivalent: `-mt`
-Default value: `false`.
-
 Example:
 
 ``` properties
@@ -91,7 +87,6 @@ streamx.blueprints.image-optimizer.webp-conversion-quality=75
 streamx.blueprints.image-optimizer.webp-conversion-method=4
 streamx.blueprints.image-optimizer.webp-conversion-lossless=false
 streamx.blueprints.image-optimizer.webp-conversion-no-alpha=false
-streamx.blueprints.image-optimizer.webp-conversion-multi-thread=false
 ```
 
 ### Channels
@@ -121,5 +116,4 @@ STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_WEBP_CONVERSION_QUALITY: "75"
 STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_WEBP_CONVERSION_METHOD: "4"
 STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_WEBP_CONVERSION_LOSSLESS: "false"
 STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_WEBP_CONVERSION_NO_ALPHA: "false"
-STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_WEBP_CONVERSION_MULTI_THREAD: "false"
 ```

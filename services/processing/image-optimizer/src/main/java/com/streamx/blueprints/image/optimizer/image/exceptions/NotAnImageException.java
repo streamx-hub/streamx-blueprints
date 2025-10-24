@@ -8,4 +8,8 @@ public class NotAnImageException extends IOException {
     super(message);
   }
 
+  public NotAnImageException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
 }

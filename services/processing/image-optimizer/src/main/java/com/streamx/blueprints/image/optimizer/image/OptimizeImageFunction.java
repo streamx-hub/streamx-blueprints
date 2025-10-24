@@ -22,7 +22,9 @@ public class OptimizeImageFunction {
 
   private Pattern lowercasedOptimizedFilePathsPattern;
   private String optimizedImageFileNameSuffixAndExtension;
-  private ImageOptimizer imageOptimizer;
+
+  @Inject
+  ImageOptimizer imageOptimizer;
 
   @Inject
   Logger log;
@@ -42,7 +44,6 @@ public class OptimizeImageFunction {
         Pattern.compile(configuration.optimizedFilePathsPattern().toLowerCase());
     optimizedImageFileNameSuffixAndExtension =
         configuration.optimizedImageFileNameSuffix() + OPTIMIZED_IMAGE_EXTENSION;
-    imageOptimizer = new ImageOptimizer(configuration.webpConversion());
   }
 
   /**
