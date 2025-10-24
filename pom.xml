@@ -27,7 +27,6 @@
     <surefire-plugin.version>3.5.4</surefire-plugin.version>
     <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
     <jacoco-plugin.version>0.8.14</jacoco-plugin.version>
-    <jandex-maven-plugin.version>3.5.0</jandex-maven-plugin.version>
     <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
     <artifactregistry-maven-wagon.version>2.2.1</artifactregistry-maven-wagon.version>
 
@@ -179,19 +178,6 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
           <version>${maven-jar-plugin.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>io.smallrye</groupId>
-          <artifactId>jandex-maven-plugin</artifactId>
-          <version>${jandex-maven-plugin.version}</version>
-          <executions>
-            <execution>
-              <id>make-index</id>
-              <goals>
-                <goal>jandex</goal>
-              </goals>
-            </execution>
-          </executions>
         </plugin>
       </plugins>
     </pluginManagement>
