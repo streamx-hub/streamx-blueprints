@@ -7,15 +7,15 @@ Note that the `{{#include ...}` expressions must contain same path as is used fo
 or additional HTTP server with host for each namespace directory should be setup - then fragments should be resolved using
 the namespace directory.
 
-It recommended to configure `streamx.blueprints.web.default-namespace` when working with namespaces.
+It is recommended to configure `streamx.blueprints.web-server-sink.default-namespace` when working with namespaces.
 
 ## Configuration
 
-`streamx.blueprints.web.resources.directory` - web resources storage location,
+`streamx.blueprints.web-server-sink.storage-root-directory` - web resources storage location,
 default: `/tmp/streamx`
-`streamx.blueprints.web.html-resource.types` -  List of CloudEvent types eligible for URL include replacement. Resources with these types are stored in filesystem as 'index.html' when CloudEvent 'subject' has no url extension
+`streamx.blueprints.web-server-sink.html-resource-types` -  List of CloudEvent types eligible for URL include replacement. Resources with these types are stored in filesystem as 'index.html' when CloudEvent 'subject' has no url extension
 
-`streamx.blueprints.web.default-namespace` - optional value, will be used as fallback value if resource has not namespace
+`streamx.blueprints.web-server-sink.default-namespace` - optional value, will be used as fallback value if resource has not namespace
 
 `streamx.url-include-replacement-provider` - an URL Include Replacement Provider. Available predefined values are: `EsiInclude` and `SsiInclude`.
 This is an optional configuration entry. When specified, the service receives access to `urlIncludeReplacer` object.
