@@ -7,7 +7,7 @@ Note that the `{{#include ...}` expressions must contain same path as is used fo
 or additional HTTP server with host for each namespace directory should be setup - then fragments should be resolved using
 the namespace directory.
 
-It recommended to configure `streamx.blueprints.web-server-sink.default-namespace` when working with namespaces.
+It is recommended to configure `streamx.blueprints.web-server-sink.default-namespace` when working with namespaces.
 
 ## Configuration
 
