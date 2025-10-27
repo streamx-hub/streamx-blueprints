@@ -1,5 +1,8 @@
 package com.streamx.blueprints.composition;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
+@RegisterForReflection
 record PageComposeRequest(String compositionKey, String layoutKey) {
 
   public static final String TYPE_PUBLISHED =
