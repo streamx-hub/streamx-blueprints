@@ -1,7 +1,5 @@
 package com.streamx.blueprints.rewriter.finders;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -69,7 +67,7 @@ public class XmlValuesFinder extends BaseValuesFinder {
     factory.setNamespaceAware(true);
     DocumentBuilder builder = factory.newDocumentBuilder();
 
-    ByteArrayInputStream bytesStream = new ByteArrayInputStream(input.getBytes(UTF_8));
+    ByteArrayInputStream bytesStream = new ByteArrayInputStream(input.getBytes());
     return builder.parse(bytesStream);
   }
 

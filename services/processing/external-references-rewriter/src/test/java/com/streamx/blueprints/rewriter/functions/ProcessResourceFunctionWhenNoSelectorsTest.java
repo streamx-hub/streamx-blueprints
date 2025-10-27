@@ -89,8 +89,8 @@ public class ProcessResourceFunctionWhenNoSelectorsTest extends BaseProcessFunct
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
     List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 2);
 
-    assertPublishedPage(pageEvents.get(0), pagePath, pageContent);
-    assertPublishedWebResource(webResourceEvents.get(0), sitemapPath, sitemapContent);
+    assertPublishedPage(pageEvents.getFirst(), pagePath, pageContent);
+    assertPublishedWebResource(webResourceEvents.getFirst(), sitemapPath, sitemapContent);
     assertPublishedWebResource(webResourceEvents.get(1), jsonIndexPath, jsonIndexContent);
   }
 }

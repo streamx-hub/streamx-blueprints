@@ -1,7 +1,6 @@
 package com.streamx.blueprints.rewriter.functions;
 
 import static com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils.assertSameEvents;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
@@ -42,10 +41,10 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
         <img src="image3.jpg">
         <img src="image4.jpg">
         """;
-    final byte[] image1Content = "Image 1".getBytes(UTF_8);
-    final byte[] image2Content = "Image 2".getBytes(UTF_8);
-    final byte[] image3Content = "Image 3".getBytes(UTF_8);
-    final byte[] image4Content = "Image 4".getBytes(UTF_8);
+    final byte[] image1Content = "Image 1".getBytes();
+    final byte[] image2Content = "Image 2".getBytes();
+    final byte[] image3Content = "Image 3".getBytes();
+    final byte[] image4Content = "Image 4".getBytes();
 
     final Map<String, String> externalPages = Map.of(
         "page1.html", page1Content,
@@ -80,7 +79,7 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
         page2Content);
 
     List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 1);
-    assertPublishedWebResource(webResourceEvents.get(0),
+    assertPublishedWebResource(webResourceEvents.getFirst(),
         "/sitemap.xml",
         """
             <?xml version="1.0" encoding="utf-8"?>
@@ -112,7 +111,7 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
         "/image2.jpg",
         image2Content);
 
-    assertPublishedPage(pageEvents.get(0),
+    assertPublishedPage(pageEvents.getFirst(),
         "/page1.html",
         """
             Page 1.
@@ -164,7 +163,7 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     List<CloudEvent> relayedEvents = waitForEventsInSink(payloadType, 1);
 
     // assert event is unchanged
-    CloudEvent relayedEvent = relayedEvents.get(0);
+    CloudEvent relayedEvent = relayedEvents.getFirst();
     assertSameEvents(relayedEvent, publishEvent);
   }
 
@@ -181,7 +180,7 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     List<CloudEvent> relayedEvents = waitForEventsInSink(WEB_RESOURCE, 1);
 
     // assert event is unchanged
-    CloudEvent relayedEvent = relayedEvents.get(0);
+    CloudEvent relayedEvent = relayedEvents.getFirst();
     assertSameEvents(relayedEvent, publishEvent);
   }
 }

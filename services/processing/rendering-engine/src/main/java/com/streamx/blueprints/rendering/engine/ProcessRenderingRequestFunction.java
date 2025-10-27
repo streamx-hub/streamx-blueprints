@@ -1,7 +1,5 @@
 package com.streamx.blueprints.rendering.engine;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
@@ -156,7 +154,7 @@ public class ProcessRenderingRequestFunction {
       return null;
     }
     try {
-      return new String(outputGenerator.generate(template, data), UTF_8);
+      return new String(outputGenerator.generate(template, data));
     } catch (GeneratorException e) {
       throw new IllegalStateException("Error while generating from template " + template, e);
     }
@@ -165,7 +163,7 @@ public class ProcessRenderingRequestFunction {
   private byte[] generateOutputContent(Renderer renderer, Map<String, Object> data) {
     if (renderer != null) {
       try {
-        return outputGenerator.generate(new String(renderer.template().array(), UTF_8), data);
+        return outputGenerator.generate(new String(renderer.template().array()), data);
       } catch (GeneratorException e) {
         throw new RuntimeException("Error while generating content", e);
       }

@@ -63,7 +63,7 @@ class ProcessJsonWebResourceFunctionTest extends BaseProcessFunctionTest {
     ));
 
     List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 1);
-    assertPublishedWebResource(webResourceEvents.get(0),
+    assertPublishedWebResource(webResourceEvents.getFirst(),
         "/data/en-index.json",
         """
         {

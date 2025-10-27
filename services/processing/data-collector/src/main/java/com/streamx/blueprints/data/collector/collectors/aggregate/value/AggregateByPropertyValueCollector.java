@@ -136,13 +136,12 @@ public class AggregateByPropertyValueCollector implements Collector {
   }
 
   private static boolean isValid(Object parsedValue) {
-    if (parsedValue instanceof ArrayNode arrayNode) {
-      return !arrayNode.isEmpty();
-    } else if (parsedValue instanceof Collection<?> collection) {
-      return !collection.isEmpty();
-    } else {
-      return Objects.nonNull(parsedValue);
-    }
+    return switch (parsedValue) {
+      case ArrayNode arrayNode -> !arrayNode.isEmpty();
+      case Collection<?> collection -> !collection.isEmpty();
+      case null -> false;
+      default -> true;
+    };
   }
 
   private ObjectNode createCollectedDataObject(String key, List<JsonNode> values) {

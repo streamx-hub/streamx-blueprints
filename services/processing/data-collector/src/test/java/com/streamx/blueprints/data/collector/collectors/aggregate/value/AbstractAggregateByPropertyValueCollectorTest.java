@@ -1,6 +1,5 @@
 package com.streamx.blueprints.data.collector.collectors.aggregate.value;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.contentOf;
 import static org.assertj.core.api.Assertions.fail;
@@ -33,9 +32,9 @@ abstract class AbstractAggregateByPropertyValueCollectorTest {
   protected static final String PRODUCT_3_ID = "B07DBGJ3TF";
 
   private static final Map<String, String> products = Map.of(
-      PRODUCT_1_ID, contentOf(new File("src/test/resources/products/products1.json"), UTF_8),
-      PRODUCT_2_ID, contentOf(new File("src/test/resources/products/products2.json"), UTF_8),
-      PRODUCT_3_ID, contentOf(new File("src/test/resources/products/products3.json"), UTF_8)
+      PRODUCT_1_ID, contentOf(new File("src/test/resources/products/products1.json")),
+      PRODUCT_2_ID, contentOf(new File("src/test/resources/products/products2.json")),
+      PRODUCT_3_ID, contentOf(new File("src/test/resources/products/products3.json"))
   );
 
   private static final ObjectMapper objectMapper = new ObjectMapper();

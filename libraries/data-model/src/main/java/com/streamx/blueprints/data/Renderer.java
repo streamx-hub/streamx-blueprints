@@ -1,7 +1,5 @@
 package com.streamx.blueprints.data;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -14,7 +12,7 @@ public record Renderer(ByteBuffer template) {
   public static final String TYPE_UNPUBLISHED = "com.streamx.blueprints.renderer.unpublished.v1";
 
   public Renderer(String content) {
-    this(content == null ? null : ByteBuffer.wrap(content.getBytes(UTF_8)));
+    this(content == null ? null : ByteBuffer.wrap(content.getBytes()));
   }
 
 }

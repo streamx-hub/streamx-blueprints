@@ -1,6 +1,5 @@
 package com.streamx.blueprints.resource.downloader.testutils;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.net.MediaType;
 import com.sun.net.httpserver.Headers;
@@ -72,7 +71,7 @@ public class TestWebServer {
 
   private static void handleStringBodyRequest(HttpExchange request, String responseBody,
       MediaType contentType) throws IOException {
-    handleRequest(request, responseBody.getBytes(UTF_8), false, contentType);
+    handleRequest(request, responseBody.getBytes(), false, contentType);
   }
 
   private static void handleRequest(HttpExchange request, byte[] responseBytes, boolean isGzipped,

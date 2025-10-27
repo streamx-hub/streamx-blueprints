@@ -1,6 +1,5 @@
 package com.streamx.blueprints.index;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -52,7 +51,7 @@ public class IndexableResourceFragmentProducerTest {
 
   @Test
   void expectNonAsciiPayloadBeProcessed() {
-    String payload = new String(new byte[]{1, 2, 3}, UTF_8);
+    String payload = new String(new byte[]{1, 2, 3});
     String result = getResourceFromFragmentWithContent(payload);
     assertThat(result).isEqualTo(payload);
   }
@@ -156,7 +155,7 @@ public class IndexableResourceFragmentProducerTest {
   private CloudEvent getResourceFrom(CloudEvent fragmentEvent) {
     fragmentsSource.send(fragmentEvent);
     await().until(() -> indexableResourceFragmentSink.received().size() == 1);
-    return indexableResourceFragmentSink.received().get(0).getPayload();
+    return indexableResourceFragmentSink.received().getFirst().getPayload();
   }
 
   private void assertNoResourceFrom(CloudEvent fragmentEvent) {

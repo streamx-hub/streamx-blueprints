@@ -183,7 +183,7 @@ class SitemapGeneratorServiceTest {
   private void assertSitemap(String expected) {
     assertThat(sitemapSink.received()).hasSize(1);
 
-    CloudEvent sitemapEvent = sitemapSink.received().get(0).getPayload();
+    CloudEvent sitemapEvent = sitemapSink.received().getFirst().getPayload();
     assertThat(sitemapEvent.getType()).isEqualTo(WebResource.TYPE_PUBLISHED);
     assertThat(sitemapEvent.getSubject()).isEqualTo("sitemap.xml");
 

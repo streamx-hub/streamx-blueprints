@@ -32,7 +32,7 @@ class ProcessHtmlWebResourceFunctionTest extends BaseProcessFunctionTest {
         new byte[]{0, 1, 2});
 
     List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 1);
-    assertPublishedWebResource(webResourceEvents.get(0),
+    assertPublishedWebResource(webResourceEvents.getFirst(),
         pagePath,
         "<img src='/logo.png'>");
   }
@@ -53,7 +53,7 @@ class ProcessHtmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     List<CloudEvent> events = waitForEventsInSink(payloadType, 1);
 
     // assert event is unchanged
-    CloudEvent relayedEvent = events.get(0);
+    CloudEvent relayedEvent = events.getFirst();
     assertSameEvents(relayedEvent, publishEvent);
   }
 
@@ -70,7 +70,7 @@ class ProcessHtmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     List<CloudEvent> events = waitForEventsInSink(WEB_RESOURCE, 1);
 
     // assert event is unchanged
-    CloudEvent relayedEvent = events.get(0);
+    CloudEvent relayedEvent = events.getFirst();
     assertSameEvents(relayedEvent, publishEvent);
   }
 }

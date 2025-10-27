@@ -8,7 +8,6 @@ import io.smallrye.mutiny.helpers.test.UniAssertSubscriber;
 import io.vertx.core.file.FileSystemException;
 import jakarta.inject.Inject;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.commons.io.FileUtils;
@@ -40,7 +39,7 @@ class FileSystemTest {
   void expectFileWithDataCreated() {
     Path path = getPathToStorageFile("sample.txt");
     UniAssertSubscriber<Void> subscriber =
-        tested.writeFile(path, "test-value".getBytes(StandardCharsets.UTF_8))
+        tested.writeFile(path, "test-value".getBytes())
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
     subscriber.awaitItem();
@@ -68,7 +67,7 @@ class FileSystemTest {
     assertThat(path).exists();
 
     UniAssertSubscriber<Void> subscriber =
-        tested.writeFile(path, "new-value".getBytes(StandardCharsets.UTF_8))
+        tested.writeFile(path, "new-value".getBytes())
             .subscribe().withSubscriber(UniAssertSubscriber.create());
 
     subscriber.awaitItem();
