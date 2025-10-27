@@ -206,6 +206,7 @@ public class DefaultRepository {
     }
   }
 
+  @RegisterForReflection
   @JsonIgnoreProperties(ignoreUnknown = true)
   public record UpdateResult(
       long took,

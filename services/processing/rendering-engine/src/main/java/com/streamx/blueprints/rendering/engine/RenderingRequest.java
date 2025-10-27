@@ -1,12 +1,14 @@
 package com.streamx.blueprints.rendering.engine;
 
 import com.streamx.blueprints.data.RenderingContext.OutputFormat;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /**
  * This is model dedicated for relay ref used internally by the Rendering Engine to trigger
  * generation of output. Information if the output should be published or unpublished should be
  * passed via event type.
  */
+@RegisterForReflection
 public record RenderingRequest(
     String dataKey,
     String rendererKey,

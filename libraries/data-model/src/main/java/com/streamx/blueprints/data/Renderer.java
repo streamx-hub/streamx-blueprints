@@ -14,7 +14,7 @@ public record Renderer(ByteBuffer template) {
   public static final String TYPE_UNPUBLISHED = "com.streamx.blueprints.renderer.unpublished.v1";
 
   public Renderer(String content) {
-    this(ByteBuffer.wrap(content.getBytes(UTF_8)));
+    this(content == null ? null : ByteBuffer.wrap(content.getBytes(UTF_8)));
   }
 
 }

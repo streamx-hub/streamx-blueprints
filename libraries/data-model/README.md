@@ -20,3 +20,22 @@ CloudEvents with payload from this library should use "application/json" as seri
 
 Data model objects may extend BaseModel that provides payload type
 
+### JSON Serialization and Deserialization in Quarkus Native Mode
+
+To ensure data model classes can be correctly serialized and deserialized with jackson library
+when running in Quarkus native mode (for example as CloudEvent payloads or when explicitly calling `objectMapper.writeValueAsString` on them),
+the following requirements must be met:
+
+- **Non-record classes**:  
+For any data model class that is not a Java `record`, the primary constructor must be annotated with `@JsonCreator`
+to enable proper Jackson deserialization.
+
+
+- **Shared data model library classes**:  
+Every class from the `data-model` library must be listed in the `src/main/resources/META-INF/native-image/reflect-config.json` file,
+so reflection metadata is preserved during native image compilation.
+
+
+- **Service-local model classes**:  
+For internal data model classes defined within a service module,
+annotate each class with `@io.quarkus.runtime.annotations.RegisterForReflection` to make them available for reflection at runtime.
