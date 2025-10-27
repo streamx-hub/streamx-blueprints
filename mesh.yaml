@@ -479,7 +479,7 @@ edge:
             - "opensearch/service-init:/deployments/opensearch/service-init"
         environment:
           QUARKUS_ELASTICSEARCH_HOSTS: "blueprint-opensearch-sink.opensearch:9200"
-          STREAMX_BLUEPRINTS_OPENSEARCH-SINK_MIGRATION-SCRIPT-LOCATIONS: "classpath:opensearch/service-init,file:opensearch/service-init"
+          STREAMX_BLUEPRINTS_OPENSEARCH-SINK_MIGRATION-SCRIPT-LOCATIONS: "classpath:opensearch/service-init"
           STREAMX_DELIVERY_SERVICE_READINESS_CHECK_ENABLED: "false"
       - name: "opensearch"
         image: "docker.io/opensearchproject/opensearch:2.16.0"
