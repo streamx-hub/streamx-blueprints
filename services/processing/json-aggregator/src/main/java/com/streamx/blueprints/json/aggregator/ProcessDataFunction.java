@@ -18,15 +18,24 @@ import java.util.Set;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class ProcessDataFunction extends AbstractFunction {
 
   @Inject
+  Logger log;
+
+  @Inject
   DataStore store;
 
   @Override
-  public DataStore getStore() {
+  protected Logger getLog() {
+    return log;
+  }
+
+  @Override
+  protected DataStore getStore() {
     return store;
   }
 
