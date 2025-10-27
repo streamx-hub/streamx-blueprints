@@ -11,6 +11,7 @@ import com.google.common.collect.Iterables;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Asset;
 import com.streamx.blueprints.data.Page;
+import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.image.optimizer.Channels;
 import com.streamx.blueprints.image.optimizer.image.AssetEventTypeStore;
 import com.streamx.blueprints.image.optimizer.image.OptimizeImageFunction;
@@ -379,13 +380,13 @@ class AdjustImgSrcFunctionTest {
   }
 
   private static CloudEvent createPublishPageEvent(String pagePath, String html) {
-    return CloudEventUtils.eventWithData(pagePath, Page.TYPE_PUBLISHED, new Page(html));
+    return CloudEventUtils.eventWithData(pagePath, Page.TYPE_PUBLISHED, new Page(html, "any"));
   }
 
   private static CloudEvent createPublishAssetEvent(File assetFile) throws IOException {
     String path = normalizedPath(assetFile);
     byte[] content = FileUtils.readFileToByteArray(assetFile);
-    return CloudEventUtils.eventWithData(path, Asset.TYPE_PUBLISHED, new Asset(content));
+    return CloudEventUtils.eventWithData(path, Asset.TYPE_PUBLISHED, new Asset(content, "any"));
   }
 
   private static CloudEvent createUnpublishPageEvent(String pagePath) {
@@ -470,6 +471,12 @@ class AdjustImgSrcFunctionTest {
     assertThat(event1.getSubject()).isEqualTo(event2.getSubject());
     assertThat(event1.getType()).isEqualTo(event2.getType());
     assertThat(event1.getTime()).isEqualTo(event2.getTime());
+
+    Page page1 = CloudEventUtils.getData(event1, Page.class);
+    Page page2 = CloudEventUtils.getData(event2, Page.class);
+    if (!Resource.isEmpty(page1) && !Resource.isEmpty(page2)) {
+      assertThat(page1.getType()).isNotNull().isEqualTo(page2.getType());
+    }
   }
 
   private List<CloudEvent> getOutgoingPages() {

@@ -33,6 +33,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 @QuarkusTest
 class OptimizeImageFunctionTest {
 
+  private static final String ASSET_TYPE = "assets/image";
+
   private static final File IMAGES_DIR = new File("src/test/resources/images");
   private static final File PNG_FILE = new File(IMAGES_DIR, "ds.pNg");
   private static final File JPG_FILE = new File(IMAGES_DIR, "mesh.jpg");
@@ -71,8 +73,7 @@ class OptimizeImageFunctionTest {
 
     // then: expect the optimized image to be published
     CloudEvent optimizedImageEvent = assertEventIsProcessed(imageEvent);
-    assertEventType(optimizedImageEvent, Asset.TYPE_PUBLISHED);
-    assertOptimizedFileIsRenamed(imageFile, optimizedImageEvent);
+    assertOptimizedImage(optimizedImageEvent, imageEvent);
 
     // and: verify its content (should be optimized - have different bytes)
     byte[] optimizedImageBytes = extractImageBytes(optimizedImageEvent);
@@ -95,24 +96,41 @@ class OptimizeImageFunctionTest {
 
     // then: expect the optimized image to be unpublished
     CloudEvent optimizedImageEvent = assertEventIsProcessed(unpublishImageEvent);
-    assertEventType(optimizedImageEvent, Asset.TYPE_UNPUBLISHED);
-    assertOptimizedFileIsRenamed(imageFile, optimizedImageEvent);
+    assertOptimizedImage(optimizedImageEvent, unpublishImageEvent);
 
     // and: verify its content - should be null
     byte[] optimizedImageBytes = extractImageBytes(optimizedImageEvent);
     assertThat(optimizedImageBytes).isNull();
   }
 
-  private static void assertEventType(CloudEvent optimizedImageEvent, String expectedEventType) {
-    String actualEventType = optimizedImageEvent.getType();
-    assertThat(actualEventType).isEqualTo(expectedEventType);
+  private static void assertOptimizedImage(CloudEvent optimizedImage, CloudEvent inputImage) {
+    assertOptimizedEventType(optimizedImage, inputImage);
+    assertOptimizedAssetType(optimizedImage, inputImage);
+    assertOptimizedFileIsRenamed(optimizedImage, inputImage);
   }
 
-  private static void assertOptimizedFileIsRenamed(File sourceImage,
-      CloudEvent optimizedImageEvent) {
-    String filePathWithoutExtension = StringUtils.substringBeforeLast(sourceImage.getPath(), ".");
+  private static void assertOptimizedEventType(CloudEvent optimizedImage, CloudEvent inputImage) {
+    String actualEventType = optimizedImage.getType();
+    assertThat(actualEventType).isEqualTo(inputImage.getType());
+  }
+
+  private static void assertOptimizedAssetType(CloudEvent optimizedImage, CloudEvent inputImage) {
+    if (Asset.TYPE_PUBLISHED.equals(inputImage.getType())) {
+      assertThat(CloudEventUtils.getData(optimizedImage, Asset.class))
+          .isNotNull()
+          .extracting(Asset::getType)
+          .isEqualTo(ASSET_TYPE);
+    } else {
+      assertThat(optimizedImage.getData()).isNull();
+    }
+  }
+
+  private static void assertOptimizedFileIsRenamed(CloudEvent optimizedImage,
+      CloudEvent inputImage) {
+    String originalFilePath = inputImage.getSubject();
+    String filePathWithoutExtension = StringUtils.substringBeforeLast(originalFilePath, ".");
     String expectedOptimizedImagePath = filePathWithoutExtension + "-optimized.webp";
-    String actualOptimizedImagePath = optimizedImageEvent.getSubject();
+    String actualOptimizedImagePath = optimizedImage.getSubject();
     assertThat(actualOptimizedImagePath).isEqualTo(expectedOptimizedImagePath);
   }
 
@@ -186,7 +204,7 @@ class OptimizeImageFunctionTest {
   void shouldNotOptimizeImageIfUnexpectedEventType() {
     // given
     String path = JPG_FILE.getPath();
-    Asset asset = new Asset(new byte[]{0, 1, 2});
+    Asset asset = new Asset(new byte[]{0, 1, 2}, ASSET_TYPE);
     CloudEvent event = CloudEventUtils.eventWithData(path, Data.TYPE_PUBLISHED, asset);
 
     // when
@@ -200,7 +218,7 @@ class OptimizeImageFunctionTest {
   void shouldNotOptimizeImageIfUnexpectedPayloadType() {
     // given
     String path = JPG_FILE.getPath();
-    Data data = new Data(new byte[]{0, 1, 2});
+    Data data = new Data(new String(new byte[]{0, 1, 2}), "any");
     CloudEvent event = CloudEventUtils.eventWithData(path, Data.TYPE_PUBLISHED, data);
 
     // when
@@ -226,7 +244,11 @@ class OptimizeImageFunctionTest {
   private static CloudEvent createPublishAssetEvent(File assetFile) throws IOException {
     String path = assetFile.getPath();
     byte[] payload = FileUtils.readFileToByteArray(assetFile);
-    return CloudEventUtils.eventWithData(path, Asset.TYPE_PUBLISHED, new Asset(payload));
+    return CloudEventUtils.eventWithData(
+        path,
+        Asset.TYPE_PUBLISHED,
+        new Asset(payload, ASSET_TYPE)
+    );
   }
 
   private static CloudEvent createUnpublishAssetEvent(File assetFile) {

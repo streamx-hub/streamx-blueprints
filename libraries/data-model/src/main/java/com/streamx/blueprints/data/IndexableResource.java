@@ -24,11 +24,6 @@ public class IndexableResource extends JsonResource {
     this.fragmentKeys = fragmentKeys;
   }
 
-  public IndexableResource(byte[] content, String type, Set<String> fragmentKeys) {
-    super(content, type);
-    this.fragmentKeys = fragmentKeys;
-  }
-
   public IndexableResource(String content, String type, Set<String> fragmentKeys) {
     super(content, type);
     this.fragmentKeys = fragmentKeys;

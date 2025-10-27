@@ -29,10 +29,10 @@ class PebbleOutputGeneratorTest {
     );
 
     // when
-    byte[] output = generator.generate(template, data);
+    String output = generator.generate(template, data);
 
     // then
-    assertThat(output).asString().isEqualTo("Hello John, your number is 123");
+    assertThat(output).isEqualTo("Hello John, your number is 123");
   }
 
   @Test

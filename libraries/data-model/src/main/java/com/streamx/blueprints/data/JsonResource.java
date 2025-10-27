@@ -9,25 +9,9 @@ import java.nio.ByteBuffer;
  */
 public abstract class JsonResource extends Resource {
 
-  public JsonResource(ByteBuffer content) {
-    super(content);
-  }
-
-  public JsonResource(byte[] content) {
-    super(content);
-  }
-
-  public JsonResource(String content) {
-    super(content);
-  }
-
   @JsonCreator
   public JsonResource(@JsonProperty("content") ByteBuffer content,
       @JsonProperty("type") String type) {
-    super(content, type);
-  }
-
-  public JsonResource(byte[] content, String type) {
     super(content, type);
   }
 

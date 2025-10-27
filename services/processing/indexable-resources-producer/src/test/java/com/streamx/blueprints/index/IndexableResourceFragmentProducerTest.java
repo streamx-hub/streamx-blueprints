@@ -62,7 +62,7 @@ public class IndexableResourceFragmentProducerTest {
     CloudEvent fragmentEvent = CloudEventTestUtils.cloudEventWithExtensions(
         "/fragment/test.html",
         Fragment.TYPE_PUBLISHED,
-        new Fragment("Fragment"),
+        new Fragment("Fragment", "fragments/type-1"),
         Map.of(AbstractIndexableResourceProducer.EXTENSION_NAME_INDEXABLE, "false")
     );
 
@@ -115,7 +115,7 @@ public class IndexableResourceFragmentProducerTest {
     CloudEvent pageEvent = CloudEventUtils.eventWithData(
         "/fragment/test.html",
         WebResource.TYPE_PUBLISHED,
-        new Fragment("content")
+        new Fragment("content", "fragments/type-1")
     );
 
     // when & then
@@ -127,7 +127,7 @@ public class IndexableResourceFragmentProducerTest {
     CloudEvent fragmentEvent = CloudEventUtils.eventWithData(
         "/fragment/test.html",
         Fragment.TYPE_PUBLISHED,
-        new Fragment(payload),
+        new Fragment(payload, "fragments/type-1"),
         CloudEventUtils.toOffsetDateTime(1)
     );
 
@@ -143,6 +143,7 @@ public class IndexableResourceFragmentProducerTest {
     IndexableResourceFragment indexableResourceFragment = CloudEventUtils
         .getData(resultEvent, IndexableResourceFragment.class);
     assertThat(indexableResourceFragment).isNotNull();
+    assertThat(indexableResourceFragment.getType()).isEqualTo("fragments/type-1");
 
     String json = indexableResourceFragment.getContentAsString();
     try {

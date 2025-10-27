@@ -107,7 +107,7 @@ public class OptimizeImageFunction {
   private Asset createOptimizedImage(Asset originalImage, String filePath) {
     try {
       byte[] optimizedImageBytes = imageOptimizer.asWebpImage(originalImage.getContentAsBytes());
-      return new Asset(optimizedImageBytes);
+      return new Asset(optimizedImageBytes, originalImage.getType());
     } catch (Throwable t) {
       log.errorf(t, "Error processing file %s", filePath);
       return null;

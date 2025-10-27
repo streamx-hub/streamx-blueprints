@@ -20,10 +20,6 @@ public class IndexableResourceFragment extends JsonResource {
     super(content, type);
   }
 
-  public IndexableResourceFragment(byte[] content, String type) {
-    super(content, type);
-  }
-
   public IndexableResourceFragment(String content, String type) {
     super(content, type);
   }

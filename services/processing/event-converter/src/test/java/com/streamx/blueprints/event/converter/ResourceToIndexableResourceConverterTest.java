@@ -31,6 +31,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 public class ResourceToIndexableResourceConverterTest {
 
   private static final String KEY = "key";
+  private static final String RESOURCE_TYPE = "type";
   private static final OffsetDateTime EVENT_TIME = CloudEventUtils.toOffsetDateTime(1);
 
   private InMemorySource<CloudEvent> incoming;
@@ -50,7 +51,7 @@ public class ResourceToIndexableResourceConverterTest {
   @Test
   void shouldConvertDataPublishEvent_ToIndexableResourcePublishEvent() {
     // given
-    Data data = new Data("{\"key\": \"value\"}");
+    Data data = new Data("{\"key\": \"value\"}", RESOURCE_TYPE);
 
     // when
     CloudEvent incomingEvent = publish(data, Data.TYPE_PUBLISHED);
@@ -63,7 +64,7 @@ public class ResourceToIndexableResourceConverterTest {
   @Test
   void shouldConvertWebResourcePublishEvent_ToIndexableResourcePublishEvent() {
     // given
-    WebResource webResource = new WebResource("{\"key\": \"value\"}");
+    WebResource webResource = new WebResource("{\"key\": \"value\"}", RESOURCE_TYPE);
 
     // when
     CloudEvent incomingEvent = publish(webResource, WebResource.TYPE_PUBLISHED);
@@ -105,7 +106,7 @@ public class ResourceToIndexableResourceConverterTest {
   @Test
   void shouldSkipConvertingPublishEvent_WhenResourceWithoutContent() {
     // given
-    Data data = new Data((ByteBuffer) null);
+    Data data = new Data((ByteBuffer) null, RESOURCE_TYPE);
 
     // when
     publish(data, Data.TYPE_PUBLISHED);
@@ -117,7 +118,7 @@ public class ResourceToIndexableResourceConverterTest {
   @Test
   void shouldSkipConvertingEvent_WithNeitherPublishingOrUnpublishingType() {
     // given
-    Data data = new Data("{\"key\": \"value\"}");
+    Data data = new Data("{\"key\": \"value\"}", RESOURCE_TYPE);
 
     // when
     publish(data, "com.streamx.blueprints.data.edited.v1");
@@ -147,7 +148,7 @@ public class ResourceToIndexableResourceConverterTest {
     IndexableResource outgoingResource = CloudEventUtils.getData(outgoingEvent,
         IndexableResource.class);
     assertThat(outgoingResource).isNotNull();
-    assertThat(outgoingResource.getType()).isEqualTo(incomingResource.getType());
+    assertThat(outgoingResource.getType()).isNotNull().isEqualTo(incomingResource.getType());
     assertThat(outgoingResource.getContent())
         .isNotNull()
         .isEqualTo(incomingResource.getContent());

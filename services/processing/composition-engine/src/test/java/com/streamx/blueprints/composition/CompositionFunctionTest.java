@@ -28,7 +28,6 @@ import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.time.Duration;
-import java.util.Optional;
 import java.util.stream.IntStream;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +37,7 @@ import org.junit.jupiter.api.Test;
 class CompositionFunctionTest {
 
   private static final String ANY_CONTENT = "any-content";
+  private static final String RESOURCE_TYPE = "any";
 
   private InMemorySource<CloudEvent> layoutsSource;
   private InMemorySource<CloudEvent> compositionsSource;
@@ -85,17 +85,18 @@ class CompositionFunctionTest {
     }).when(compositionFunction).consumeComposition(any());
   }
 
-  record ExpectedEvent(String subject, String type, Class<? extends Resource> payloadClass,
-                       String payloadContent, String payloadType) {
+  record ExpectedEvent(String subject, String type, String pageContent, String pageType) {
 
-    ExpectedEvent(String subject, String type, Resource payload) {
-      this(
-          subject,
-          type,
-          Optional.ofNullable(payload).map(Resource::getClass).orElse(null),
-          Optional.ofNullable(payload).map(Resource::getContentAsString).orElse(null),
-          Optional.ofNullable(payload).map(Resource::getType).orElse(null)
-      );
+    static ExpectedEvent publishedPage(String subject, String content, String pageType) {
+      return new ExpectedEvent(subject, Page.TYPE_PUBLISHED, content, pageType);
+    }
+
+    static ExpectedEvent publishedPage(String subject, String content) {
+      return publishedPage(subject, content, RESOURCE_TYPE);
+    }
+
+    static ExpectedEvent unpublishedPage(String subject) {
+      return new ExpectedEvent(subject, Page.TYPE_UNPUBLISHED, null, null);
     }
   }
 
@@ -210,8 +211,8 @@ class CompositionFunctionTest {
 
     // expect 2 pages to be published
     assertOutgoingPageEvents(
-        new ExpectedEvent(composition1Key, Page.TYPE_PUBLISHED, new Page("Hello, John")),
-        new ExpectedEvent(composition2Key, Page.TYPE_PUBLISHED, new Page("Hello, Kate"))
+        ExpectedEvent.publishedPage(composition1Key, "Hello, John"),
+        ExpectedEvent.publishedPage(composition2Key, "Hello, Kate")
     );
 
     pagesSink.clear();
@@ -221,8 +222,8 @@ class CompositionFunctionTest {
 
     // then: expect the two pages to be recomposed
     assertOutgoingPageEvents(
-        new ExpectedEvent(composition1Key, Page.TYPE_PUBLISHED, new Page("Good morning, John")),
-        new ExpectedEvent(composition2Key, Page.TYPE_PUBLISHED, new Page("Good morning, Kate"))
+        ExpectedEvent.publishedPage(composition1Key, "Good morning, John"),
+        ExpectedEvent.publishedPage(composition2Key, "Good morning, Kate")
     );
   }
 
@@ -253,11 +254,11 @@ class CompositionFunctionTest {
 
     // expect all the pages to be published
     assertOutgoingPageEvents(
-        new ExpectedEvent(compositionA1, Page.TYPE_PUBLISHED, new Page("Hello, A1")),
-        new ExpectedEvent(compositionA2, Page.TYPE_PUBLISHED, new Page("Hello, A2")),
-        new ExpectedEvent(compositionB1, Page.TYPE_PUBLISHED, new Page("Goodbye, B1")),
-        new ExpectedEvent(compositionB2, Page.TYPE_PUBLISHED, new Page("Goodbye, B2")),
-        new ExpectedEvent(compositionB3, Page.TYPE_PUBLISHED, new Page("Goodbye, B3"))
+        ExpectedEvent.publishedPage(compositionA1, "Hello, A1"),
+        ExpectedEvent.publishedPage(compositionA2, "Hello, A2"),
+        ExpectedEvent.publishedPage(compositionB1, "Goodbye, B1"),
+        ExpectedEvent.publishedPage(compositionB2, "Goodbye, B2"),
+        ExpectedEvent.publishedPage(compositionB3, "Goodbye, B3")
     );
 
     pagesSink.clear();
@@ -267,9 +268,9 @@ class CompositionFunctionTest {
 
     // then: expect the pages composed using the unpublished layout, to be unpublished
     assertOutgoingPageEvents(
-        new ExpectedEvent(compositionB1, Page.TYPE_UNPUBLISHED, null),
-        new ExpectedEvent(compositionB2, Page.TYPE_UNPUBLISHED, null),
-        new ExpectedEvent(compositionB3, Page.TYPE_UNPUBLISHED, null)
+        ExpectedEvent.unpublishedPage(compositionB1),
+        ExpectedEvent.unpublishedPage(compositionB2),
+        ExpectedEvent.unpublishedPage(compositionB3)
     );
   }
 
@@ -293,10 +294,8 @@ class CompositionFunctionTest {
 
     // then
     assertOutgoingPageEvents(
-        new ExpectedEvent(activitiesCompositionKey, Page.TYPE_PUBLISHED,
-            new Page("Title of Activities page")),
-        new ExpectedEvent(carsCompositionKey, Page.TYPE_PUBLISHED,
-            new Page("Title of Cars page"))
+        ExpectedEvent.publishedPage(activitiesCompositionKey, "Title of Activities page"),
+        ExpectedEvent.publishedPage(carsCompositionKey, "Title of Cars page")
     );
   }
 
@@ -372,8 +371,8 @@ class CompositionFunctionTest {
     assertOutgoingPageEvents(
         IntStream
             .range(0, numberOfCompositions)
-            .mapToObj(i -> new ExpectedEvent("composition_" + i, Page.TYPE_PUBLISHED,
-                new Page("Hello, User " + i))).toArray(ExpectedEvent[]::new)
+            .mapToObj(i -> ExpectedEvent.publishedPage("composition_" + i, "Hello, User " + i))
+            .toArray(ExpectedEvent[]::new)
     );
     pagesSink.clear();
 
@@ -385,8 +384,8 @@ class CompositionFunctionTest {
     assertOutgoingPageEvents(
         IntStream
             .range(0, numberOfCompositions)
-            .mapToObj(i -> new ExpectedEvent("composition_" + i, Page.TYPE_PUBLISHED,
-                new Page("Bye, User " + i))).toArray(ExpectedEvent[]::new)
+            .mapToObj(i -> ExpectedEvent.publishedPage("composition_" + i, "Bye, User " + i))
+            .toArray(ExpectedEvent[]::new)
     );
   }
 
@@ -411,19 +410,15 @@ class CompositionFunctionTest {
 
     // then: expect all compositions except composition_3 to result in composed pages
     assertOutgoingPageEvents(
-        new ExpectedEvent("composition_1", Page.TYPE_PUBLISHED,
-            new Page("<img src='image-1.png' />")),
-        new ExpectedEvent("composition_2", Page.TYPE_PUBLISHED,
-            new Page("<img src='image-2.png' />")),
-        new ExpectedEvent("composition_4", Page.TYPE_PUBLISHED,
-            new Page("<img src='image-4.png' />")),
-        new ExpectedEvent("composition_5", Page.TYPE_PUBLISHED,
-            new Page("<img src='image-5.png' />"))
+        ExpectedEvent.publishedPage("composition_1", "<img src='image-1.png' />"),
+        ExpectedEvent.publishedPage("composition_2", "<img src='image-2.png' />"),
+        ExpectedEvent.publishedPage("composition_4", "<img src='image-4.png' />"),
+        ExpectedEvent.publishedPage("composition_5", "<img src='image-5.png' />")
     );
   }
 
   private void publishLayout(String key, String content) {
-    publishLayout(key, null, content);
+    publishLayout(key, RESOURCE_TYPE, content);
   }
 
   private void publishLayout(String key, String type, String content) {
@@ -437,7 +432,7 @@ class CompositionFunctionTest {
   private void publishComposition(String key, String content, String layoutKey) {
     compositionsSource.send(
         eventWithData(key, Composition.TYPE_PUBLISHED,
-            new Composition(content, null, layoutKey)));
+            new Composition(content, RESOURCE_TYPE, layoutKey)));
   }
 
   private void unpublishComposition(String key) {
@@ -446,20 +441,19 @@ class CompositionFunctionTest {
   }
 
   private void assertSingleOutgoingPublishPage(String expectedKey, String expectedContent) {
-    assertSingleOutgoingPublishPage(expectedKey, null, expectedContent);
+    assertSingleOutgoingPublishPage(expectedKey, RESOURCE_TYPE, expectedContent);
   }
 
   private void assertSingleOutgoingPublishPage(String expectedKey, String expectedType,
       String expectedContent) {
-    ExpectedEvent expectedEvent = new ExpectedEvent(
-        expectedKey, Page.TYPE_PUBLISHED, new Page(expectedContent, expectedType)
+    ExpectedEvent expectedEvent = ExpectedEvent.publishedPage(
+        expectedKey, expectedContent, expectedType
     );
     assertOutgoingPageEvents(expectedEvent);
   }
 
   private void assertSingleOutgoingUnpublishPage(String expectedKey) {
-    ExpectedEvent expectedEvent = new ExpectedEvent(
-        expectedKey, Page.TYPE_UNPUBLISHED, null);
+    ExpectedEvent expectedEvent = ExpectedEvent.unpublishedPage(expectedKey);
     assertOutgoingPageEvents(expectedEvent);
   }
 
@@ -470,7 +464,10 @@ class CompositionFunctionTest {
             .map(Message::getPayload)
             .map(event -> {
               Resource resource = CloudEventUtils.getData(event, Resource.class);
-              return new ExpectedEvent(event.getSubject(), event.getType(), resource);
+              return resource == null
+                  ? ExpectedEvent.unpublishedPage(event.getSubject())
+                  : ExpectedEvent.publishedPage(event.getSubject(), resource.getContentAsString(),
+                      resource.getType());
             })
             .containsExactlyInAnyOrder(expectedEvents)
     );

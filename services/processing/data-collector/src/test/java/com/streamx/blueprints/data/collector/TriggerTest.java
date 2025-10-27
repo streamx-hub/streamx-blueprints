@@ -126,7 +126,7 @@ class TriggerTest {
     cut.process(CloudEventUtils.eventWithData(
         "any-key",
         Data.TYPE_PUBLISHED,
-        new Data("any-content"),
+        new Data("any-content", "any-type"),
         CloudEventUtils.toOffsetDateTime(1)
     ));
   }
