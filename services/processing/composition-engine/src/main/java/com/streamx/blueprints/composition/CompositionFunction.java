@@ -46,6 +46,7 @@ public class CompositionFunction {
     try {
       return Multi.createFrom().items(createPageComposeRequests(layout));
     } catch (Exception e) {
+      log.warnf(e, "Error creating page compose requests from layout %s", layout.getSubject());
       return Multi.createFrom().empty();
     }
   }

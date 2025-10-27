@@ -83,6 +83,7 @@ abstract class AbstractFunction {
           .onCompletion()
           .call(() -> Uni.createFrom().completionStage(message.ack()));
     } catch (Exception e) {
+      log.warnf(e, "Error processing data message %s", key);
       message.nack(e);
       return Multi.createFrom().empty();
     }
