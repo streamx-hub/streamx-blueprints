@@ -55,14 +55,15 @@ public class AdjustImgSrcFunction {
     String pagePath = CloudEventUtils.getSubject(event);
     Page page = CloudEventUtils.getData(event, Page.class);
     if (Resource.isEmpty(page)) {
-      log.warnf("Skipping adjusting incoming page [%s] - no content", pagePath);
+      log.warnf("Skipping adjusting incoming page %s - no content", pagePath);
       return event;
     }
 
-    log.tracef("Processing page [%s] with eventTime %s", pagePath, event.getTime());
+    log.tracef("Processing page %s of type %s with event time %s", pagePath, page.getType(),
+        event.getTime());
 
     if (!lowercasedAdjustedPagePathsPattern.matcher(pagePath.toLowerCase()).matches()) {
-      log.tracef("Skipping adjusting incoming page [%s] - not matching path", pagePath);
+      log.tracef("Skipping adjusting incoming page %s - not matching path", pagePath);
       return event;
     }
 
@@ -82,7 +83,7 @@ public class AdjustImgSrcFunction {
       return pageEvent;
     }
 
-    Page adjustedPage = new Page(adjustedContent.get());
+    Page adjustedPage = new Page(adjustedContent.get(), page.getType());
     log.tracef("Publishing adjusted page %s", pagePath);
     return CloudEventUtils.eventCopyWithData(pageEvent, adjustedPage).build();
   }
