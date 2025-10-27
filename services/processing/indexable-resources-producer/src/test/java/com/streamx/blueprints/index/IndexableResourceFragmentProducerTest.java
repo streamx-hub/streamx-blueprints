@@ -10,7 +10,6 @@ import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Fragment;
 import com.streamx.blueprints.data.IndexableResourceFragment;
 import com.streamx.blueprints.data.WebResource;
-import com.streamx.blueprints.index.IndexableResourceFragmentProducer.IndexableResourceFragmentContent;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;

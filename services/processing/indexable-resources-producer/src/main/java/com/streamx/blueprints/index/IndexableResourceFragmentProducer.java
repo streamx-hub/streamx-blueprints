@@ -50,7 +50,4 @@ public class IndexableResourceFragmentProducer extends AbstractIndexableResource
     return configuration.indexFragments();
   }
 
-  record IndexableResourceFragmentContent(String content) {
-
-  }
 }

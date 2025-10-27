@@ -15,6 +15,7 @@
     <jsoup.version>1.21.2</jsoup.version>
     <json-path.version>2.9.0</json-path.version>
     <commons-text.version>1.14.0</commons-text.version>
+    <camel-quarkus-xpath.version>3.27.0</camel-quarkus-xpath.version>
   </properties>
 
   <dependencies>
@@ -31,6 +32,11 @@
     <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-yaml</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel.quarkus</groupId>
+      <artifactId>camel-quarkus-xpath</artifactId>
+      <version>${camel-quarkus-xpath.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>

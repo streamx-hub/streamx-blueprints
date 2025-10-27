@@ -62,11 +62,23 @@ class HtmlValuesFinderTest extends AbstractValuesFinderTest<HtmlValuesFinderTest
   }
 
   @Test
+  void shouldFindCountOfImages() {
+    givenHtmlBodyContent("""
+        <img src='a.png'>
+        <img src='b.png'>
+        <img src='c.png'>
+        """)
+        .andGivenLookupSelectors("count(//img)")
+        .whenFindMatchingValues()
+        .thenExpectFoundValue("3");
+  }
+
+  @Test
   void shouldFindValuesWithAppendedFixedValue() {
     givenHtmlBodyContent("<header data-header-path='http://www.google.com/header' />")
         .andGivenLookupSelectors("concat(//header/@data-header-path, '.plain.html')")
         .whenFindMatchingValues()
-        .thenExpectFoundValues("http://www.google.com/header.plain.html");
+        .thenExpectFoundValue("http://www.google.com/header.plain.html");
   }
 
   @Test

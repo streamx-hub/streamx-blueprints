@@ -28,10 +28,9 @@ abstract class AbstractFunction {
   protected static final ObjectMapper objectMapper = new ObjectMapper();
 
   @Inject
-  Logger log;
-
-  @Inject
   AggregatorConfiguration aggregatorConfig;
+
+  protected abstract Logger getLog();
 
   protected final Map<Configuration, Set<String>> supportedNamespacesByConfig
       = new LinkedHashMap<>();
@@ -64,11 +63,11 @@ abstract class AbstractFunction {
     OffsetDateTime eventTime = event.getTime();
 
     getStore().register(data, eventType, key);
-    log.tracef("Processing message [%s]", key);
+    getLog().tracef("Processing message [%s] with event time %s", key, eventTime);
 
     try {
-      if (!accept(key, eventTime)) {
-        log.tracef("Skipping invalid incoming message key=%s", key);
+      if (!accept(key)) {
+        getLog().tracef("Skipping invalid incoming message key=%s", key);
         message.ack();
         return Multi.createFrom().empty();
       }
@@ -83,6 +82,7 @@ abstract class AbstractFunction {
           .onCompletion()
           .call(() -> Uni.createFrom().completionStage(message.ack()));
     } catch (Exception e) {
+      getLog().warnf(e, "Error processing data message %s", key);
       message.nack(e);
       return Multi.createFrom().empty();
     }
@@ -91,7 +91,7 @@ abstract class AbstractFunction {
   protected CloudEvent createPublishEvent(CloudEvent inputEvent, String id, String outputNamespace,
       String outputType, String payload) {
     String key = DataKey.fromNamespaceAndId(outputNamespace, id);
-    log.tracef("Creating Data Publish message with key %s and outputType %s", key, outputType);
+    getLog().tracef("Creating Data Publish message with key %s and outputType %s", key, outputType);
     return CloudEventUtils.eventCopyWithData(inputEvent, new Data(payload, outputType))
         .withSubject(key)
         .withType(Data.TYPE_PUBLISHED)
@@ -101,26 +101,34 @@ abstract class AbstractFunction {
   protected CloudEvent createUnpublishEvent(CloudEvent inputEvent, String id,
       String outputNamespace) {
     String key = DataKey.fromNamespaceAndId(outputNamespace, id);
-    log.tracef("Creating Data Unpublish message with key %s", key);
+    getLog().tracef("Creating Data Unpublish message with key %s", key);
     return CloudEventUtils.eventCopyWithoutData(inputEvent)
         .withSubject(key)
         .withType(Data.TYPE_UNPUBLISHED)
         .build();
   }
 
-  private boolean accept(String key, OffsetDateTime eventTime) {
-    if (eventTime == null) {
-      return false;
-    }
+  private boolean accept(String key) {
     DataKey dataKey = DataKey.fromKey(key);
+
     if (!dataKey.hasNamespaceAndId()) {
+      getLog().tracef("Expected namespace and ID in key %s", key);
       return false;
     }
+
     if (requiresHashInKey() && !dataKey.hasHash()) {
+      getLog().tracef("Expected hash in key %s, but it's missing", key);
       return false;
     }
-    return supportedNamespacesByConfig.values().stream()
+
+    boolean anyMatchingNamespace = supportedNamespacesByConfig.values().stream()
         .anyMatch(supportedNamespaces -> supportedNamespaces.contains(dataKey.namespace()));
+    if (!anyMatchingNamespace) {
+      getLog().tracef("No matching namespace for %s", key);
+      return false;
+    }
+
+    return true;
   }
 
   private List<Configuration> getConfigurations(String namespace) {

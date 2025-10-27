@@ -46,27 +46,22 @@ public class RenderingRequests {
       List<KeyedValue<RenderingContext>> renderingContexts,
       Stream<KeyedValue<Data>> dataStream) {
     Multi<Message<CloudEvent>> outgoings;
-    try {
-      AckHandler ackHandler = new AckHandler(incoming);
-      if (renderingContexts.isEmpty()) {
-        outgoings = Multi.createFrom().empty();
-      } else {
-        CloudEvent event = incoming.getPayload();
-        log.tracef("Sending outgoing messages after %s of message with key %s",
-            event.getType(), CloudEventUtils.getSubject(event));
-        Stream<Message<CloudEvent>> renderingRequests = calculateRenderingRequestForDataStore(
-            event.getTime(),
-            event.getType(),
-            ackHandler,
-            renderingContexts,
-            dataStream);
-        outgoings = Multi.createFrom().items(renderingRequests);
-      }
-      return outgoings.onCompletion().call(ackHandler::handleIncomingMessageAck);
-    } catch (Exception e) {
-      incoming.nack(e);
-      return Multi.createFrom().empty();
+    AckHandler ackHandler = new AckHandler(incoming);
+    if (renderingContexts.isEmpty()) {
+      outgoings = Multi.createFrom().empty();
+    } else {
+      CloudEvent event = incoming.getPayload();
+      log.tracef("Sending outgoing messages after %s of message with key %s",
+          event.getType(), CloudEventUtils.getSubject(event));
+      Stream<Message<CloudEvent>> renderingRequests = calculateRenderingRequestForDataStore(
+          event.getTime(),
+          event.getType(),
+          ackHandler,
+          renderingContexts,
+          dataStream);
+      outgoings = Multi.createFrom().items(renderingRequests);
     }
+    return outgoings.onCompletion().call(ackHandler::handleIncomingMessageAck);
   }
 
   private Stream<Message<CloudEvent>> calculateRenderingRequestForDataStore(

@@ -110,7 +110,4 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
     return page != null && page.getContent() != null && page.getContent().array().length != 0;
   }
 
-  record IndexableResourceContent(String title, String content) {
-
-  }
 }

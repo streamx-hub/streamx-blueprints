@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.streamx.blueprints.opensearch.sink.index.model.DefaultDocument;
 import com.streamx.blueprints.opensearch.sink.index.model.Fragment;
 import com.streamx.blueprints.opensearch.sink.index.model.SearchIndexStorageException;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -205,6 +206,7 @@ public class DefaultRepository {
     }
   }
 
+  @RegisterForReflection
   @JsonIgnoreProperties(ignoreUnknown = true)
   public record UpdateResult(
       long took,
@@ -269,15 +271,18 @@ public class DefaultRepository {
     }
   }
 
+  @RegisterForReflection
   private record IndexEntry(@JsonProperty("_index") String indexName,
                             @JsonProperty("_id") String key) {
 
   }
 
+  @RegisterForReflection
   private record IndexCommand(@JsonProperty("index") IndexEntry indexEntry) {
 
   }
 
+  @RegisterForReflection
   private record DeleteCommand(@JsonProperty("delete") IndexEntry indexEntry) {
 
   }

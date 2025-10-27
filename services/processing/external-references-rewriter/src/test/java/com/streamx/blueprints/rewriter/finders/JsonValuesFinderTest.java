@@ -86,7 +86,7 @@ class JsonValuesFinderTest extends AbstractValuesFinderTest<JsonValuesFinderTest
     givenInput("{ \"value\": 1 }")
         .andGivenLookupSelectors("$.value")
         .whenFindMatchingValues()
-        .thenExpectFoundValues("1");
+        .thenExpectFoundValue("1");
   }
 
   @Test
@@ -94,7 +94,7 @@ class JsonValuesFinderTest extends AbstractValuesFinderTest<JsonValuesFinderTest
     givenInput("{ \"value\": 1 }")
         .andGivenLookupSelectors("$.data[*].image")
         .whenFindMatchingValues()
-        .thenExpectFoundValues();
+        .thenExpectNoFoundValues();
   }
 
   @Test

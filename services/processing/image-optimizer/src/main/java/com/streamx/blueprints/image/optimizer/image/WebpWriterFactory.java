@@ -12,6 +12,7 @@ final class WebpWriterFactory {
 
   private static final int INTEGER_PARAM_DEFAULT_VALUE = -1;
   private static final boolean BOOLEAN_PARAM_DEFAULT_VALUE = false;
+  private static final boolean MULTI_THREAD = false;
 
   static WebpWriter createWriterInstance(WebpConversion configuration) {
     return new WebpWriter(
@@ -20,7 +21,7 @@ final class WebpWriterFactory {
         getOrDefault(configuration.method()),
         getOrDefault(configuration.lossless()),
         getOrDefault(configuration.noAlpha()),
-        getOrDefault(configuration.multiThread())
+        MULTI_THREAD
     );
   }
 

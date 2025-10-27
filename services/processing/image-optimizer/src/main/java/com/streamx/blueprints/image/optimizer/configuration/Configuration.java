@@ -31,8 +31,5 @@ public interface Configuration {
 
     @WithDefault("false")
     boolean noAlpha();
-
-    @WithDefault("false")
-    boolean multiThread();
   }
 }

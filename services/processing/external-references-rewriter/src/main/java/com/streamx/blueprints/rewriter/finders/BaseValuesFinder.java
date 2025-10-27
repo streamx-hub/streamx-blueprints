@@ -21,7 +21,7 @@ public abstract class BaseValuesFinder {
         return doFindMatchingValues(inputContent, searchExpressions);
       } catch (Exception ex) {
         // Content is an external resource, we should isolate parsing exception
-        Log.warnf("Exception while processing input: %s", inputContent);
+        Log.warnf("Exception: %s while processing input: %s", ex.getMessage(), inputContent);
       }
     }
     return Set.of();

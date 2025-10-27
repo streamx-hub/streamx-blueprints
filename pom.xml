@@ -42,14 +42,19 @@
     <quarkus.platform.version>3.20.1</quarkus.platform.version>
     <quarkus-reactive-messaging-http.version>2.5.0-lts</quarkus-reactive-messaging-http.version>
 
+    <!--  Images tags  -->
+    <streamx.container-image.package.type.jvm>jvm</streamx.container-image.package.type.jvm>
+    <streamx.container-image.package.type.native>native</streamx.container-image.package.type.native>
+    <streamx.container-image.latest-tag>latest-${quarkus.container-image.package.type}</streamx.container-image.latest-tag>
+
     <!--  Docker  -->
     <quarkus.container-image.build>true</quarkus.container-image.build>
     <quarkus.container-image.registry>ghcr.io</quarkus.container-image.registry>
     <quarkus.container-image.group>streamx-com/streamx-blueprints</quarkus.container-image.group>
     <quarkus.container-image.name>${project.artifactId}</quarkus.container-image.name>
-    <quarkus.container-image.package.type>jvm</quarkus.container-image.package.type>
+    <quarkus.container-image.package.type>${streamx.container-image.package.type.jvm}</quarkus.container-image.package.type>
     <quarkus.container-image.tag>${project.version}-${quarkus.container-image.package.type}</quarkus.container-image.tag>
-    <quarkus.container-image.additional-tags>latest-${quarkus.container-image.package.type}</quarkus.container-image.additional-tags>
+    <quarkus.container-image.additional-tags>${streamx.container-image.latest-tag}</quarkus.container-image.additional-tags>
 
     <!-- Test dependencies -->
     <assertj-core.version>3.27.6</assertj-core.version>
@@ -337,6 +342,20 @@
   </build>
 
   <profiles>
+    <profile>
+      <id>native</id>
+      <activation>
+        <property>
+          <name>native</name>
+        </property>
+      </activation>
+      <properties>
+        <skipITs>false</skipITs>
+        <quarkus.native.enabled>true</quarkus.native.enabled>
+        <quarkus.container-image.package.type>${streamx.container-image.package.type.native}</quarkus.container-image.package.type>
+        <quarkus.native.container-build>true</quarkus.native.container-build>
+      </properties>
+    </profile>
     <profile>
       <id>container-image-multiplatform</id>
       <properties>

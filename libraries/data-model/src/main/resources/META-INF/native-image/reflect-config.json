@@ -1,0 +1,18 @@
+[
+  { "name": "com.streamx.blueprints.data.Asset", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.Composition", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.Data", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.DownloadRequest", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.Fragment", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.IndexableResource", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.IndexableResourceFragment", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.JsonResource", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.Layout", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.Page", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.Renderer", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.RenderingContext", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.RenderingContext$OutputFormat", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.Resource", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.Typed", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true },
+  { "name": "com.streamx.blueprints.data.WebResource", "allDeclaredConstructors": true, "allDeclaredFields": true, "allDeclaredMethods": true }
+]
