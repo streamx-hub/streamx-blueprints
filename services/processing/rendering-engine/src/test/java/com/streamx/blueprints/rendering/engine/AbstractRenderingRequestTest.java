@@ -78,11 +78,7 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
     dataSource.send(dataPublishEvent(dataPublishKey));
     renderingContexts.send(renderingContextPublishEvent(renderingContext));
     renderers.send(rendererPublishEvent(TEMPLATE_KEY));
-
-    publishRenderingRequest(
-        renderingContext,
-        dataPublishKey
-    );
+    publishRenderingRequest(renderingContext, dataPublishKey);
 
     assertResourceIsProduced(
         "rendering-request-test-generated/" + dataPublishKey + ".html",
@@ -111,10 +107,7 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
 
     String dataPublishKey = "rendering-request-test-data-type2:1";
     dataSource.send(dataPublishEvent(dataPublishKey));
-    publishRenderingRequest(
-        renderingContext,
-        dataPublishKey
-    );
+    publishRenderingRequest(renderingContext, dataPublishKey);
 
     assertResourceIsProduced(
         "rendering-request-test-generated/" + dataPublishKey + ".html",
@@ -136,11 +129,7 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
     dataSource.send(dataPublishEvent(dataPublishKey));
     renderingContexts.send(renderingContextPublishEvent(renderingContext));
     renderers.send(rendererPublishEvent(TEMPLATE_KEY));
-
-    publishRenderingRequest(
-        renderingContext,
-        dataPublishKey
-    );
+    publishRenderingRequest(renderingContext, dataPublishKey);
 
     assertResourceIsProduced(
         "rendering-request-test-generated/" + dataPublishKey + ".html",
@@ -150,10 +139,7 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
     resourcesSink.clear();
 
     dataSource.send(dataUnpublishEvent(dataPublishKey));
-    unpublishRenderingRequest(
-        renderingContext,
-        dataPublishKey
-    );
+    unpublishRenderingRequest(renderingContext, dataPublishKey);
 
     assertResourceIsProduced(
         "rendering-request-test-generated/" + dataPublishKey + ".html",
