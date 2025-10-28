@@ -1,11 +1,13 @@
 package com.streamx.blueprints.data;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.annotation.Nullable;
 
 /**
  * Represents configuration defining what should be rendered. Relates to {@link Renderer} and
  * {@link Data}.
  */
+@RegisterForReflection
 public record RenderingContext(
     String rendererKey,
     @Nullable String dataKeyMatchPattern,

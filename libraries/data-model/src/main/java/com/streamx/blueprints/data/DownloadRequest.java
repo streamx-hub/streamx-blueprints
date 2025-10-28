@@ -1,5 +1,8 @@
 package com.streamx.blueprints.data;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
+@RegisterForReflection
 public record DownloadRequest(
     String url,
     String emitKey,

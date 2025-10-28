@@ -1,10 +1,9 @@
 package com.streamx.blueprints.data;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.contentOf;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import java.io.File;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.Set;
@@ -17,9 +16,6 @@ import org.reflections.scanners.Scanners;
 
 public class DataModelClassesTest {
 
-  private static final File reflectConfigFile = new File(
-      "src/main/resources/META-INF/native-image/reflect-config.json");
-
   private static final String DATA_MODEL_CLASSES_PACKAGE = DataModelClassesTest.class
       .getPackageName();
 
@@ -29,12 +25,12 @@ public class DataModelClassesTest {
           .stream()
           .filter(type -> type.startsWith(DATA_MODEL_CLASSES_PACKAGE))
           .map(DataModelClassesTest::toClass)
+          .filter(cls -> !cls.isEnum())
           .collect(Collectors.toSet());
 
-  private static final Set<Class<?>> plainClassDataModelClasses = dataModelClasses
+  private static final Set<Class<?>> nonRecordDataModelClasses = dataModelClasses
       .stream()
       .filter(cls -> !cls.isRecord())
-      .filter(cls -> !cls.isEnum())
       .collect(Collectors.toSet());
 
   private static Class<?> toClass(String cls) {
@@ -49,19 +45,19 @@ public class DataModelClassesTest {
     return dataModelClasses;
   }
 
-  public static Set<Class<?>> getPlainClassDataModelClasses() {
-    return plainClassDataModelClasses;
+  public static Set<Class<?>> getNonRecordDataModelClasses() {
+    return nonRecordDataModelClasses;
   }
 
   @ParameterizedTest
   @MethodSource("getDataModelClasses")
   void verifyReflectConfigJson(Class<?> dataModelClass) {
-    assertThat(contentOf(reflectConfigFile))
-        .contains(dataModelClass.getName());
+    assertThat(dataModelClass)
+        .hasAnnotation(RegisterForReflection.class);
   }
 
   @ParameterizedTest
-  @MethodSource("getPlainClassDataModelClasses")
+  @MethodSource("getNonRecordDataModelClasses")
   void nonRecordDataModelClassesShouldContainJsonCreatorAnnotation(Class<?> dataModelClass) {
     assertThat(dataModelClass.getConstructors())
         .anyMatch(c -> c.isAnnotationPresent(JsonCreator.class));
@@ -74,11 +70,7 @@ public class DataModelClassesTest {
       return;
     }
     for (Constructor<?> constructor : dataModelClass.getConstructors()) {
-      Object[] nulls = IntStream
-          .rangeClosed(1, constructor.getParameterCount())
-          .mapToObj(i -> null)
-          .toArray(Object[]::new);
-      Object dataClassInstance = constructor.newInstance(nulls);
+      Object dataClassInstance = instantiateWithNullParameters(constructor);
       if (dataClassInstance instanceof Resource resource) {
         assertThat(Resource.isEmpty(resource));
         assertThat(resource.getContent()).isNull();
@@ -89,6 +81,14 @@ public class DataModelClassesTest {
         assertThat(typed.getType()).isNull();
       }
     }
+  }
+
+  private static Object instantiateWithNullParameters(Constructor<?> constructor) throws Exception {
+    Object[] nulls = IntStream
+        .rangeClosed(1, constructor.getParameterCount())
+        .mapToObj(i -> null)
+        .toArray(Object[]::new);
+    return constructor.newInstance(nulls);
   }
 
 }

@@ -3,12 +3,14 @@ package com.streamx.blueprints.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.annotation.Nullable;
 import java.nio.ByteBuffer;
 
 /**
  * Represents object containing content.
  */
+@RegisterForReflection
 public class Resource extends Typed {
 
   @Nullable
