@@ -47,8 +47,7 @@ public class RenderingContexts {
   private Stream<KeyedValue<RenderingContext>> getPublishedContexts() {
     return renderingContextStore.getAll().stream()
         .filter(entry -> RenderingContext.TYPE_PUBLISHED.equals(entry.getValue().eventType()))
-        .map(entry -> new KeyedValue<>(entry.getKey(), entry.getValue().renderingContext()))
-        .filter(entry -> entry.value() != null);
+        .map(entry -> new KeyedValue<>(entry.getKey(), entry.getValue().renderingContext()));
   }
 
   static boolean isMatchingData(RenderingContext renderingContext, String dataKey,

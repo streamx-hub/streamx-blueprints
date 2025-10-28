@@ -4,6 +4,7 @@ import com.streamx.blueprints.data.RenderingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,17 +17,19 @@ public class PreservedRenderingContextStore {
     if (RenderingContext.TYPE_UNPUBLISHED.equals(eventType)) {
       PreservedRenderingContext preserved = store.get(subject);
       if (preserved == null) {
-        store.put(subject, new PreservedRenderingContext(null, eventType));
+        store.remove(subject);
       } else {
         store.put(subject, new PreservedRenderingContext(preserved.renderingContext(), eventType));
       }
-    } else {
+    } else if (RenderingContext.TYPE_PUBLISHED.equals(eventType)) {
       store.put(subject, new PreservedRenderingContext(renderingContext, eventType));
     }
   }
 
-  public PreservedRenderingContext get(String key) {
-    return store.get(key);
+  public RenderingContext get(String key) {
+    return Optional.ofNullable(store.get(key))
+        .map(PreservedRenderingContext::renderingContext)
+        .orElse(null);
   }
 
   public Set<Entry<String, PreservedRenderingContext>> getAll() {
