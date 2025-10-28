@@ -3,6 +3,7 @@ package com.streamx.blueprints.image.optimizer.image;
 import com.sksamuel.scrimage.AwtImage;
 import com.sksamuel.scrimage.ImmutableImage;
 import com.sksamuel.scrimage.metadata.ImageMetadata;
+import com.sksamuel.scrimage.nio.ImmutableImageLoader;
 import com.sksamuel.scrimage.webp.WebpWriter;
 import com.streamx.blueprints.image.optimizer.configuration.Configuration;
 import com.streamx.blueprints.image.optimizer.image.exceptions.NotAnImageException;
@@ -40,8 +41,9 @@ class ImageOptimizer {
   }
 
   private static AwtImage toAwtImage(byte[] imageContent) throws IOException {
+    ImmutableImageLoader imageLoader = ImmutableImage.loader().withJavaxImageReaders();
     try {
-      BufferedImage bufferedImage = ImmutableImage.loader().fromBytes(imageContent).awt();
+      BufferedImage bufferedImage = imageLoader.fromBytes(imageContent).awt();
       return new AwtImage(bufferedImage);
     } catch (IOException ex) {
       throw new NotAnImageException("Error reading the data as an image", ex);

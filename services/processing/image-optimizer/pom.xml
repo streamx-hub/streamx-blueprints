@@ -14,6 +14,7 @@
   <properties>
     <scrimage-webp.version>4.3.5</scrimage-webp.version>
     <jsoup.version>1.21.2</jsoup.version>
+    <maven-dependency-plugin.version>3.9.0</maven-dependency-plugin.version>
   </properties>
 
   <dependencies>
@@ -28,5 +29,49 @@
       <version>${jsoup.version}</version>
     </dependency>
   </dependencies>
+
+  <profiles>
+    <profile>
+      <id>native</id>
+      <activation>
+        <property>
+          <name>native</name>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>io.quarkus</groupId>
+          <artifactId>quarkus-awt</artifactId>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>${maven-dependency-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>unpack-binaries</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>unpack</goal>
+                </goals>
+                <configuration>
+                  <artifactItems>
+                    <artifactItem>
+                      <groupId>com.sksamuel.scrimage</groupId>
+                      <artifactId>scrimage-webp</artifactId>
+                      <includes>dist_webp_binaries/libwebp-1.4.0-linux-aarch64/bin/*</includes>
+                      <outputDirectory>${project.build.directory}/scrimage-webp-libraries</outputDirectory>
+                    </artifactItem>
+                  </artifactItems>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>
