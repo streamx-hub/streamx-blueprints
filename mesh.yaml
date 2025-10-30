@@ -1,7 +1,7 @@
 default:
   image:
     repository: ghcr.io/streamx-com/streamx-blueprints
-    tag: latest-jvm
+    tag: latest-jvm # or: latest-native
 
 sources:
   resources-source:

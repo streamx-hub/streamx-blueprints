@@ -1,5 +1,7 @@
 *
 !target/*-runner
 !target/*-runner.jar
+!target/*.so
+!target/scrimage-webp-libraries/*
 !target/lib/*
 !target/quarkus-app/*
