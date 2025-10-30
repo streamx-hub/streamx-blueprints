@@ -35,14 +35,7 @@ public class RenderingRequests {
     return getFrom(incoming, renderingContexts, dataStream);
   }
 
-  Multi<Message<CloudEvent>> getFromDataEntries(Message<CloudEvent> incoming,
-      List<KeyedValue<RenderingContext>> renderingContexts, List<KeyedValue<Data>> dataEntry) {
-    Stream<KeyedValue<Data>> dataStream = dataEntry.stream();
-
-    return getFrom(incoming, renderingContexts, dataStream);
-  }
-
-  private Multi<Message<CloudEvent>> getFrom(Message<CloudEvent> incoming,
+  Multi<Message<CloudEvent>> getFrom(Message<CloudEvent> incoming,
       List<KeyedValue<RenderingContext>> renderingContexts,
       Stream<KeyedValue<Data>> dataStream) {
     Multi<Message<CloudEvent>> outgoings;
@@ -111,7 +104,7 @@ public class RenderingRequests {
 
   private boolean skipDataWithNoValue(KeyedValue<?> entry) {
     return entry.value() != null
-        || dataStore.get(entry.key()).data() != null;
+        || dataStore.hasData(entry.key());
   }
 
   private String getDataType(String key) {

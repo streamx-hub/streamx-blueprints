@@ -18,8 +18,12 @@ abstract class AbstractRenderEngineTest {
   @Any
   InMemoryConnector connector;
 
-  protected CloudEvent dataEvent(String key, String eventType) {
-    return dataEvent(key, eventType, 1L);
+  protected CloudEvent dataPublishEvent(String key) {
+    return dataEvent(key, Data.TYPE_PUBLISHED, 1L);
+  }
+
+  protected CloudEvent dataUnpublishEvent(String key) {
+    return dataEvent(key, Data.TYPE_UNPUBLISHED, 1L);
   }
 
   protected CloudEvent dataEvent(String key, String eventType, long eventTime) {

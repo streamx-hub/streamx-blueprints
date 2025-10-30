@@ -5,7 +5,6 @@ import static org.awaitility.Awaitility.await;
 
 import com.google.common.collect.Iterables;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
-import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.Fragment;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.RenderingContext;
@@ -16,16 +15,21 @@ import com.streamx.blueprints.rendering.engine.Channels.Outgoing;
 import io.cloudevents.CloudEvent;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
 import io.smallrye.reactive.messaging.memory.InMemorySource;
+import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
 
-  InMemorySource<CloudEvent> dataSource;
-  InMemorySource<CloudEvent> renderers;
-  InMemorySource<CloudEvent> renderingRequests;
-  InMemorySource<CloudEvent> renderingContexts;
-  InMemorySink<CloudEvent> resourcesSink;
+  private static final String TEMPLATE_KEY = "rendering-request-test-resource-renderer";
+  private static final String RENDERING_CONTEXT_EVENT_KEY =
+      "rendering-request-test-resources-rendering-context";
+
+  private InMemorySource<CloudEvent> dataSource;
+  private InMemorySource<CloudEvent> renderers;
+  private InMemorySource<CloudEvent> renderingRequests;
+  private InMemorySource<CloudEvent> renderingContexts;
+  private InMemorySink<CloudEvent> resourcesSink;
 
   private final OutputFormat outputFormat;
   private final String outgoingChannel;
@@ -62,98 +66,117 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
 
   @Test
   void dataPublishRenderingRequestShouldGenerateResource() {
-    String templateKey = "rendering-request-test-resource-renderer";
-    CloudEvent data = dataEvent("rendering-request-test-data-type1:1", Data.TYPE_PUBLISHED);
-    CloudEvent renderingContextPublishEvent =
-        renderingContextPublishEvent(
-            "rendering-request-test-resources-rendering-context",
-            new RenderingContext(templateKey, "rendering-request-test-data-type1:.*",
-                null,
-                "rendering-request-test-generated/{{id}}.html",
-                null,
-                outputFormat));
+    String dataPublishKey = "rendering-request-test-data-type1:1";
+    RenderingContext renderingContext = new RenderingContext(
+        TEMPLATE_KEY,
+        "rendering-request-test-data-type1:.*",
+        null,
+        "rendering-request-test-generated/{{id}}.html",
+        null,
+        outputFormat);
 
-    dataSource.send(data);
-    renderingContexts.send(renderingContextPublishEvent);
-    renderers.send(rendererPublishEvent(templateKey));
+    dataSource.send(dataPublishEvent(dataPublishKey));
+    renderingContexts.send(renderingContextPublishEvent(renderingContext));
+    renderers.send(rendererPublishEvent(TEMPLATE_KEY));
+    publishRenderingRequest(renderingContext, dataPublishKey);
 
-    sendRenderingRequest(
-        renderingContextPublishEvent,
-        data.getSubject(),
-        templateKey,
-        RenderingRequest.TYPE_PUBLISHED);
-
-    await().until(() -> resourcesSink.received().size() == 1);
     assertResourceIsProduced(
-        "rendering-request-test-generated/" + data.getSubject() + ".html",
+        "rendering-request-test-generated/" + dataPublishKey + ".html",
         outputEventPublishedType,
         null,
-        "id = " + data.getSubject());
+        "id = " + dataPublishKey);
+  }
+
+  @Test
+  void dataPublishRenderingRequestShouldGenerateResourceAfterInitialUnpublish() {
+    RenderingContext renderingContext = new RenderingContext(
+        TEMPLATE_KEY,
+        "rendering-request-test-data-type2:.*",
+        null,
+        "rendering-request-test-generated/{{id}}.html",
+        null,
+        OutputFormat.PAGE);
+    String dataUnpublishKey = "rendering-request-test-data-type2:1";
+
+    renderingContexts.send(renderingContextPublishEvent(renderingContext));
+    renderers.send(rendererPublishEvent(TEMPLATE_KEY));
+    dataSource.send(dataUnpublishEvent(dataUnpublishKey));
+    await().atLeast(Duration.ofMillis(100)).untilAsserted(() ->
+        assertThat(resourcesSink.received()).isEmpty()
+    );
+
+    String dataPublishKey = "rendering-request-test-data-type2:1";
+    dataSource.send(dataPublishEvent(dataPublishKey));
+    publishRenderingRequest(renderingContext, dataPublishKey);
+
+    assertResourceIsProduced(
+        "rendering-request-test-generated/" + dataPublishKey + ".html",
+        outputEventPublishedType,
+        null,
+        "id = " + dataPublishKey);
   }
 
   @Test
   void dataUnpublishRenderingRequestShouldRemoveResource() {
-    String templateKey = "rendering-request-test-resource-renderer";
-    CloudEvent data = dataEvent("rendering-request-test-data-type2:1", Data.TYPE_PUBLISHED);
-    CloudEvent renderingContextPublishEvent =
-        renderingContextPublishEvent(
-            "rendering-request-test-resources-rendering-context",
-            new RenderingContext(templateKey, "rendering-request-test-data-type2:.*",
-                null,
-                "rendering-request-test-generated/{{id}}.html",
-                "output-template-test-{{id}}",
-                outputFormat));
+    String dataPublishKey = "rendering-request-test-data-type3:1";
+    RenderingContext renderingContext = new RenderingContext(TEMPLATE_KEY,
+        "rendering-request-test-data-type3:.*",
+        null,
+        "rendering-request-test-generated/{{id}}.html",
+        "output-template-test-{{id}}",
+        outputFormat);
 
-    dataSource.send(data);
-    renderingContexts.send(renderingContextPublishEvent);
-    renderers.send(rendererPublishEvent(templateKey));
+    dataSource.send(dataPublishEvent(dataPublishKey));
+    renderingContexts.send(renderingContextPublishEvent(renderingContext));
+    renderers.send(rendererPublishEvent(TEMPLATE_KEY));
+    publishRenderingRequest(renderingContext, dataPublishKey);
 
-    sendRenderingRequest(
-        renderingContextPublishEvent,
-        data.getSubject(),
-        templateKey,
-        RenderingRequest.TYPE_PUBLISHED);
-
-    await().until(() -> resourcesSink.received().size() == 1);
     assertResourceIsProduced(
-        "rendering-request-test-generated/" + data.getSubject() + ".html",
+        "rendering-request-test-generated/" + dataPublishKey + ".html",
         outputEventPublishedType,
-        "output-template-test-" + data.getSubject(),
-        "id = " + data.getSubject());
+        "output-template-test-" + dataPublishKey,
+        "id = " + dataPublishKey);
     resourcesSink.clear();
 
-    dataSource.send(dataEvent(data.getSubject(), Data.TYPE_UNPUBLISHED));
-    sendRenderingRequest(
-        renderingContextPublishEvent,
-        data.getSubject(),
-        templateKey,
-        RenderingRequest.TYPE_UNPUBLISHED);
+    dataSource.send(dataUnpublishEvent(dataPublishKey));
+    unpublishRenderingRequest(renderingContext, dataPublishKey);
 
-    await().until(() -> resourcesSink.received().size() == 1);
     assertResourceIsProduced(
-        "rendering-request-test-generated/" + data.getSubject() + ".html",
+        "rendering-request-test-generated/" + dataPublishKey + ".html",
         outputEventUnpublishedType,
         null,
         null);
   }
 
-  private void sendRenderingRequest(CloudEvent renderingContextPublishEvent, String dataKey,
-      String templateKey, String eventType) {
+  protected CloudEvent renderingContextPublishEvent(RenderingContext context) {
+    return renderingContextPublishEvent(RENDERING_CONTEXT_EVENT_KEY, context);
+  }
 
-    RenderingContext renderingContext =
-        CloudEventUtils.getData(renderingContextPublishEvent, RenderingContext.class);
+  private void publishRenderingRequest(RenderingContext renderingContext, String dataKey) {
+    sendRenderingRequest(renderingContext, dataKey, RenderingRequest.TYPE_PUBLISHED);
+  }
+
+  private void unpublishRenderingRequest(RenderingContext renderingContext, String dataKey) {
+    sendRenderingRequest(renderingContext, dataKey, RenderingRequest.TYPE_UNPUBLISHED);
+  }
+
+  private void sendRenderingRequest(RenderingContext renderingContext, String dataKey,
+      String eventType) {
+
     assertThat(renderingContext).isNotNull();
     String outputKeyTemplate = renderingContext.outputKeyTemplate();
     String outputTypeTemplate = renderingContext.outputTypeTemplate();
 
-    String key = renderingContextPublishEvent.getSubject() + ":::" + dataKey;
-    RenderingRequest request = new RenderingRequest(dataKey, templateKey,
+    String key = RENDERING_CONTEXT_EVENT_KEY + ":::" + dataKey;
+    RenderingRequest request = new RenderingRequest(dataKey, TEMPLATE_KEY,
         outputKeyTemplate, outputTypeTemplate, outputFormat);
     renderingRequests.send(renderingRequestEvent(key, eventType, request));
   }
 
   private void assertResourceIsProduced(String expectedKey, String expectedEventType,
       String expectedResourceType, String expectedContent) {
+    await().untilAsserted(() -> assertThat(resourcesSink.received()).hasSize(1));
+
     CloudEvent actual = Iterables.getOnlyElement(resourcesSink.received()).getPayload();
     assertThat(actual).isNotNull();
 

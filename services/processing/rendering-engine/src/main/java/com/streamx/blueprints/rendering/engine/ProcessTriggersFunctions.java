@@ -13,6 +13,7 @@ import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.List;
+import java.util.stream.Stream;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -56,9 +57,9 @@ public class ProcessTriggersFunctions {
     String dataType = data == null ? null : data.getType();
 
     dataStore.register(data, eventType, dataKey);
-    var entryStream = List.of(new KeyedValue<>(dataKey, data));
+    var entryStream = Stream.of(new KeyedValue<>(dataKey, data));
 
-    return renderingRequests.getFromDataEntries(incoming,
+    return renderingRequests.getFrom(incoming,
         renderingContexts.getByData(dataKey, dataType), entryStream);
   }
 
@@ -110,7 +111,7 @@ public class ProcessTriggersFunctions {
     String subject = CloudEventUtils.getSubject(event);
     RenderingContext renderingContext = CloudEventUtils.getData(event, RenderingContext.class);
     renderingContextStore.register(renderingContext, event.getType(), subject);
-    return renderingContextStore.get(subject).renderingContext();
+    return renderingContextStore.get(subject);
   }
 
 }

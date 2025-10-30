@@ -4,6 +4,7 @@ import com.streamx.blueprints.data.Data;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,13 +17,17 @@ public class PreservedDataStore {
     if (Data.TYPE_UNPUBLISHED.equals(eventType)) {
       PreservedData preserved = store.get(subject);
       if (preserved == null) {
-        store.put(subject, new PreservedData(null, eventType));
+        store.remove(subject);
       } else {
         store.put(subject, new PreservedData(preserved.data(), eventType));
       }
-    } else {
+    } else if (Data.TYPE_PUBLISHED.equals(eventType)) {
       store.put(subject, new PreservedData(data, eventType));
     }
+  }
+
+  public boolean hasData(String key) {
+    return Optional.ofNullable(store.get(key)).isPresent();
   }
 
   public PreservedData get(String key) {

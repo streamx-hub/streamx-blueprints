@@ -62,7 +62,7 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
 
     // DXP-1206 resolution verification
     String dataKeyWillNotBeProcessed = "data-type2:dataKeyWillNotBeProcessed";
-    dataSource.send(dataEvent(dataKeyWillNotBeProcessed, Data.TYPE_PUBLISHED));
+    dataSource.send(dataPublishEvent(dataKeyWillNotBeProcessed));
     renderingRequestSink.clear();
 
     // test
@@ -86,8 +86,8 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
   @Test
   void testRendererProcessing() {
     // given
-    CloudEvent data1 = dataEvent("data-type1:1", Data.TYPE_PUBLISHED);
-    CloudEvent data2 = dataEvent("data-type1:2", Data.TYPE_PUBLISHED);
+    CloudEvent data1 = dataPublishEvent("data-type1:1");
+    CloudEvent data2 = dataPublishEvent("data-type1:2");
     dataSource.send(data1);
     dataSource.send(data2);
     CloudEvent context1 = renderingContextPublishEvent(
@@ -143,8 +143,8 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
   @Test
   void testRenderingContextProcessing() {
     // given
-    CloudEvent data1 = dataEvent("data-type3:1", Data.TYPE_PUBLISHED);
-    CloudEvent data2 = dataEvent("data-type3:2", Data.TYPE_PUBLISHED);
+    CloudEvent data1 = dataPublishEvent("data-type3:1");
+    CloudEvent data2 = dataPublishEvent("data-type3:2");
     dataSource.send(data1);
     dataSource.send(data2);
     renderersSource.send(rendererPublishEvent("renderer3-1"));
