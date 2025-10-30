@@ -55,7 +55,7 @@ public class ProcessRenderingRequestFunction {
   private record ProcessingSettings(
       String publishEventType,
       String unpublishEventType,
-      BiFunction<byte[], String, WebResource> resourceConstructor,
+      BiFunction<String, String, WebResource> resourceConstructor,
       Emitter<CloudEvent> emitter) {
 
   }
@@ -115,7 +115,7 @@ public class ProcessRenderingRequestFunction {
   private void generateAndEmitOutputEvent(boolean isUnpublish, RenderingRequest request, Data data,
       Renderer renderer) {
     Map<String, Object> dataValue = readValue(data);
-    byte[] outputContent = isUnpublish ? null : generateOutputContent(renderer, dataValue);
+    String outputContent = isUnpublish ? null : generateOutputContent(renderer, dataValue);
     String outputType = isUnpublish ? null : generateKey(request.outputTypeTemplate(), dataValue);
     String key = generateKey(request.outputKeyTemplate(), dataValue);
 
@@ -131,7 +131,7 @@ public class ProcessRenderingRequestFunction {
   }
 
   private WebResource createResource(ProcessingSettings settings, String outputType,
-      byte[] outputContent) {
+      String outputContent) {
     return settings.resourceConstructor.apply(outputContent, outputType);
   }
 
@@ -154,13 +154,13 @@ public class ProcessRenderingRequestFunction {
       return null;
     }
     try {
-      return new String(outputGenerator.generate(template, data));
+      return outputGenerator.generate(template, data);
     } catch (GeneratorException e) {
       throw new IllegalStateException("Error while generating from template " + template, e);
     }
   }
 
-  private byte[] generateOutputContent(Renderer renderer, Map<String, Object> data) {
+  private String generateOutputContent(Renderer renderer, Map<String, Object> data) {
     if (renderer != null) {
       try {
         return outputGenerator.generate(new String(renderer.template().array()), data);

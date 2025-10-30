@@ -150,8 +150,8 @@ abstract class SearchEdgeServiceTestBase extends BaseOpensearchTest {
 
   private void send(TestResource content, String eventType, Set<String> fragmentKeys, String type) {
     try {
-      var bytes = objectMapper.writeValueAsBytes(content);
-      var indexableResource = new IndexableResource(bytes, type, fragmentKeys);
+      var json = objectMapper.writeValueAsString(content);
+      var indexableResource = new IndexableResource(json, type, fragmentKeys);
 
       connector.source(Channels.INDEXABLE_RESOURCES)
           .send(CloudEventUtils.eventWithData(

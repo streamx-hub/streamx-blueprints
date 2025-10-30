@@ -14,25 +14,9 @@ public class WebResource extends Resource {
   public static final String TYPE_UNPUBLISHED =
       "com.streamx.blueprints.web-resource.unpublished.v1";
 
-  public WebResource(ByteBuffer content) {
-    super(content);
-  }
-
-  public WebResource(byte[] content) {
-    super(content);
-  }
-
-  public WebResource(String content) {
-    super(content);
-  }
-
   @JsonCreator
   public WebResource(
       @JsonProperty("content") ByteBuffer content, @JsonProperty("type") String type) {
-    super(content, type);
-  }
-
-  public WebResource(byte[] content, String type) {
     super(content, type);
   }
 

@@ -16,14 +16,14 @@ public class PebbleOutputGenerator implements OutputGenerator {
   private final PebbleEngine engine = createPebbleEngine();
 
   @Override
-  public byte[] generate(String template, Map<String, Object> data) throws GeneratorException {
+  public String generate(String template, Map<String, Object> data) throws GeneratorException {
     StringWriter writer = new StringWriter();
     try {
       engine.getTemplate(template).evaluate(writer, data);
     } catch (PebbleException | IOException e) {
       throw new GeneratorException("Could not evaluate template", e);
     }
-    return writer.toString().getBytes();
+    return writer.toString();
   }
 
   @Override

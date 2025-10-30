@@ -12,24 +12,8 @@ public class Data extends JsonResource {
   public static final String TYPE_PUBLISHED = "com.streamx.blueprints.data.published.v1";
   public static final String TYPE_UNPUBLISHED = "com.streamx.blueprints.data.unpublished.v1";
 
-  public Data(ByteBuffer content) {
-    super(content);
-  }
-
-  public Data(byte[] content) {
-    super(content);
-  }
-
-  public Data(String content) {
-    super(content);
-  }
-
   @JsonCreator
   public Data(@JsonProperty("content") ByteBuffer content, @JsonProperty("type") String type) {
-    super(content, type);
-  }
-
-  public Data(byte[] content, String type) {
     super(content, type);
   }
 

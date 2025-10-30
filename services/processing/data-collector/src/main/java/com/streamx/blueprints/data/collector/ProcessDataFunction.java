@@ -78,7 +78,8 @@ class ProcessDataFunction {
         log.warnf("Skipping processing publish event %s with no payload", key);
         return null;
       }
-      return CloudEventUtils.eventCopyWithData(dataEvent, new WebResource(data.getContent()))
+      WebResource webResource = new WebResource(data.getContent(), data.getType());
+      return CloudEventUtils.eventCopyWithData(dataEvent, webResource)
           .withSubject(publishKey)
           .withType(WebResource.TYPE_PUBLISHED)
           .build();

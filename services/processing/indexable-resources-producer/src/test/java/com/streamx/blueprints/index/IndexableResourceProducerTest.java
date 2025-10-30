@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 public class IndexableResourceProducerTest {
 
   private static final String DEFAULT_KEY = "/test.html";
+  private static final String RESOURCE_TYPE = "any";
 
   private InMemorySource<CloudEvent> pagesSource;
   private InMemorySink<CloudEvent> indexableResourceSink;
@@ -235,7 +236,7 @@ public class IndexableResourceProducerTest {
     CloudEvent pageEvent = CloudEventTestUtils.cloudEventWithExtensions(
         DEFAULT_KEY,
         Page.TYPE_PUBLISHED,
-        new Page(payload),
+        new Page(payload, RESOURCE_TYPE),
         Map.of(AbstractIndexableResourceProducer.EXTENSION_NAME_INDEXABLE, "true")
     );
 
@@ -259,7 +260,7 @@ public class IndexableResourceProducerTest {
     CloudEvent pageEvent = CloudEventTestUtils.cloudEventWithExtensions(
         DEFAULT_KEY,
         Page.TYPE_PUBLISHED,
-        new Page(payload),
+        new Page(payload, RESOURCE_TYPE),
         Map.of(AbstractIndexableResourceProducer.EXTENSION_NAME_INDEXABLE, "false")
     );
 
@@ -292,7 +293,7 @@ public class IndexableResourceProducerTest {
     CloudEvent pageEvent = CloudEventUtils.eventWithData(
         DEFAULT_KEY,
         WebResource.TYPE_PUBLISHED,
-        new Page("content")
+        new Page("content", RESOURCE_TYPE)
     );
 
     // when & then
@@ -303,7 +304,7 @@ public class IndexableResourceProducerTest {
     CloudEvent pageEvent = CloudEventUtils.eventWithData(
         DEFAULT_KEY,
         Page.TYPE_PUBLISHED,
-        new Page(payload),
+        new Page(payload, RESOURCE_TYPE),
         CloudEventUtils.toOffsetDateTime(1)
     );
 
@@ -322,6 +323,7 @@ public class IndexableResourceProducerTest {
     IndexableResource indexableResource = CloudEventUtils.getData(indexableResourceEvent,
         IndexableResource.class);
     assertThat(indexableResource).isNotNull();
+    assertThat(indexableResource.getType()).isEqualTo(RESOURCE_TYPE);
     String json = indexableResource.getContentAsString();
     try {
       return objectMapper.readValue(json, IndexableResourceContent.class);

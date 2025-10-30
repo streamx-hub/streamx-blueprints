@@ -14,18 +14,6 @@ public class Resource extends Typed {
   @Nullable
   private final ByteBuffer content;
 
-  public Resource(ByteBuffer content) {
-    this(content, null);
-  }
-
-  public Resource(byte[] content) {
-    this(wrapBytes(content));
-  }
-
-  public Resource(String content) {
-    this(getBytes(content));
-  }
-
   @JsonCreator
   public Resource(@JsonProperty("content") ByteBuffer content, @JsonProperty("type") String type) {
     super(type);

@@ -23,7 +23,7 @@ import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Test;
@@ -39,6 +39,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 public abstract class WebResourcesAccessTestBase {
 
   private static final String TEST_CONTENT = "test content for %s";
+  private static final String RESOURCE_TYPE = "any";
   private static final AtomicLong EVENT_TIME = new AtomicLong(1);
 
   @Inject
@@ -110,7 +111,7 @@ public abstract class WebResourcesAccessTestBase {
     verifyStoragePath(
         "blogs/pages/",
         "/blogs/pages/index.html",
-        new Page("Some content"),
+        new Page("Some content", RESOURCE_TYPE),
         Page.TYPE_PUBLISHED,
         Page.TYPE_UNPUBLISHED
     );
@@ -121,7 +122,7 @@ public abstract class WebResourcesAccessTestBase {
     verifyStoragePath(
         "blogs/fragments/",
         "/blogs/fragments/index.html",
-        new Fragment("Some content"),
+        new Fragment("Some content", RESOURCE_TYPE),
         Fragment.TYPE_PUBLISHED,
         Fragment.TYPE_UNPUBLISHED
     );
@@ -132,7 +133,7 @@ public abstract class WebResourcesAccessTestBase {
     verifyStoragePath(
         "blogs/web-resources/",
         "/blogs/web-resources",
-        new WebResource("Some content"),
+        new WebResource("Some content", RESOURCE_TYPE),
         WebResource.TYPE_PUBLISHED,
         WebResource.TYPE_UNPUBLISHED
     );
@@ -143,7 +144,7 @@ public abstract class WebResourcesAccessTestBase {
     verifyStoragePath(
         "blogs/assets/",
         "/blogs/assets",
-        new Asset(new byte[]{0, 1, 2}),
+        new Asset(new byte[]{0, 1, 2}, RESOURCE_TYPE),
         Asset.TYPE_PUBLISHED,
         Asset.TYPE_UNPUBLISHED
     );
@@ -177,7 +178,7 @@ public abstract class WebResourcesAccessTestBase {
     String assetContent = "Asset content";
 
     // when
-    publish(subject, content -> new Asset(assetContent.getBytes()));
+    publish(subject, (content, type) -> new Asset(assetContent.getBytes(), type));
 
     // then
     assertCanAccessViaHttp(expectedPath, assetContent);
@@ -229,9 +230,9 @@ public abstract class WebResourcesAccessTestBase {
     assertCanAccessViaHttp(synchronisationFile, syncContent);
   }
 
-  private <T> String publish(String subject, Function<String, T> createPayloadFn) {
+  private <T> String publish(String subject, BiFunction<String, String, T> createPayloadFn) {
     String content = TEST_CONTENT.formatted(subject);
-    T payload = createPayloadFn.apply(content);
+    T payload = createPayloadFn.apply(content, RESOURCE_TYPE);
     publish(subject, payload);
     return content;
   }
@@ -242,14 +243,6 @@ public abstract class WebResourcesAccessTestBase {
 
   private <T> void publish(String subject, T payload, String eventType) {
     sendEvent(subject, payload, eventType);
-  }
-
-  private <T> void publishPage(String subject, T payload) {
-    sendEvent(subject, payload, Page.TYPE_PUBLISHED);
-  }
-
-  private <T> void unpublishPage(String subject) {
-    sendEvent(subject, null, Page.TYPE_UNPUBLISHED);
   }
 
   private void unpublish(String subject) {

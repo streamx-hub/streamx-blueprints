@@ -23,6 +23,7 @@ public class WebResourceProducingTest {
 
   private static final String DEFAULT_KEY = "collected:test";
   private static final String DEFAULT_CONTENT = "{\"key\": \"value\"}";
+  private static final String DEFAULT_TYPE = "any-type";
 
   @Inject
   @Any
@@ -109,7 +110,7 @@ public class WebResourceProducingTest {
   void shouldNotProduceWebResourceIfWrongTypeOfIncomingEvent() {
     // given
     CloudEvent dataEvent = CloudEventUtils.eventWithData(
-        DEFAULT_KEY, Page.TYPE_PUBLISHED, new Data(DEFAULT_CONTENT));
+        DEFAULT_KEY, Page.TYPE_PUBLISHED, new Data(DEFAULT_CONTENT, DEFAULT_TYPE));
 
     // when
     dataSource.send(dataEvent);
@@ -122,7 +123,7 @@ public class WebResourceProducingTest {
     return CloudEventUtils.eventWithData(
         key,
         Data.TYPE_PUBLISHED,
-        new Data(DEFAULT_CONTENT),
+        new Data(DEFAULT_CONTENT, DEFAULT_TYPE),
         CloudEventUtils.toOffsetDateTime(1)
     );
   }
