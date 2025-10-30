@@ -1,6 +1,5 @@
 package com.streamx.blueprints.rewriter.functions;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.contentOf;
 
 import com.streamx.blueprints.rewriter.testutils.DownloadedResource;
@@ -18,7 +17,7 @@ class ProcessJsonDataFunctionTest extends BaseProcessFunctionTest {
     // given
     final String jsonResourceKey = "default_product:62";
     final String jsonResourceContent = contentOf(
-        new File("src/test/resources/magento-products.json"), UTF_8);
+        new File("src/test/resources/magento-products.json"));
 
     List<String> externalImageUrls = jsonResourceContent.lines()
         .filter(line -> line.contains("http"))
@@ -52,7 +51,7 @@ class ProcessJsonDataFunctionTest extends BaseProcessFunctionTest {
     String expectedPublishedContent = jsonResourceContent
         .replace("\\/", "/")
         .replace("https://", "/https_");
-    assertPublishedData(dataAssets.get(0), jsonResourceKey, expectedPublishedContent);
+    assertPublishedData(dataAssets.getFirst(), jsonResourceKey, expectedPublishedContent);
   }
 
   @Test
@@ -88,7 +87,7 @@ class ProcessJsonDataFunctionTest extends BaseProcessFunctionTest {
 
     // and: verify published processed json
     List<CloudEvent> dataSink = waitForEventsInSink(DATA, 1);
-    assertPublishedData(dataSink.get(0), jsonResourceKey,
+    assertPublishedData(dataSink.getFirst(), jsonResourceKey,
         """
             {
               "productUrls": [
@@ -112,7 +111,7 @@ class ProcessJsonDataFunctionTest extends BaseProcessFunctionTest {
           "someOtherField": "Value with \\"escaped\\" quoted text"
         }
         """;
-    final byte[] externalResourceContent = "content".getBytes(UTF_8);
+    final byte[] externalResourceContent = "content".getBytes();
 
     // and
     mockDownloadResponse("https://www.my-eds-server.com/a/b.jpg", externalResourceContent);
@@ -126,7 +125,7 @@ class ProcessJsonDataFunctionTest extends BaseProcessFunctionTest {
 
     // and: verify published processed json
     List<CloudEvent> dataSink = waitForEventsInSink(DATA, 1);
-    assertPublishedData(dataSink.get(0),
+    assertPublishedData(dataSink.getFirst(),
         jsonResourceKey,
         """
             {

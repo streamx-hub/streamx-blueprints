@@ -79,7 +79,7 @@ abstract class AbstractCollectorTest {
     await().atMost(Duration.ofSeconds(3)).untilAsserted(() ->
         assertThat(collectedDataSink.received()).hasSize(1));
 
-    return collectedDataSink.received().get(0).getPayload();
+    return collectedDataSink.received().getFirst().getPayload();
   }
 
 }

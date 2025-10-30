@@ -121,7 +121,7 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     // then
     List<CloudEvent> webResourceEvents = waitForDownloadedResources(testPath,
         downloadedWebResourcesSink, EMITTED_WEB_RESOURCE_TYPE, 2);
-    assertEventContent(webResourceEvents.get(0), testContent);
+    assertEventContent(webResourceEvents.getFirst(), testContent);
     assertEventContent(webResourceEvents.get(1), testContent);
 
     // then: expect no re-download

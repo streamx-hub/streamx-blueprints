@@ -1,7 +1,5 @@
 package com.streamx.blueprints.data;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -61,11 +59,11 @@ public class Resource extends Typed {
   }
 
   private static byte[] getBytes(String content) {
-    return content == null ? null : content.getBytes(UTF_8);
+    return content == null ? null : content.getBytes();
   }
 
   private static String contentAsString(ByteBuffer content) {
-    return content == null ? null : new String(content.array(), UTF_8);
+    return content == null ? null : new String(content.array());
   }
 
   public static boolean isEmpty(Resource resource) {

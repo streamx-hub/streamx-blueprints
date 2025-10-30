@@ -8,7 +8,6 @@ import io.pebbletemplates.pebble.loader.StringLoader;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @ApplicationScoped
@@ -24,7 +23,7 @@ public class PebbleOutputGenerator implements OutputGenerator {
     } catch (PebbleException | IOException e) {
       throw new GeneratorException("Could not evaluate template", e);
     }
-    return writer.toString().getBytes(StandardCharsets.UTF_8);
+    return writer.toString().getBytes();
   }
 
   @Override

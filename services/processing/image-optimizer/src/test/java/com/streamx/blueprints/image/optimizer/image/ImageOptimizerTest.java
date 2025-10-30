@@ -1,6 +1,5 @@
 package com.streamx.blueprints.image.optimizer.image;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
@@ -80,7 +79,7 @@ class ImageOptimizerTest {
 
   private static List<byte[]> bytesOfNonImageFiles() {
     return Arrays.asList(
-        "Lorem ipsum".getBytes(UTF_8),
+        "Lorem ipsum".getBytes(),
         new byte[]{0, 1, 2},
         new byte[0],
         null

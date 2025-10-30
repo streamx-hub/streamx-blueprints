@@ -1,6 +1,5 @@
 package com.streamx.blueprints.rewriter.functions;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
@@ -51,7 +50,7 @@ abstract class BaseMockedDownloaderTest {
 
   protected void mockDownloadResponse(String url, Object response) {
     urlsToDownloadByCurrentTest.add(url);
-    byte[] content = response instanceof String s ? s.getBytes(UTF_8) : (byte[]) response;
+    byte[] content = response instanceof String s ? s.getBytes() : (byte[]) response;
     doAnswer(invocation -> {
       ExternalResource resource = invocation.getArgument(0);
       String streamxKey = resource.getStreamxKey();

@@ -138,7 +138,7 @@ public class WebResourceProducingTest {
   private CloudEvent waitForSingleResultEvent() {
     await().atMost(Duration.ofSeconds(3))
         .untilAsserted(() -> assertThat(webResourceSink.received()).hasSize(1));
-    return webResourceSink.received().get(0).getPayload();
+    return webResourceSink.received().getFirst().getPayload();
   }
 
   private void assertNoResultEvents() {

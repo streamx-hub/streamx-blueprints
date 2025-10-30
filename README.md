@@ -19,7 +19,7 @@ The following are recommended directories:
 ## Prerequisites
 
 To work with this repository you need:
-* OpenJDK 17+ installed with JAVA_HOME configured appropriately
+* OpenJDK 21+ installed with JAVA_HOME configured appropriately
 * Docker
 * StreamX CLI
 

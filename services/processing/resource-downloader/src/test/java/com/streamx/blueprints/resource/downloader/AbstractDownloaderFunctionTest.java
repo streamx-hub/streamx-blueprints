@@ -1,6 +1,5 @@
 package com.streamx.blueprints.resource.downloader;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -90,7 +89,7 @@ abstract class AbstractDownloaderFunctionTest {
 
   private CloudEvent waitForSingleDownloadedResource(String key, InMemorySink<CloudEvent> sink,
       String payloadType) {
-    return waitForDownloadedResources(key, sink, payloadType, 1).get(0);
+    return waitForDownloadedResources(key, sink, payloadType, 1).getFirst();
   }
 
   protected List<CloudEvent> waitForDownloadedResources(String key, InMemorySink<CloudEvent> sink,
@@ -120,7 +119,7 @@ abstract class AbstractDownloaderFunctionTest {
   }
 
   protected void assertEventContent(CloudEvent actualEvent, String expectedContent) {
-    assertEventContent(actualEvent, expectedContent.getBytes(UTF_8));
+    assertEventContent(actualEvent, expectedContent.getBytes());
   }
 
   protected void assertEventContent(CloudEvent actualEvent, byte[] expectedContent) {

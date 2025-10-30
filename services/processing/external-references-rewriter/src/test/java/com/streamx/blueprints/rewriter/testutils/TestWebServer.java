@@ -1,6 +1,5 @@
 package com.streamx.blueprints.rewriter.testutils;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.net.HttpHeaders;
 import com.google.common.net.MediaType;
@@ -48,7 +47,7 @@ class TestWebServer {
 
   private static String uploadPageToHttpServer(String relativeUrl, String content, int status,
       boolean slow) {
-    return uploadResourceToHttpServer(relativeUrl, content.getBytes(UTF_8), MediaType.HTML_UTF_8,
+    return uploadResourceToHttpServer(relativeUrl, content.getBytes(), MediaType.HTML_UTF_8,
         status, slow);
   }
 

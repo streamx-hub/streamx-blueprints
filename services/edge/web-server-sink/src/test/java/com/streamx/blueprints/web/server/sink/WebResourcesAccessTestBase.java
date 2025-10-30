@@ -1,7 +1,6 @@
 package com.streamx.blueprints.web.server.sink;
 
 import static io.restassured.RestAssured.given;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.mockito.ArgumentMatchers.any;
@@ -178,7 +177,7 @@ public abstract class WebResourcesAccessTestBase {
     String assetContent = "Asset content";
 
     // when
-    publish(subject, content -> new Asset(assetContent.getBytes(UTF_8)));
+    publish(subject, content -> new Asset(assetContent.getBytes()));
 
     // then
     assertCanAccessViaHttp(expectedPath, assetContent);

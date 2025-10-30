@@ -47,21 +47,13 @@ public class CloudEventUtils {
   public static <T> T getData(CloudEvent cloudEvent, Class<T> clazz) {
     CloudEventData cloudEventData = cloudEvent.getData();
 
-    if (cloudEventData == null) {
-      return null;
-    }
-
-    if (cloudEventData instanceof JsonCloudEventData jsonData) {
-      return parseJsonCloudEventData(jsonData, clazz);
-    }
-
-    if (cloudEventData instanceof PojoCloudEventData<?> pojoData) {
-      return parsePojoCloudEventData(pojoData, clazz);
-    }
-
-    throw new IllegalStateException(
-        "Unexpected CloudEvent data type: " + cloudEventData.getClass().getName()
-    );
+    return switch (cloudEventData) {
+      case null -> null;
+      case JsonCloudEventData jsonData -> parseJsonCloudEventData(jsonData, clazz);
+      case PojoCloudEventData<?> pojoData -> parsePojoCloudEventData(pojoData, clazz);
+      default -> throw new IllegalStateException(
+          "Unexpected CloudEvent data type: " + cloudEventData.getClass().getName());
+    };
   }
 
   private static <T> T parseJsonCloudEventData(JsonCloudEventData jsonData, Class<T> clazz) {

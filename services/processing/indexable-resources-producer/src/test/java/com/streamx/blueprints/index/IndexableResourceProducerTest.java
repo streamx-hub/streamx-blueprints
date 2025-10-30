@@ -1,6 +1,5 @@
 package com.streamx.blueprints.index;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -198,7 +197,7 @@ public class IndexableResourceProducerTest {
   @Test
   void expectNonAsciiPayloadBeProcessed() {
     // given
-    String payload = new String(new byte[]{1, 2, 3}, UTF_8);
+    String payload = new String(new byte[]{1, 2, 3});
 
     // when
     var result = getResourceFromPageWithContent(payload);
@@ -334,7 +333,7 @@ public class IndexableResourceProducerTest {
   private CloudEvent getResourceFrom(CloudEvent pageEvent) {
     pagesSource.send(pageEvent);
     await().until(() -> indexableResourceSink.received().size() == 1);
-    return indexableResourceSink.received().get(0).getPayload();
+    return indexableResourceSink.received().getFirst().getPayload();
   }
 
   private void assertNoResourceFrom(CloudEvent pageEvent) {

@@ -1,7 +1,6 @@
 package com.streamx.blueprints.rewriter.functions;
 
 import static com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils.assertSameEvents;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -38,7 +37,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     // then: wait for expected events to be published
     waitForDownloadedAssets(1);
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
-    CloudEvent editedPageEvent = pageEvents.get(0);
+    CloudEvent editedPageEvent = pageEvents.getFirst();
 
     // and: assert content of published events
     assertDownloadedAsset(0,
@@ -90,7 +89,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     assertDownloadedAsset(1,
         "/image.png_a_b_c_d.png",
         imageCustomizedContent);
-    assertPublishedPage(pageEvents.get(0),
+    assertPublishedPage(pageEvents.getFirst(),
         "/page1.html",
         """
             <img src='/image.png'>
@@ -128,7 +127,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
 
     // then: wait for expected events to be published
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
-    assertPublishedPage(pageEvents.get(0),
+    assertPublishedPage(pageEvents.getFirst(),
         "/page1.html",
         """
             <picture>
@@ -141,10 +140,10 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     waitForDownloadedAssets(2);
     assertDownloadedAsset(0,
         "/media_14c1.jpg_width_750_format_jpg_optimize_medium.jpg",
-        "media_14c1.jpg".getBytes(UTF_8));
+        "media_14c1.jpg".getBytes());
     assertDownloadedAsset(1,
         "/media_1d5b.jpg_width_2000_format_webply_optimize_medium.jpg",
-        "media_1d5b.jpg".getBytes(UTF_8));
+        "media_1d5b.jpg".getBytes());
   }
 
   @Test
@@ -170,7 +169,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     assertDownloadedAsset(0,
         "/http_www.goggle.com/image.jpg",
         imageContent);
-    assertPublishedPage(pageEvents.get(0),
+    assertPublishedPage(pageEvents.getFirst(),
         "/page.html",
         "<img src='/http_www.goggle.com/image.jpg'>");
   }
@@ -232,7 +231,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
             stylesheetContent)
     ));
 
-    assertPublishedPage(pageEvents.get(0),
+    assertPublishedPage(pageEvents.getFirst(),
         "/eds/pages/page.html",
         """
             <html>
@@ -284,7 +283,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
 
     assertDownloadedAsset(0, "/eds/images/image1.jpg", image1Content);
     assertDownloadedAsset(1, "/eds/images/image2.jpg", image2Content);
-    assertPublishedPage(pageEvents.get(0),
+    assertPublishedPage(pageEvents.getFirst(),
         "/eds/pages/page.html",
         """
             <img src='/eds/images/image1.jpg'>
@@ -324,7 +323,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
 
     // then
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
-    assertSameEvents(pageEvents.get(0), publishedPage);
+    assertSameEvents(pageEvents.getFirst(), publishedPage);
   }
 
   @Test
@@ -351,7 +350,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
     assertDownloadedWebResource(0, "/pages/configuration.xml", configurationContent);
-    assertPublishedPage(pageEvents.get(0), pagePath,
+    assertPublishedPage(pageEvents.getFirst(), pagePath,
         """
             <a href='page2.html'>Page 2</a>
             <img src='/pages/configuration.xml'>
@@ -397,7 +396,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
 
     assertDownloadedAsset(0, "/eds/pages/image1.jpg", image1Content);
     assertDownloadedAsset(1, "/eds/pages/image3.jpg", image3Content);
-    assertPublishedPage(pageEvents.get(0),
+    assertPublishedPage(pageEvents.getFirst(),
         "/eds/pages/page.html",
         """
             <html>
@@ -422,7 +421,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
 
     // then: expecting nothing to be downloaded and no edits in page content
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
-    assertPublishedPage(pageEvents.get(0), pagePath, pageContent);
+    assertPublishedPage(pageEvents.getFirst(), pagePath, pageContent);
     verifyNoDownloads();
   }
 
@@ -472,7 +471,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     ));
 
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
-    assertPublishedPage(pageEvents.get(0),
+    assertPublishedPage(pageEvents.getFirst(),
         "/pages/page.html",
         """
             <html>
@@ -499,7 +498,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
 
     // then
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
-    assertPublishedPage(pageEvents.get(0), pagePath, pageContent);
+    assertPublishedPage(pageEvents.getFirst(), pagePath, pageContent);
   }
 
   @Test
@@ -522,7 +521,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
 
     assertDownloadedAsset(0, "/Nested_20Images/image.jpg",
         nestedImageContent);
-    assertPublishedPage(pageEvents.get(0), "/eds/pages/page_20with_20space.html",
+    assertPublishedPage(pageEvents.getFirst(), "/eds/pages/page_20with_20space.html",
         "<img src='/Nested_20Images/image.jpg'>");
   }
 
@@ -548,7 +547,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
 
     // then
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
-    assertPublishedPage(pageEvents.get(0), pagePath, html);
+    assertPublishedPage(pageEvents.getFirst(), pagePath, html);
     waitForDownloadedAssets(0);
 
     // and
@@ -576,7 +575,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
     // assert the event is unchanged
-    CloudEvent relayedPageEvent = pageEvents.get(0);
+    CloudEvent relayedPageEvent = pageEvents.getFirst();
     assertSameEvents(relayedPageEvent, publishPageEvent);
   }
 
@@ -592,7 +591,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
     // assert the event is unchanged
-    CloudEvent relayedPageEvent = pageEvents.get(0);
+    CloudEvent relayedPageEvent = pageEvents.getFirst();
     assertSameEvents(relayedPageEvent, unpublishPageEvent);
   }
 
@@ -611,7 +610,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     );
 
     // assert the event is unchanged
-    CloudEvent relayedPageEvent = resourcesSink.received().get(0).getPayload();
+    CloudEvent relayedPageEvent = resourcesSink.received().getFirst().getPayload();
     assertSameEvents(relayedPageEvent, event);
   }
 
@@ -638,11 +637,11 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     List<CloudEvent> pageEvents = waitForEventsInSink(payloadType, 1);
 
     // assert event is unchanged
-    CloudEvent relayedPageEvent = pageEvents.get(0);
+    CloudEvent relayedPageEvent = pageEvents.getFirst();
     assertSameEvents(relayedPageEvent, publishPageEvent);
   }
 
   private static byte[] generateImageContent(String imagePath) {
-    return imagePath.getBytes(UTF_8);
+    return imagePath.getBytes();
   }
 }

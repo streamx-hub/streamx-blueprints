@@ -164,7 +164,7 @@ public class ResourceToIndexableResourceConverterTest {
     await()
         .atMost(Duration.ofSeconds(3))
         .untilAsserted(() -> assertThat(outgoing.received()).hasSize(1));
-    return outgoing.received().get(0).getPayload();
+    return outgoing.received().getFirst().getPayload();
   }
 
   private void assertNoOutgoingEvents() {

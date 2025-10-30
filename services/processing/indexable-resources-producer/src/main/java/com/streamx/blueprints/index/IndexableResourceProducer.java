@@ -1,7 +1,5 @@
 package com.streamx.blueprints.index;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.data.Page;
@@ -17,7 +15,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -61,7 +58,7 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
     var resourceTitle = StringUtil.isNullOrEmpty(title) ? key : title;
     var sourceResourceContent = StringUtil.isNullOrEmpty(content) ? key : content;
     var urlIncludes = urlIncludeCollector.collect(
-        ByteBuffer.wrap(sourceResourceContent.getBytes(StandardCharsets.UTF_8)));
+        ByteBuffer.wrap(sourceResourceContent.getBytes()));
 
     var resourceContent = dropUrlIncludes(sourceResourceContent);
     var indexableResourceContent = new IndexableResourceContent(resourceTitle, resourceContent);
@@ -90,7 +87,7 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
 
     List<String> titleMetadataValues = metadata.getValues("dc:title");
     if (titleMetadataValues != null && !titleMetadataValues.isEmpty()) {
-      title = titleMetadataValues.get(0);
+      title = titleMetadataValues.getFirst();
     }
     String body = content.getText();
 
@@ -100,10 +97,10 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
   }
 
   private String dropUrlIncludes(String sourceResourceContent) {
-    ByteBuffer inputBuffer = ByteBuffer.wrap(sourceResourceContent.getBytes(UTF_8));
+    ByteBuffer inputBuffer = ByteBuffer.wrap(sourceResourceContent.getBytes());
     ByteBuffer result = urlIncludeRemover.replace(inputBuffer);
 
-    return new String(result.array(), UTF_8);
+    return new String(result.array());
   }
 
   private boolean hasContent(Page page) {
