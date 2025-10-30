@@ -22,20 +22,21 @@ Data model objects may extend BaseModel that provides payload type
 
 ### JSON Serialization and Deserialization in Quarkus Native Mode
 
-To ensure data model classes can be correctly serialized and deserialized with jackson library
-when running in Quarkus native mode (for example as CloudEvent payloads or when explicitly calling `objectMapper.writeValueAsString` on them),
-the following requirements must be met:
+The blueprints project uses Jackson library for serializing and deserializing data.
 
-- **Non-record classes**:  
-For any data model class that is not a Java `record`, the primary constructor must be annotated with `@JsonCreator`
-to enable proper Jackson deserialization.
+When running in **Quarkus native mode**, Jackson (which relies on reflection internally) requires
+certain configuration to correctly serialize and deserialize objects - for example, when handling **CloudEvent payloads** or explicitly calling `objectMapper.writeValueAsString()` and similar methods.
+
+To ensure proper behavior:
+
+#### Register classes for reflection
+
+Any class that needs to be serialized or deserialized at runtime must be annotated with `@io.quarkus.runtime.annotations.RegisterForReflection`.
+
+#### Handle non-record classes
+If the class is not a Java record, its primary constructor must be annotated with `@com.fasterxml.jackson.annotation.JsonCreator`.
 
 
-- **Shared data model library classes**:  
-Every class from the `data-model` library must be listed in the `src/main/resources/META-INF/native-image/reflect-config.json` file,
-so reflection metadata is preserved during native image compilation.
+This ensures Jackson can instantiate the object during deserialization.
 
-
-- **Service-local model classes**:  
-For internal data model classes defined within a service module,
-annotate each class with `@io.quarkus.runtime.annotations.RegisterForReflection` to make them available for reflection at runtime.
+Note: Java records automatically expose their canonical constructor for Jackson, so `@JsonCreator` is not required for them.

@@ -2,11 +2,13 @@ package com.streamx.blueprints.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.nio.ByteBuffer;
 
 /**
  * Represents object containing data to be injected into layout.
  */
+@RegisterForReflection
 public class Composition extends Resource {
 
   public static final String TYPE_PUBLISHED = "com.streamx.blueprints.composition.published.v1";
