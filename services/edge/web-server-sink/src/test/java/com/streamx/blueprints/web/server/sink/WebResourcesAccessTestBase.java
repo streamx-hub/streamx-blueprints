@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Asset;
 import com.streamx.blueprints.data.Fragment;
+import com.streamx.blueprints.data.OptimizedAsset;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.data.WebResource;
@@ -39,6 +40,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 public abstract class WebResourcesAccessTestBase {
 
   private static final String TEST_CONTENT = "test content for %s";
+  private static final byte[] TEST_BINARY_CONTENT = {0, 1, 2};
   private static final String RESOURCE_TYPE = "any";
   private static final AtomicLong EVENT_TIME = new AtomicLong(1);
 
@@ -129,9 +131,20 @@ public abstract class WebResourcesAccessTestBase {
     verifyStoragePath(
         "blogs/assets/",
         "/blogs/assets",
-        new Asset(new byte[]{0, 1, 2}, RESOURCE_TYPE),
+        new Asset(TEST_BINARY_CONTENT, RESOURCE_TYPE),
         Asset.TYPE_PUBLISHED,
         Asset.TYPE_UNPUBLISHED
+    );
+  }
+
+  @Test
+  void shouldNotAppendIndexHtmlWhenStoringOptimizedAssetThatHasPathEndingWithSlash() {
+    verifyStoragePath(
+        "assets/optimized/",
+        "/assets/optimized",
+        new OptimizedAsset(TEST_BINARY_CONTENT, RESOURCE_TYPE, "/original/path"),
+        OptimizedAsset.TYPE_PUBLISHED,
+        OptimizedAsset.TYPE_UNPUBLISHED
     );
   }
 
@@ -251,12 +264,12 @@ public abstract class WebResourcesAccessTestBase {
   }
 
   private <T> void sendEvent(String subject, T payload, String type) {
-    InMemorySource<CloudEvent> pages = connector.source(Channels.RESOURCES);
+    InMemorySource<CloudEvent> resourcesSource = connector.source(Channels.RESOURCES);
     OffsetDateTime eventTime = CloudEventUtils.toOffsetDateTime(EVENT_TIME.getAndIncrement());
     CloudEvent event = payload == null
         ? CloudEventUtils.eventWithoutData(subject, type, eventTime)
         : CloudEventUtils.eventWithData(subject, type, payload, eventTime);
-    pages.send(event);
+    resourcesSource.send(event);
   }
 
   private static void assertCanAccessViaHttp(String path, String content) {
