@@ -26,6 +26,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicHeader;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -37,6 +38,9 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
 
   @Inject
   MockWebClientsFactory mockWebClientsFactory;
+
+  @Inject
+  HttpDownloaderFunction httpDownloaderFunction;
 
   private final CloseableHttpResponse headHttpResponse = mock(CloseableHttpResponse.class);
   private final StatusLine headStatusLine = mock(StatusLine.class);
@@ -55,6 +59,11 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
 
     when(httpClient.execute(any(HttpGet.class))).thenReturn(getHttpResponse);
     when(getHttpResponse.getStatusLine()).thenReturn(getStatusLine);
+  }
+
+  @AfterEach
+  void resetStore() {
+    httpDownloaderFunction.resetStore();
   }
 
   @Test
