@@ -3,6 +3,7 @@ package com.streamx.blueprints.resource.downloader;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -52,6 +53,7 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
   void doInit() throws IOException {
     super.init();
     httpClient = mockWebClientsFactory.httpClient();
+    reset(httpClient);
     when(httpClient.execute(any(HttpHead.class))).thenReturn(headHttpResponse);
     when(headHttpResponse.getStatusLine()).thenReturn(headStatusLine);
     when(headHttpResponse.getFirstHeader(HttpHeaders.LAST_MODIFIED))
