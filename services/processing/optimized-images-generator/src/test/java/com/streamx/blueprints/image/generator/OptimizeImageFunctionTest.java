@@ -296,8 +296,8 @@ class OptimizeImageFunctionTest {
   }
 
   private static byte[] extractImageBytes(CloudEvent event) {
-    return Optional.ofNullable(CloudEventUtils.getData(event, Asset.class))
-        .map(Asset::getContent)
+    return Optional.ofNullable(CloudEventUtils.getData(event, OptimizedAsset.class))
+        .map(OptimizedAsset::getContent)
         .map(ByteBuffer::array)
         .orElse(null);
   }
