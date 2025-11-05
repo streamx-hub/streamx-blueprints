@@ -46,9 +46,6 @@ public abstract class WebResourcesAccessTestBase {
   @Any
   InMemoryConnector connector;
 
-  @Inject
-  WebServerSink webServerSink;
-
   @InjectSpy
   FileSystemResourceStorage fileSystemResourceStorage;
 
@@ -75,18 +72,6 @@ public abstract class WebResourcesAccessTestBase {
 
     // then
     assertCannotAccessViaHttp(expectedPath);
-  }
-
-  @Test
-  void shouldNotAccessUnsupportedType() {
-    // given
-    publish("unsupported.ext", new Object());
-
-    // when
-    makeSurePublicationProcessed();
-
-    // then
-    assertCannotAccessViaHttp("/unsupported.ext");
   }
 
   @Test
@@ -194,12 +179,11 @@ public abstract class WebResourcesAccessTestBase {
   @Test
   void shouldSkipProcessingMessageWithUnexpectedPayload() {
     // given
-    String filePath = "/directory/file.html";
-    Object payload = new Object();
-    CloudEvent cloudEvent = CloudEventUtils.eventWithData(filePath, "unexpected", payload);
+    String filePath = "/test-resources/resource-1";
+    TestResource payload = new TestResource("resource-1");
 
     // when
-    webServerSink.consume(cloudEvent);
+    publish(filePath, payload);
 
     // then
     verify(fileSystemResourceStorage, never()).add(any(), any());

@@ -1,7 +1,5 @@
 package com.streamx.blueprints.web.server.storage;
 
-import static java.util.Objects.requireNonNull;
-
 import com.streamx.blueprints.web.server.Configuration;
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.file.FileSystemException;
@@ -34,7 +32,6 @@ public class FileSystemResourceStorage {
 
   public Uni<Void> add(String path, byte[] data) {
     log.tracef("Adding resource: %s", path);
-    requireNonNull(data);
     return fs.writeFile(storagePath(path), data)
         .onFailure().invoke(failure -> log.errorf(failure, "Failed to write %s", path));
   }

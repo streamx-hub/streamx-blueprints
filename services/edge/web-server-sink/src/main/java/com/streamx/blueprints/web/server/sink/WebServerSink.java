@@ -49,7 +49,7 @@ public class WebServerSink {
   public Uni<Void> consume(CloudEvent event) {
     Resource resource;
     try {
-      resource = CloudEventUtils.getData(event, Resource.class);
+      resource = CloudEventUtils.getDataSkippingUnknownProperties(event, Resource.class);
     } catch (IllegalStateException e) {
       log.warnf(e, "Unsupported event: subject %s, type %s", event.getSubject(), event.getType());
       return Uni.createFrom().voidItem();
@@ -71,7 +71,12 @@ public class WebServerSink {
   private <T extends Resource> Uni<Void> updateStorage(T resource, String path,
       String type, boolean isHtmlResource) {
     if (isPublishingType(type)) {
-      return fileSystemResourceStorage.add(path, getDataToStore(resource, isHtmlResource));
+      byte[] dataToStore = getDataToStore(resource, isHtmlResource);
+      if (dataToStore == null) {
+        log.warnf("No data to store for %s", path);
+        return Uni.createFrom().voidItem();
+      }
+      return fileSystemResourceStorage.add(path, dataToStore);
     }
     if (isUnpublishingType(type)) {
       return fileSystemResourceStorage.delete(path);

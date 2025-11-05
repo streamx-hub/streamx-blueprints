@@ -3,11 +3,11 @@ package com.streamx.blueprints.cloudevents.utils;
 import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.CloudEventData;
 import io.cloudevents.core.builder.CloudEventBuilder;
-import io.cloudevents.core.data.PojoCloudEventData;
 import io.cloudevents.jackson.JsonCloudEventData;
 import io.cloudevents.lang.Nullable;
 import java.net.URI;
@@ -34,7 +34,10 @@ public class CloudEventUtils {
       .orElse(null);
 
   private static final ZoneId DEFAULT_ZONE = ZoneOffset.UTC;
-  private static final ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper strictObjectMapper = new ObjectMapper();
+  private static final ObjectMapper tolerantObjectMapper = new ObjectMapper()
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
 
   private CloudEventUtils() {
     // no instance
@@ -45,35 +48,37 @@ public class CloudEventUtils {
    */
   @Nullable
   public static <T> T getData(CloudEvent cloudEvent, Class<T> clazz) {
-    CloudEventData cloudEventData = cloudEvent.getData();
-
-    return switch (cloudEventData) {
-      case null -> null;
-      case JsonCloudEventData jsonData -> parseJsonCloudEventData(jsonData, clazz);
-      case PojoCloudEventData<?> pojoData -> parsePojoCloudEventData(pojoData, clazz);
-      default -> throw new IllegalStateException(
-          "Unexpected CloudEvent data type: " + cloudEventData.getClass().getName());
-    };
+    return extractData(cloudEvent, clazz, strictObjectMapper);
   }
 
-  private static <T> T parseJsonCloudEventData(JsonCloudEventData jsonData, Class<T> clazz) {
+  /**
+   * @throws IllegalStateException when the event's data cannot be converted to the provided type
+   */
+  @Nullable
+  public static <T> T getDataSkippingUnknownProperties(CloudEvent cloudEvent, Class<T> clazz) {
+    return extractData(cloudEvent, clazz, tolerantObjectMapper);
+  }
+
+  @Nullable
+  private static <T> T extractData(CloudEvent cloudEvent, Class<T> clazz, ObjectMapper mapper) {
+    CloudEventData cloudEventData = cloudEvent.getData();
+    if (cloudEventData == null) {
+      return null;
+    }
+    if (cloudEventData instanceof JsonCloudEventData jsonData) {
+      return parseJsonCloudEventData(jsonData, clazz, mapper);
+    }
+    throw new IllegalStateException(
+        "Unexpected CloudEvent data type: " + cloudEventData.getClass().getName());
+  }
+
+  private static <T> T parseJsonCloudEventData(JsonCloudEventData jsonData, Class<T> clazz,
+      ObjectMapper objectMapper) {
     try {
       return objectMapper.treeToValue(jsonData.getNode(), clazz);
     } catch (JsonProcessingException ex) {
       throw new IllegalStateException("Error parsing payload to " + clazz.getName(), ex);
     }
-  }
-
-  @SuppressWarnings("unchecked")
-  private static <T> T parsePojoCloudEventData(PojoCloudEventData<?> pojoData, Class<T> clazz) {
-    Object value = pojoData.getValue();
-    if (!clazz.isInstance(value)) {
-      throw new IllegalStateException("Invalid payload type: expected %s but received %s".formatted(
-          clazz.getName(), value.getClass().getName())
-      );
-    }
-
-    return (T) value;
   }
 
   public static boolean isPublishingType(String type) {
@@ -160,7 +165,7 @@ public class CloudEventUtils {
       io.cloudevents.core.v1.CloudEventBuilder builder, Object data) {
     return builder
         .withDataContentType("application/json")
-        .withData(PojoCloudEventData.wrap(data, objectMapper::writeValueAsBytes));
+        .withData(JsonCloudEventData.wrap(strictObjectMapper.valueToTree(data)));
   }
 
   public static OffsetDateTime getNow() {
