@@ -175,12 +175,25 @@ public abstract class WebResourcesAccessTestBase {
     assertCannotAccessViaHttp(expectedPath);
   }
 
-
   @Test
-  void shouldSkipProcessingMessageWithUnexpectedPayload() {
+  void shouldSkipProcessingMessageWhenNoContentFieldInPayloadObject() {
     // given
     String filePath = "/test-resources/resource-1";
-    TestResource payload = new TestResource("resource-1");
+    var payload = new TestResourceWithoutContentField("resource-1");
+
+    // when
+    publish(filePath, payload);
+
+    // then
+    verify(fileSystemResourceStorage, never()).add(any(), any());
+    verify(fileSystemResourceStorage, never()).delete(any());
+  }
+
+  @Test
+  void shouldSkipProcessingMessageWhenContentFieldOfUnexpectedTypeInPayloadObject() {
+    // given
+    String filePath = "/test-resources/resource-2";
+    var payload = new TestResourceWithIntContentField(2);
 
     // when
     publish(filePath, payload);
