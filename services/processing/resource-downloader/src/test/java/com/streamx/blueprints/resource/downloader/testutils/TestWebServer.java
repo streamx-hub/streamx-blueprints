@@ -4,11 +4,14 @@ package com.streamx.blueprints.resource.downloader.testutils;
 import com.google.common.net.MediaType;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.commons.lang3.ThreadUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -17,6 +20,7 @@ public class TestWebServer {
 
   public static final String SLOW_PAGE_TOKEN = "SLOW_PAGE";
   public static final String HTTP_500_PAGE_TOKEN = "HTTP_500_PAGE_TOKEN";
+  private static final Set<String> uploadedResources = new HashSet<>();
 
   private static HttpServer httpServer;
   private static int httpPort;
@@ -42,31 +46,40 @@ public class TestWebServer {
   }
 
   private static String uploadImage(String relativeUrl, byte[] content, boolean isGzipped) {
-    httpServer.createContext(relativeUrl, exchange ->
+    uploadResource(relativeUrl, exchange ->
         handleRequest(exchange, content, isGzipped, MediaType.OCTET_STREAM)
     );
     return computeAbsoluteUrl(relativeUrl);
   }
 
   public static String uploadXmlFile(String relativeUrl, String content) {
-    httpServer.createContext(relativeUrl, exchange ->
+    uploadResource(relativeUrl, exchange ->
         handleStringBodyRequest(exchange, content, MediaType.XML_UTF_8)
     );
     return computeAbsoluteUrl(relativeUrl);
   }
 
   public static String uploadJsonFile(String relativeUrl, String content) {
-    httpServer.createContext(relativeUrl, exchange ->
+    uploadResource(relativeUrl, exchange ->
         handleStringBodyRequest(exchange, content, MediaType.JSON_UTF_8)
     );
     return computeAbsoluteUrl(relativeUrl);
   }
 
   public static String uploadPage(String relativeUrl, String content) {
-    httpServer.createContext(relativeUrl, exchange ->
+    uploadResource(relativeUrl, exchange ->
         handleStringBodyRequest(exchange, content, MediaType.HTML_UTF_8)
     );
     return computeAbsoluteUrl(relativeUrl);
+  }
+
+  private static void uploadResource(String relativeUrl, HttpHandler handler) {
+    if (uploadedResources.contains(relativeUrl)) {
+      httpServer.removeContext(relativeUrl);
+      uploadedResources.remove(relativeUrl);
+    }
+    httpServer.createContext(relativeUrl, handler);
+    uploadedResources.add(relativeUrl);
   }
 
   private static void handleStringBodyRequest(HttpExchange request, String responseBody,
