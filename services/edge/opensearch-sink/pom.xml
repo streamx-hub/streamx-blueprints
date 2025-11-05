@@ -47,6 +47,17 @@
     </dependency>
   </dependencies>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <!-- com.senacor.elasticsearch.evolution:elasticsearch-evolution-core transitively imports incompatible version 4.8.174 of the classgraph library -->
+        <groupId>io.github.classgraph</groupId>
+        <artifactId>classgraph</artifactId>
+        <version>4.8.178</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <profiles>
     <!-- Profile for Windows: lower coverage threshold since cannot start opensearch container for testing -->
     <profile>
