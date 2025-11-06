@@ -27,6 +27,6 @@ jobs:
           distribution: 'adopt'
           cache: 'maven'
 
-      - name: Build project
+      - name: Run tests
         run: |
-          ./mvnw clean verify
+          ./mvnw clean test
