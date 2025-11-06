@@ -58,6 +58,7 @@
 
     <!-- Test dependencies -->
     <assertj-core.version>3.27.6</assertj-core.version>
+    <quarkus-wiremock-test.version>1.5.0</quarkus-wiremock-test.version>
   </properties>
 
   <scm>
@@ -151,6 +152,12 @@
         <groupId>org.assertj</groupId>
         <artifactId>assertj-core</artifactId>
         <version>${assertj-core.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.quarkiverse.wiremock</groupId>
+        <artifactId>quarkus-wiremock-test</artifactId>
+        <version>${quarkus-wiremock-test.version}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
