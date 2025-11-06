@@ -40,17 +40,24 @@ sources:
           - "com.streamx.blueprints.rendering-context.unpublished.v1"
 
 descriptors:
-  image-optimizer:
+  optimized-images-generator:
     type: "processing"
     incoming:
       incoming-assets:
         binding: "http-structured-json"
-      incoming-pages:
-        binding: "http-structured-json"
     outgoing:
       optimized-assets:
         binding: "http-structured-json"
-      outgoing-pages:
+
+  local-references-rewriter:
+    type: "processing"
+    incoming:
+      incoming-pages:
+        binding: "http-structured-json"
+      optimized-assets:
+        binding: "http-structured-json"
+    outgoing:
+      adjusted-pages:
         binding: "http-structured-json"
 
   json-aggregator:
@@ -231,22 +238,31 @@ processing:
         environment:
           STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
 
-  blueprint-image-optimizer:
+  blueprint-optimized-images-generator:
     containers:
-      - image: image-optimizer
+      - image: optimized-images-generator
         incoming:
           incoming-assets:
             ref: inbox.assets
-          incoming-pages:
-            ref: inbox.pages
         outgoing:
           optimized-assets:
-            ref: inbox.assets
-          outgoing-pages:
+            ref: relay.optimized-assets
+        environment:
+          STREAMX_BLUEPRINTS_OPTIMIZED_IMAGES_GENERATOR_PROCESSED_IMAGE_PATH_PATTERN: ".*(png|gif|jpg|jpeg)$"
+
+  blueprint-local-references-rewriter:
+    containers:
+      - image: local-references-rewriter
+        incoming:
+          incoming-pages:
+            ref: inbox.pages
+          optimized-assets:
+            ref: relay.optimized-assets
+        outgoing:
+          adjusted-pages:
             ref: relay.pages
         environment:
-          STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_OPTIMIZED_FILE_PATHS_PATTERN: ".*(png|gif|jpg|jpeg)$"
-          STREAMX_BLUEPRINTS_IMAGE_OPTIMIZER_ADJUSTED_PAGE_PATHS_PATTERN: ".*"
+          STREAMX_BLUEPRINTS_LOCAL_REFERENCES_REWRITER_PROCESSED_PAGE_PATH_PATTERN: ".*"
 
   blueprint-json-aggregator:
     containers:
@@ -453,7 +469,7 @@ edge:
       - image: web-server-sink
         incoming:
           resources:
-            ref: outbox.pages,outbox.fragments,outbox.assets,outbox.web-resources
+            ref: outbox.pages,outbox.fragments,relay.optimized-assets,outbox.assets,outbox.web-resources
         ports:
           - "8081:8080"
 

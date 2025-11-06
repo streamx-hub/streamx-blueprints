@@ -1,0 +1,37 @@
+####
+# This Dockerfile is used in order to build a container that runs the Quarkus application in native (no JVM) mode.
+#
+# Before building the container image run:
+#
+# ../../../mvnw package -Dnative
+#
+# Then, build the image with:
+#
+# docker build -f src/main/docker/Dockerfile.native -t quarkus/optimized-images-generator .
+#
+# Then run the container using:
+#
+# docker run -i --rm -p 8080:8080 quarkus/optimized-images-generator
+#
+###
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5
+
+# Install libraries for image processing
+RUN microdnf install -y freetype fontconfig \
+    && microdnf clean all # removes all cached package data
+
+WORKDIR /work/
+RUN chown 1001 /work \
+    && chmod "g+rwX" /work \
+    && chown 1001:root /work
+COPY --chown=1001:root target/*.so /work/
+COPY --chown=1001:root --chmod=0755 target/*-runner /work/application
+
+RUN mkdir -p /webp_binaries
+RUN chown 1001 /webp_binaries
+COPY --chown=1001:root --chmod=0755 target/scrimage-webp-libraries/dist_webp_binaries/libwebp-1.4.0-linux-aarch64/bin/ /webp_binaries/
+
+EXPOSE 8080
+USER 1001
+
+CMD ["./application", "-Dquarkus.http.host=0.0.0.0", "-Dcom.sksamuel.scrimage.webp.binary.dir=/webp_binaries"]

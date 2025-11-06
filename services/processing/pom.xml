@@ -18,9 +18,10 @@
     <module>data-collector</module>
     <module>event-converter</module>
     <module>external-references-rewriter</module>
-    <module>image-optimizer</module>
     <module>indexable-resources-producer</module>
     <module>json-aggregator</module>
+    <module>local-references-rewriter</module>
+    <module>optimized-images-generator</module>
     <module>rendering-engine</module>
     <module>resource-downloader</module>
     <module>sitemap-generator</module>
