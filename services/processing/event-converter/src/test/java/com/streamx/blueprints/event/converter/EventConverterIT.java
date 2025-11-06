@@ -7,7 +7,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
@@ -17,20 +16,14 @@ import com.streamx.blueprints.event.converter.EventConverterIT.WireMockProfile;
 import com.streamx.reactive.messaging.http.CloudEventJsonDeserializer;
 import com.streamx.reactive.messaging.http.CloudEventJsonSerializer;
 import io.cloudevents.CloudEvent;
-import io.cloudevents.core.builder.CloudEventBuilder;
-import io.cloudevents.jackson.JsonCloudEventData;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import io.vertx.core.buffer.Buffer;
 import java.io.IOException;
-import java.net.URI;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -38,6 +31,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -47,11 +41,14 @@ import org.junit.jupiter.api.Test;
 public class EventConverterIT {
 
   private static final String INDEXABLE_RESOURCES_ENDPOINT = "/" + Channels.INDEXABLE_RESOURCES;
-  private static final ObjectMapper objectMapper = new ObjectMapper();
-  private static final URI EVENT_SOURCE = URI.create(EventConverterIT.class.getName());
 
   // will be injected automatically when the test class is annotated with @ConnectWireMock
   WireMock wiremock;
+
+  @BeforeAll
+  static void setEventSource() {
+    System.setProperty("quarkus.application.name", EventConverterIT.class.getSimpleName());
+  }
 
   @BeforeEach
   void setupEndpointForReceivingOutgoingEvents() {
@@ -79,15 +76,7 @@ public class EventConverterIT {
   }
 
   private static CloudEvent createPublishDataEvent(Data data) {
-    return CloudEventBuilder.v1()
-        .withId(UUID.randomUUID().toString())
-        .withSource(EVENT_SOURCE)
-        .withSubject("key")
-        .withType(Data.TYPE_PUBLISHED)
-        .withTime(OffsetDateTime.now(ZoneOffset.UTC))
-        .withDataContentType("application/json")
-        .withData(JsonCloudEventData.wrap(objectMapper.valueToTree(data)))
-        .build();
+    return CloudEventUtils.eventWithData("key", Data.TYPE_PUBLISHED, data);
   }
 
   private static LoggedRequest waitForResponseRequest() {
