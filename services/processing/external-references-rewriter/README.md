@@ -16,7 +16,7 @@ This instance will extract the page URLs, download and publish their HTML conten
 and then pass that content to a second instance of `external-references-rewriter`.
 The second instance is responsible for extracting, downloading and publishing any referenced assets, such as images, stylesheets, and scripts.
 
-The project includes a sample [mesh.yaml](../../../mesh.yaml) file that demonstrates a basic service configuration,
+The project includes a sample [mesh.yaml](../../../example-mesh/mesh.yaml) file that demonstrates a basic service configuration,
 enabling multiple `external-references-rewriter` instances to operate together as described.
 
 ## Configuration

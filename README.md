@@ -11,9 +11,7 @@ Each StreamX project should be organized in a specific way and should follow the
 
 The following are recommended directories:
 
-* [data](./data/README.md) - sample data should be placed here
-* [mesh](./mesh/README.md) - resources required to configure and run StreamX Mesh
-* [scripts](./scripts/README.md) - all useful scripts and resources should be placed here
+* [mesh](./example-mesh/README.md) - resources required to configure and run StreamX Mesh
 * [services](./services/README.md) - your StreamX Processing and Edge Services (as well as other Maven modules) should be placed here
 
 ## Prerequisites
@@ -71,7 +69,7 @@ This command builds both the Maven artefacts and the Docker images needed to sta
 To start local instance of Mesh run:
 
 ```shell
-cd mesh
+cd example-mesh
 streamx run
 ```
 The above command runs the StreamX mesh defined in the `mesh.yaml` file located in the current directory.
@@ -83,7 +81,7 @@ If you need to debug a single service as part of the StreamX Mesh, you need to c
 
 Then, run your mesh using standard `streamx run` command:
 ```shell
-cd mesh
+cd example-mesh
 streamx run
 ```
 
