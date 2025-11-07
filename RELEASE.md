@@ -2,8 +2,8 @@
 
 ## Updating dependencies
 
-Before releasing `StreamX Blueprints` ensure that all required pull requests are merged, and the latest releases of `StreamX` are used.
-It may be required to perform `StreamX` release prior to `StreamX Blueprints` release, if there are unreleased changes.
+Before releasing `StreamX Blueprints` ensure that all required pull requests are merged, and the latest release of `StreamX Service Mesh` is used.
+It may be required to perform `StreamX Service Mesh` release prior to `StreamX Blueprints` release, if there are unreleased changes.
 
 ## Release automation
 
