@@ -38,7 +38,8 @@ build/
 /.idea/
 
 # ignore secrets
-mesh/secrets/*
-!mesh/secrets/.gitkeep
+example-mesh/secrets/*
+!example-mesh/secrets/.gitkeep
 
-/repository/**
+# ignore edge services repositories
+example-mesh/repository/**
