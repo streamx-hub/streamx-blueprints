@@ -1,8 +1,3 @@
-default:
-  image:
-    repository: ghcr.io/streamx-com/streamx-blueprints
-    tag: latest-jvm # or: latest-native
-
 sources:
   resources-source:
     outgoing:
@@ -40,207 +35,227 @@ sources:
           - "com.streamx.blueprints.rendering-context.unpublished.v1"
 
 descriptors:
+  relay:
+    type: "processing"
+    containers:
+      service:
+        incoming:
+          events:
+        outgoing:
+          relayed-events:
+
   optimized-images-generator:
     type: "processing"
-    incoming:
-      incoming-assets:
-        binding: "http-structured-json"
-    outgoing:
-      optimized-assets:
-        binding: "http-structured-json"
+    containers:
+      processor:
+        image: "ghcr.io/streamx-com/streamx-blueprints/optimized-images-generator:latest-jvm"
+        incoming:
+          incoming-assets:
+        outgoing:
+          optimized-assets:
 
   local-references-rewriter:
     type: "processing"
-    incoming:
-      incoming-pages:
-        binding: "http-structured-json"
-      optimized-assets:
-        binding: "http-structured-json"
-    outgoing:
-      adjusted-pages:
-        binding: "http-structured-json"
+    containers:
+      processor:
+        image: "ghcr.io/streamx-com/streamx-blueprints/local-references-rewriter:latest-jvm"
+        incoming:
+          incoming-pages:
+          optimized-assets:
+        outgoing:
+          adjusted-pages:
 
   json-aggregator:
     type: "processing"
-    incoming:
-      data:
-        binding: "http-structured-json"
-      multivalued-data:
-        binding: "http-structured-json"
-    outgoing:
-      aggregated-data:
-        binding: "http-structured-json"
-      aggregated-multivalued-data:
-        binding: "http-structured-json"
+    containers:
+      processor:
+        image: "ghcr.io/streamx-com/streamx-blueprints/json-aggregator:latest-jvm"
+        incoming:
+          data:
+          multivalued-data:
+        outgoing:
+          aggregated-data:
+          aggregated-multivalued-data:
 
   external-references-rewriter:
     type: "processing"
-    incoming:
-      incoming-resources:
-        binding: "http-structured-json"
-    outgoing:
-      outgoing-resources:
-        binding: "http-structured-json"
-      download-requests:
-        binding: "http-structured-json"
+    containers:
+      processor:
+        image: "ghcr.io/streamx-com/streamx-blueprints/external-references-rewriter:latest-jvm"
+        incoming:
+          incoming-resources:
+        outgoing:
+          outgoing-resources:
+          download-requests:
 
   resource-downloader:
     type: "processing"
-    incoming:
-      download-requests:
-        binding: "http-structured-json"
-    outgoing:
-      downloaded-pages:
-        binding: "http-structured-json"
-      downloaded-assets:
-        binding: "http-structured-json"
-      downloaded-web-resources:
-        binding: "http-structured-json"
+    containers:
+      processor:
+        image: "ghcr.io/streamx-com/streamx-blueprints/resource-downloader:latest-jvm"
+        incoming:
+          download-requests:
+        outgoing:
+          downloaded-pages:
+          downloaded-assets:
+          downloaded-web-resources:
 
   event-converter:
     type: "processing"
-    incoming:
-      resources:
-        binding: "http-structured-json"
-    outgoing:
-      indexable-resources:
-        binding: "http-structured-json"
+    containers:
+      processor:
+        image: "ghcr.io/streamx-com/streamx-blueprints/event-converter:latest-jvm"
+        incoming:
+          resources:
+        outgoing:
+          indexable-resources:
 
   rendering-engine:
     type: "processing"
-    incoming:
-      data:
-        binding: "http-structured-json"
-      renderers:
-        binding: "http-structured-json"
-      rendering-contexts:
-        binding: "http-structured-json"
-      incoming-rendering-requests:
-        binding: "http-structured-json"
-    outgoing:
-      outgoing-rendering-requests:
-        binding: "http-structured-json"
-      pages:
-        binding: "http-structured-json"
-      fragments:
-        binding: "http-structured-json"
+    containers:
+      processor:
+        image: "ghcr.io/streamx-com/streamx-blueprints/rendering-engine:latest-jvm"
+        incoming:
+          data:
+          renderers:
+          rendering-contexts:
+          incoming-rendering-requests:
+        outgoing:
+          outgoing-rendering-requests:
+          pages:
+          fragments:
 
   composition-engine:
     type: "processing"
-    incoming:
-      layouts:
-        binding: "http-structured-json"
-      compositions:
-        binding: "http-structured-json"
-      incoming-page-compose-requests:
-        binding: "http-structured-json"
-    outgoing:
-      pages:
-        binding: "http-structured-json"
-      outgoing-page-compose-requests:
-        binding: "http-structured-json"
+    containers:
+      processor:
+        image: "ghcr.io/streamx-com/streamx-blueprints/composition-engine:latest-jvm"
+        incoming:
+          layouts:
+          compositions:
+          incoming-page-compose-requests:
+        outgoing:
+          pages:
+          outgoing-page-compose-requests:
 
   sitemap-generator:
     type: "processing"
-    incoming:
-      incoming-pages:
-        binding: "http-structured-json"
-    outgoing:
-      outgoing-sitemaps:
-        binding: "http-structured-json"
+    containers:
+      processor:
+        image: "ghcr.io/streamx-com/streamx-blueprints/sitemap-generator:latest-jvm"
+        incoming:
+          incoming-pages:
+        outgoing:
+          outgoing-sitemaps:
 
   indexable-resources-producer:
     type: "processing"
-    incoming:
-      pages:
-        binding: "http-structured-json"
-      fragments:
-        binding: "http-structured-json"
-    outgoing:
-      indexable-resources:
-        binding: "http-structured-json"
-      indexable-resource-fragments:
-        binding: "http-structured-json"
+    containers:
+      processor:
+        image: "ghcr.io/streamx-com/streamx-blueprints/indexable-resources-producer:latest-jvm"
+        incoming:
+          pages:
+          fragments:
+        outgoing:
+          indexable-resources:
+          indexable-resource-fragments:
 
   data-collector:
     type: "processing"
-    incoming:
-      data:
-        binding: "http-structured-json"
-    outgoing:
-      collected-data:
-        binding: "http-structured-json"
-      web-resources:
-        binding: "http-structured-json"
+    containers:
+      processor:
+        image: "ghcr.io/streamx-com/streamx-blueprints/data-collector:latest-jvm"
+        incoming:
+          data:
+        outgoing:
+          collected-data:
+          web-resources:
 
   web-server-sink:
     type: "edge"
-    incoming:
-      resources:
-        binding: "http-structured-json"
+    containers:
+      sink:
+        image: "ghcr.io/streamx-com/streamx-blueprints/web-server-sink:latest-jvm"
+        incoming:
+          resources:
 
   opensearch-sink:
     type: "edge"
-    incoming:
-      indexable-resources:
-        binding: "http-structured-json"
-      indexable-resource-fragments:
-        binding: "http-structured-json"
+    containers:
+      sink:
+        image: "ghcr.io/streamx-com/streamx-blueprints/opensearch-sink:latest-jvm"
+        incoming:
+          indexable-resources:
+          indexable-resource-fragments:
+        ports:
+          - "8082:8080"
+        volumes:
+          - "repository-volume:/usr/share/opensearch/data"
+      opensearch:
+        image: "docker.io/opensearchproject/opensearch:2.16.0"
+        ports:
+          - "9201:9200"
+          - "9301:9300"
+        volumes:
+          - "repository-volume:/usr/share/opensearch/data"
+        healthCheck: null
 
 ingestion:
   rest-ingestion:
     containers:
-      - environment:
+      service:
+        environment:
           QUARKUS_HTTP_AUTH_PERMISSION_BEARER_POLICY: permit
 
 processing:
   web-resources-relay:
+    descriptor: relay
     containers:
-      - incoming:
-          incoming-web-resources:
+      service:
+        incoming:
+          events:
             ref: inbox.web-resources
         outgoing:
-          outgoing-web-resources:
+          relayed-events:
             ref: relay.web-resources
-        environment:
-          STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
 
   assets-relay:
+    descriptor: relay
     containers:
-      - incoming:
-          incoming-assets:
+      service:
+        incoming:
+          events:
             ref: inbox.assets
         outgoing:
-          outgoing-assets:
+          relayed-events:
             ref: outbox.assets
-        environment:
-          STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
 
   fragments-relay:
+    descriptor: relay
     containers:
-      - incoming:
-          incoming-fragments:
+      service:
+        incoming:
+          events:
             ref: inbox.fragments
         outgoing:
-          outgoing-fragments:
+          relayed-events:
             ref: relay.fragments
-        environment:
-          STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
 
   outbox-fragments-relay:
+    descriptor: relay
     containers:
-      - incoming:
-          messages:
+      service:
+        incoming:
+          events:
             ref: relay.fragments
         outgoing:
-          relayed-messages:
+          relayed-events:
             ref: outbox.fragments
-        environment:
-          STREAMX_PROXY_CONFIG_RELAY_ENABLED: "true"
 
   blueprint-optimized-images-generator:
+    descriptor: optimized-images-generator
     containers:
-      - image: optimized-images-generator
+      processor:
         incoming:
           incoming-assets:
             ref: inbox.assets
@@ -251,8 +266,9 @@ processing:
           STREAMX_BLUEPRINTS_OPTIMIZED_IMAGES_GENERATOR_PROCESSED_IMAGE_PATH_PATTERN: ".*(png|gif|jpg|jpeg)$"
 
   blueprint-local-references-rewriter:
+    descriptor: local-references-rewriter
     containers:
-      - image: local-references-rewriter
+      processor:
         incoming:
           incoming-pages:
             ref: inbox.pages
@@ -265,8 +281,9 @@ processing:
           STREAMX_BLUEPRINTS_LOCAL_REFERENCES_REWRITER_PROCESSED_PAGE_PATH_PATTERN: ".*"
 
   blueprint-json-aggregator:
+    descriptor: json-aggregator
     containers:
-      - image: json-aggregator
+      processor:
         incoming:
           data:
             ref: relay.data
@@ -290,8 +307,9 @@ processing:
 
   # Instance 1 of external-references-rewriter: process web resources
   blueprint-web-resources-external-references-rewriter:
+    descriptor: external-references-rewriter
     containers:
-      - image: external-references-rewriter
+      processor:
         incoming:
           incoming-resources:
             ref: relay.web-resources
@@ -311,8 +329,9 @@ processing:
 
   # Instance 2 of external-references-rewriter: process pages
   blueprint-pages-external-references-rewriter:
+    descriptor: external-references-rewriter
     containers:
-      - image: external-references-rewriter
+      processor:
         incoming:
           incoming-resources:
             ref: relay.pages
@@ -331,8 +350,9 @@ processing:
 
   # Instance 3 of external-references-rewriter: process data
   blueprint-data-external-references-rewriter:
+    descriptor: external-references-rewriter
     containers:
-      - image: external-references-rewriter
+      processor:
         incoming:
           incoming-resources:
             ref: inbox.data
@@ -350,8 +370,9 @@ processing:
           STREAMX_BLUEPRINTS_EXTERNAL_REFERENCES_REWRITER_EMITTED_ASSET_TYPE: "asset/external"
 
   blueprint-resource-downloader:
+    descriptor: resource-downloader
     containers:
-      - image: resource-downloader
+      processor:
         incoming:
           download-requests:
             ref: relay.download-requests
@@ -364,8 +385,9 @@ processing:
             ref: inbox.web-resources
 
   blueprint-event-converter:
+    descriptor: event-converter
     containers:
-      - image: event-converter
+      processor:
         incoming:
           resources:
             ref: relay.data,relay.aggregated-data
@@ -374,8 +396,9 @@ processing:
             ref: outbox.indexable-resources
 
   blueprint-rendering-engine:
+    descriptor: rendering-engine
     containers:
-      - image: rendering-engine
+      processor:
         incoming:
           data:
             ref: relay.aggregated-data,relay.collected-data
@@ -394,8 +417,9 @@ processing:
             ref: relay.fragments
 
   blueprint-composition-engine:
+    descriptor: composition-engine
     containers:
-      - image: composition-engine
+      processor:
         incoming:
           layouts:
             ref: inbox.layouts
@@ -410,8 +434,9 @@ processing:
             ref: relay.page-compose-requests
 
   blueprint-data-collector:
+    descriptor: data-collector
     containers:
-      - image: data-collector
+      processor:
         incoming:
           data:
             ref: relay.aggregated-data,relay.collected-data
@@ -433,8 +458,9 @@ processing:
           STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_MAX: "8"
 
   blueprint-sitemap-generator:
+    descriptor: sitemap-generator
     containers:
-      - image: sitemap-generator
+      processor:
         incoming:
           incoming-pages:
             ref: relay.pages
@@ -448,8 +474,9 @@ processing:
           STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_DIRTY_CHECK_MAX_DIRTY_SEQUENCE_COUNT: "1"
 
   blueprint-indexable-resources-producer:
+    descriptor: indexable-resources-producer
     containers:
-      - image: indexable-resources-producer
+      processor:
         incoming:
           pages:
             ref: relay.pages
@@ -465,8 +492,9 @@ processing:
 
 edge:
   blueprint-web-server-sink:
+    descriptor: web-server-sink
     containers:
-      - image: web-server-sink
+      sink:
         incoming:
           resources:
             ref: outbox.pages,outbox.fragments,relay.optimized-assets,outbox.assets,outbox.web-resources
@@ -474,32 +502,23 @@ edge:
           - "8081:8080"
 
   blueprint-opensearch-sink:
+    descriptor: opensearch-sink
     volumes:
-      - name: "repository-volume"
+      repository-volume:
     containers:
-      - image: opensearch-sink
+      sink:
         incoming:
           indexable-resources:
             ref: outbox.indexable-resources
           indexable-resource-fragments:
             ref: outbox.indexable-resource-fragments
-        ports:
-          - "8082:8080"
-        volumes:
-          - "repository-volume:/usr/share/opensearch/data"
         volumesFrom:
           configs:
             - "opensearch/service-init:/deployments/opensearch/service-init"
         environment:
           QUARKUS_ELASTICSEARCH_HOSTS: "blueprint-opensearch-sink.opensearch:9200"
           STREAMX_BLUEPRINTS_OPENSEARCH-SINK_MIGRATION-SCRIPT-LOCATIONS: "classpath:opensearch/service-init"
-      - name: "opensearch"
-        image: "docker.io/opensearchproject/opensearch:2.16.0"
-        ports:
-          - "9201:9200"
-          - "9301:9300"
-        volumes:
-          - "repository-volume:/usr/share/opensearch/data"
+      opensearch:
         environment:
           DISABLE_SECURITY_PLUGIN: "true"
           OPENSEARCH_INITIAL_ADMIN_PASSWORD: "myStrongPassword123@456"
