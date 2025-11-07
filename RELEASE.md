@@ -17,7 +17,7 @@ The Release process is partially automated. To perform a release of blueprints, 
 
 ## Released artifacts visibility
 
-After a successful new blueprints release, its visibility has to be changed manually in GH artifacts.
+After a successful new blueprint release, its visibility has to be changed manually in GH artifacts.
 
 1. Go to: [Packages](https://github.com/orgs/streamx-com/packages?repo_name=streamx-blueprints)
 2. Find your container image package and change its visibility to Public in settings.
