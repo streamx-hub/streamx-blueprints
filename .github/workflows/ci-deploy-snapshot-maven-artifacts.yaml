@@ -1,4 +1,4 @@
-name: 'CI: Deploy SNAPSHOT Maven'
+name: 'CI: Deploy SNAPSHOT Maven Artifacts'
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 
 permissions:
   id-token: write
+  packages: write
   contents: read
 
 jobs:
