@@ -2,7 +2,7 @@ package com.streamx.blueprints.sitemap;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.WebResource;
-import com.streamx.blueprints.sitemap.configuration.properties.SitemapGeneratorProperties;
+import com.streamx.blueprints.sitemap.configuration.Configuration;
 import io.cloudevents.CloudEvent;
 import io.quarkus.scheduler.Scheduled;
 import io.quarkus.scheduler.Scheduled.ConcurrentExecution;
@@ -19,14 +19,14 @@ class ProcessPageFunction {
   PublishedPagesStore publishedPagesStore;
 
   @Inject
-  @Channel(Channels.OUTGOING_SITEMAPS_CHANNEL)
+  @Channel(Channels.OUTGOING_SITEMAPS)
   Emitter<CloudEvent> emitter;
 
   @Inject
   DirtySequenceStateManager dirtySequenceStateManager;
 
   @Inject
-  SitemapGeneratorProperties configuration;
+  Configuration configuration;
 
   @Inject
   SitemapService sitemapService;
@@ -34,7 +34,7 @@ class ProcessPageFunction {
   @Inject
   PageKeyService pageKeyService;
 
-  @Incoming(Channels.INCOMING_PAGES_CHANNEL)
+  @Incoming(Channels.INCOMING_PAGES)
   void processPage(CloudEvent event) {
     String pageKey = CloudEventUtils.getSubject(event);
     publishedPagesStore.register(pageKey, event.getTime(), event.getType());

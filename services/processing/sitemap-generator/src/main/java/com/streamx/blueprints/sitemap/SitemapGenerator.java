@@ -1,6 +1,6 @@
 package com.streamx.blueprints.sitemap;
 
-import com.streamx.blueprints.sitemap.configuration.properties.SitemapGeneratorProperties;
+import com.streamx.blueprints.sitemap.configuration.Configuration;
 import cz.jiripinkas.jsitemapgenerator.WebPage;
 import cz.jiripinkas.jsitemapgenerator.WebPage.WebPageBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -17,7 +17,7 @@ public class SitemapGenerator {
   Logger log;
 
   @Inject
-  SitemapGeneratorProperties properties;
+  Configuration properties;
 
   public String generate(Collection<SitemapEntryData> entries) {
     var generator = createSitemapGenerator();

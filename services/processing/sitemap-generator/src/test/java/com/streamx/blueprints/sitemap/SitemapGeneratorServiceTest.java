@@ -52,8 +52,8 @@ class SitemapGeneratorServiceTest {
 
   @BeforeEach
   void setup() {
-    pages = connector.source(Channels.INCOMING_PAGES_CHANNEL);
-    sitemapSink = connector.sink(Channels.OUTGOING_SITEMAPS_CHANNEL);
+    pages = connector.source(Channels.INCOMING_PAGES);
+    sitemapSink = connector.sink(Channels.OUTGOING_SITEMAPS);
   }
 
   @AfterEach
