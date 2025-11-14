@@ -131,6 +131,12 @@ jobs:
           MODULES=$(./mvnw -q --also-make exec:exec -Dexec.executable="pwd")
           
           for module in $MODULES; do
+            PACKAGING="$(./mvnw -q -f "$module/pom.xml" help:evaluate -Dexpression=project.packaging -DforceStdout)"
+            if [ "$PACKAGING" != "jar" ]; then
+              echo "Skipping module $module with packaging $PACKAGING"
+              continue
+            fi
+
             if [ "$(./mvnw -Prelease -Dnative -q -f "$module/pom.xml" help:evaluate -Dexpression=quarkus.native.container-build -DforceStdout)" = "true" ]; then
               echo "Processing module: $module"
           
