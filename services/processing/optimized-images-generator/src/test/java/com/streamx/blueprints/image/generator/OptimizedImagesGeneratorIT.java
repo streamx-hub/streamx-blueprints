@@ -21,13 +21,6 @@ import org.junit.jupiter.api.Test;
 @TestProfile(IntegrationTestProfile.class)
 public class OptimizedImagesGeneratorIT extends BaseQuarkusIntegrationTest {
 
-  private static final String OUTGOING_CHANNEL = Channels.OPTIMIZED_ASSETS;
-
-  @Override
-  protected String outgoingChannel() {
-    return OUTGOING_CHANNEL;
-  }
-
   @Test
   void shouldGenerateOptimizedImage() throws IOException {
     // given
@@ -40,7 +33,7 @@ public class OptimizedImagesGeneratorIT extends BaseQuarkusIntegrationTest {
     sendEvent(sourceEvent, Channels.INCOMING_ASSETS);
 
     // then
-    CloudEvent outgoingEvent = waitForResponseEvent();
+    CloudEvent outgoingEvent = waitForResponseEvent(Channels.OPTIMIZED_ASSETS);
     assertOutgoingEvent(outgoingEvent, sourceEvent, asset);
   }
 
@@ -66,7 +59,7 @@ public class OptimizedImagesGeneratorIT extends BaseQuarkusIntegrationTest {
 
     @Override
     public Map<String, String> getConfigOverrides() {
-      return propertiesForOutgoingChannel(OUTGOING_CHANNEL)
+      return propertiesForOutgoingChannels()
           .put("streamx.blueprints.optimized-images-generator.processed-image-path-pattern", ".*")
           .build();
     }

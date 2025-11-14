@@ -19,15 +19,8 @@ import org.junit.jupiter.api.Test;
 @TestProfile(IntegrationTestProfile.class)
 public class SitemapGeneratorIT extends BaseQuarkusIntegrationTest {
 
-  private static final String OUTGOING_CHANNEL = Channels.OUTGOING_SITEMAPS;
-
   private static final String BASE_URL = "https://www.streamx.dev";
   private static final String SITEMAP_FILE_NAME = "sitemap.xml";
-
-  @Override
-  protected String outgoingChannel() {
-    return OUTGOING_CHANNEL;
-  }
 
   @Test
   void shouldGenerateSitemap() throws IOException {
@@ -40,7 +33,7 @@ public class SitemapGeneratorIT extends BaseQuarkusIntegrationTest {
     sendEvent(sourceEvent, Channels.INCOMING_PAGES);
 
     // then
-    CloudEvent outgoingEvent = waitForResponseEvent();
+    CloudEvent outgoingEvent = waitForResponseEvent(Channels.OUTGOING_SITEMAPS);
     assertOutgoingEvent(outgoingEvent, pageKey);
   }
 
@@ -64,7 +57,7 @@ public class SitemapGeneratorIT extends BaseQuarkusIntegrationTest {
 
     @Override
     public Map<String, String> getConfigOverrides() {
-      return propertiesForOutgoingChannel(OUTGOING_CHANNEL)
+      return propertiesForOutgoingChannels()
           .put("streamx.blueprints.sitemap-generator.base-url", BASE_URL)
           .put("streamx.blueprints.sitemap-generator.output-key", SITEMAP_FILE_NAME)
           .put("streamx.blueprints.sitemap-generator.dirty-check.interval", "1s")
