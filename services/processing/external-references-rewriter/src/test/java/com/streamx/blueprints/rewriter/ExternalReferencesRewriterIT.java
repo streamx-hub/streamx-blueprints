@@ -25,7 +25,7 @@ public class ExternalReferencesRewriterIT extends BaseQuarkusIntegrationTest {
   private static final String EXTERNAL_ASSET_TYPE = "assets/external";
 
   @Test
-  void shouldRewriteExternalResources() throws IOException {
+  void shouldRewriteExternalReferences() throws IOException {
     // given
     String pageContent = """
         <html>
