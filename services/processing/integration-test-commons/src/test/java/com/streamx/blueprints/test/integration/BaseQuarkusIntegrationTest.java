@@ -31,14 +31,6 @@ import org.junit.jupiter.api.BeforeEach;
 @ConnectWireMock
 public abstract class BaseQuarkusIntegrationTest {
 
-  protected static String toUrl(String channel) {
-    return "http://localhost:8081/" + channel;
-  }
-
-  protected static String toEndpoint(String channel) {
-    return "/" + channel;
-  }
-
   protected abstract String outgoingChannel();
 
   // will be injected automatically when the test class is annotated with @ConnectWireMock
@@ -91,9 +83,16 @@ public abstract class BaseQuarkusIntegrationTest {
     String host = getContainerLocalhost();
     String endpoint = toEndpoint(channel);
     String url = "http://%s:${quarkus.wiremock.devservices.port}%s".formatted(host, endpoint);
-    return ImmutableMap
-        .<String, String>builder()
+    return ImmutableMap.<String, String>builder()
         .put("mp.messaging.outgoing." + channel + ".url", url);
+  }
+
+  private static String toUrl(String channel) {
+    return "http://localhost:8081/" + channel;
+  }
+
+  private static String toEndpoint(String channel) {
+    return "/" + channel;
   }
 
   private static String getContainerLocalhost() {
