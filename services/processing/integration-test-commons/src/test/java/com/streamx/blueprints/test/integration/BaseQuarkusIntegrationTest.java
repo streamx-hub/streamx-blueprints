@@ -9,15 +9,15 @@ import static org.awaitility.Awaitility.await;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
 import com.streamx.reactive.messaging.http.CloudEventJsonDeserializer;
 import com.streamx.reactive.messaging.http.CloudEventJsonSerializer;
 import io.cloudevents.CloudEvent;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.vertx.core.buffer.Buffer;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -25,6 +25,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -32,7 +33,7 @@ import org.junit.jupiter.api.BeforeEach;
 public abstract class BaseQuarkusIntegrationTest {
 
   // will be injected automatically when the test class is annotated with @ConnectWireMock
-  WireMock wiremock;
+  protected WireMock wiremock;
 
   @BeforeAll
   static void setEventSource() {
@@ -78,19 +79,19 @@ public abstract class BaseQuarkusIntegrationTest {
     return result.get();
   }
 
-  protected static Builder<String, String> propertiesForOutgoingChannels() {
-    Builder<String, String> propertiesBuilder = ImmutableMap.builder();
+  static Map<String, String> propertiesForOutgoingChannels() {
+    Map<String, String> properties = new HashMap<>();
 
     String host = getContainerLocalhost();
     for (String channel : ChannelsReader.OUTGOING_CHANNELS) {
       String endpoint = toEndpoint(channel);
-      propertiesBuilder.put(
+      properties.put(
           "mp.messaging.outgoing." + channel + ".url",
           "http://%s:${quarkus.wiremock.devservices.port}%s".formatted(host, endpoint)
       );
     }
 
-    return propertiesBuilder;
+    return properties;
   }
 
   private static String toUrl(String channel) {
@@ -101,11 +102,16 @@ public abstract class BaseQuarkusIntegrationTest {
     return "/" + channel;
   }
 
-  private static String getContainerLocalhost() {
+  protected static String getContainerLocalhost() {
     if (System.getProperty("os.name", "").toLowerCase().startsWith("linux")) {
       return "172.17.0.1";
     } else {
       return "host.docker.internal";
     }
+  }
+
+  protected static int getWiremockPort() {
+    return ConfigProvider.getConfig()
+        .getValue("quarkus.wiremock.devservices.port", Integer.class);
   }
 }

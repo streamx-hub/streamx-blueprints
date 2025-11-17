@@ -7,9 +7,9 @@ import com.streamx.blueprints.data.DownloadRequest;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.rewriter.ExternalReferencesRewriterIT.IntegrationTestProfile;
 import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTest;
+import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
-import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import java.io.IOException;
 import java.util.Map;
@@ -86,19 +86,19 @@ public class ExternalReferencesRewriterIT extends BaseQuarkusIntegrationTest {
     assertThat(outgoingResource.emittedAssetType()).isEqualTo(EXTERNAL_ASSET_TYPE);
   }
 
-  public static class IntegrationTestProfile implements QuarkusTestProfile {
+  public static class IntegrationTestProfile extends BaseQuarkusIntegrationTestProfile {
 
     @Override
-    public Map<String, String> getConfigOverrides() {
+    protected Map<String, String> getServiceConfigProperties() {
       String basePropertyPath = "streamx.blueprints.external-references-rewriter.";
-      return propertiesForOutgoingChannels()
-          .put(basePropertyPath + "html-external-resource-xpath-selectors", "//img/@src")
-          .put(basePropertyPath + "base-url-for-relative-paths", "https://www.streamx.dev")
-          .put(basePropertyPath + "processable-payload-types", SOURCE_PAGE_TYPE)
-          .put(basePropertyPath + "emitted-page-type", EXTERNAL_PAGE_TYPE)
-          .put(basePropertyPath + "emitted-web-resource-type", EXTERNAL_WEB_RESOURCE_TYPE)
-          .put(basePropertyPath + "emitted-asset-type", EXTERNAL_ASSET_TYPE)
-          .build();
+      return Map.of(
+          basePropertyPath + "html-external-resource-xpath-selectors", "//img/@src",
+          basePropertyPath + "base-url-for-relative-paths", "https://www.streamx.dev",
+          basePropertyPath + "processable-payload-types", SOURCE_PAGE_TYPE,
+          basePropertyPath + "emitted-page-type", EXTERNAL_PAGE_TYPE,
+          basePropertyPath + "emitted-web-resource-type", EXTERNAL_WEB_RESOURCE_TYPE,
+          basePropertyPath + "emitted-asset-type", EXTERNAL_ASSET_TYPE
+      );
     }
   }
 }

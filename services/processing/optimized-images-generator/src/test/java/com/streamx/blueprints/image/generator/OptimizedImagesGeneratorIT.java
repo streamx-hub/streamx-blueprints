@@ -7,9 +7,9 @@ import com.streamx.blueprints.data.Asset;
 import com.streamx.blueprints.data.OptimizedAsset;
 import com.streamx.blueprints.image.generator.OptimizedImagesGeneratorIT.IntegrationTestProfile;
 import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTest;
+import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
-import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import java.io.File;
 import java.io.IOException;
@@ -55,13 +55,13 @@ public class OptimizedImagesGeneratorIT extends BaseQuarkusIntegrationTest {
     assertThat(outgoingResource.getOriginalPath()).isEqualTo(sourceEvent.getSubject());
   }
 
-  public static class IntegrationTestProfile implements QuarkusTestProfile {
+  public static class IntegrationTestProfile extends BaseQuarkusIntegrationTestProfile {
 
     @Override
-    public Map<String, String> getConfigOverrides() {
-      return propertiesForOutgoingChannels()
-          .put("streamx.blueprints.optimized-images-generator.processed-image-path-pattern", ".*")
-          .build();
+    protected Map<String, String> getServiceConfigProperties() {
+      return Map.of(
+          "streamx.blueprints.optimized-images-generator.processed-image-path-pattern", ".*"
+      );
     }
   }
 }
