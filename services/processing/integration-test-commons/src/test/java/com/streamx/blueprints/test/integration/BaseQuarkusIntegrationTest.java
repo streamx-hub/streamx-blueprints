@@ -31,8 +31,6 @@ import org.junit.jupiter.api.BeforeEach;
 @ConnectWireMock
 public abstract class BaseQuarkusIntegrationTest {
 
-  protected abstract String outgoingChannel();
-
   // will be injected automatically when the test class is annotated with @ConnectWireMock
   WireMock wiremock;
 
@@ -43,10 +41,12 @@ public abstract class BaseQuarkusIntegrationTest {
   }
 
   @BeforeEach
-  void setupEndpointForReceivingOutgoingEvents() {
-    String endpoint = toEndpoint(outgoingChannel());
-    wiremock.register(post(urlEqualTo(endpoint))
-        .willReturn(aResponse().withStatus(202)));
+  void setupEndpointsForReceivingOutgoingEvents() {
+    for (String channel : ChannelsReader.OUTGOING_CHANNELS) {
+      String endpoint = toEndpoint(channel);
+      wiremock.register(post(urlEqualTo(endpoint))
+          .willReturn(aResponse().withStatus(202)));
+    }
   }
 
   protected static void sendEvent(CloudEvent cloudEvent, String channel) throws IOException {
@@ -61,8 +61,8 @@ public abstract class BaseQuarkusIntegrationTest {
     }
   }
 
-  protected CloudEvent waitForResponseEvent() {
-    String endpoint = toEndpoint(outgoingChannel());
+  protected CloudEvent waitForResponseEvent(String outgoingChannel) {
+    String endpoint = toEndpoint(outgoingChannel);
     LoggedRequest response = waitForResponseRequest(endpoint);
     byte[] body = response.getBody();
     return new CloudEventJsonDeserializer().deserialize(Buffer.buffer(body));
@@ -71,20 +71,26 @@ public abstract class BaseQuarkusIntegrationTest {
   private static LoggedRequest waitForResponseRequest(String endpoint) {
     AtomicReference<LoggedRequest> result = new AtomicReference<>();
     await().untilAsserted(() -> {
-      List<LoggedRequest> requests = WireMock.findAll(
-          postRequestedFor(urlEqualTo(endpoint)));
+      List<LoggedRequest> requests = WireMock.findAll(postRequestedFor(urlEqualTo(endpoint)));
       assertThat(requests).hasSize(1);
       result.set(requests.getFirst());
     });
     return result.get();
   }
 
-  protected static Builder<String, String> propertiesForOutgoingChannel(String channel) {
+  protected static Builder<String, String> propertiesForOutgoingChannels() {
+    Builder<String, String> propertiesBuilder = ImmutableMap.builder();
+
     String host = getContainerLocalhost();
-    String endpoint = toEndpoint(channel);
-    String url = "http://%s:${quarkus.wiremock.devservices.port}%s".formatted(host, endpoint);
-    return ImmutableMap.<String, String>builder()
-        .put("mp.messaging.outgoing." + channel + ".url", url);
+    for (String channel : ChannelsReader.OUTGOING_CHANNELS) {
+      String endpoint = toEndpoint(channel);
+      propertiesBuilder.put(
+          "mp.messaging.outgoing." + channel + ".url",
+          "http://%s:${quarkus.wiremock.devservices.port}%s".formatted(host, endpoint)
+      );
+    }
+
+    return propertiesBuilder;
   }
 
   private static String toUrl(String channel) {

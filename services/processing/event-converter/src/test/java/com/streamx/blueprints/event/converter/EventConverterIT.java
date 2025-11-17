@@ -19,13 +19,6 @@ import org.junit.jupiter.api.Test;
 @TestProfile(IntegrationTestProfile.class)
 public class EventConverterIT extends BaseQuarkusIntegrationTest {
 
-  private static final String OUTGOING_CHANNEL = Channels.INDEXABLE_RESOURCES;
-
-  @Override
-  protected String outgoingChannel() {
-    return OUTGOING_CHANNEL;
-  }
-
   @Test
   void shouldConvertDataToIndexableResource() throws IOException {
     // given
@@ -36,7 +29,7 @@ public class EventConverterIT extends BaseQuarkusIntegrationTest {
     sendEvent(sourceEvent, Channels.RESOURCES);
 
     // then
-    CloudEvent outgoingEvent = waitForResponseEvent();
+    CloudEvent outgoingEvent = waitForResponseEvent(Channels.INDEXABLE_RESOURCES);
     assertOutgoingEvent(outgoingEvent, sourceEvent, data);
   }
 
@@ -59,7 +52,7 @@ public class EventConverterIT extends BaseQuarkusIntegrationTest {
 
     @Override
     public Map<String, String> getConfigOverrides() {
-      return propertiesForOutgoingChannel(OUTGOING_CHANNEL).build();
+      return propertiesForOutgoingChannels().build();
     }
   }
 }
