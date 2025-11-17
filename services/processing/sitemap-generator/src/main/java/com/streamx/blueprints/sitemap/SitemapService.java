@@ -2,7 +2,7 @@ package com.streamx.blueprints.sitemap;
 
 import com.streamx.blueprints.data.WebResource;
 import com.streamx.blueprints.sitemap.SitemapGenerator.SitemapEntryData;
-import com.streamx.blueprints.sitemap.configuration.properties.SitemapGeneratorProperties;
+import com.streamx.blueprints.sitemap.configuration.Configuration;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.Optional;
@@ -20,7 +20,7 @@ public class SitemapService {
   PageKeyService pageKeyService;
 
   @Inject
-  SitemapGeneratorProperties configuration;
+  Configuration configuration;
 
   public WebResource createSitemapResource() {
     var entries = publishedPagesStore.getEntries().stream()

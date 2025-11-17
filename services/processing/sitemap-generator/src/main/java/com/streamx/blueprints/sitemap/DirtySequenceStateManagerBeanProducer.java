@@ -1,6 +1,6 @@
 package com.streamx.blueprints.sitemap;
 
-import com.streamx.blueprints.sitemap.configuration.properties.SitemapGeneratorProperties;
+import com.streamx.blueprints.sitemap.configuration.Configuration;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
@@ -9,7 +9,7 @@ import jakarta.inject.Inject;
 public class DirtySequenceStateManagerBeanProducer {
 
   @Inject
-  SitemapGeneratorProperties properties;
+  Configuration properties;
 
   @Produces
   DirtySequenceStateManager produceDirtySequenceStateManager() {

@@ -1,11 +1,11 @@
-package com.streamx.blueprints.sitemap.configuration.properties;
+package com.streamx.blueprints.sitemap.configuration;
 
 import io.smallrye.config.ConfigMapping;
 import java.util.Map;
 import java.util.Optional;
 
 @ConfigMapping(prefix = "streamx.blueprints.sitemap-generator")
-public interface SitemapGeneratorProperties {
+public interface Configuration {
 
   Map<String, String> matchKeyPatterns();
 
