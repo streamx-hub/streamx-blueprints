@@ -7,9 +7,9 @@ import com.streamx.blueprints.data.OptimizedAsset;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.rewriter.LocalReferencesRewriterIT.IntegrationTestProfile;
 import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTest;
+import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
-import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import java.io.File;
 import java.io.IOException;
@@ -80,13 +80,13 @@ public class LocalReferencesRewriterIT extends BaseQuarkusIntegrationTest {
     assertThat(outgoingResource.getContentAsString()).isEqualTo(expectedOutgoingPageContent);
   }
 
-  public static class IntegrationTestProfile implements QuarkusTestProfile {
+  public static class IntegrationTestProfile extends BaseQuarkusIntegrationTestProfile {
 
     @Override
-    public Map<String, String> getConfigOverrides() {
-      return propertiesForOutgoingChannels()
-          .put("streamx.blueprints.local-references-rewriter.processed-page-path-pattern", ".*")
-          .build();
+    protected Map<String, String> getServiceConfigProperties() {
+      return Map.of(
+          "streamx.blueprints.local-references-rewriter.processed-page-path-pattern", ".*"
+      );
     }
   }
 }

@@ -7,9 +7,9 @@ import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.WebResource;
 import com.streamx.blueprints.sitemap.SitemapGeneratorIT.IntegrationTestProfile;
 import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTest;
+import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
-import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import java.io.IOException;
 import java.util.Map;
@@ -53,16 +53,16 @@ public class SitemapGeneratorIT extends BaseQuarkusIntegrationTest {
         </urlset>""".formatted(BASE_URL, sourcePagePath));
   }
 
-  public static class IntegrationTestProfile implements QuarkusTestProfile {
+  public static class IntegrationTestProfile extends BaseQuarkusIntegrationTestProfile {
 
     @Override
-    public Map<String, String> getConfigOverrides() {
-      return propertiesForOutgoingChannels()
-          .put("streamx.blueprints.sitemap-generator.base-url", BASE_URL)
-          .put("streamx.blueprints.sitemap-generator.output-key", SITEMAP_FILE_NAME)
-          .put("streamx.blueprints.sitemap-generator.dirty-check.interval", "1s")
-          .put("streamx.blueprints.sitemap-generator.dirty-check.delay", "1s")
-          .build();
+    protected Map<String, String> getServiceConfigProperties() {
+      return Map.of(
+          "streamx.blueprints.sitemap-generator.base-url", BASE_URL,
+          "streamx.blueprints.sitemap-generator.output-key", SITEMAP_FILE_NAME,
+          "streamx.blueprints.sitemap-generator.dirty-check.interval", "1s",
+          "streamx.blueprints.sitemap-generator.dirty-check.delay", "1s"
+      );
     }
   }
 }

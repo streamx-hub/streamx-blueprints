@@ -10,9 +10,9 @@ import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.WebResource;
 import com.streamx.blueprints.index.IndexableResourcesProducerIT.IntegrationTestProfile;
 import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTest;
+import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
-import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import java.io.IOException;
 import java.util.Map;
@@ -77,13 +77,11 @@ public class IndexableResourcesProducerIT extends BaseQuarkusIntegrationTest {
         .isEqualTo(expectedOutgoingContent);
   }
 
-  public static class IntegrationTestProfile implements QuarkusTestProfile {
+  public static class IntegrationTestProfile extends BaseQuarkusIntegrationTestProfile {
 
     @Override
-    public Map<String, String> getConfigOverrides() {
-      return propertiesForOutgoingChannels()
-          .put("streamx.blueprints.indexable-resources-producer.index-fragments", "true")
-          .build();
+    protected Map<String, String> getServiceConfigProperties() {
+      return Map.of("streamx.blueprints.indexable-resources-producer.index-fragments", "true");
     }
   }
 }

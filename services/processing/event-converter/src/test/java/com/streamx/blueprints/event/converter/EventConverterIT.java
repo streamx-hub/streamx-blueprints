@@ -5,18 +5,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.IndexableResource;
-import com.streamx.blueprints.event.converter.EventConverterIT.IntegrationTestProfile;
 import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTest;
+import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
-import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import java.io.IOException;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 @QuarkusIntegrationTest
-@TestProfile(IntegrationTestProfile.class)
+@TestProfile(BaseQuarkusIntegrationTestProfile.class)
 public class EventConverterIT extends BaseQuarkusIntegrationTest {
 
   @Test
@@ -46,13 +44,5 @@ public class EventConverterIT extends BaseQuarkusIntegrationTest {
     assertThat(outgoingResource).isNotNull();
     assertThat(outgoingResource.getType()).isEqualTo(sourceData.getType());
     assertThat(outgoingResource.getContent()).isEqualTo(sourceData.getContent());
-  }
-
-  public static class IntegrationTestProfile implements QuarkusTestProfile {
-
-    @Override
-    public Map<String, String> getConfigOverrides() {
-      return propertiesForOutgoingChannels().build();
-    }
   }
 }
