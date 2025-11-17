@@ -71,24 +71,24 @@ public abstract class BaseQuarkusIntegrationTest {
     return waitForLastResponseEvent(outgoingChannel, 1);
   }
 
-  protected CloudEvent waitForLastResponseEvent(String outgoingChannel, int count) {
-    return waitForResponseEvents(outgoingChannel, count).getLast();
+  protected CloudEvent waitForLastResponseEvent(String outgoingChannel, int totalCount) {
+    return waitForResponseEvents(outgoingChannel, totalCount).getLast();
   }
 
-  private List<CloudEvent> waitForResponseEvents(String outgoingChannel, int count) {
+  private List<CloudEvent> waitForResponseEvents(String outgoingChannel, int totalCount) {
     String endpoint = toEndpoint(outgoingChannel);
-    List<LoggedRequest> responses = waitForResponseRequests(endpoint, count);
+    List<LoggedRequest> responses = waitForResponseRequests(endpoint, totalCount);
     return responses.stream()
         .map(LoggedRequest::getBody)
         .map(body -> eventsDeserializer.deserialize(Buffer.buffer(body)))
         .toList();
   }
 
-  private static List<LoggedRequest> waitForResponseRequests(String endpoint, int count) {
+  private static List<LoggedRequest> waitForResponseRequests(String endpoint, int totalCount) {
     List<LoggedRequest> results = new LinkedList<>();
     await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
       List<LoggedRequest> requests = WireMock.findAll(postRequestedFor(urlEqualTo(endpoint)));
-      assertThat(requests).hasSize(count);
+      assertThat(requests).hasSize(totalCount);
       results.addAll(requests);
     });
     return results;
