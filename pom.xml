@@ -328,27 +328,4 @@
       </extension>
     </extensions>
   </build>
-
-  <profiles>
-    <profile>
-      <id>native</id>
-      <activation>
-        <property>
-          <name>native</name>
-        </property>
-      </activation>
-      <properties>
-        <skipITs>false</skipITs>
-        <quarkus.native.enabled>true</quarkus.native.enabled>
-        <quarkus.container-image.package.type>${streamx.container-image.package.type.native}</quarkus.container-image.package.type>
-        <quarkus.native.container-build>true</quarkus.native.container-build>
-      </properties>
-    </profile>
-    <profile>
-      <id>container-image-multiplatform</id>
-      <properties>
-        <quarkus.docker.buildx.platform>linux/amd64,linux/arm64</quarkus.docker.buildx.platform>
-      </properties>
-    </profile>
-  </profiles>
 </project>
