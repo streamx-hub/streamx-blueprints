@@ -38,7 +38,7 @@ public class OptimizedAssetsStore {
       var optimizedAsset = CloudEventUtils.getData(optimizedAssetEvent, OptimizedAsset.class);
       publishedOptimizedAssets.put(optimizedAsset.getOriginalPath(), key);
     } catch (RuntimeException ex) {
-      log.warnf("Error extracting OptimizedAsset from event %s", key);
+      log.warnf(ex, "Error extracting OptimizedAsset from event %s", key);
     }
   }
 
