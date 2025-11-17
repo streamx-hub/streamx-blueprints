@@ -2,13 +2,13 @@ package com.streamx.blueprints.json.aggregator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.json.aggregator.configuration.Configuration;
-import com.streamx.blueprints.json.aggregator.stores.DataStore;
 import com.streamx.blueprints.json.aggregator.stores.PreservedData;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
-import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -16,25 +16,9 @@ import java.util.Optional;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.jboss.logging.Logger;
 
+@ApplicationScoped
 public class ProcessMultiValueDataFunction extends AbstractFunction {
-
-  @Inject
-  Logger log;
-
-  @Inject
-  DataStore store;
-
-  @Override
-  protected Logger getLog() {
-    return log;
-  }
-
-  @Override
-  protected DataStore getStore() {
-    return store;
-  }
 
   @Override
   protected boolean requiresHashInKey() {
@@ -71,10 +55,18 @@ public class ProcessMultiValueDataFunction extends AbstractFunction {
       }
       String merged = objectMapper.writeValueAsString(jsonNode);
       log.tracef("Merged json for [%s] %s", id, merged);
-      return createPublishEvent(inputEvent, id, config.outputNamespace(),
-          config.outputType().orElse(null), merged);
+      String outputType = getOutputType(config, inputEvent);
+      return createPublishEvent(inputEvent, id, config.outputNamespace(), outputType, merged);
     } catch (IOException e) {
       throw new RuntimeException("Unable to deserialize payload", e);
     }
+  }
+
+  private String getOutputType(Configuration config, CloudEvent inputEvent) {
+    return config.outputType().orElse(
+        Optional
+            .ofNullable(CloudEventUtils.getData(inputEvent, Data.class))
+            .map(Data::getType)
+            .orElse(null));
   }
 }

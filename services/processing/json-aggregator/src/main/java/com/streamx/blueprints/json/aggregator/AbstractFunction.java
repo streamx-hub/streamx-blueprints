@@ -27,15 +27,15 @@ abstract class AbstractFunction {
 
   protected static final ObjectMapper objectMapper = new ObjectMapper();
 
+  Logger log;
+
+  @Inject
+  DataStore store;
+
   @Inject
   AggregatorConfiguration aggregatorConfig;
 
-  protected abstract Logger getLog();
-
-  protected final Map<Configuration, Set<String>> supportedNamespacesByConfig
-      = new LinkedHashMap<>();
-
-  protected abstract DataStore getStore();
+  private final Map<Configuration, Set<String>> supportedNamespacesByConfig = new LinkedHashMap<>();
 
   protected abstract boolean requiresHashInKey();
 
@@ -44,6 +44,7 @@ abstract class AbstractFunction {
 
   @PostConstruct
   void init() {
+    log = Logger.getLogger(getClass());
     for (Configuration config : aggregatorConfig.configurations()) {
       Set<String> supportedNamespaces = new LinkedHashSet<>();
       supportedNamespaces.add(config.masterNamespace());
@@ -62,12 +63,12 @@ abstract class AbstractFunction {
     String key = CloudEventUtils.getSubject(event);
     OffsetDateTime eventTime = event.getTime();
 
-    getStore().register(data, eventType, key);
-    getLog().tracef("Processing message [%s] with event time %s", key, eventTime);
+    store.register(data, eventType, key);
+    log.tracef("Processing message [%s] with event time %s", key, eventTime);
 
     try {
       if (!accept(key)) {
-        getLog().tracef("Skipping invalid incoming message key=%s", key);
+        log.tracef("Skipping invalid incoming message key=%s", key);
         message.ack();
         return Multi.createFrom().empty();
       }
@@ -82,7 +83,7 @@ abstract class AbstractFunction {
           .onCompletion()
           .call(() -> Uni.createFrom().completionStage(message.ack()));
     } catch (Exception e) {
-      getLog().warnf(e, "Error processing data message %s", key);
+      log.warnf(e, "Error processing data message %s", key);
       message.nack(e);
       return Multi.createFrom().empty();
     }
@@ -91,7 +92,7 @@ abstract class AbstractFunction {
   protected CloudEvent createPublishEvent(CloudEvent inputEvent, String id, String outputNamespace,
       String outputType, String payload) {
     String key = DataKey.fromNamespaceAndId(outputNamespace, id);
-    getLog().tracef("Creating Data Publish message with key %s and outputType %s", key, outputType);
+    log.tracef("Creating Data Publish message with key %s and outputType %s", key, outputType);
     return CloudEventUtils.eventCopyWithData(inputEvent, new Data(payload, outputType))
         .withSubject(key)
         .withType(Data.TYPE_PUBLISHED)
@@ -101,7 +102,7 @@ abstract class AbstractFunction {
   protected CloudEvent createUnpublishEvent(CloudEvent inputEvent, String id,
       String outputNamespace) {
     String key = DataKey.fromNamespaceAndId(outputNamespace, id);
-    getLog().tracef("Creating Data Unpublish message with key %s", key);
+    log.tracef("Creating Data Unpublish message with key %s", key);
     return CloudEventUtils.eventCopyWithoutData(inputEvent)
         .withSubject(key)
         .withType(Data.TYPE_UNPUBLISHED)
@@ -112,19 +113,19 @@ abstract class AbstractFunction {
     DataKey dataKey = DataKey.fromKey(key);
 
     if (!dataKey.hasNamespaceAndId()) {
-      getLog().tracef("Expected namespace and ID in key %s", key);
+      log.tracef("Expected namespace and ID in key %s", key);
       return false;
     }
 
     if (requiresHashInKey() && !dataKey.hasHash()) {
-      getLog().tracef("Expected hash in key %s, but it's missing", key);
+      log.tracef("Expected hash in key %s, but it's missing", key);
       return false;
     }
 
     boolean anyMatchingNamespace = supportedNamespacesByConfig.values().stream()
         .anyMatch(supportedNamespaces -> supportedNamespaces.contains(dataKey.namespace()));
     if (!anyMatchingNamespace) {
-      getLog().tracef("No matching namespace for %s", key);
+      log.tracef("No matching namespace for %s", key);
       return false;
     }
 
@@ -135,5 +136,9 @@ abstract class AbstractFunction {
     return supportedNamespacesByConfig.entrySet().stream()
         .filter(entry -> entry.getValue().contains(namespace))
         .map(Entry::getKey).toList();
+  }
+
+  protected Set<String> getNamespacesByConfig(Configuration config) {
+    return supportedNamespacesByConfig.get(config);
   }
 }

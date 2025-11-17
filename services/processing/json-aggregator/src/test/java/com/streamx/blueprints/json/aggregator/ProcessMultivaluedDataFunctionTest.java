@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 class ProcessMultivaluedDataFunctionTest extends ProcessDataFunctionBaseTest {
 
-  private static final String REVIEW_PAYLOAD = "{\"stars\":1,\"text\":\"some review\"}";
+  private static final String REVIEW_PAYLOAD = "{\"stars\":1,\"text\":\"nice\"}";
 
   @Inject
   @Any
@@ -41,11 +41,27 @@ class ProcessMultivaluedDataFunctionTest extends ProcessDataFunctionBaseTest {
   }
 
   @Test
-  void expectReviewsArrayWithSingleReview() {
-    int id = 101;
-    publish("review:" + id + ":hash", REVIEW_PAYLOAD);
+  void expectReviewsArrayWithSingleReviewAndRewrittenType() {
+    int id = 100;
+    publish("typed-review:" + id + ":hash", "my-review-type", REVIEW_PAYLOAD);
     waitForProcessedMessages(1);
-    assertReviewsPublished(id, "{\"reviews\":[{\"stars\":1,\"text\":\"some review\"}]}");
+    assertReviewsPublished(
+        "typed-reviews:" + id,
+        "my-review-type",
+        "{\"typed-reviews\":[{\"stars\":1,\"text\":\"nice\"}]}"
+    );
+  }
+
+  @Test
+  void expectReviewsArrayWithSingleReviewAndTypeFromConfig() {
+    int id = 101;
+    publish("review:" + id + ":hash", "my-review-type", REVIEW_PAYLOAD);
+    waitForProcessedMessages(1);
+    assertReviewsPublished(
+        "reviews:" + id,
+        "reviews/all",
+        "{\"reviews\":[{\"stars\":1,\"text\":\"nice\"}]}"
+    );
   }
 
   @Test
@@ -54,8 +70,11 @@ class ProcessMultivaluedDataFunctionTest extends ProcessDataFunctionBaseTest {
     publish("review:" + id + ":hash", REVIEW_PAYLOAD);
     publish("review:" + id + ":hash1", REVIEW_PAYLOAD);
     waitForProcessedMessages(2);
-    assertReviewsPublished(id, "{\"reviews\":[{\"stars\":1,"
-        + "\"text\":\"some review\"},{\"stars\":1,\"text\":\"some review\"}]}");
+    assertReviewsPublished(
+        "reviews:" + id,
+        "reviews/all",
+        "{\"reviews\":[{\"stars\":1,\"text\":\"nice\"},{\"stars\":1,\"text\":\"nice\"}]}"
+    );
   }
 
   @Test
@@ -64,7 +83,11 @@ class ProcessMultivaluedDataFunctionTest extends ProcessDataFunctionBaseTest {
     publish("review:" + id + ":hash", REVIEW_PAYLOAD);
     unpublish("review:" + id + ":hash1");
     waitForProcessedMessages(2);
-    assertReviewsPublished(id, "{\"reviews\":[{\"stars\":1,\"text\":\"some review\"}]}");
+    assertReviewsPublished(
+        "reviews:" + id,
+        "reviews/all",
+        "{\"reviews\":[{\"stars\":1,\"text\":\"nice\"}]}"
+    );
   }
 
   @Test
@@ -72,10 +95,16 @@ class ProcessMultivaluedDataFunctionTest extends ProcessDataFunctionBaseTest {
     publish("multi-outputs-trigger:1:hash", REVIEW_PAYLOAD);
     waitForProcessedMessages(2);
 
-    assertPublished("multi-output-1:1", null,
-        "{\"multi-output-1\":[{\"stars\":1,\"text\":\"some review\"}]}");
-    assertPublished("multi-output-2:1", null,
-        "{\"multi-output-2\":[{\"stars\":1,\"text\":\"some review\"}]}");
+    assertReviewsPublished(
+        "multi-output-1:1",
+        null,
+        "{\"multi-output-1\":[{\"stars\":1,\"text\":\"nice\"}]}"
+    );
+    assertReviewsPublished(
+        "multi-output-2:1",
+        null,
+        "{\"multi-output-2\":[{\"stars\":1,\"text\":\"nice\"}]}"
+    );
   }
 
   @Test
@@ -84,8 +113,8 @@ class ProcessMultivaluedDataFunctionTest extends ProcessDataFunctionBaseTest {
     assertNoResultMessageWasSent();
   }
 
-  private void assertReviewsPublished(int id, String expectedPayload) {
-    assertPublished("reviews:" + id, "reviews/all", expectedPayload);
+  private void assertReviewsPublished(String key, String expectedType, String expectedPayload) {
+    assertPublished(key, expectedType, expectedPayload);
   }
 
 }

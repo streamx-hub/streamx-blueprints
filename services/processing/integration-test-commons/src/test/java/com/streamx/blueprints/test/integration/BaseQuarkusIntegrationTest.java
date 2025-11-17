@@ -15,10 +15,11 @@ import io.cloudevents.CloudEvent;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import io.vertx.core.buffer.Buffer;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -31,6 +32,10 @@ import org.junit.jupiter.api.BeforeEach;
 
 @ConnectWireMock
 public abstract class BaseQuarkusIntegrationTest {
+
+  private static final CloudEventJsonSerializer eventsSerializer = new CloudEventJsonSerializer();
+  private static final CloudEventJsonDeserializer eventsDeserializer
+      = new CloudEventJsonDeserializer();
 
   // will be injected automatically when the test class is annotated with @ConnectWireMock
   protected WireMock wiremock;
@@ -51,7 +56,7 @@ public abstract class BaseQuarkusIntegrationTest {
   }
 
   protected static void sendEvent(CloudEvent cloudEvent, String channel) throws IOException {
-    String serializedEvent = new CloudEventJsonSerializer().serialize(cloudEvent).toString();
+    String serializedEvent = eventsSerializer.serialize(cloudEvent).toString();
     String url = toUrl(channel);
 
     try (CloseableHttpClient http = HttpClients.createDefault()) {
@@ -63,20 +68,30 @@ public abstract class BaseQuarkusIntegrationTest {
   }
 
   protected CloudEvent waitForResponseEvent(String outgoingChannel) {
-    String endpoint = toEndpoint(outgoingChannel);
-    LoggedRequest response = waitForResponseRequest(endpoint);
-    byte[] body = response.getBody();
-    return new CloudEventJsonDeserializer().deserialize(Buffer.buffer(body));
+    return waitForLastResponseEvent(outgoingChannel, 1);
   }
 
-  private static LoggedRequest waitForResponseRequest(String endpoint) {
-    AtomicReference<LoggedRequest> result = new AtomicReference<>();
-    await().untilAsserted(() -> {
+  protected CloudEvent waitForLastResponseEvent(String outgoingChannel, int totalCount) {
+    return waitForResponseEvents(outgoingChannel, totalCount).getLast();
+  }
+
+  private List<CloudEvent> waitForResponseEvents(String outgoingChannel, int totalCount) {
+    String endpoint = toEndpoint(outgoingChannel);
+    List<LoggedRequest> responses = waitForResponseRequests(endpoint, totalCount);
+    return responses.stream()
+        .map(LoggedRequest::getBody)
+        .map(body -> eventsDeserializer.deserialize(Buffer.buffer(body)))
+        .toList();
+  }
+
+  private static List<LoggedRequest> waitForResponseRequests(String endpoint, int totalCount) {
+    List<LoggedRequest> results = new LinkedList<>();
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
       List<LoggedRequest> requests = WireMock.findAll(postRequestedFor(urlEqualTo(endpoint)));
-      assertThat(requests).hasSize(1);
-      result.set(requests.getFirst());
+      assertThat(requests).hasSize(totalCount);
+      results.addAll(requests);
     });
-    return result.get();
+    return results;
   }
 
   static Map<String, String> propertiesForOutgoingChannels() {

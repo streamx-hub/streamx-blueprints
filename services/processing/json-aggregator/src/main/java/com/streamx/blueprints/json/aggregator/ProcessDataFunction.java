@@ -3,12 +3,10 @@ package com.streamx.blueprints.json.aggregator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.json.aggregator.configuration.Configuration;
-import com.streamx.blueprints.json.aggregator.stores.DataStore;
 import com.streamx.blueprints.json.aggregator.stores.PreservedData;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -18,26 +16,9 @@ import java.util.Set;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class ProcessDataFunction extends AbstractFunction {
-
-  @Inject
-  Logger log;
-
-  @Inject
-  DataStore store;
-
-  @Override
-  protected Logger getLog() {
-    return log;
-  }
-
-  @Override
-  protected DataStore getStore() {
-    return store;
-  }
 
   @Override
   protected boolean requiresHashInKey() {
@@ -76,7 +57,7 @@ public class ProcessDataFunction extends AbstractFunction {
     if (Data.TYPE_UNPUBLISHED.equals(inputEvent.getType())) {
       return unmergeResources(inputEvent, key, masterResource, config);
     }
-    return Optional.of(mergeResources(inputEvent, key.id(), supportedNamespacesByConfig.get(config),
+    return Optional.of(mergeResources(inputEvent, key.id(), getNamespacesByConfig(config),
         config.outputNamespace(), getOutputType(config, masterResource)));
   }
 
@@ -92,7 +73,7 @@ public class ProcessDataFunction extends AbstractFunction {
       }
     } else {
       log.tracef("Unpublishing optional resource at [%s]", key);
-      Set<String> namespacesToMerge = new LinkedHashSet<>(supportedNamespacesByConfig.get(config));
+      Set<String> namespacesToMerge = new LinkedHashSet<>(getNamespacesByConfig(config));
       namespacesToMerge.remove(key.namespace());
       return Optional.of(mergeResources(inputEvent, key.id(), namespacesToMerge,
           config.outputNamespace(), getOutputType(config, masterResource)));
