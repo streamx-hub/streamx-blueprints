@@ -10,6 +10,7 @@ import com.streamx.content.parser.datainsert.Segment;
 import com.streamx.content.parser.datainsert.SegmentDefineHandler;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
@@ -18,8 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
-import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.jboss.logging.Logger;
 
@@ -29,24 +30,30 @@ public class CompositionFunction {
   @Inject
   Logger log;
 
-  Map<String, Layout> layoutsStore = new HashMap<>();
+  private static final Map<String, Layout> layoutsStore = new HashMap<>();
 
-  Map<String, Composition> compositionsStore = new HashMap<>();
+  private static final Map<String, Composition> compositionsStore = new HashMap<>();
 
   @Incoming(Channels.INCOMING_LAYOUTS)
   @Outgoing(Channels.OUTGOING_PAGE_COMPOSE_REQUESTS)
-  @Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
-  public Multi<CloudEvent> consumeLayout(CloudEvent layout) {
+  public Multi<Message<CloudEvent>> consumeLayout(Message<CloudEvent> layoutMessage) {
+    CloudEvent layout = layoutMessage.getPayload();
     String eventType = layout.getType();
+    String subject = layout.getSubject();
+    log.tracef("Consuming layout with subject %s and type %s", subject, eventType);
+
     if (Layout.TYPE_PUBLISHED.equals(eventType)) {
-      layoutsStore.put(layout.getSubject(), CloudEventUtils.getData(layout, Layout.class));
+      layoutsStore.put(subject, CloudEventUtils.getData(layout, Layout.class));
     } else if (Layout.TYPE_UNPUBLISHED.equals(eventType)) {
-      layoutsStore.remove(layout.getSubject());
+      layoutsStore.remove(subject);
     }
     try {
-      return Multi.createFrom().items(createPageComposeRequests(layout));
+      return Multi.createFrom().items(createPageComposeRequests(layout))
+          .map(Message::of)
+          .onCompletion()
+          .call(() -> Uni.createFrom().completionStage(layoutMessage.ack()));
     } catch (Exception e) {
-      log.warnf(e, "Error creating page compose requests from layout %s", layout.getSubject());
+      log.warnf(e, "Error creating page compose requests from layout %s", subject);
       return Multi.createFrom().empty();
     }
   }
@@ -57,6 +64,7 @@ public class CompositionFunction {
     String compositionKey = compositionEvent.getSubject();
     String eventType = compositionEvent.getType();
     OffsetDateTime eventTime = compositionEvent.getTime();
+    log.tracef("Consuming composition with key %s and type %s", compositionKey, eventType);
 
     if (Composition.TYPE_PUBLISHED.equals(eventType)) {
       Composition composition = CloudEventUtils.getData(compositionEvent, Composition.class);
@@ -65,20 +73,14 @@ public class CompositionFunction {
         return null;
       }
       compositionsStore.put(compositionKey, composition);
-      return CloudEventUtils.eventWithData(
-          compositionKey,
-          PageComposeRequest.TYPE_PUBLISHED,
-          new PageComposeRequest(compositionKey, composition.getLayoutKey()),
-          eventTime);
+      return createPageComposeRequest(compositionKey, composition.getLayoutKey(),
+          PageComposeRequest.TYPE_PUBLISHED, eventTime);
     }
 
     if (CloudEventUtils.isUnpublishingType(eventType)) {
       compositionsStore.remove(compositionKey);
-      return CloudEventUtils.eventWithData(
-          compositionKey,
-          PageComposeRequest.TYPE_UNPUBLISHED,
-          new PageComposeRequest(compositionKey, null),
-          eventTime);
+      return createPageComposeRequest(compositionKey, null,
+          PageComposeRequest.TYPE_UNPUBLISHED, eventTime);
     }
 
     log.warnf("Skipping processing event %s of unexpected type: %s", compositionKey, eventType);
@@ -91,6 +93,8 @@ public class CompositionFunction {
     PageComposeRequest request = CloudEventUtils.getData(event, PageComposeRequest.class);
     String compositionKey = request.compositionKey();
     String layoutKey = request.layoutKey();
+    log.tracef("Consuming page compose request with composition key %s and layout key %s",
+        compositionKey, layoutKey);
 
     if (PageComposeRequest.TYPE_PUBLISHED.equals(event.getType())) {
       Composition composition = compositionsStore.get(compositionKey);
@@ -116,15 +120,18 @@ public class CompositionFunction {
         : PageComposeRequest.TYPE_UNPUBLISHED;
 
     return compositionsStore.entrySet().stream()
-        .filter(entry ->
-            entry.getValue() != null && entry.getValue().getLayoutKey().equals(layoutKey))
+        .filter(entry -> entry.getValue().getLayoutKey().equals(layoutKey))
         .map(Entry::getKey)
         .map(compositionKey ->
-            CloudEventUtils.eventWithData(
-                compositionKey,
-                type,
-                new PageComposeRequest(compositionKey, layoutKey),
-                layout.getTime()));
+            createPageComposeRequest(compositionKey, layoutKey, type, layout.getTime()));
+  }
+
+  private CloudEvent createPageComposeRequest(String compositionKey, String layoutKey,
+      String eventType, OffsetDateTime eventTime) {
+    log.tracef("Creating page compose request for composition %s and layout %s",
+        compositionKey, layoutKey);
+    PageComposeRequest data = new PageComposeRequest(compositionKey, layoutKey);
+    return CloudEventUtils.eventWithData(compositionKey, eventType, data, eventTime);
   }
 
   private boolean ableToGeneratePage(Layout layout, String layoutKey,
