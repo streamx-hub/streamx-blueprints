@@ -14,7 +14,6 @@
   <properties>
     <jsoup.version>1.21.2</jsoup.version>
     <json-path.version>2.9.0</json-path.version>
-    <commons-text.version>1.14.0</commons-text.version>
     <camel-quarkus-xpath.version>3.27.0</camel-quarkus-xpath.version>
   </properties>
 
@@ -39,9 +38,12 @@
       <version>${camel-quarkus-xpath.version}</version>
     </dependency>
     <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-text</artifactId>
-      <version>${commons-text.version}</version>
     </dependency>
 
     <!-- Test dependencies -->
