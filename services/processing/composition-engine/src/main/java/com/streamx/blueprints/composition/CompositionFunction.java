@@ -43,13 +43,10 @@ public class CompositionFunction {
     log.tracef("Consuming layout with subject %s and type %s", subject, eventType);
 
     if (Layout.TYPE_PUBLISHED.equals(eventType)) {
-      log.tracef("FIXME putting to map");
       layoutsStore.put(subject, CloudEventUtils.getData(layout, Layout.class));
     } else if (Layout.TYPE_UNPUBLISHED.equals(eventType)) {
-      log.tracef("FIXME removing from map");
       layoutsStore.remove(subject);
     }
-    log.tracef("FIXME creating a multi");
     try {
       return Multi.createFrom().items(createPageComposeRequests(layout))
           .map(Message::of)
