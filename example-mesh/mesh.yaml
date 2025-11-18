@@ -198,7 +198,7 @@ descriptors:
           - "9301:9300"
         volumes:
           - "repository-volume:/usr/share/opensearch/data"
-        healthCheck: null
+        healthCheck: "/_cluster/health"
 
 ingestion:
   rest-ingestion:
