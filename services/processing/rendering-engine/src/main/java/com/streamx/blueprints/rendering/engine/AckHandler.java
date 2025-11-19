@@ -18,6 +18,8 @@ public class AckHandler {
 
   private final List<Uni<Void>> ackUnisList = new ArrayList<>();
 
+  // TODO consider removing AckHandler and migrate from Message<CloudEvent> to CloudEvent
+  //  when https://github.com/smallrye/smallrye-reactive-messaging/issues/3232 is fixed
   public AckHandler(Message<CloudEvent> incoming) {
     this.incoming = incoming;
     this.incomingEventKey = CloudEventUtils.getSubject(incoming.getPayload());

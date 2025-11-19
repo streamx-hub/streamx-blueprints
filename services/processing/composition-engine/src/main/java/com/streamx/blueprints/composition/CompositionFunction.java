@@ -36,6 +36,8 @@ public class CompositionFunction {
 
   @Incoming(Channels.INCOMING_LAYOUTS)
   @Outgoing(Channels.OUTGOING_PAGE_COMPOSE_REQUESTS)
+  // TODO migrate from Message<CloudEvent> to CloudEvent
+  //  when https://github.com/smallrye/smallrye-reactive-messaging/issues/3232 is fixed
   public Multi<Message<CloudEvent>> consumeLayout(Message<CloudEvent> layoutMessage) {
     CloudEvent layout = layoutMessage.getPayload();
     String eventType = layout.getType();
