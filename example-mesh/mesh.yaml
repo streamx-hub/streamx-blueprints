@@ -1,39 +1,3 @@
-sources:
-  resources-source:
-    outgoing:
-      - ref: "inbox.pages"
-        produces:
-          - "com.streamx.blueprints.page.published.v1"
-          - "com.streamx.blueprints.page.unpublished.v1"
-      - ref: "inbox.web-resources"
-        produces:
-          - "com.streamx.blueprints.web-resource.published.v1"
-          - "com.streamx.blueprints.web-resource.unpublished.v1"
-      - ref: "inbox.assets"
-        produces:
-          - "com.streamx.blueprints.asset.published.v1"
-          - "com.streamx.blueprints.asset.unpublished.v1"
-      - ref: "inbox.layouts"
-        produces:
-          - "com.streamx.blueprints.layout.published.v1"
-          - "com.streamx.blueprints.layout.unpublished.v1"
-      - ref: "inbox.compositions"
-        produces:
-          - "com.streamx.blueprints.composition.published.v1"
-          - "com.streamx.blueprints.composition.unpublished.v1"
-      - ref: "inbox.data"
-        produces:
-          - "com.streamx.blueprints.data.published.v1"
-          - "com.streamx.blueprints.data.unpublished.v1"
-      - ref: "inbox.renderers"
-        produces:
-          - "com.streamx.blueprints.renderer.published.v1"
-          - "com.streamx.blueprints.renderer.unpublished.v1"
-      - ref: "inbox.rendering-contexts"
-        produces:
-          - "com.streamx.blueprints.rendering-context.published.v1"
-          - "com.streamx.blueprints.rendering-context.unpublished.v1"
-
 descriptors:
   relay:
     type: "processing"
@@ -199,6 +163,42 @@ descriptors:
         volumes:
           - "repository-volume:/usr/share/opensearch/data"
         healthCheck: "/_cluster/health"
+
+sources:
+  resources-source:
+    outgoing:
+      - ref: "inbox.pages"
+        produces:
+          - "com.streamx.blueprints.page.published.v1"
+          - "com.streamx.blueprints.page.unpublished.v1"
+      - ref: "inbox.web-resources"
+        produces:
+          - "com.streamx.blueprints.web-resource.published.v1"
+          - "com.streamx.blueprints.web-resource.unpublished.v1"
+      - ref: "inbox.assets"
+        produces:
+          - "com.streamx.blueprints.asset.published.v1"
+          - "com.streamx.blueprints.asset.unpublished.v1"
+      - ref: "inbox.layouts"
+        produces:
+          - "com.streamx.blueprints.layout.published.v1"
+          - "com.streamx.blueprints.layout.unpublished.v1"
+      - ref: "inbox.compositions"
+        produces:
+          - "com.streamx.blueprints.composition.published.v1"
+          - "com.streamx.blueprints.composition.unpublished.v1"
+      - ref: "inbox.data"
+        produces:
+          - "com.streamx.blueprints.data.published.v1"
+          - "com.streamx.blueprints.data.unpublished.v1"
+      - ref: "inbox.renderers"
+        produces:
+          - "com.streamx.blueprints.renderer.published.v1"
+          - "com.streamx.blueprints.renderer.unpublished.v1"
+      - ref: "inbox.rendering-contexts"
+        produces:
+          - "com.streamx.blueprints.rendering-context.published.v1"
+          - "com.streamx.blueprints.rendering-context.unpublished.v1"
 
 ingestion:
   rest-ingestion:
