@@ -11,4 +11,11 @@
   <artifactId>json-aggregator</artifactId>
   <name>StreamX Blueprints : Json Data Aggregator</name>
 
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+    </dependency>
+  </dependencies>
+
 </project>
