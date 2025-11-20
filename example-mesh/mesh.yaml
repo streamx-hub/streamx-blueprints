@@ -4,9 +4,9 @@ descriptors:
     containers:
       service:
         incoming:
-          events:
+          events: {}
         outgoing:
-          relayed-events:
+          relayed-events: {}
 
   optimized-images-generator:
     type: "processing"
@@ -14,9 +14,9 @@ descriptors:
       processor:
         image: "ghcr.io/streamx-com/streamx-blueprints/optimized-images-generator:latest-jvm"
         incoming:
-          incoming-assets:
+          incoming-assets: {}
         outgoing:
-          optimized-assets:
+          optimized-assets: {}
 
   local-references-rewriter:
     type: "processing"
@@ -24,10 +24,10 @@ descriptors:
       processor:
         image: "ghcr.io/streamx-com/streamx-blueprints/local-references-rewriter:latest-jvm"
         incoming:
-          incoming-pages:
-          optimized-assets:
+          incoming-pages: {}
+          optimized-assets: {}
         outgoing:
-          adjusted-pages:
+          adjusted-pages: {}
 
   json-aggregator:
     type: "processing"
@@ -35,11 +35,11 @@ descriptors:
       processor:
         image: "ghcr.io/streamx-com/streamx-blueprints/json-aggregator:latest-jvm"
         incoming:
-          data:
-          multivalued-data:
+          data: {}
+          multivalued-data: {}
         outgoing:
-          aggregated-data:
-          aggregated-multivalued-data:
+          aggregated-data: {}
+          aggregated-multivalued-data: {}
 
   external-references-rewriter:
     type: "processing"
@@ -47,10 +47,10 @@ descriptors:
       processor:
         image: "ghcr.io/streamx-com/streamx-blueprints/external-references-rewriter:latest-jvm"
         incoming:
-          incoming-resources:
+          incoming-resources: {}
         outgoing:
-          outgoing-resources:
-          download-requests:
+          outgoing-resources: {}
+          download-requests: {}
 
   resource-downloader:
     type: "processing"
@@ -58,11 +58,11 @@ descriptors:
       processor:
         image: "ghcr.io/streamx-com/streamx-blueprints/resource-downloader:latest-jvm"
         incoming:
-          download-requests:
+          download-requests: {}
         outgoing:
-          downloaded-pages:
-          downloaded-assets:
-          downloaded-web-resources:
+          downloaded-pages: {}
+          downloaded-assets: {}
+          downloaded-web-resources: {}
 
   event-converter:
     type: "processing"
@@ -70,9 +70,9 @@ descriptors:
       processor:
         image: "ghcr.io/streamx-com/streamx-blueprints/event-converter:latest-jvm"
         incoming:
-          resources:
+          resources: {}
         outgoing:
-          indexable-resources:
+          indexable-resources: {}
 
   rendering-engine:
     type: "processing"
@@ -80,14 +80,14 @@ descriptors:
       processor:
         image: "ghcr.io/streamx-com/streamx-blueprints/rendering-engine:latest-jvm"
         incoming:
-          data:
-          renderers:
-          rendering-contexts:
-          incoming-rendering-requests:
+          data: {}
+          renderers: {}
+          rendering-contexts: {}
+          incoming-rendering-requests: {}
         outgoing:
-          outgoing-rendering-requests:
-          pages:
-          fragments:
+          outgoing-rendering-requests: {}
+          pages: {}
+          fragments: {}
 
   composition-engine:
     type: "processing"
@@ -95,12 +95,12 @@ descriptors:
       processor:
         image: "ghcr.io/streamx-com/streamx-blueprints/composition-engine:latest-jvm"
         incoming:
-          layouts:
-          compositions:
-          incoming-page-compose-requests:
+          layouts: {}
+          compositions: {}
+          incoming-page-compose-requests: {}
         outgoing:
-          pages:
-          outgoing-page-compose-requests:
+          pages: {}
+          outgoing-page-compose-requests: {}
 
   sitemap-generator:
     type: "processing"
@@ -108,9 +108,9 @@ descriptors:
       processor:
         image: "ghcr.io/streamx-com/streamx-blueprints/sitemap-generator:latest-jvm"
         incoming:
-          incoming-pages:
+          incoming-pages: {}
         outgoing:
-          outgoing-sitemaps:
+          outgoing-sitemaps: {}
 
   indexable-resources-producer:
     type: "processing"
@@ -118,11 +118,11 @@ descriptors:
       processor:
         image: "ghcr.io/streamx-com/streamx-blueprints/indexable-resources-producer:latest-jvm"
         incoming:
-          pages:
-          fragments:
+          pages: {}
+          fragments: {}
         outgoing:
-          indexable-resources:
-          indexable-resource-fragments:
+          indexable-resources: {}
+          indexable-resource-fragments: {}
 
   data-collector:
     type: "processing"
@@ -130,10 +130,10 @@ descriptors:
       processor:
         image: "ghcr.io/streamx-com/streamx-blueprints/data-collector:latest-jvm"
         incoming:
-          data:
+          data: {}
         outgoing:
-          collected-data:
-          web-resources:
+          collected-data: {}
+          web-resources: {}
 
   web-server-sink:
     type: "edge"
@@ -141,7 +141,7 @@ descriptors:
       sink:
         image: "ghcr.io/streamx-com/streamx-blueprints/web-server-sink:latest-jvm"
         incoming:
-          resources:
+          resources: {}
 
   opensearch-sink:
     type: "edge"
@@ -149,8 +149,8 @@ descriptors:
       sink:
         image: "ghcr.io/streamx-com/streamx-blueprints/opensearch-sink:latest-jvm"
         incoming:
-          indexable-resources:
-          indexable-resource-fragments:
+          indexable-resources: {}
+          indexable-resource-fragments: {}
         ports:
           - "8082:8080"
         volumes:
@@ -504,7 +504,7 @@ edge:
   blueprint-opensearch-sink:
     descriptor: opensearch-sink
     volumes:
-      repository-volume:
+      repository-volume: {}
     containers:
       sink:
         incoming:
