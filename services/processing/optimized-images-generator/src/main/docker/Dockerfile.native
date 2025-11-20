@@ -14,7 +14,9 @@
 # docker run -i --rm -p 8080:8080 quarkus/optimized-images-generator
 #
 ###
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5
+ARG TARGETARCH
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5 AS base
+ARG TARGETARCH
 
 # Install libraries for image processing
 RUN microdnf install -y freetype fontconfig \
@@ -27,8 +29,14 @@ RUN chown 1001 /work \
 COPY --chown=1001:root target/*.so /work/
 COPY --chown=1001:root --chmod=0755 target/*-runner /work/application
 
+# Install scrimage libraries in the version matching current architecture
 RUN mkdir -p /webp_binaries
 RUN chown 1001 /webp_binaries
+
+FROM base AS arch_amd64
+COPY --chown=1001:root --chmod=0755 target/scrimage-webp-libraries/dist_webp_binaries/libwebp-1.4.0-linux-x86-x64/bin/ /webp_binaries/
+
+FROM base AS arch_arm64
 COPY --chown=1001:root --chmod=0755 target/scrimage-webp-libraries/dist_webp_binaries/libwebp-1.4.0-linux-aarch64/bin/ /webp_binaries/
 
 EXPOSE 8080
