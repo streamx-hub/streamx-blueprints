@@ -15,7 +15,7 @@
 
   <modules>
     <module>processing</module>
-<!--    <module>edge</module>-->
+    <module>edge</module>
   </modules>
 
   <dependencies>

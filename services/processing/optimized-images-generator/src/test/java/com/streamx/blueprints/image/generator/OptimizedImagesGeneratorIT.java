@@ -13,11 +13,8 @@ import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 
 @QuarkusIntegrationTest
@@ -36,24 +33,8 @@ public class OptimizedImagesGeneratorIT extends BaseQuarkusIntegrationTest {
     sendEvent(sourceEvent, Channels.INCOMING_ASSETS);
 
     // then
-    try {
-      CloudEvent outgoingEvent = waitForResponseEvent(Channels.OPTIMIZED_ASSETS);
-      assertOutgoingEvent(outgoingEvent, sourceEvent, asset);
-    } catch (Throwable t) {
-      String dockerPsOutput = readProcessOutput("docker", "ps");
-      String secondLine = dockerPsOutput.lines().toList().get(1);
-      String containerId = StringUtils.substringBefore(secondLine, " ");
-
-      String logs = readProcessOutput("docker", "logs", containerId);
-      System.out.println("---- DOCKER CONTAINER LOGS ---\n" + logs);
-    }
-  }
-
-  private static String readProcessOutput(String... command) throws IOException {
-    ProcessBuilder builder = new ProcessBuilder(command);
-    builder.redirectErrorStream(true);  // merge STDOUT + STDERR
-    Process process = builder.start();
-    return IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8);
+    CloudEvent outgoingEvent = waitForResponseEvent(Channels.OPTIMIZED_ASSETS);
+    assertOutgoingEvent(outgoingEvent, sourceEvent, asset);
   }
 
   private static void assertOutgoingEvent(CloudEvent outgoingEvent, CloudEvent sourceEvent,
