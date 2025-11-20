@@ -48,6 +48,8 @@
       </dependencies>
       <build>
         <plugins>
+
+          <!-- Extract scrimage webp libraries -->
           <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
             <version>${maven-dependency-plugin.version}</version>
@@ -63,11 +65,39 @@
                     <artifactItem>
                       <groupId>com.sksamuel.scrimage</groupId>
                       <artifactId>scrimage-webp</artifactId>
-                      <includes>dist_webp_binaries/libwebp-1.4.0-linux-aarch64/bin/*</includes>
+                      <includes>dist_webp_binaries/libwebp-*-linux-*/bin/*</includes>
                       <outputDirectory>${project.build.directory}/scrimage-webp-libraries</outputDirectory>
                     </artifactItem>
                   </artifactItems>
                 </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <!-- Rename the extracted files for easier access via Dockerfile -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.2.0</version>
+            <executions>
+              <execution>
+                <id>rename-binaries</id>
+                <phase>prepare-package</phase>
+                <configuration>
+                  <target>
+                    <move file="${project.build.directory}/scrimage-webp-libraries/dist_webp_binaries"
+                      tofile="${project.build.directory}/scrimage-webp-libraries/dist_webp_binaries">
+                      <mapper type="regexp" from="(.*)x86-64(.*)" to="\1amd64\2" />
+                    </move>
+                    <move file="${project.build.directory}/scrimage-webp-libraries/dist_webp_binaries"
+                      tofile="${project.build.directory}/scrimage-webp-libraries/dist_webp_binaries">
+                      <mapper type="regexp" from="(.*)aarch64(.*)" to="\1arm64\2" />
+                    </move>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
               </execution>
             </executions>
           </plugin>

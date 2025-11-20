@@ -15,6 +15,7 @@
 #
 ###
 FROM registry.access.redhat.com/ubi9/ubi-minimal:9.5
+ARG TARGETARCH
 
 # Install libraries for image processing
 RUN microdnf install -y freetype fontconfig \
@@ -27,9 +28,10 @@ RUN chown 1001 /work \
 COPY --chown=1001:root target/*.so /work/
 COPY --chown=1001:root --chmod=0755 target/*-runner /work/application
 
+# Install scrimage libraries in the version matching current architecture
 RUN mkdir -p /webp_binaries
 RUN chown 1001 /webp_binaries
-COPY --chown=1001:root --chmod=0755 target/scrimage-webp-libraries/dist_webp_binaries/libwebp-1.4.0-linux-aarch64/bin/ /webp_binaries/
+COPY --chown=1001:root --chmod=0755 target/scrimage-webp-libraries/dist_webp_binaries/libwebp-*-linux-${TARGETARCH}/bin/ /webp_binaries/
 
 EXPOSE 8080
 USER 1001
