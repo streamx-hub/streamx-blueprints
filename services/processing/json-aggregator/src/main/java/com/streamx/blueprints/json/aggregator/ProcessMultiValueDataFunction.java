@@ -27,6 +27,8 @@ public class ProcessMultiValueDataFunction extends AbstractFunction {
 
   @Incoming(Channels.MULTIVALUED_DATA)
   @Outgoing(Channels.AGGREGATED_MULTIVALUED_DATA)
+  // TODO migrate from Message<CloudEvent> to CloudEvent
+  //  when https://github.com/smallrye/smallrye-reactive-messaging/issues/3232 is fixed
   Multi<Message<CloudEvent>> processMultiValue(Message<CloudEvent> message) {
     return processDataMessage(message);
   }

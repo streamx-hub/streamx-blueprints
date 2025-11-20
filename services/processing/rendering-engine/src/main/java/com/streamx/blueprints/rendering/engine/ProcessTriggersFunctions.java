@@ -48,6 +48,8 @@ public class ProcessTriggersFunctions {
    */
   @Incoming(Channels.Incoming.DATA)
   @Outgoing(Channels.Outgoing.RENDERING_REQUESTS)
+  // TODO migrate from Message<CloudEvent> to CloudEvent
+  //  when https://github.com/smallrye/smallrye-reactive-messaging/issues/3232 is fixed
   public Multi<Message<CloudEvent>> processData(Message<CloudEvent> incoming) {
     CloudEvent dataEvent = incoming.getPayload();
     String eventType = dataEvent.getType();
@@ -72,6 +74,8 @@ public class ProcessTriggersFunctions {
    */
   @Incoming(Channels.Incoming.RENDERERS)
   @Outgoing(Channels.Outgoing.RENDERING_REQUESTS)
+  // TODO migrate from Message<CloudEvent> to CloudEvent
+  //  when https://github.com/smallrye/smallrye-reactive-messaging/issues/3232 is fixed
   public Multi<Message<CloudEvent>> processRenderer(Message<CloudEvent> incoming) {
     outputGenerator.invalidateCache();
     CloudEvent event = incoming.getPayload();
@@ -92,6 +96,8 @@ public class ProcessTriggersFunctions {
    */
   @Incoming(Channels.Incoming.RENDERING_CONTEXTS)
   @Outgoing(Channels.Outgoing.RENDERING_REQUESTS)
+  // TODO migrate from Message<CloudEvent> to CloudEvent
+  //  when https://github.com/smallrye/smallrye-reactive-messaging/issues/3232 is fixed
   public Multi<Message<CloudEvent>> processContext(Message<CloudEvent> incoming) {
     CloudEvent event = incoming.getPayload();
     RenderingContext renderingContext = registerAndRetrieveFromStore(event);

@@ -91,3 +91,33 @@ Then run the debugged service with the `streamx-mesh-debug` profile, e.g. for `r
 cd services/processing/rendering-engine
 quarkus dev -Dquarkus.profile=streamx-mesh-debug
 ```
+
+## Known issues to be resolved
+
+Search by ticket URL to find references to the given issue in code.
+
+1. Empty `Multi<Payload>` is not acked when the function produces an empty stream.
+  https://github.com/smallrye/smallrye-reactive-messaging/issues/3232
+
+What should work no matter if the result Multi is empty or not:
+```java
+@Incoming(Channels.INCOMING_CHANNEL)
+@Outgoing(Channels.OUTGOING_CHANNEL)
+@Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
+public Multi<CloudEvent> consume(CloudEvent data) {
+  ...
+  return Multi.createFrom().items(myItemsStream);
+}
+```
+Temporary workaround:
+```java
+   @Incoming(Channels.INCOMING_CHANNEL)
+   @Outgoing(Channels.OUTGOING_CHANNEL)
+   public Multi<Message<CloudEvent>> consume(Message<CloudEvent> dataMessage) {
+     ...
+     return Multi.createFrom().items(myItemsStream)
+       .map(Message::of)
+       .onCompletion()
+       .call(() -> Uni.createFrom().completionStage(layoutMessage.ack()));
+   }
+```
