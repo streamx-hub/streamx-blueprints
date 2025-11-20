@@ -1,7 +1,7 @@
 name: 'Test: Windows CI build'
 
 on:
-  pull_request:
+#  pull_request:
   push:
     branches:
       - main

@@ -1,7 +1,7 @@
 name: 'Test: Ubuntu CI build'
 
 on:
-  pull_request:
+#  pull_request:
   push:
     branches:
       - main
