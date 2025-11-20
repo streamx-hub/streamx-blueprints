@@ -31,7 +31,6 @@ COPY --chown=1001:root --chmod=0755 target/*-runner /work/application
 # Install scrimage libraries in the version matching current architecture
 RUN mkdir -p /webp_binaries
 RUN chown 1001 /webp_binaries
-
 COPY --chown=1001:root --chmod=0755 target/scrimage-webp-libraries/dist_webp_binaries/libwebp-1.4.0-linux-${TARGETARCH}/bin/ /webp_binaries/
 
 EXPOSE 8080
