@@ -4,7 +4,8 @@ import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.data.WebResource;
-import com.streamx.blueprints.data.collector.configuration.ServiceConfigMapping;
+import com.streamx.blueprints.data.collector.collectors.Collector.CollectedOutput;
+import com.streamx.blueprints.data.collector.configuration.Configuration;
 import com.streamx.blueprints.data.collector.stores.PublishedDataStore;
 import io.cloudevents.CloudEvent;
 import io.quarkus.scheduler.Scheduled;
@@ -35,7 +36,7 @@ class ProcessDataFunction {
   Emitter<CloudEvent> dataEmitter;
 
   @Inject
-  ServiceConfigMapping serviceConfigMapping;
+  Configuration configuration;
 
   @Inject
   WebResourcesService webResourcesService;
@@ -65,35 +66,42 @@ class ProcessDataFunction {
     // replicas.
     dirty.set(collectors.processData(key, data, eventType));
 
-    if (!webResourcesService.isMatchingFilter(key)) {
-      log.tracef("Skipping sending incoming data with key=%s as web resource", key);
-      return null;
+    if (webResourcesService.isMatchingFilter(key)) {
+      return sendAsWebResource(dataEvent, key, data);
     }
 
+    log.tracef("Skipping sending incoming data with key=%s as web resource", key);
+    return null;
+  }
+
+  private CloudEvent sendAsWebResource(CloudEvent dataEvent, String key, Data data) {
     String publishKey = webResourcesService.mapToWebResourceKey(key);
     log.tracef("Sending incoming data with key=%s as web resource with key=%s", key, publishKey);
 
-    if (Data.TYPE_PUBLISHED.equals(eventType)) {
-      if (Resource.isEmpty(data)) {
-        log.warnf("Skipping processing publish event %s with no payload", key);
-        return null;
+    String eventType = dataEvent.getType();
+    return switch (eventType) {
+      case Data.TYPE_PUBLISHED -> {
+        if (Resource.isEmpty(data)) {
+          log.warnf("Skipping processing publish event %s with no payload", key);
+          yield null;
+        }
+        WebResource webResource = new WebResource(data.getContent(), data.getType());
+        yield CloudEventUtils.eventCopyWithData(dataEvent, webResource)
+            .withSubject(publishKey)
+            .withType(WebResource.TYPE_PUBLISHED)
+            .build();
       }
-      WebResource webResource = new WebResource(data.getContent(), data.getType());
-      return CloudEventUtils.eventCopyWithData(dataEvent, webResource)
-          .withSubject(publishKey)
-          .withType(WebResource.TYPE_PUBLISHED)
-          .build();
-    }
-
-    if (Data.TYPE_UNPUBLISHED.equals(eventType)) {
-      return CloudEventUtils.eventCopyWithoutData(dataEvent)
-          .withSubject(publishKey)
-          .withType(WebResource.TYPE_UNPUBLISHED)
-          .build();
-    }
-
-    log.warnf("Skipping processing event %s of unexpected type: %s", key, eventType);
-    return null;
+      case Data.TYPE_UNPUBLISHED -> {
+        yield CloudEventUtils.eventCopyWithoutData(dataEvent)
+            .withSubject(publishKey)
+            .withType(WebResource.TYPE_UNPUBLISHED)
+            .build();
+      }
+      default -> {
+        log.warnf("Skipping sending data %s of unexpected type: %s", key, eventType);
+        yield null;
+      }
+    };
   }
 
   @Scheduled(
@@ -107,12 +115,14 @@ class ProcessDataFunction {
       // The nack handler should set back
       // 'dirty' to true in this service and in collections in collectors as it was before the
       // calling of the collectors.collect; to be verified while add the 'generate trigger' events.
-      collectors.collect().forEach(
-          collectedOutput -> dataEmitter.send(CloudEventUtils.eventWithData(
-              collectedOutput.key(),
-              Data.TYPE_PUBLISHED,
-              new Data(collectedOutput.dataContent(), collectedOutput.dataType())
-          )));
+      for (CollectedOutput output : collectors.collect()) {
+        log.tracef("Publishing collected data to %s", output.key());
+        dataEmitter.send(CloudEventUtils.eventWithData(
+            output.key(),
+            Data.TYPE_PUBLISHED,
+            new Data(output.dataContent(), output.dataType())
+        ));
+      }
     }
   }
 
@@ -121,7 +131,7 @@ class ProcessDataFunction {
     long count = previouslyDirtyCount.get();
 
     if (dirty) {
-      if (count < serviceConfigMapping.dirtyCheck().maxDirtySequenceCount()) {
+      if (count < configuration.dirtyCheck().maxDirtySequenceCount()) {
         log.debugf("Publication has been done. "
             + "Waiting for other publications for batch generation. "
             + "DirtySequenceCount = %s", count);

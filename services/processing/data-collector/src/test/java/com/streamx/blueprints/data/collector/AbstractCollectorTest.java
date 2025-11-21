@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.collector.Channels.Outgoing;
+import com.streamx.blueprints.data.collector.configuration.CollectorProperties;
 import io.cloudevents.CloudEvent;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
@@ -13,7 +14,6 @@ import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.time.Duration;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -59,9 +59,9 @@ abstract class AbstractCollectorTest {
 
   @Test
   void validateConnectorPropertiesPassedToFactory() {
-    assertThat(testCollectorFactory.getProperties()).containsExactlyInAnyOrderEntriesOf(
-        Map.of("test-prop1", "test-prop1-value",
-            "test-prop2", "test-prop2-value"));
+    CollectorProperties properties = testCollectorFactory.getProperties();
+    assertThat(properties.sortBy()).hasValue("test-prop1-value");
+    assertThat(properties.groupBy()).hasValue("test-prop2-value");
   }
 
   protected abstract String getExpectedCollectedDataOutputType();

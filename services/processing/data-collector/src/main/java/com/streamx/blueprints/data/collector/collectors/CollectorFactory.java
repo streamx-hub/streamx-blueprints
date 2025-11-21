@@ -1,11 +1,11 @@
 package com.streamx.blueprints.data.collector.collectors;
 
-import java.util.Map;
+import com.streamx.blueprints.data.collector.configuration.CollectorProperties;
 
 public interface CollectorFactory {
 
   String id();
 
-  Collector create(DataFilter dataFilter, Map<String, String> properties);
+  Collector create(DataFilter dataFilter, CollectorProperties properties);
 
 }

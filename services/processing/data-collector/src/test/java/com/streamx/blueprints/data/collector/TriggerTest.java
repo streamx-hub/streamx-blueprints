@@ -9,7 +9,8 @@ import static org.mockito.Mockito.when;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.collector.collectors.Collector.CollectedOutput;
-import com.streamx.blueprints.data.collector.configuration.ServiceConfigMapping;
+import com.streamx.blueprints.data.collector.configuration.Configuration;
+import com.streamx.blueprints.data.collector.configuration.DirtyCheck;
 import com.streamx.blueprints.data.collector.stores.PublishedDataStore;
 import io.cloudevents.CloudEvent;
 import java.util.List;
@@ -33,10 +34,10 @@ class TriggerTest {
   private Collectors collectors;
 
   @Mock
-  private ServiceConfigMapping serviceConfigMapping;
+  private Configuration configuration;
 
   @Mock
-  private ServiceConfigMapping.DirtyCheck dirtyCheck;
+  private DirtyCheck dirtyCheck;
 
   @Mock
   private WebResourcesService webResourcesService;
@@ -132,7 +133,7 @@ class TriggerTest {
   }
 
   private void initializeMaxDirtySequenceCount(Long value) {
-    when(serviceConfigMapping.dirtyCheck()).thenReturn(dirtyCheck);
+    when(configuration.dirtyCheck()).thenReturn(dirtyCheck);
     when(webResourcesService.isMatchingFilter(any())).thenReturn(false);
     when(dirtyCheck.maxDirtySequenceCount()).thenReturn(value);
   }

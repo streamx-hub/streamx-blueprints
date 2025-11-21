@@ -27,6 +27,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.awaitility.core.ConditionTimeoutException;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -104,14 +105,23 @@ public abstract class BaseQuarkusIntegrationTest {
         .toList();
   }
 
-  private static List<LoggedRequest> waitForResponseRequests(String endpoint, int totalCount) {
+  private List<LoggedRequest> waitForResponseRequests(String endpoint, int totalCount) {
     List<LoggedRequest> results = new LinkedList<>();
-    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
-      List<LoggedRequest> requests = WireMock.findAll(postRequestedFor(urlEqualTo(endpoint)));
-      assertThat(requests).hasSize(totalCount);
-      results.addAll(requests);
-    });
+    try {
+      await().atMost(waitForResponseEventsTimeout()).untilAsserted(() -> {
+        List<LoggedRequest> requests = WireMock.findAll(postRequestedFor(urlEqualTo(endpoint)));
+        assertThat(requests).hasSize(totalCount);
+        results.addAll(requests);
+      });
+    } catch (ConditionTimeoutException ex) {
+      DockerLogsRetriever.printDockerContainerLogs();
+      throw ex;
+    }
     return results;
+  }
+
+  protected Duration waitForResponseEventsTimeout() {
+    return Duration.ofSeconds(3);
   }
 
   static Map<String, String> propertiesForOutgoingChannels() {
