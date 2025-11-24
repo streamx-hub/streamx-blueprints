@@ -64,8 +64,7 @@ public class JsonAggregatorIT extends BaseQuarkusIntegrationTest {
 
   private void sendDataEvent(String subject, String content, String channel) throws IOException {
     Data data = new Data(content, ANY);
-    CloudEvent event = CloudEventUtils.eventWithData(subject, Data.TYPE_PUBLISHED, data);
-    sendEvent(event, channel);
+    sendEvent(subject, Data.TYPE_PUBLISHED, data, channel);
   }
 
   private static void assertOutgoingEvent(CloudEvent outgoingEvent,

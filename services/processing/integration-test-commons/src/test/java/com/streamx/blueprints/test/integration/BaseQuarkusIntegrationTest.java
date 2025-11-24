@@ -9,6 +9,7 @@ import static org.awaitility.Awaitility.await;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.reactive.messaging.http.CloudEventJsonDeserializer;
 import com.streamx.reactive.messaging.http.CloudEventJsonSerializer;
 import io.cloudevents.CloudEvent;
@@ -65,6 +66,23 @@ public abstract class BaseQuarkusIntegrationTest {
       CloseableHttpResponse response = http.execute(post);
       assertThat(response.getStatusLine().getStatusCode()).isEqualTo(HttpStatus.SC_ACCEPTED);
     }
+  }
+
+  protected static <T> void sendEvent(String key, String eventType, T data, String channel)
+      throws IOException {
+    CloudEvent event = CloudEventUtils.eventWithData(key, eventType, data);
+    sendEvent(event, channel);
+  }
+
+  /**
+   * Some services are configured in the mesh file to use the same ref for outgoing and incoming
+   * channels. Since QuarkusIntegrationTests don't use a mesh file, this method can be used to
+   * manually simulate that behavior
+   */
+  protected void sendFromOutgoingToIncomingChannel(String outgoing, String incoming)
+      throws IOException {
+    CloudEvent outgoingEvent = waitForResponseEvent(outgoing);
+    sendEvent(outgoingEvent, incoming);
   }
 
   protected CloudEvent waitForResponseEvent(String outgoingChannel) {
