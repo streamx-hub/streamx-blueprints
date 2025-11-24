@@ -16,6 +16,7 @@
   <modules>
     <module>processing</module>
     <module>edge</module>
+    <module>integration-test-commons</module>
   </modules>
 
   <dependencies>
@@ -61,6 +62,19 @@
     <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.streamx.blueprints</groupId>
+      <artifactId>integration-test-commons</artifactId>
+      <version>${project.version}</version>
+      <classifier>tests</classifier>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.wiremock</groupId>
+      <artifactId>quarkus-wiremock-test</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

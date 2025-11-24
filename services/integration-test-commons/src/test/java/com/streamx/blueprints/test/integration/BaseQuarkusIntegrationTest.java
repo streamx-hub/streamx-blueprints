@@ -38,6 +38,8 @@ public abstract class BaseQuarkusIntegrationTest {
   private static final CloudEventJsonDeserializer eventsDeserializer
       = new CloudEventJsonDeserializer();
 
+  protected static final String SERVICE_BASE_URL = "http://localhost:8081";
+
   // will be injected automatically when the test class is annotated with @ConnectWireMock
   protected WireMock wiremock;
 
@@ -128,7 +130,7 @@ public abstract class BaseQuarkusIntegrationTest {
   }
 
   private static String toUrl(String channel) {
-    return "http://localhost:8081/" + channel;
+    return SERVICE_BASE_URL + toEndpoint(channel);
   }
 
   private static String toEndpoint(String channel) {

@@ -19,7 +19,6 @@
     <module>event-converter</module>
     <module>external-references-rewriter</module>
     <module>indexable-resources-producer</module>
-    <module>integration-test-commons</module>
     <module>json-aggregator</module>
     <module>local-references-rewriter</module>
     <module>optimized-images-generator</module>
@@ -27,21 +26,5 @@
     <module>resource-downloader</module>
     <module>sitemap-generator</module>
   </modules>
-
-  <dependencies>
-    <dependency>
-      <groupId>com.streamx.blueprints</groupId>
-      <artifactId>integration-test-commons</artifactId>
-      <version>${project.version}</version>
-      <classifier>tests</classifier>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkiverse.wiremock</groupId>
-      <artifactId>quarkus-wiremock-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
 
 </project>

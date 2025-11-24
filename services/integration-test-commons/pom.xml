@@ -6,7 +6,7 @@
     <groupId>com.streamx.blueprints</groupId>
     <artifactId>blueprints-project</artifactId>
     <version>3.0.3-SNAPSHOT</version>
-    <relativePath>../../../pom.xml</relativePath>
+    <relativePath>../../pom.xml</relativePath>
   </parent>
 
   <artifactId>integration-test-commons</artifactId>
