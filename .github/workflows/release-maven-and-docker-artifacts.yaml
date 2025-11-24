@@ -212,6 +212,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "github.actions@streamx.dev"
+          git config --global user.name "${GITHUB_ACTOR}"
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_SECRET_KEY }}" > ~/.ssh/id_rsa
+          chmod 0600 ~/.ssh/id_rsa
+
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
