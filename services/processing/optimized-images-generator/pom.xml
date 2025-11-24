@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.streamx.blueprints</groupId>
     <artifactId>processing</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>3.0.1</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -85,12 +85,10 @@
                 <phase>prepare-package</phase>
                 <configuration>
                   <target>
-                    <move file="${project.build.directory}/scrimage-webp-libraries/dist_webp_binaries"
-                      tofile="${project.build.directory}/scrimage-webp-libraries/dist_webp_binaries">
+                    <move file="${project.build.directory}/scrimage-webp-libraries/dist_webp_binaries" tofile="${project.build.directory}/scrimage-webp-libraries/dist_webp_binaries">
                       <mapper type="regexp" from="(.*)x86-64(.*)" to="\1amd64\2" />
                     </move>
-                    <move file="${project.build.directory}/scrimage-webp-libraries/dist_webp_binaries"
-                      tofile="${project.build.directory}/scrimage-webp-libraries/dist_webp_binaries">
+                    <move file="${project.build.directory}/scrimage-webp-libraries/dist_webp_binaries" tofile="${project.build.directory}/scrimage-webp-libraries/dist_webp_binaries">
                       <mapper type="regexp" from="(.*)aarch64(.*)" to="\1arm64\2" />
                     </move>
                   </target>
