@@ -49,15 +49,11 @@ public class CompositionFunction {
     } else if (Layout.TYPE_UNPUBLISHED.equals(eventType)) {
       layoutsStore.remove(subject);
     }
-    try {
-      return Multi.createFrom().items(createPageComposeRequests(layout))
-          .map(Message::of)
-          .onCompletion()
-          .call(() -> Uni.createFrom().completionStage(layoutMessage.ack()));
-    } catch (Exception e) {
-      log.warnf(e, "Error creating page compose requests from layout %s", subject);
-      return Multi.createFrom().empty();
-    }
+
+    return Multi.createFrom().items(createPageComposeRequests(layout))
+        .map(Message::of)
+        .onCompletion()
+        .call(() -> Uni.createFrom().completionStage(layoutMessage.ack()));
   }
 
   @Incoming(Channels.INCOMING_COMPOSITIONS)

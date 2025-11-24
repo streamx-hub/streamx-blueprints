@@ -1,12 +1,18 @@
 package com.streamx.blueprints.rewriter.contentadjusters;
 
 import com.streamx.blueprints.rewriter.data.ExternalResource;
-import io.quarkus.logging.Log;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jboss.logging.Logger;
 
 public abstract class BaseResourceContentAdjuster {
+
+  private final Logger log;
+
+  public BaseResourceContentAdjuster() {
+    log = Logger.getLogger(getClass());
+  }
 
   protected abstract Pattern inputUrlPattern(String externalResourcePath);
 
@@ -29,7 +35,7 @@ public abstract class BaseResourceContentAdjuster {
           String replacementUrl = resource.getStreamxKey();
           inputContent = replaceUrl(matcher, replacementUrl);
         } else {
-          Log.warnf("Didn't replace %s", resourcePath);
+          log.warnf("Didn't replace %s", resourcePath);
         }
       }
     }
@@ -49,7 +55,7 @@ public abstract class BaseResourceContentAdjuster {
         }
       }
 
-      Log.tracef("Replacing %s to %s", matcher.group(0), replacement);
+      log.tracef("Replacing %s to %s", matcher.group(0), replacement);
       matcher.appendReplacement(result, replacement.toString());
     } while (matcher.find());
 

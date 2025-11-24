@@ -2,15 +2,17 @@ package com.streamx.blueprints.data.collector.collectors.aggregate.value;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.streamx.blueprints.data.collector.utils.JsonUtils;
-import io.quarkus.logging.Log;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jboss.logging.Logger;
 
 final class SorterAndLimiter {
+
+  private static final Logger log = Logger.getLogger(SorterAndLimiter.class);
 
   private SorterAndLimiter() {
     // no instances
@@ -51,7 +53,7 @@ final class SorterAndLimiter {
       try {
         return Double.parseDouble(sortByValue.iterator().next());
       } catch (NumberFormatException e) {
-        Log.tracef("Cannot parse as double: %s", sortByValue);
+        log.tracef("Cannot parse as double: %s", sortByValue);
       }
     }
     return null;

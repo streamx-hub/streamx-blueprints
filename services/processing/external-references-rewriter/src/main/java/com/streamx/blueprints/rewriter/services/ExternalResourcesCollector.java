@@ -4,7 +4,6 @@ import com.streamx.blueprints.rewriter.data.ExternalResource;
 import com.streamx.blueprints.rewriter.data.ResourceData;
 import com.streamx.blueprints.rewriter.finders.BaseValuesFinder;
 import com.streamx.blueprints.rewriter.functions.settings.contentprocessing.BaseContentProcessingSettings;
-import io.quarkus.logging.Log;
 import jakarta.annotation.Nullable;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -14,8 +13,11 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.jboss.logging.Logger;
 
 public class ExternalResourcesCollector {
+
+  private final Logger log;
 
   private final UrlComputationService urlComputationService;
   private final BaseValuesFinder valuesFinder;
@@ -24,6 +26,7 @@ public class ExternalResourcesCollector {
 
   public ExternalResourcesCollector(BaseContentProcessingSettings settings,
       UrlComputationService urlComputationService) {
+    this.log = Logger.getLogger(getClass());
     this.urlComputationService = urlComputationService;
     this.valuesFinder = settings.getValuesFinder();
     this.resourceSelectors = settings.getResourceSelectors().orElseGet(Collections::emptyList);
@@ -76,19 +79,19 @@ public class ExternalResourcesCollector {
     try {
       absoluteUrl = urlComputationService.computeAbsoluteUrl(parentResource.absoluteUrl(), path);
     } catch (RuntimeException ex) {
-      Log.errorf(ex, "Error computing absolute url for %s found in parent resource %s",
+      log.errorf(ex, "Error computing absolute url for %s found in parent resource %s",
           path, parentResource.streamxKey());
       return null;
     }
 
     if (!urlComputationService.isAbsoluteHttpUrl(absoluteUrl)) {
-      Log.warnf("Skipping non http(s) url %s found in parent resource %s",
+      log.warnf("Skipping non http(s) url %s found in parent resource %s",
           absoluteUrl, parentResource.streamxKey());
       return null;
     }
 
     if (isUrlExcluded(absoluteUrl)) {
-      Log.tracef("Skipping external resource %s because its URL is excluded", absoluteUrl);
+      log.tracef("Skipping external resource %s because its URL is excluded", absoluteUrl);
       return null;
     }
     return absoluteUrl;
@@ -106,12 +109,12 @@ public class ExternalResourcesCollector {
     try {
       streamxKey = urlComputationService.asStreamxKeyRelativeToConfiguredBaseUrl(absoluteUrl);
     } catch (Exception ex) {
-      Log.tracef("Skipping external resource %s because it has an invalid URL", absoluteUrl);
+      log.tracef("Skipping external resource %s because it has an invalid URL", absoluteUrl);
       return null;
     }
 
     if (streamxKey.equals(parentResource.streamxKey())) {
-      Log.tracef("Skipping external resource %s because it's same as parent resource",
+      log.tracef("Skipping external resource %s because it's same as parent resource",
           absoluteUrl);
       return null;
     }
