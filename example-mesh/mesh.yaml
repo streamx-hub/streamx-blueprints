@@ -142,6 +142,21 @@ descriptors:
         image: "ghcr.io/streamx-com/streamx-blueprints/web-server-sink:latest-jvm"
         incoming:
           resources: {}
+        environment:
+          STREAMX_BLUEPRINTS_WEB_SERVER_SINK_STORAGE_ROOT_DIRECTORY: "/srv/www"
+        ports:
+          - "8081:8080"
+        volumes:
+          - "repository-volume:/srv/www"
+      webserver:
+        image: "docker.io/library/nginx:1.26.0"
+        ports:
+          - "8082:80"
+        volumes:
+          - "repository-volume:/usr/share/nginx/html"
+        healthCheck: null
+    volumes:
+      repository-volume: {}
 
   opensearch-sink:
     type: "edge"
@@ -152,7 +167,7 @@ descriptors:
           indexable-resources: {}
           indexable-resource-fragments: {}
         ports:
-          - "8082:8080"
+          - "8083:8080"
         volumes:
           - "repository-volume:/usr/share/opensearch/data"
       opensearch:
@@ -498,8 +513,10 @@ edge:
         incoming:
           resources:
             ref: outbox.pages,outbox.fragments,relay.optimized-assets,outbox.assets,outbox.web-resources
-        ports:
-          - "8081:8080"
+      webserver:
+        volumesFrom:
+          configs:
+            - "web-delivery/overridden-nginx.conf:/etc/nginx/conf.d/default.conf"
 
   blueprint-opensearch-sink:
     descriptor: opensearch-sink

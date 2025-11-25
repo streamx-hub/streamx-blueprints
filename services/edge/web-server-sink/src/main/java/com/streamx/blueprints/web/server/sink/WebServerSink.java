@@ -15,7 +15,9 @@ import io.smallrye.mutiny.Uni;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -27,6 +29,8 @@ public class WebServerSink {
   private static final String INDEX_HTML_SUFFIX = "index.html";
 
   private UrlIncludeReplacer urlIncludeReplacer;
+  private Set<String> htmlResourceTypes;
+  private String defaultNamespace;
 
   @Inject
   Logger log;
@@ -43,6 +47,8 @@ public class WebServerSink {
   @PostConstruct
   void init() {
     urlIncludeReplacer = UrlIncludeReplacerFactory.create(config);
+    htmlResourceTypes = configuration.htmlResourceTypes().orElseGet(Collections::emptySet);
+    defaultNamespace = configuration.defaultNamespace().orElse("");
   }
 
   @Incoming(Channels.RESOURCES)
@@ -60,11 +66,10 @@ public class WebServerSink {
 
   private <T extends Resource> Uni<Void> process(T resource, String subject,
       String type, long eventTime) {
-    boolean isHtmlResource = configuration.htmlResourceTypes().map(types -> types.contains(type))
-        .orElse(false);
+    boolean isHtmlResource = htmlResourceTypes.contains(type);
     String path = getPathFrom(subject, isHtmlResource);
-    log.tracef("Storing resource: subject %s, type %s, event time %s under path %s", subject, type,
-        eventTime, path);
+    log.tracef("Storing %s resource: subject %s, type %s, event time %s under path %s",
+        (isHtmlResource ? "HTML" : "non-HTML"), subject, type, eventTime, path);
     return updateStorage(resource, path, type, isHtmlResource);
   }
 
@@ -94,8 +99,7 @@ public class WebServerSink {
   }
 
   private String getPathFrom(String subject, boolean isHtmlResource) {
-    String namespace = CloudEventUtils.getSubjectNamespace(subject)
-        .orElse(configuration.defaultNamespace().orElse(""));
+    String namespace = CloudEventUtils.getSubjectNamespace(subject).orElse(defaultNamespace);
     String path = namespace + "/" + CloudEventUtils.getSubjectWithoutNamespace(subject);
     return isHtmlResource ? computeHtmlResourcePath(path) : path;
   }
