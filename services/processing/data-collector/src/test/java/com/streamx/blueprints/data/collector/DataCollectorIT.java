@@ -107,10 +107,10 @@ public class DataCollectorIT extends BaseQuarkusIntegrationTest {
           cheapestProducts + "data-key-match-pattern", "product:.*",
           cheapestProducts + "collector", "aggregate-by-property-value",
           cheapestProducts + "output-data-type", OUTPUT_DATA_TYPE,
-          cheapestProducts + "properties.output-key-prefix", "cheapest-by-category_",
-          cheapestProducts + "properties.group-by", "categories/name",
-          cheapestProducts + "properties.sort-by", "price/value",
-          cheapestProducts + "properties.sort-mode", "asc"
+          cheapestProducts + "properties.outputkeyprefix", "cheapest-by-category_",
+          cheapestProducts + "properties.groupby", "categories/name",
+          cheapestProducts + "properties.sortby", "price/value",
+          cheapestProducts + "properties.sortmode", "asc"
       );
     }
   }

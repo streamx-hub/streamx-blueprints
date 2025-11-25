@@ -20,21 +20,21 @@ Produced data are JSON objects containing `key` field with same value as the mes
 
 Properties specific for this collector:
 
-`output-key-prefix` - required; value of the group-by property will be added to this prefix in the
+`outputkeyprefix` - required; value of the `groupby` property will be added to this prefix in the
 output data key
 
-`filter-by` - optional; see [filter-by section](#filter-by) for details
+`filterby` - optional; see [filterby section](#filterby) for details
 
-`group-by` - optional; property name used to group the data, could be a field name, like `category`
+`groupby` - optional; property name used to group the data, could be a field name, like `category`
 where
 the `category` is field in the data object or nested like `category/name` where `category` is nested
 field name in the data object and `name` is the property in the `category` object; if not set all
-the data are in 1 group and noting is added to the `output-key-prefix` for the produced output data
-key - same result for data with blank value of the `group-by` property
+the data are in 1 group and noting is added to the `outputkeyprefix` for the produced output data
+key - same result for data with blank value of the `groupby` property
 
-`sort-by` - optional; property name used to sort the data; could be nested like `group-by`
+`sortby` - optional; property name used to sort the data; could be nested like `groupby`
 
-`sort-mode` - optional; `asc` or `desc`; `asc` by default
+`sortmode` - optional; `asc` or `desc`; `asc` by default
 
 `max` - optional; max number of results in the output data; `10` by default
 
@@ -62,7 +62,8 @@ map with fields:
 - `output-data-type` - optional; type set on produced data object; if configured, overrides the type
   returned from collector implementation
 - `collector` - id of the collector used to process the data
-- `properties` - properties map specific for the connector
+- `properties` - properties map specific for the connector.
+  Each property name must contain only lowercase ascii letters in properties file, or only uppercase ascii letters in mesh file.
 
 Examples:
 
@@ -76,19 +77,19 @@ STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_D
 STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_DATA_TYPE_MATCH_PATTERN: "product/simple"
 STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_OUTPUT_DATA_TYPE: "collection/products"
 STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_COLLECTOR: "aggregate-by-property-value"
-STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_OUTPUT-KEY-PREFIX: "collected:products:cheapest-by-category:"
-STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_GROUP-BY: "category"
-STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_SORT-BY: "price/value"
-STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_SORT-MODE: "asc"
+STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_OUTPUTKEYPREFIX: "collected:products:cheapest-by-category:"
+STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_GROUPBY: "category"
+STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_SORTBY: "price/value"
+STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_SORTMODE: "asc"
 STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_MAX: "8"
 ```
 
 ```
 STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_POPULAR-PRODUCTS_DATA-KEY-MATCH-PATTERN: "product:.*"
 STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_POPULAR-PRODUCTS_COLLECTOR: "aggregate-by-property-value"
-STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_POPULAR-PRODUCTS_PROPERTIES_OUTPUT-KEY-PREFIX: "collected:products:most-popular"
-STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_POPULAR-PRODUCTS_PROPERTIES_SORT-BY: "popularityRanking"
-STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_POPULAR-PRODUCTS_PROPERTIES_SORT-MODE: "desc"
+STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_POPULAR-PRODUCTS_PROPERTIES_OUTPUTKEYPREFIX: "collected:products:most-popular"
+STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_POPULAR-PRODUCTS_PROPERTIES_SORTBY: "popularityRanking"
+STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_POPULAR-PRODUCTS_PROPERTIES_SORTMODE: "desc"
 ```
 
 ### Channels
@@ -104,7 +105,7 @@ Outgoing channels:
 
 ### Data processing
 
-#### filter-by
+#### filterby
 
 Data processing uses [json-path](https://github.com/json-path/JsonPath) library for validation
 processing. Property can have a single
@@ -119,5 +120,5 @@ Multi-queries have logical AND between checks. In order to approve item as valid
 
 For more details about usage please
 follow [Getting started](https://github.com/json-path/JsonPath?tab=readme-ov-file#getting-started)
-For development purposes use this [online console](https://jsonpath.com) for your filter-by JsonPath
+For development purposes use this [online console](https://jsonpath.com) for your filterby JsonPath
 queries 

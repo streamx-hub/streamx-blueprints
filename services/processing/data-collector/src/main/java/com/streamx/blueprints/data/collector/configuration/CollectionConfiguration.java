@@ -1,5 +1,6 @@
 package com.streamx.blueprints.data.collector.configuration;
 
+import java.util.Map;
 import java.util.Optional;
 
 public interface CollectionConfiguration {
@@ -12,6 +13,6 @@ public interface CollectionConfiguration {
 
   Optional<String> outputDataType();
 
-  CollectorProperties properties();
+  Map<String, String> properties();
 
 }
