@@ -146,15 +146,6 @@ descriptors:
           STREAMX_BLUEPRINTS_WEB_SERVER_SINK_STORAGE_ROOT_DIRECTORY: "/srv/www"
         ports:
           - "8081:8080"
-  composite-web-server-sink:
-    type: "edge"
-    containers:
-      sink:
-        image: "ghcr.io/streamx-com/streamx-blueprints/web-server-sink:latest-jvm"
-        incoming:
-          resources: {}
-        environment:
-          STREAMX_BLUEPRINTS_WEB_SERVER_SINK_STORAGE_ROOT_DIRECTORY: "/srv/www"
         volumes:
           - "repository-volume:/srv/www"
       webserver:
@@ -517,13 +508,6 @@ processing:
 edge:
   blueprint-web-server-sink:
     descriptor: web-server-sink
-    containers:
-      sink:
-        incoming:
-          resources:
-            ref: outbox.pages,outbox.fragments,relay.optimized-assets,outbox.assets,outbox.web-resources
-  blueprint-composite-web-server-sink:
-    descriptor: composite-web-server-sink
     containers:
       sink:
         incoming:
