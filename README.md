@@ -121,3 +121,6 @@ Temporary workaround:
        .call(() -> Uni.createFrom().completionStage(layoutMessage.ack()));
    }
 ```
+
+## Code coverage tips
+ - Don't use `io.quarkus.logging.Log` in main code, since it causes the whole class using that logger to have 0% jacoco coverage

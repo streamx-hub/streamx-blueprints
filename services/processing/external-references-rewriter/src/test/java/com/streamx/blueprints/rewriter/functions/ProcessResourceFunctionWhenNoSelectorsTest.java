@@ -1,44 +1,15 @@
 package com.streamx.blueprints.rewriter.functions;
 
-import static org.mockito.Mockito.doReturn;
-
-import com.streamx.blueprints.rewriter.configuration.Configuration;
-import com.streamx.blueprints.rewriter.testutils.ForceRecreatingBeans;
 import io.cloudevents.CloudEvent;
-import io.quarkus.test.InjectMock;
-import io.quarkus.test.Mock;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
-import io.smallrye.config.SmallRyeConfig;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import java.util.List;
-import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-@TestProfile(ForceRecreatingBeans.class)
+@TestProfile(ProcessResourceFunctionWhenNoSelectorsTest.Configuration.class)
 public class ProcessResourceFunctionWhenNoSelectorsTest extends BaseProcessFunctionTest {
-
-  @Inject
-  SmallRyeConfig smallRyeConfig;
-
-  @ApplicationScoped
-  @Mock
-  Configuration configuration() {
-    return smallRyeConfig.getConfigMapping(Configuration.class);
-  }
-
-  @InjectMock
-  Configuration configuration;
-
-  @BeforeEach
-  void initConfig() {
-    doReturn(Optional.empty()).when(configuration).htmlExternalResourceXpathSelectors();
-    doReturn(Optional.empty()).when(configuration).xmlExternalResourceXpathSelectors();
-    doReturn(Optional.empty()).when(configuration).jsonExternalResourceJsonpathSelectors();
-  }
 
   @Test
   void shouldRelayResources() {
@@ -92,5 +63,13 @@ public class ProcessResourceFunctionWhenNoSelectorsTest extends BaseProcessFunct
     assertPublishedPage(pageEvents.getFirst(), pagePath, pageContent);
     assertPublishedWebResource(webResourceEvents.getFirst(), sitemapPath, sitemapContent);
     assertPublishedWebResource(webResourceEvents.get(1), jsonIndexPath, jsonIndexContent);
+  }
+
+  public static class Configuration implements QuarkusTestProfile {
+
+    @Override
+    public String getConfigProfile() {
+      return "noselectors";
+    }
   }
 }
