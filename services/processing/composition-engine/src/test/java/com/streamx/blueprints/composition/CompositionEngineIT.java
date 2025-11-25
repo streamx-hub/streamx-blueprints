@@ -42,12 +42,9 @@ public class CompositionEngineIT extends BaseQuarkusIntegrationTest {
     sendEvent(compositionKey, Composition.TYPE_PUBLISHED, composition,
         Channels.INCOMING_COMPOSITIONS);
 
-    // then: expect page compose request to be produced by the service
-    CloudEvent pageComposeRequest = waitForResponseEvent(Channels.OUTGOING_PAGE_COMPOSE_REQUESTS);
-
-    // and: manually send the event to the service. In the real world scenario, that's achieved by
-    // configuring both the channels to use the same ref
-    sendEvent(pageComposeRequest, Channels.INCOMING_PAGE_COMPOSE_REQUESTS);
+    // then: expect page compose request to be produced by the service and relayed to input channel
+    sendFromOutgoingToIncomingChannel(
+        Channels.OUTGOING_PAGE_COMPOSE_REQUESTS, Channels.INCOMING_PAGE_COMPOSE_REQUESTS);
 
     // then
     CloudEvent outgoingEvent = waitForResponseEvent(Channels.OUTGOING_PAGES);
@@ -63,12 +60,6 @@ public class CompositionEngineIT extends BaseQuarkusIntegrationTest {
           Hello John.
         </html>
         """);
-  }
-
-  private static void sendEvent(String key, String eventType, Resource data, String channel)
-      throws IOException {
-    CloudEvent event = CloudEventUtils.eventWithData(key, eventType, data);
-    sendEvent(event, channel);
   }
 
 }
