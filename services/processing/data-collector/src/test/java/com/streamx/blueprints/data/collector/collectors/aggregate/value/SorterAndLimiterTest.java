@@ -43,25 +43,37 @@ class SorterAndLimiterTest {
         jsonNodes, sortBy, SortMode.DESC, limit);
 
     // then
-    assertThat(sortedNodes)
-        .hasSize(limit)
-        .extracting(JsonNode::toPrettyString)
-        .containsExactly(
-            """
-                {
-                  "name" : "c",
-                  "value" : "3"
-                }""",
-            """
-                {
-                  "name" : "a",
-                  "value" : "2"
-                }"""
-        );
+    assertThat(sortedNodes).hasSize(limit);
+    assertJsonNode(sortedNodes.get(0), """
+        {
+          "name" : "c",
+          "value" : "3"
+        }"""
+    );
+    assertJsonNode(sortedNodes.get(1), """
+        {
+          "name" : "a",
+          "value" : "2"
+        }"""
+    );
+  }
+
+  private static void assertJsonNode(JsonNode jsonNode, String expectedContentJson)
+      throws JsonProcessingException {
+    assertThat(formatJson(jsonNode))
+        .isEqualTo(formatJson(expectedContentJson));
   }
 
   private static JsonNode toJsonNode(String json) throws JsonProcessingException {
     return objectMapper.readTree(json);
   }
 
+  private static String formatJson(String json) throws JsonProcessingException {
+    JsonNode jsonNode = objectMapper.readTree(json);
+    return formatJson(jsonNode);
+  }
+
+  private static String formatJson(JsonNode jsonNode) throws JsonProcessingException {
+    return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
+  }
 }
