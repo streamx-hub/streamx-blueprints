@@ -1,7 +1,7 @@
 package com.streamx.blueprints.data.collector;
 
-import com.streamx.blueprints.data.collector.configuration.ServiceConfigMapping;
-import com.streamx.blueprints.data.collector.configuration.ServiceConfigMapping.WebResources;
+import com.streamx.blueprints.data.collector.configuration.Configuration;
+import com.streamx.blueprints.data.collector.configuration.WebResources;
 import io.quarkus.runtime.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -19,7 +19,7 @@ public class WebResourcesService {
   Logger log;
 
   @Inject
-  ServiceConfigMapping serviceConfiguration;
+  Configuration serviceConfiguration;
 
   private final List<Pattern> filters = new CopyOnWriteArrayList<>();
 

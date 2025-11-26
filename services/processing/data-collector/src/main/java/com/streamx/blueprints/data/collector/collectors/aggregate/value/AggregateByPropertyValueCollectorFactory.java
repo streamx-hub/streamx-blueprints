@@ -34,7 +34,7 @@ public class AggregateByPropertyValueCollectorFactory implements CollectorFactor
   public Collector create(DataFilter dataFilter, Map<String, String> properties) {
     log.infof("Creating collector %s with config %s", id(), StringUtils.join(properties));
 
-    List<String> filterBy = Optional.ofNullable(properties.get("filter-by"))
+    List<String> filterBy = Optional.ofNullable(properties.get("filterby"))
         .map(s -> StringUtils.split(s, ','))
         .map(Arrays::stream)
         .map(Stream::toList)
@@ -43,12 +43,12 @@ public class AggregateByPropertyValueCollectorFactory implements CollectorFactor
     return new AggregateByPropertyValueCollector(
         dataStore,
         dataFilter,
-        Objects.requireNonNull(properties.get("output-key-prefix")),
+        Objects.requireNonNull(properties.get("outputkeyprefix")),
         filterBy,
-        properties.get("group-by"),
-        properties.get("sort-by"),
+        properties.get("groupby"),
+        properties.get("sortby"),
         SortMode.valueOf(
-            properties.getOrDefault("sort-mode", SortMode.ASC.toString()).toUpperCase()),
+            properties.getOrDefault("sortmode", SortMode.ASC.toString()).toUpperCase()),
         Integer.parseInt(properties.getOrDefault("max", "10")));
   }
 }

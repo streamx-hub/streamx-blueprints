@@ -6,7 +6,7 @@ import com.streamx.blueprints.data.collector.collectors.Collector.CollectedOutpu
 import com.streamx.blueprints.data.collector.collectors.CollectorFactory;
 import com.streamx.blueprints.data.collector.collectors.DataFilter;
 import com.streamx.blueprints.data.collector.configuration.CollectionConfiguration;
-import com.streamx.blueprints.data.collector.configuration.ServiceConfigMapping;
+import com.streamx.blueprints.data.collector.configuration.Configuration;
 import io.quarkus.arc.All;
 import io.quarkus.runtime.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -26,7 +26,7 @@ public class Collectors {
   Logger log;
 
   @Inject
-  ServiceConfigMapping serviceConfiguration;
+  Configuration serviceConfiguration;
 
   @Inject
   @All

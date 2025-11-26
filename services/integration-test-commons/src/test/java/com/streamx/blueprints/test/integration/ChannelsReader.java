@@ -14,24 +14,19 @@ import java.util.regex.Pattern;
 final class ChannelsReader {
 
   private static final File TEST_PROPERTIES_FILE =
-      new File("src/test/resources/application.properties");
+      new File("src/main/resources/application.properties");
 
   private static final Pattern CHANNEL_CONNECTOR_PROPERTY_NAME_PATTERN =
-      Pattern.compile("^mp\\.messaging\\.outgoing\\.(.+)\\.connector$");
+      Pattern.compile("^mp\\.messaging\\.outgoing\\.(.+)\\.url$");
 
-  static final List<String> OUTGOING_CHANNELS = loadOutgoingChannels();
+  static final List<String> OUTGOING_CHANNELS = loadTestProperties().stringPropertyNames().stream()
+      .map(CHANNEL_CONNECTOR_PROPERTY_NAME_PATTERN::matcher)
+      .filter(Matcher::find)
+      .map(matcher -> matcher.group(1))
+      .toList();
 
   private ChannelsReader() {
     // no instances
-  }
-
-  private static List<String> loadOutgoingChannels() {
-    Properties testProperties = loadTestProperties();
-    return testProperties.stringPropertyNames().stream()
-        .map(CHANNEL_CONNECTOR_PROPERTY_NAME_PATTERN::matcher)
-        .filter(Matcher::find)
-        .map(matcher -> matcher.group(1))
-        .toList();
   }
 
   private static Properties loadTestProperties() {

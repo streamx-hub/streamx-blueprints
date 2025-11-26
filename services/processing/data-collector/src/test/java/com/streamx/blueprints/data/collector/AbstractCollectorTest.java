@@ -60,8 +60,8 @@ abstract class AbstractCollectorTest {
   @Test
   void validateConnectorPropertiesPassedToFactory() {
     assertThat(testCollectorFactory.getProperties()).containsExactlyInAnyOrderEntriesOf(
-        Map.of("test-prop1", "test-prop1-value",
-            "test-prop2", "test-prop2-value"));
+        Map.of("testpropone", "test-prop1-value",
+            "testproptwo", "test-prop2-value"));
   }
 
   protected abstract String getExpectedCollectedDataOutputType();
