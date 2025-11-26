@@ -14,7 +14,6 @@ import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
-import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 @QuarkusIntegrationTest
@@ -30,7 +29,7 @@ public class ResourceDownloaderIT extends BaseQuarkusIntegrationTest {
   private static final String EMITTED_ASSET_TYPE = "assets/external";
 
   @Test
-  void shouldDownloadResource() throws IOException {
+  void shouldDownloadResource() {
     // given
     configureServiceToDownloadTestPageFromWiremock();
 

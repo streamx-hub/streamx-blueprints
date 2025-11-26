@@ -4,29 +4,23 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.streamx.blueprints.test.integration.JsonFormatter.formatJson;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
-import com.streamx.reactive.messaging.http.CloudEventJsonDeserializer;
-import com.streamx.reactive.messaging.http.CloudEventJsonSerializer;
 import io.cloudevents.CloudEvent;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
-import io.vertx.core.buffer.Buffer;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import java.util.concurrent.atomic.AtomicReference;
 import org.awaitility.core.ConditionTimeoutException;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.BeforeAll;
@@ -34,10 +28,6 @@ import org.junit.jupiter.api.BeforeEach;
 
 @ConnectWireMock
 public abstract class BaseQuarkusIntegrationTest {
-
-  private static final CloudEventJsonSerializer eventsSerializer = new CloudEventJsonSerializer();
-  private static final CloudEventJsonDeserializer eventsDeserializer
-      = new CloudEventJsonDeserializer();
 
   protected static final String SERVICE_BASE_URL = "http://localhost:8081";
 
@@ -59,20 +49,13 @@ public abstract class BaseQuarkusIntegrationTest {
     }
   }
 
-  protected static void sendEvent(CloudEvent cloudEvent, String channel) throws IOException {
-    String serializedEvent = eventsSerializer.serialize(cloudEvent).toString();
+  protected static void sendEvent(CloudEvent cloudEvent, String channel) {
+    String serializedEvent = CloudEventsSerialization.serialize(cloudEvent);
     String url = toUrl(channel);
-
-    try (CloseableHttpClient http = HttpClients.createDefault()) {
-      HttpPost post = new HttpPost(url);
-      post.setEntity(new StringEntity(serializedEvent));
-      CloseableHttpResponse response = http.execute(post);
-      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(HttpStatus.SC_ACCEPTED);
-    }
+    HttpRequestor.post(url, serializedEvent);
   }
 
-  protected static <T> void sendEvent(String key, String eventType, T data, String channel)
-      throws IOException {
+  protected static <T> void sendEvent(String key, String eventType, T data, String channel) {
     CloudEvent event = CloudEventUtils.eventWithData(key, eventType, data);
     sendEvent(event, channel);
   }
@@ -82,8 +65,7 @@ public abstract class BaseQuarkusIntegrationTest {
    * channels. Since QuarkusIntegrationTests don't use a mesh file, this method can be used to
    * manually simulate that behavior
    */
-  protected void sendFromOutgoingToIncomingChannel(String outgoing, String incoming)
-      throws IOException {
+  protected void sendFromOutgoingToIncomingChannel(String outgoing, String incoming) {
     CloudEvent outgoingEvent = waitForResponseEvent(outgoing);
     sendEvent(outgoingEvent, incoming);
   }
@@ -101,7 +83,7 @@ public abstract class BaseQuarkusIntegrationTest {
     List<LoggedRequest> responses = waitForResponseRequests(endpoint, totalCount);
     return responses.stream()
         .map(LoggedRequest::getBody)
-        .map(body -> eventsDeserializer.deserialize(Buffer.buffer(body)))
+        .map(CloudEventsSerialization::deserialize)
         .toList();
   }
 
@@ -115,13 +97,29 @@ public abstract class BaseQuarkusIntegrationTest {
       });
     } catch (ConditionTimeoutException ex) {
       DockerLogsRetriever.printDockerContainerLogs();
-      throw ex;
+      return fail(ex);
     }
     return results;
   }
 
   protected Duration waitForResponseEventsTimeout() {
     return Duration.ofSeconds(3);
+  }
+
+  protected String getUrlContent(String url) {
+    AtomicReference<String> content = new AtomicReference<>();
+    await().atMost(waitForResponseEventsTimeout()).untilAsserted(() ->
+        content.set(HttpRequestor.getUrlContent(url))
+    );
+    return content.get();
+  }
+
+  protected static void assertSameJsons(String actual, String expected) {
+    assertThat(formatJson(actual)).isEqualTo(formatJson(expected));
+  }
+
+  protected static void assertSameJsons(JsonNode actual, String expected) {
+    assertThat(formatJson(actual)).isEqualTo(formatJson(expected));
   }
 
   static Map<String, String> propertiesForOutgoingChannels() {

@@ -10,7 +10,6 @@ import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
-import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 @QuarkusIntegrationTest
@@ -18,7 +17,7 @@ import org.junit.jupiter.api.Test;
 public class EventConverterIT extends BaseQuarkusIntegrationTest {
 
   @Test
-  void shouldConvertDataToIndexableResource() throws IOException {
+  void shouldConvertDataToIndexableResource() {
     // given
     Data data = new Data("{\"key\": \"value\"}", "type");
     CloudEvent sourceEvent = CloudEventUtils.eventWithData("key", Data.TYPE_PUBLISHED, data);

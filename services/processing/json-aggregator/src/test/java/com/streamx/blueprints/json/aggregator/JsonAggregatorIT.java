@@ -10,7 +10,6 @@ import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
-import java.io.IOException;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +22,7 @@ public class JsonAggregatorIT extends BaseQuarkusIntegrationTest {
   private static final String ANY = "any";
 
   @Test
-  void shouldAggregateData() throws IOException {
+  void shouldAggregateData() {
     // when: publish product
     sendDataEvent("pim:1", "{\"id\":\"1\"}", Channels.DATA);
 
@@ -48,7 +47,7 @@ public class JsonAggregatorIT extends BaseQuarkusIntegrationTest {
   }
 
   @Test
-  void shouldAggregateMultivaluedData() throws IOException {
+  void shouldAggregateMultivaluedData() {
     // when
     sendDataEvent("review:1:john", "{\"rating\":\"good\"}", Channels.MULTIVALUED_DATA);
     sendDataEvent("review:1:alice", "{\"rating\":\"bad\"}", Channels.MULTIVALUED_DATA);
@@ -62,7 +61,7 @@ public class JsonAggregatorIT extends BaseQuarkusIntegrationTest {
     );
   }
 
-  private void sendDataEvent(String subject, String content, String channel) throws IOException {
+  private void sendDataEvent(String subject, String content, String channel) {
     Data data = new Data(content, ANY);
     sendEvent(subject, Data.TYPE_PUBLISHED, data, channel);
   }

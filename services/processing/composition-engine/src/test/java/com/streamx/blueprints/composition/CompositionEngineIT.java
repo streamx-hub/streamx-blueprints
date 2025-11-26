@@ -6,13 +6,11 @@ import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Composition;
 import com.streamx.blueprints.data.Layout;
 import com.streamx.blueprints.data.Page;
-import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTest;
 import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
-import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 @QuarkusIntegrationTest
@@ -20,7 +18,7 @@ import org.junit.jupiter.api.Test;
 public class CompositionEngineIT extends BaseQuarkusIntegrationTest {
 
   @Test
-  void shouldComposePage() throws IOException {
+  void shouldComposePage() {
     // when: publish layout
     String layoutKey = "/user-page-layout";
     String layoutContent = """
