@@ -1,4 +1,4 @@
-package com.streamx.blueprints.opensearch;
+package com.streamx.blueprints.opensearch.sink;
 
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.data.IndexableResourceFragment;
-import com.streamx.blueprints.opensearch.sink.Channels;
 import io.cloudevents.CloudEvent;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;

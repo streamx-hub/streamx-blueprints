@@ -1,4 +1,4 @@
-package com.streamx.blueprints.opensearch;
+package com.streamx.blueprints.opensearch.sink;
 
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
