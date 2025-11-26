@@ -2,7 +2,7 @@ package com.streamx.blueprints.rewriter.finders;
 
 import org.junit.jupiter.api.Test;
 
-class JsonValuesFinderTest extends AbstractValuesFinderTest<JsonValuesFinderTest> {
+class JsonValuesFinderTest extends AbstractValuesFinderTest {
 
   private static final JsonValuesFinder jsonValuesFinder = new JsonValuesFinder();
 

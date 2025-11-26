@@ -2,7 +2,7 @@ package com.streamx.blueprints.rewriter.finders;
 
 import org.junit.jupiter.api.Test;
 
-class YamlValuesFinderTest extends AbstractValuesFinderTest<YamlValuesFinderTest> {
+class YamlValuesFinderTest extends AbstractValuesFinderTest {
 
   private static final YamlValuesFinder yamlValuesFinder = new YamlValuesFinder();
 

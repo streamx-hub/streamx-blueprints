@@ -83,11 +83,13 @@ descriptors:
           data: {}
           renderers: {}
           rendering-contexts: {}
-          incoming-rendering-requests: {}
         outgoing:
-          outgoing-rendering-requests: {}
           pages: {}
           fragments: {}
+        autoRef:
+          - from: outgoing-rendering-requests
+            to: incoming-rendering-requests
+            using: internal-relay
 
   composition-engine:
     type: "processing"
@@ -97,10 +99,12 @@ descriptors:
         incoming:
           layouts: {}
           compositions: {}
-          incoming-page-compose-requests: {}
         outgoing:
           pages: {}
-          outgoing-page-compose-requests: {}
+        autoRef:
+          - from: outgoing-page-compose-requests
+            to: incoming-page-compose-requests
+            using: internal-relay
 
   sitemap-generator:
     type: "processing"
@@ -421,11 +425,7 @@ processing:
             ref: inbox.renderers
           rendering-contexts:
             ref: inbox.rendering-contexts
-          incoming-rendering-requests:
-            ref: relay.rendering-requests
         outgoing:
-          outgoing-rendering-requests:
-            ref: relay.rendering-requests
           pages:
             ref: relay.pages
           fragments:
@@ -440,13 +440,9 @@ processing:
             ref: inbox.layouts
           compositions:
             ref: inbox.compositions
-          incoming-page-compose-requests:
-            ref: relay.page-compose-requests
         outgoing:
           pages:
             ref: relay.pages
-          outgoing-page-compose-requests:
-            ref: relay.page-compose-requests
 
   blueprint-data-collector:
     descriptor: data-collector
