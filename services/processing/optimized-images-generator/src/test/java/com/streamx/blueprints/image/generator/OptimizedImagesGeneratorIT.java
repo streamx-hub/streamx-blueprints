@@ -1,7 +1,6 @@
 package com.streamx.blueprints.image.generator;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.contentOf;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Asset;
@@ -13,7 +12,9 @@ import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
 @QuarkusIntegrationTest
@@ -21,11 +22,11 @@ import org.junit.jupiter.api.Test;
 public class OptimizedImagesGeneratorIT extends BaseQuarkusIntegrationTest {
 
   @Test
-  void shouldGenerateOptimizedImage() {
+  void shouldGenerateOptimizedImage() throws IOException {
     // given
     File testImageFile = new File("src/test/resources/ds.png");
     String key = testImageFile.getName();
-    Asset asset = new Asset(contentOf(testImageFile).getBytes(), "test-image");
+    Asset asset = new Asset(FileUtils.readFileToByteArray(testImageFile), "test-image");
     CloudEvent sourceEvent = CloudEventUtils.eventWithData(key, Asset.TYPE_PUBLISHED, asset);
 
     // when

@@ -1,7 +1,6 @@
 package com.streamx.blueprints.rewriter;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.contentOf;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.OptimizedAsset;
@@ -13,7 +12,9 @@ import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
 @QuarkusIntegrationTest
@@ -25,7 +26,7 @@ public class LocalReferencesRewriterIT extends BaseQuarkusIntegrationTest {
   private static final String OPTIMIZED_ASSET_KEY = "/images/logo-optimized.webp";
 
   @Test
-  void shouldRewriteLocalReferences() {
+  void shouldRewriteLocalReferences() throws IOException {
     // given: prepare page referencing the unoptimized image
     String pageContent = """
         <html>
@@ -54,8 +55,8 @@ public class LocalReferencesRewriterIT extends BaseQuarkusIntegrationTest {
     );
   }
 
-  private static void publishOptimizedImage() {
-    byte[] testFileContent = contentOf(TEST_IMAGE_FILE).getBytes();
+  private static void publishOptimizedImage() throws IOException {
+    byte[] testFileContent = FileUtils.readFileToByteArray(TEST_IMAGE_FILE);
 
     CloudEvent sourceAssetEvent = CloudEventUtils.eventWithData(
         OPTIMIZED_ASSET_KEY,
