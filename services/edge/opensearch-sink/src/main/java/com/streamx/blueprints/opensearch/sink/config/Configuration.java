@@ -13,7 +13,6 @@ public interface Configuration {
   @WithDefault("classpath:opensearch/service-init")
   List<String> migrationScriptLocations();
 
-  @WithDefault("")
   List<String> allowedJsonPaths();
 
 }
