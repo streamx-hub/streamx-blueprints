@@ -13,7 +13,6 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
-import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Optional;
 import java.util.Set;
 import org.jboss.logging.Logger;
@@ -36,7 +35,7 @@ public class DefaultIndexUpdater {
     return Uni.createFrom()
         .item(path)
         .invoke(() -> log.tracev("Indexing resource: {0} with type: {1}", path, type))
-        .map(s -> {
+        .flatMap(s -> {
           var fragmentKeys = Optional.ofNullable(resource.getFragmentKeys()).orElseGet(Set::of);
           var fragmentList = fragmentKeys.stream()
               .map(this::fillFragment)
@@ -49,10 +48,8 @@ public class DefaultIndexUpdater {
               resource.getContentAsString()
           );
 
-          return new SimpleImmutableEntry<>(path, document);
-        })
-        .flatMap(p -> defaultRepository.index(p.getKey(), p.getValue()))
-        .onFailure().invoke(e -> log.errorv(e, "Failed to add to index [{0}]", path));
+          return defaultRepository.index(path, document);
+        }).onFailure().invoke(e -> log.errorv(e, "Failed to add to index [{0}]", path));
   }
 
   private Fragment fillFragment(String fragmentKey) {

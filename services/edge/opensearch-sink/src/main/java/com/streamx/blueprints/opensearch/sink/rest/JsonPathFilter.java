@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
@@ -98,12 +97,13 @@ class JsonPathFilter {
 
   private boolean filterArrayNode(ArrayNode node,
       Set<JsonNodeWrapper> nodesFromJsonPaths) {
-    boolean anyChildFoundInJsonPaths = false;
+    int matchesCount = 0;
     for (int i = node.size() - 1; i >= 0; i--) {
-      anyChildFoundInJsonPaths = filterArrayElement(node, i, nodesFromJsonPaths)
-          || anyChildFoundInJsonPaths;
+      if (filterArrayElement(node, i, nodesFromJsonPaths)) {
+        matchesCount++;
+      }
     }
-    return anyChildFoundInJsonPaths;
+    return matchesCount > 0;
   }
 
   private boolean filterArrayElement(
@@ -146,12 +146,7 @@ class JsonPathFilter {
    * However, equal JsonNodes can be placed in different JSON paths,
    * so we need "hashCode" and "equal" methods basing on object identity.
    */
-  private static class JsonNodeWrapper {
-    private final JsonNode jsonNode;
-
-    public JsonNodeWrapper(JsonNode jsonNode) {
-      this.jsonNode = jsonNode;
-    }
+  private record JsonNodeWrapper(JsonNode jsonNode) {
 
     @Override
     public boolean equals(Object o) {
@@ -164,18 +159,6 @@ class JsonPathFilter {
       JsonNodeWrapper that = (JsonNodeWrapper) o;
       // comparing object identity is intentional to avoid deduplication of equal JsonNodes
       return jsonNode == that.jsonNode;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(jsonNode);
-    }
-
-    @Override
-    public String toString() {
-      return "JsonNodeWrapper{"
-          + "jsonNode=" + jsonNode
-          + '}';
     }
   }
 

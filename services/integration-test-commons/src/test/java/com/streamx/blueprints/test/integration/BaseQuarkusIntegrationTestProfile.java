@@ -9,7 +9,7 @@ import java.util.Map;
 public class BaseQuarkusIntegrationTestProfile implements QuarkusTestProfile {
 
   @Override
-  public final Map<String, String> getConfigOverrides() {
+  public Map<String, String> getConfigOverrides() {
     Map<String, String> properties = propertiesForOutgoingChannels();
     properties.putAll(getServiceConfigProperties());
     return properties;

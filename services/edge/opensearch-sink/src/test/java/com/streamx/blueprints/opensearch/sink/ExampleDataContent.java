@@ -1,4 +1,4 @@
-package com.streamx.blueprints.opensearch;
+package com.streamx.blueprints.opensearch.sink;
 
 record ExampleDataContent(
     String id,
