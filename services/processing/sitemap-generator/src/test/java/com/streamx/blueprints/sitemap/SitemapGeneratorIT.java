@@ -11,7 +11,6 @@ import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
-import java.io.IOException;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +22,7 @@ public class SitemapGeneratorIT extends BaseQuarkusIntegrationTest {
   private static final String SITEMAP_FILE_NAME = "sitemap.xml";
 
   @Test
-  void shouldGenerateSitemap() throws IOException {
+  void shouldGenerateSitemap() {
     // given
     Page page = new Page("<b>Hello World</b>", "test-page");
     String pageKey = "pages/test-page.html";

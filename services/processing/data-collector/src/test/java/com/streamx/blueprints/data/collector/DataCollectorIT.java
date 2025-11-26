@@ -2,9 +2,6 @@ package com.streamx.blueprints.data.collector;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.collector.DataCollectorIT.IntegrationTestProfile;
@@ -13,7 +10,6 @@ import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -21,8 +17,6 @@ import org.junit.jupiter.api.Test;
 @QuarkusIntegrationTest
 @TestProfile(IntegrationTestProfile.class)
 public class DataCollectorIT extends BaseQuarkusIntegrationTest {
-
-  private static final ObjectMapper objectMapper = new ObjectMapper();
 
   private static final String INPUT_PRODUCT_TYPE = "product/simple";
   private static final String OUTPUT_DATA_TYPE = "collected-data";
@@ -63,7 +57,7 @@ public class DataCollectorIT extends BaseQuarkusIntegrationTest {
   }
 
   @Test
-  void shouldAggregateData() throws IOException {
+  void shouldAggregateData() {
     // when: publish products
     sendDataEvent("product:" + PRODUCT_1_ID, PRODUCT_1_JSON);
     sendDataEvent("product:" + PRODUCT_2_ID, PRODUCT_2_JSON);
@@ -79,14 +73,14 @@ public class DataCollectorIT extends BaseQuarkusIntegrationTest {
     Data outgoingData = CloudEventUtils.getData(outgoingEvent, Data.class);
     assertThat(outgoingData).isNotNull();
     assertThat(outgoingData.getType()).isEqualTo(OUTPUT_DATA_TYPE);
-    assertThat(formatJson(outgoingData.getContentAsString())).isEqualTo(formatJson(
+    assertSameJsons(outgoingData.getContentAsString(),
         "{"
         + "  \"key\": \"cheapest-by-category_Furniture\","
         + "  \"values\": [" + PRODUCT_3_JSON + "," + PRODUCT_2_JSON + "," + PRODUCT_1_JSON + "]"
-        + "}"));
+        + "}");
   }
 
-  private void sendDataEvent(String subject, String content) throws IOException {
+  private void sendDataEvent(String subject, String content) {
     Data data = new Data(content, INPUT_PRODUCT_TYPE);
     CloudEvent event = CloudEventUtils.eventWithData(subject, Data.TYPE_PUBLISHED, data);
     sendEvent(event, Channels.Incoming.DATA);
@@ -113,10 +107,5 @@ public class DataCollectorIT extends BaseQuarkusIntegrationTest {
           cheapestProducts + "properties.sortmode", "asc"
       );
     }
-  }
-
-  private static String formatJson(String json) throws JsonProcessingException {
-    JsonNode tree = objectMapper.readTree(json);
-    return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(tree);
   }
 }

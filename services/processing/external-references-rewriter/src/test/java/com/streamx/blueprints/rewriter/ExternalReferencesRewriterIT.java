@@ -11,7 +11,6 @@ import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
-import java.io.IOException;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +24,7 @@ public class ExternalReferencesRewriterIT extends BaseQuarkusIntegrationTest {
   private static final String EXTERNAL_ASSET_TYPE = "assets/external";
 
   @Test
-  void shouldRewriteExternalReferences() throws IOException {
+  void shouldRewriteExternalReferences() {
     // given
     String pageContent = """
         <html>
