@@ -35,9 +35,12 @@ public abstract class BaseOpensearchTest {
   @BeforeEach
   void runMigrations() {
     if (!migrationsExecuted.get()) {
-      opensearchConfig
-          .elasticsearchEvolution(restClient())
-          .migrate();
+      RestClient client = restClient();
+      var elasticsearchEvolution = opensearchConfig.elasticsearchEvolution(client);
+      elasticsearchEvolution.migrate();
+
+      // run migration again, to verify executed scripts are skipped with no errors
+      elasticsearchEvolution.migrate();
 
       migrationsExecuted.set(true);
     }

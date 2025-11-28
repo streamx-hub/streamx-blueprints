@@ -1,15 +1,12 @@
-package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
+package com.senacor.elasticsearch.evolution.core.migration.execution;
 
-import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
+import com.senacor.elasticsearch.evolution.core.model.dbhistory.MigrationScriptProtocol;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * @author Andreas Keefer
- */
 public class MigrationScriptProtocolMapper {
 
   public static final String LOCKED_FIELD_NAME = "locked";
@@ -26,7 +23,7 @@ public class MigrationScriptProtocolMapper {
     HashMap<String, Object> res = new HashMap<>(10);
     res.put(LOCKED_FIELD_NAME, migrationScriptProtocol.isLocked());
     res.put(CHECKSUM_FIELD_NAME, migrationScriptProtocol.getChecksum());
-    res.put(DESCRIPTION_FIELD_NAME, migrationScriptProtocol.getDescription());
+    res.put(DESCRIPTION_FIELD_NAME, migrationScriptProtocol.description());
     res.put(EXECUTION_RUNTIME_IN_MILLIS_FIELD_NAME,
         migrationScriptProtocol.getExecutionRuntimeInMillis());
     res.put(EXECUTION_TIMESTAMP_FIELD_NAME, null == migrationScriptProtocol.getExecutionTimestamp()
@@ -34,11 +31,11 @@ public class MigrationScriptProtocolMapper {
         : migrationScriptProtocol.getExecutionTimestamp()
             .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     res.put(SUCCESS_FIELD_NAME, migrationScriptProtocol.isSuccess());
-    res.put(VERSION_FIELD_NAME, null == migrationScriptProtocol.getVersion()
+    res.put(VERSION_FIELD_NAME, null == migrationScriptProtocol.version()
         ? null
-        : migrationScriptProtocol.getVersion().getVersion());
+        : migrationScriptProtocol.version().getVersion());
     res.put(INDEX_NAME_FIELD_NAME, migrationScriptProtocol.getIndexName());
-    res.put(SCRIPT_NAME_FIELD_NAME, migrationScriptProtocol.getScriptName());
+    res.put(SCRIPT_NAME_FIELD_NAME, migrationScriptProtocol.scriptName());
     return res;
   }
 

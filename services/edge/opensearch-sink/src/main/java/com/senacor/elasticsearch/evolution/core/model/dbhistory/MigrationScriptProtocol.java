@@ -1,73 +1,33 @@
-package com.senacor.elasticsearch.evolution.core.internal.model.dbhistory;
+package com.senacor.elasticsearch.evolution.core.model.dbhistory;
 
-import com.senacor.elasticsearch.evolution.core.internal.model.FileNameInfo;
-import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
+import com.senacor.elasticsearch.evolution.core.model.FileNameInfo;
+import com.senacor.elasticsearch.evolution.core.model.MigrationVersion;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
 /**
  * Represents a Script execution in the database.
- *
- * @author Andreas Keefer
  */
 public class MigrationScriptProtocol implements FileNameInfo, Comparable<MigrationScriptProtocol> {
 
-  /**
-   * not-null
-   */
   private MigrationVersion version;
-
-  /**
-   * The index this scrip was applied to nullable: in case this migration was not applied for an
-   * index pattern lookup
-   */
   private String indexName;
-
-  /**
-   * migration description not-null
-   */
   private String description;
-
-  /**
-   * The name of the script to execute for this migration, relative to the configured location.
-   * not-null
-   */
   private String scriptName;
-
-  /**
-   * The checksum of the raw migration script. not-null
-   */
   private int checksum;
-
-  /**
-   * The timestamp when this migration was applied/executed. not-null
-   */
   private OffsetDateTime executionTimestamp;
-
-  /**
-   * The the runtime in millis of this migration. not-null
-   */
   private int executionRuntimeInMillis;
-
-  /**
-   * Flag indicating whether the migration was successful or not. not-null
-   */
   private boolean success;
-
-  /**
-   * a flag to implement a "index lock". If a document in the index is locked, the application will
-   * not continue. not-null
-   */
   private boolean locked = true;
+
+  @Override
+  public MigrationVersion version() {
+    return version;
+  }
 
   public MigrationScriptProtocol setVersion(String version) {
     this.version = MigrationVersion.fromVersion(version);
     return this;
-  }
-
-  @Override
-  public MigrationVersion getVersion() {
-    return version;
   }
 
   public MigrationScriptProtocol setVersion(MigrationVersion version) {
@@ -85,7 +45,7 @@ public class MigrationScriptProtocol implements FileNameInfo, Comparable<Migrati
   }
 
   @Override
-  public String getDescription() {
+  public String description() {
     return description;
   }
 
@@ -95,7 +55,7 @@ public class MigrationScriptProtocol implements FileNameInfo, Comparable<Migrati
   }
 
   @Override
-  public String getScriptName() {
+  public String scriptName() {
     return scriptName;
   }
 
@@ -150,23 +110,6 @@ public class MigrationScriptProtocol implements FileNameInfo, Comparable<Migrati
   }
 
   @Override
-  public int hashCode() {
-    return Objects.hash(version);
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null || getClass() != obj.getClass()) {
-      return false;
-    }
-    final MigrationScriptProtocol other = (MigrationScriptProtocol) obj;
-    return Objects.equals(this.version, other.version);
-  }
-
-  @Override
   public int compareTo(MigrationScriptProtocol o) {
     if (o == null) {
       return 1;
@@ -174,18 +117,4 @@ public class MigrationScriptProtocol implements FileNameInfo, Comparable<Migrati
     return version.compareTo(o.version);
   }
 
-  @Override
-  public String toString() {
-    return "MigrationScriptProtocol{" +
-           "version=" + version +
-           ", indexName='" + indexName + '\'' +
-           ", description='" + description + '\'' +
-           ", scriptName='" + scriptName + '\'' +
-           ", checksum=" + checksum +
-           ", executionTimestamp=" + executionTimestamp +
-           ", executionRuntimeInMillis=" + executionRuntimeInMillis +
-           ", success=" + success +
-           ", locked=" + locked +
-           '}';
-  }
 }

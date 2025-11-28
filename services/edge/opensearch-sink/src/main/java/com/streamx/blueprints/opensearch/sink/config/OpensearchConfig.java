@@ -21,8 +21,9 @@ public class OpensearchConfig {
 
   @ApplicationScoped
   public ElasticsearchEvolution elasticsearchEvolution(RestClient client) {
-    return ElasticsearchEvolution.configure()
-        .setLocations(configuration.migrationScriptLocations())
-        .load(client);
+    return new ElasticsearchEvolution(
+        configuration.migrationScriptLocations(),
+        client
+    );
   }
 }

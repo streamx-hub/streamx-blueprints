@@ -1,15 +1,13 @@
-package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
+package com.senacor.elasticsearch.evolution.core.migration.execution;
 
-import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotBlank;
 import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.senacor.elasticsearch.evolution.core.api.MigrationException;
-import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
-import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
-import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
+import com.senacor.elasticsearch.evolution.core.MigrationException;
+import com.senacor.elasticsearch.evolution.core.model.MigrationVersion;
+import com.senacor.elasticsearch.evolution.core.model.dbhistory.MigrationScriptProtocol;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -25,48 +23,38 @@ import org.apache.http.util.EntityUtils;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 
-/**
- * @author Andreas Keefer
- */
-public class HistoryRepositoryImpl implements HistoryRepository {
+public class HistoryRepository {
 
-  private static final Logger logger = LoggerFactory.getLogger(HistoryRepositoryImpl.class);
+  private static final Logger logger = Logger.getLogger(HistoryRepository.class);
   private static final String INTERNAL_LOCK_VERSION = "0.1";
   private static final MigrationVersion INTERNAL_VERSIONS = MigrationVersion.fromVersion("0");
-  static final String INDEX_TYPE_DOC = "_doc";
 
   private final RestClient restClient;
-  private final String historyIndex;
-  private final MigrationScriptProtocolMapper migrationScriptProtocolMapper;
-  private final int querySize;
+  private final String historyIndex = "es_evolution";
+  private final MigrationScriptProtocolMapper migrationScriptProtocolMapper =
+      new MigrationScriptProtocolMapper();
   private final ObjectMapper objectMapper;
 
-  public HistoryRepositoryImpl(RestClient restClient,
-      String historyIndex,
-      MigrationScriptProtocolMapper migrationScriptProtocolMapper,
-      int querySize,
-      ObjectMapper objectMapper) {
-    this.restClient = requireNonNull(restClient, "restClient must not be null");
-    this.historyIndex = requireNotBlank(historyIndex, "historyIndex must not be blank: {}",
-        historyIndex);
-    this.migrationScriptProtocolMapper = requireNonNull(migrationScriptProtocolMapper,
-        "migrationScriptProtocolMapper must not be null");
-    this.querySize = querySize;
+  public HistoryRepository(RestClient restClient, ObjectMapper objectMapper) {
+    this.restClient = restClient;
     this.objectMapper = objectMapper;
   }
 
-  @Override
+  /**
+   * @return sorted set by version. The earliest version is the first element and the latest version
+   * is the last element.
+   * @throws MigrationException in case the operation failed
+   */
   public NavigableSet<MigrationScriptProtocol> findAll() throws MigrationException {
     try {
       final Request findAllSearchRequest = new Request("POST", "/" + historyIndex + "/_search");
       findAllSearchRequest.addParameters(indicesOptions(IndexOptions.lenientExpandOpen()));
-      findAllSearchRequest.setJsonEntity("{\"size\":" + querySize + "}");
+      findAllSearchRequest.setJsonEntity("{\"size\":1000}");
       final Response searchResponse = restClient.performRequest(findAllSearchRequest);
       final String bodyAsString = EntityUtils.toString(searchResponse.getEntity());
-      logger.debug("findAll res: {} (body={})", searchResponse, bodyAsString);
+      logger.debugf("findAll res: %s (body=%s)", searchResponse, bodyAsString);
       validateHttpStatusIs2xx(searchResponse, "findAll");
 
       final SearchResponse body = objectMapper.readValue(bodyAsString, SearchResponse.class);
@@ -76,18 +64,24 @@ public class HistoryRepositoryImpl implements HistoryRepository {
           .map(Hit::source)
           .map(migrationScriptProtocolMapper::mapFromMap)
           // filter protocols with 0 major version, because they are used internal
-          .filter(protocol -> protocol.getVersion().isMajorNewerThan(INTERNAL_VERSIONS))
+          .filter(protocol -> protocol.version().isMajorNewerThan(INTERNAL_VERSIONS))
           .collect(Collectors.toCollection(TreeSet::new));
     } catch (IOException e) {
       throw new MigrationException("findAll failed!", e);
     }
   }
 
-  @Override
+  /**
+   * Put the protocol in the internal Elasticsearch-Evolution history index and use the version as
+   * ID.
+   *
+   * @param migrationScriptProtocol the protocol to save or update
+   * @throws MigrationException in case the operation failed
+   */
   public void saveOrUpdate(MigrationScriptProtocol migrationScriptProtocol)
       throws MigrationException {
     try {
-      final String id = requireNonNull(migrationScriptProtocol.getVersion(),
+      final String id = requireNonNull(migrationScriptProtocol.version(),
           "migrationScriptProtocol.version must not be null").getVersion();
       final Request indexRequest = new Request("PUT", "/" + historyIndex + "/_doc/" + id);
       final Map<String, Object> source = migrationScriptProtocolMapper.mapToMap(
@@ -95,9 +89,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
       indexRequest.setJsonEntity(objectMapper.writeValueAsString(source));
       final Response res = restClient.performRequest(indexRequest);
 
-      if (logger.isDebugEnabled()) {
-        logger.debug("saveOrUpdate res: {} (body={})", res, EntityUtils.toString(res.getEntity()));
-      }
+      logger.debugf("saveOrUpdate res: %s (body=%s)", res, EntityUtils.toString(res.getEntity()));
       validateHttpStatusIs2xx(res, "saveOrUpdate");
     } catch (IOException e) {
       throw new MigrationException(
@@ -105,7 +97,11 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     }
   }
 
-  @Override
+  /**
+   * @return true, if the index is locked and Elasticsearch-Evolution has to wait until the lock is
+   * released.
+   * @throws MigrationException in case the check failed
+   */
   public boolean isLocked() throws MigrationException {
     try {
       refresh(historyIndex);
@@ -116,11 +112,11 @@ public class HistoryRepositoryImpl implements HistoryRepository {
       final long count = executeCountRequest(Optional.of(countQuery));
 
       if (count == 0L) {
-        logger.debug("index '{}' is not locked: no locked documents in index.", historyIndex);
+        logger.debugf("index '%s' is not locked: no locked documents in index.", historyIndex);
         return false;
       }
 
-      logger.debug("index '{}' is locked: {} locked documents found.", historyIndex, count);
+      logger.debugf("index '%s' is locked: {} locked documents found.", historyIndex, count);
       return true;
     } catch (IOException e) {
       throw new MigrationException("isLocked check failed!", e);
@@ -139,7 +135,11 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     return countResBody.get("count").asLong();
   }
 
-  @Override
+  /**
+   * This will lock the index for other Elasticsearch-Evolution instances
+   *
+   * @return true, if the lock was set successfully.
+   */
   public boolean lock() {
     try {
       final long countAll = executeCountRequest(Optional.empty());
@@ -164,7 +164,11 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     }
   }
 
-  @Override
+  /**
+   * This will unlock the index for other Elasticsearch-Evolution instances
+   *
+   * @return true, if the unlock was successfully.
+   */
   public boolean unlock() {
     try {
       refresh(historyIndex);
@@ -174,20 +178,18 @@ public class HistoryRepositoryImpl implements HistoryRepository {
       updateByQueryRequest.addParameters(indicesOptions(IndexOptions.lenientExpandOpen()));
       updateByQueryRequest.addParameter("requests_per_second", "-1");
       updateByQueryRequest.addParameter("refresh", "true");
-      updateByQueryRequest.setJsonEntity("{\"script\":{" +
-                                         "\"source\":\"ctx.op = \\\"delete\\\"\"," +
-                                         "\"lang\":\"painless\"}," +
-                                         "\"size\":1000," +
-                                         "\"query\":{\"term\":{\""
+      updateByQueryRequest.setJsonEntity("{\"script\":{"
+                                         + "\"source\":\"ctx.op = \\\"delete\\\"\","
+                                         + "\"lang\":\"painless\"},"
+                                         + "\"size\":1000,"
+                                         + "\"query\":{\"term\":{\""
                                          + MigrationScriptProtocolMapper.VERSION_FIELD_NAME
                                          + "\":{\"value\":\"" + INTERNAL_LOCK_VERSION + "\"}}}}");
 
       final Response deleteInternalLockRes = restClient.performRequest(updateByQueryRequest);
 
-      if (logger.isDebugEnabled()) {
-        logger.debug("unlock.deleteLockEntry res: {} (body={})", deleteInternalLockRes,
-            EntityUtils.toString(deleteInternalLockRes.getEntity()));
-      }
+      logger.debugf("unlock.deleteLockEntry res: %s (body=%s)", deleteInternalLockRes,
+          EntityUtils.toString(deleteInternalLockRes.getEntity()));
 
       executeLockRequest(false, "unlock.removeLock");
       return true;
@@ -203,36 +205,39 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     updateByQueryRequest.addParameters(indicesOptions(IndexOptions.lenientExpandOpen()));
     updateByQueryRequest.addParameter("requests_per_second", "-1");
     updateByQueryRequest.addParameter("refresh", "true");
-    updateByQueryRequest.setJsonEntity("{\"script\":" +
-                                       "{\"source\":\"ctx._source."
+    updateByQueryRequest.setJsonEntity("{\"script\":"
+                                       + "{\"source\":\"ctx._source."
                                        + MigrationScriptProtocolMapper.LOCKED_FIELD_NAME
-                                       + " = params.lock\"," +
-                                       "\"lang\":\"painless\"," +
-                                       "\"params\":{\"lock\":" + lock + "}" +
-                                       "}," +
-                                       "\"size\":1000," +
-                                       "\"query\":{\"term\":{\""
+                                       + " = params.lock\","
+                                       + "\"lang\":\"painless\","
+                                       + "\"params\":{\"lock\":" + lock + "}"
+                                       + "},"
+                                       + "\"size\":1000,"
+                                       + "\"query\":{\"term\":{\""
                                        + MigrationScriptProtocolMapper.LOCKED_FIELD_NAME
                                        + "\":{\"value\":" + !lock + "}}}}");
 
     final Response updateByQueryResponse = restClient.performRequest(updateByQueryRequest);
 
-    if (logger.isDebugEnabled()) {
-      logger.debug("{} res: {} (body={})", debugContext, updateByQueryResponse,
-          EntityUtils.toString(updateByQueryResponse.getEntity()));
-    }
+    logger.debugf("%s res: %s (body=%s)", debugContext, updateByQueryResponse,
+        EntityUtils.toString(updateByQueryResponse.getEntity()));
   }
 
-  @Override
+  /**
+   * Creates the internal elasticsearch-evolution history index in Elasticsearch if necessary.
+   *
+   * @return true, if the index was created, false if it's already present in Elasticsearch
+   * @throws MigrationException in case the operation failed
+   */
   public boolean createIndexIfAbsent() throws MigrationException {
     try {
       Response existsRes = restClient.performRequest(new Request("HEAD", "/" + historyIndex));
       boolean exists = 200 == existsRes.getStatusLine().getStatusCode();
       if (exists) {
-        logger.debug("Elasticsearch-Evolution history index '{}' already exists.", historyIndex);
+        logger.debugf("Elasticsearch-Evolution history index '%s' already exists.", historyIndex);
         return false;
       }
-      logger.debug("Elasticsearch-Evolution history index '{}' does not yet exists. Res={}",
+      logger.debugf("Elasticsearch-Evolution history index '%s' does not yet exists. Res=%s",
           historyIndex, existsRes);
 
       // create index
@@ -242,7 +247,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
             "Could not create Elasticsearch-Evolution history index '" + historyIndex
             + "'. Create res=" + createRes);
       }
-      logger.debug("created Elasticsearch-Evolution history index '{}'", historyIndex);
+      logger.debugf("created Elasticsearch-Evolution history index '%s'", historyIndex);
       return true;
     } catch (IOException e) {
       throw new MigrationException("createIndexIfAbsent failed!", e);
@@ -313,10 +318,8 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     return nameValuePairs;
   }
 
-  /**
-   * simple replacement for {@link org.elasticsearch.action.support.IndicesOptions}
-   */
-  private static final class IndexOptions {
+  private record IndexOptions(boolean ignoreUnavailable, boolean allowNoIndices,
+                              boolean expandWildcardsOpen, boolean expandWildcardsClosed) {
 
     private static final IndexOptions LENIENT_EXPAND_OPEN = new IndexOptions(
         true,
@@ -324,39 +327,8 @@ public class HistoryRepositoryImpl implements HistoryRepository {
         true,
         false);
 
-    private final boolean ignoreUnavailable;
-    private final boolean allowNoIndices;
-    private final boolean expandWildcardsOpen;
-    private final boolean expandWildcardsClosed;
-
-    public IndexOptions(boolean ignoreUnavailable,
-        boolean allowNoIndices,
-        boolean expandWildcardsOpen,
-        boolean expandWildcardsClosed) {
-      this.ignoreUnavailable = ignoreUnavailable;
-      this.allowNoIndices = allowNoIndices;
-      this.expandWildcardsOpen = expandWildcardsOpen;
-      this.expandWildcardsClosed = expandWildcardsClosed;
-    }
-
     public static IndexOptions lenientExpandOpen() {
       return LENIENT_EXPAND_OPEN;
-    }
-
-    public boolean ignoreUnavailable() {
-      return ignoreUnavailable;
-    }
-
-    public boolean allowNoIndices() {
-      return allowNoIndices;
-    }
-
-    public boolean expandWildcardsOpen() {
-      return expandWildcardsOpen;
-    }
-
-    public boolean expandWildcardsClosed() {
-      return expandWildcardsClosed;
     }
   }
 

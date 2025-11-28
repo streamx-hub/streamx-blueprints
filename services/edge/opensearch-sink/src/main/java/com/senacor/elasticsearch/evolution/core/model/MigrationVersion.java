@@ -1,23 +1,8 @@
-/*
- * Copyright 2010-2018 Boxfuse GmbH
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.senacor.elasticsearch.evolution.core.internal.model;
+package com.senacor.elasticsearch.evolution.core.model;
 
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotBlank;
 
-import com.senacor.elasticsearch.evolution.core.api.MigrationException;
+import com.senacor.elasticsearch.evolution.core.MigrationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -49,7 +34,6 @@ public final class MigrationVersion implements Comparable<MigrationVersion> {
    * @param version The version String like
    * @return The MigrationVersion
    */
-  @SuppressWarnings("ConstantConditions")
   public static MigrationVersion fromVersion(String version) {
     return new MigrationVersion(version);
   }
@@ -70,37 +54,10 @@ public final class MigrationVersion implements Comparable<MigrationVersion> {
   }
 
   /**
-   * @return The textual representation of the version.
-   */
-  @Override
-  public String toString() {
-    return displayText;
-  }
-
-  /**
    * @return Numeric version as String
    */
   public String getVersion() {
     return displayText;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-      if (this == o) {
-          return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-          return false;
-      }
-
-    MigrationVersion version1 = (MigrationVersion) o;
-
-    return compareTo(version1) == 0;
-  }
-
-  @Override
-  public int hashCode() {
-    return versionParts == null ? 0 : versionParts.hashCode();
   }
 
   /**
@@ -112,16 +69,6 @@ public final class MigrationVersion implements Comparable<MigrationVersion> {
    */
   public boolean isAtLeast(String otherVersion) {
     return compareTo(MigrationVersion.fromVersion(otherVersion)) >= 0;
-  }
-
-  /**
-   * Convenience method for quickly checking whether this version is newer than this other version.
-   *
-   * @param otherVersion The other version.
-   * @return {@code true} if this version is newer, {@code false} if it is not.
-   */
-  public boolean isNewerThan(String otherVersion) {
-    return compareTo(MigrationVersion.fromVersion(otherVersion)) > 0;
   }
 
   /**
@@ -146,31 +93,11 @@ public final class MigrationVersion implements Comparable<MigrationVersion> {
     return getMajor().compareTo(otherVersion.getMajor()) > 0;
   }
 
-  /**
-   * @return The major version.
-   */
   public Integer getMajor() {
-    return versionParts.get(0);
+    return versionParts.getFirst();
   }
 
-  /**
-   * @return The major version as a string.
-   */
-  public String getMajorAsString() {
-    return versionParts.get(0).toString();
-  }
-
-  /**
-   * @return The minor version as a string.
-   */
-  public String getMinorAsString() {
-    if (versionParts.size() == 1) {
-      return "0";
-    }
-    return versionParts.get(1).toString();
-  }
-
-  @SuppressWarnings("NullableProblems")
+  @Override
   public int compareTo(MigrationVersion o) {
     if (o == null) {
       return 1;
@@ -206,8 +133,8 @@ public final class MigrationVersion implements Comparable<MigrationVersion> {
       }
     } catch (NumberFormatException e) {
       throw new MigrationException(
-          "Invalid version containing non-numeric characters. Only 0..9 and . are allowed. Invalid version: "
-          + str);
+          "Invalid version containing non-numeric characters. Only 0..9 and . are allowed. "
+          + "Invalid version: " + str);
     }
     for (int i = parts.size() - 1; i > 0; i--) {
       if (!parts.get(i).equals(0)) {

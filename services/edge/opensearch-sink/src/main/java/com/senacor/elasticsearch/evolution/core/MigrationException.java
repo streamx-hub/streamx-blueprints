@@ -1,10 +1,5 @@
-package com.senacor.elasticsearch.evolution.core.api;
+package com.senacor.elasticsearch.evolution.core;
 
-/**
- * Exception thrown when ES Evolution encounters a problem.
- *
- * @author Andreas Keefer
- */
 public class MigrationException extends RuntimeException {
 
   public MigrationException(String message) {

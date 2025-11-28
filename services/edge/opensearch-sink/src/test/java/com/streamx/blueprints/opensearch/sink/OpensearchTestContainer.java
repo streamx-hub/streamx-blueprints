@@ -75,6 +75,10 @@ public class OpensearchTestContainer {
     }
   }
 
+  public static boolean isDockerProcessRunning() {
+    return ProcessRunner.readProcessOutput("docker ps").contains(DOCKER_IMAGE_NAME);
+  }
+
   public static void waitUntilPreviousInstanceExited() {
     await().atMost(Duration.ofMinutes(1)).untilAsserted(() -> {
       assertCommandDoesNotPrint("docker ps", DOCKER_IMAGE_NAME);
