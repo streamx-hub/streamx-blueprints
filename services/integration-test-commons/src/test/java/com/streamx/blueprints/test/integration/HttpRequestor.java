@@ -24,7 +24,8 @@ public final class HttpRequestor {
       post.setEntity(new StringEntity(body));
       CloseableHttpResponse response = http.execute(post);
       assertThat(response.getStatusLine().getStatusCode()).isEqualTo(HttpStatus.SC_ACCEPTED);
-    } catch (IOException ex) {
+    } catch (IOException | AssertionError ex) {
+      DockerLogsRetriever.printDockerContainerLogs();
       fail(ex);
     }
   }
@@ -35,7 +36,7 @@ public final class HttpRequestor {
       CloseableHttpResponse response = http.execute(get);
       assertThat(response.getStatusLine().getStatusCode()).isEqualTo(HttpStatus.SC_OK);
       return new String(response.getEntity().getContent().readAllBytes());
-    } catch (IOException ex) {
+    } catch (IOException | AssertionError ex) {
       return fail(ex);
     }
   }
