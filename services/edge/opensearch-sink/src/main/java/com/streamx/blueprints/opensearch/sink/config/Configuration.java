@@ -10,7 +10,7 @@ public interface Configuration {
   @WithDefault("true")
   boolean typeRequired();
 
-  @WithDefault("classpath:opensearch/service-init")
+  @WithDefault("file:/deployments/opensearch/service-init")
   List<String> migrationScriptLocations();
 
   List<String> allowedJsonPaths();
