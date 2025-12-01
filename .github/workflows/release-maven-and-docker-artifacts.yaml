@@ -55,7 +55,7 @@ jobs:
       - name: Release prepare
         id: prepare-release
         run: |
-          ./mvnw -B release:prepare -DskipTests
+          ./mvnw -B release:prepare
 
       - name: Extract release tag
         id: set-tag
