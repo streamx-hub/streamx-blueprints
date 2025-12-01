@@ -70,7 +70,7 @@ jobs:
             -Dquarkus.container-image.push=true \
             -Dquarkus.container-image.additional-tags=${{ steps.set-tag.outputs.tag }}-amd64 \
             -Dquarkus.docker.buildx.platform=linux/amd64"
-          ./mvnw -B release:perform -P release -Darguments="$ARGS"
+          ./mvnw -B release:perform -Darguments="$ARGS"
 
   release-arm64-native:
     runs-on: ubuntu-latest-m-arm
@@ -114,7 +114,6 @@ jobs:
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           ./mvnw -DskipTests -B package \
             -Dnative \
-            -P release \
             -Dquarkus.container-image.push=true \
             -Dquarkus.container-image.additional-tags=$VERSION-arm64 \
             -Dquarkus.docker.buildx.platform=linux/arm64
@@ -139,10 +138,10 @@ jobs:
             if [ "$(./mvnw -Prelease -Dnative -q -f "$module/pom.xml" help:evaluate -Dexpression=quarkus.native.container-build -DforceStdout)" = "true" ]; then
               echo "Processing module: $module"
 
-              REGISTRY=$(./mvnw -f "$module/pom.xml" help:evaluate -Dexpression=quarkus.container-image.registry -q -DforceStdout -Dnative -P release)
-              GROUP=$(./mvnw -f "$module/pom.xml" help:evaluate -Dexpression=quarkus.container-image.group -q -DforceStdout -Dnative -P release)
-              IMAGE_NAME=$(./mvnw -f "$module/pom.xml" help:evaluate -Dexpression=quarkus.container-image.name -q -DforceStdout -Dnative -P release)
-              IMAGE_TYPE=$(./mvnw -f "$module/pom.xml" help:evaluate -Dexpression=streamx.container-image.package.type.native -q -DforceStdout -Dnative -P release)
+              REGISTRY=$(./mvnw -f "$module/pom.xml" help:evaluate -Dexpression=quarkus.container-image.registry -q -DforceStdout -Dnative)
+              GROUP=$(./mvnw -f "$module/pom.xml" help:evaluate -Dexpression=quarkus.container-image.group -q -DforceStdout -Dnative)
+              IMAGE_NAME=$(./mvnw -f "$module/pom.xml" help:evaluate -Dexpression=quarkus.container-image.name -q -DforceStdout -Dnative)
+              IMAGE_TYPE=$(./mvnw -f "$module/pom.xml" help:evaluate -Dexpression=streamx.container-image.package.type.native -q -DforceStdout -Dnative)
 
               FULL_IMAGE_NAME="$REGISTRY/$GROUP/$IMAGE_NAME"
 
