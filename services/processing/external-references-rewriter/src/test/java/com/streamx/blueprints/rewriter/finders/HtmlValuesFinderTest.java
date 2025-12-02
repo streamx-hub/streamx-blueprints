@@ -2,7 +2,7 @@ package com.streamx.blueprints.rewriter.finders;
 
 import org.junit.jupiter.api.Test;
 
-class HtmlValuesFinderTest extends AbstractValuesFinderTest<HtmlValuesFinderTest> {
+class HtmlValuesFinderTest extends AbstractValuesFinderTest {
 
   private static final HtmlValuesFinder htmlValuesFinder = new HtmlValuesFinder();
 

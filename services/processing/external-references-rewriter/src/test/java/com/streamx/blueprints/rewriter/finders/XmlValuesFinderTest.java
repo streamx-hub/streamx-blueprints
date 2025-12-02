@@ -2,7 +2,7 @@ package com.streamx.blueprints.rewriter.finders;
 
 import org.junit.jupiter.api.Test;
 
-class XmlValuesFinderTest extends AbstractValuesFinderTest<XmlValuesFinderTest> {
+class XmlValuesFinderTest extends AbstractValuesFinderTest {
 
   private static final XmlValuesFinder xmlValuesFinder = new XmlValuesFinder();
 

@@ -6,7 +6,7 @@ import io.quarkus.logging.Log;
 import java.util.List;
 import java.util.Set;
 
-abstract class AbstractValuesFinderTest<T extends AbstractValuesFinderTest<T>> {
+abstract class AbstractValuesFinderTest {
 
   private String input;
   private List<String> lookupSelectors;
@@ -15,30 +15,29 @@ abstract class AbstractValuesFinderTest<T extends AbstractValuesFinderTest<T>> {
 
   protected abstract BaseValuesFinder getFinder();
 
-  protected T givenInput(String input) {
+  protected AbstractValuesFinderTest givenInput(String input) {
     this.input = input;
-    return (T) this;
+    return this;
   }
 
-
-  protected T andGivenLookupSelector(String selector) {
+  protected AbstractValuesFinderTest andGivenLookupSelector(String selector) {
     this.lookupSelectors = List.of(selector);
-    return (T) this;
+    return this;
   }
 
-  protected T andGivenLookupSelectors(String... selectors) {
+  protected AbstractValuesFinderTest andGivenLookupSelectors(String... selectors) {
     this.lookupSelectors = List.of(selectors);
-    return (T) this;
+    return this;
   }
 
-  protected T whenFindMatchingValues() {
+  protected AbstractValuesFinderTest whenFindMatchingValues() {
     try {
       this.foundValues = getFinder().findMatchingValues(input, lookupSelectors);
     } catch (Exception ex) {
       Log.warn("Exception", ex);
       this.thrownException = ex;
     }
-    return (T) this;
+    return this;
   }
 
   protected void thenExpectFoundValue(String expectedValue) {
