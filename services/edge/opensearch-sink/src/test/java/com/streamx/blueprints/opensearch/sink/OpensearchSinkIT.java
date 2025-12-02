@@ -14,8 +14,8 @@ import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.apache.http.client.utils.URIBuilder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ public class OpensearchSinkIT extends BaseQuarkusIntegrationTest {
     publishIndexableResource(
         "resource-1",
         "{\"content\": \"Some data\"}",
-        Set.of("fragment-1", "fragment-2")
+        List.of("fragment-1", "fragment-2")
     );
 
     // and
@@ -70,16 +70,16 @@ public class OpensearchSinkIT extends BaseQuarkusIntegrationTest {
             "_score" : 1.0,
             "_source" : {
               "fragments" : [ {
-                "key" : "fragment-2",
-                "eventTime" : null,
-                "payload" : {
-                  "content" : "Fragment B"
-                }
-              }, {
                 "key" : "fragment-1",
                 "eventTime" : null,
                 "payload" : {
                   "content" : "Fragment A"
+                }
+              }, {
+                "key" : "fragment-2",
+                "eventTime" : null,
+                "payload" : {
+                  "content" : "Fragment B"
                 }
               } ],
               "namespace" : null,
@@ -102,7 +102,7 @@ public class OpensearchSinkIT extends BaseQuarkusIntegrationTest {
     sendEvent(event, Channels.INDEXABLE_RESOURCE_FRAGMENTS);
   }
 
-  private void publishIndexableResource(String key, String content, Set<String> fragmentKeys) {
+  private void publishIndexableResource(String key, String content, List<String> fragmentKeys) {
     CloudEvent event = CloudEventUtils.eventWithData(
         key,
         IndexableResource.TYPE_PUBLISHED,

@@ -3,6 +3,7 @@ package com.streamx.blueprints.index;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.streamx.blueprints.data.Fragment;
 import com.streamx.blueprints.data.IndexableResourceFragment;
+import com.streamx.blueprints.data.JsonResource;
 import io.cloudevents.CloudEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -33,7 +34,7 @@ public class IndexableResourceFragmentProducer extends AbstractIndexableResource
   }
 
   @Override
-  protected Object produceIndexableResource(Fragment incomingFragment, String key) {
+  protected JsonResource produceIndexableResource(Fragment incomingFragment, String key) {
     try {
       var content = incomingFragment.getContentAsString();
       var fragmentContent = new IndexableResourceFragmentContent(content);

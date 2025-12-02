@@ -13,8 +13,8 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -36,7 +36,7 @@ public class DefaultIndexUpdater {
         .item(path)
         .invoke(() -> log.tracev("Indexing resource: {0} with type: {1}", path, type))
         .flatMap(s -> {
-          var fragmentKeys = Optional.ofNullable(resource.getFragmentKeys()).orElseGet(Set::of);
+          var fragmentKeys = Optional.ofNullable(resource.getFragmentKeys()).orElseGet(List::of);
           var fragmentList = fragmentKeys.stream()
               .map(this::fillFragment)
               .toList();

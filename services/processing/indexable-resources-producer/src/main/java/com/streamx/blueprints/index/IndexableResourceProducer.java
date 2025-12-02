@@ -2,6 +2,7 @@ package com.streamx.blueprints.index;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.streamx.blueprints.data.IndexableResource;
+import com.streamx.blueprints.data.JsonResource;
 import com.streamx.blueprints.data.Page;
 import com.streamx.content.parser.urlinclude.UrlInclude;
 import com.streamx.content.parser.urlinclude.UrlIncludeCollector;
@@ -47,7 +48,7 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
   }
 
   @Override
-  protected Object produceIndexableResource(Page incomingPage, String key) {
+  protected JsonResource produceIndexableResource(Page incomingPage, String key) {
     String title = null;
     String content = null;
     if (hasContent(incomingPage)) {
@@ -65,7 +66,8 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
 
     var fragments = urlIncludes.stream()
         .map(UrlInclude::url)
-        .collect(Collectors.toSet());
+        .distinct()
+        .toList();
 
     log.tracef("Generated indexableResource fragments=%s payload=%s",
         fragments, indexableResourceContent);

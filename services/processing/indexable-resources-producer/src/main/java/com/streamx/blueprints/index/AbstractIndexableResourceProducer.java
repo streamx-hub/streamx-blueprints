@@ -3,6 +3,7 @@ package com.streamx.blueprints.index;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.JsonResource;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.data.WebResource;
 import io.cloudevents.CloudEvent;
@@ -24,7 +25,7 @@ abstract class AbstractIndexableResourceProducer<T extends WebResource> {
 
   protected abstract ProducerSettings<T> producerSettings();
 
-  protected abstract Object produceIndexableResource(T incomingResource, String key);
+  protected abstract JsonResource produceIndexableResource(T incomingResource, String key);
 
   protected CloudEvent produceIndexableResourceFromEvent(CloudEvent event) {
     ProducerSettings<T> settings = producerSettings();
@@ -44,20 +45,17 @@ abstract class AbstractIndexableResourceProducer<T extends WebResource> {
         log.warnf("Skipping processing empty incoming %s %s", incomingType, key);
         return null;
       }
-      return CloudEventUtils.eventWithData(
-          key,
-          settings.outgoingPublishedEventType(),
-          produceIndexableResource(resource, key),
-          eventTime
-      );
+
+      String outgoingEventType = settings.outgoingPublishedEventType();
+      log.tracef("Publishing %s as %s", key, outgoingEventType);
+      JsonResource indexableResource = produceIndexableResource(resource, key);
+      return CloudEventUtils.eventWithData(key, outgoingEventType, indexableResource, eventTime);
     }
 
     if (shouldUnpublish(indexable, eventType, settings)) {
-      return CloudEventUtils.eventWithoutData(
-          key,
-          settings.outgoingUnpublishedEventType(),
-          eventTime
-      );
+      String outgoingEventType = settings.outgoingUnpublishedEventType();
+      log.tracef("Unpublishing %s as %s", key, outgoingEventType);
+      return CloudEventUtils.eventWithoutData(key, outgoingEventType, eventTime);
     }
 
     log.warnf("Skipping processing event %s with unexpected type: %s", key, eventType);
