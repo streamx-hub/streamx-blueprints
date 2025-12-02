@@ -16,7 +16,7 @@ import io.quarkus.test.junit.TestProfile;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.utils.URIBuilder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
@@ -32,7 +32,7 @@ public class OpensearchSinkIT extends BaseQuarkusIntegrationTest {
   }
 
   @Test
-  void shouldIndexAndFindResources() {
+  void shouldIndexAndFindResources() throws Exception {
     // when
     publishIndexableResourceFragment(
         "fragment-1",
@@ -49,15 +49,14 @@ public class OpensearchSinkIT extends BaseQuarkusIntegrationTest {
     );
 
     // and
-    String expectedUrl = StringUtils.join(
-        "http://",
-        OpensearchTestContainer.getHost(),
-        ":",
-        OpensearchTestContainer.getPort(),
-        "/default/_search?q=_id:%22",
-        "resource-1",
-        "%22"
-    );
+    String expectedUrl = new URIBuilder()
+        .setScheme("http")
+        .setHost(OpensearchTestContainer.getHost())
+        .setPort(OpensearchTestContainer.getPort())
+        .setPath("/default/_search")
+        .setCustomQuery("q=_id:\"resource-1\"")
+        .build()
+        .toString();
 
     // then
     await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
