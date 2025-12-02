@@ -1,4 +1,4 @@
-package com.streamx.blueprints.opensearch;
+package com.streamx.blueprints.opensearch.sink;
 
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.doReturn;
@@ -29,7 +29,7 @@ public abstract class BaseOpensearchTest {
         DockerUtils.isDockerAvailable,
         "Skipping test, not able to run opensearch docker container"
     );
-    OpensearchContainer.start();
+    OpensearchTestContainer.start();
   }
 
   @BeforeEach
@@ -50,8 +50,8 @@ public abstract class BaseOpensearchTest {
 
   private RestClient restClient() {
     HttpHost httpHost = new HttpHost(
-        OpensearchContainer.getHost(),
-        OpensearchContainer.getPort(),
+        OpensearchTestContainer.getHost(),
+        OpensearchTestContainer.getPort(),
         "http"
     );
     return RestClient.builder(httpHost).build();

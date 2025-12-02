@@ -3,6 +3,7 @@ package com.streamx.blueprints.opensearch.sink;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.data.Resource;
+import com.streamx.blueprints.opensearch.sink.config.Configuration;
 import com.streamx.blueprints.opensearch.sink.index.DefaultIndexUpdater;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Uni;
@@ -11,20 +12,17 @@ import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class SearchEdgeServiceSink {
 
-  @ConfigProperty(
-      name = "streamx.blueprints.opensearch-sink.type-required",
-      defaultValue = "true")
-  boolean typeRequired;
-
   @Inject
   Logger log;
+
+  @Inject
+  Configuration configuration;
 
   @Inject
   DefaultIndexUpdater defaultIndexUpdater;
@@ -62,7 +60,7 @@ public class SearchEdgeServiceSink {
   }
 
   public boolean isTypeRequired() {
-    return typeRequired;
+    return configuration.typeRequired();
   }
 
   private static boolean isPublish(String eventType) {

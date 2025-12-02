@@ -1,12 +1,11 @@
-package com.streamx.blueprints.opensearch;
+package com.streamx.blueprints.opensearch.sink;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jboss.logging.Logger;
 import org.testcontainers.DockerClientFactory;
 
 final class DockerUtils {
 
-  private static final Logger log = LoggerFactory.getLogger(OpensearchContainer.class);
+  private static final Logger log = Logger.getLogger(DockerUtils.class);
   static final boolean isDockerAvailable = isDockerAvailable();
 
   private DockerUtils() {
