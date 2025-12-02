@@ -527,7 +527,7 @@ edge:
             ref: outbox.indexable-resource-fragments
         volumesFrom:
           configs:
-            - "opensearch/service-init:/deployments/opensearch/service-init"
+            - "opensearch/service-init:/deployments/opensearch/service-init/additional"
         environment:
           QUARKUS_ELASTICSEARCH_HOSTS: "blueprint-opensearch-sink.opensearch:9200"
       opensearch:

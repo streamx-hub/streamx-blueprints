@@ -22,7 +22,7 @@ Example named searches:
 
 The search templates defined above are included if the 
 `streamx.blueprints.opensearch-sink.migration-script-locations` property 
-contains `file:/deployments/opensearch/service-init/search-templates` or `file:/deployments/opensearch/service-init`.
+contains `file:/deployments/opensearch/service-init/default/search-templates` or `file:/deployments/opensearch/service-init/default/`.
 
 
 ## Configuration
@@ -38,7 +38,7 @@ Allows you to specify custom scripts that will be executed when Opensearch is la
 Scripts should match [Elasticsearch-evolution migration script format](https://github.com/senacor/elasticsearch-evolution?tab=readme-ov-file#41-migration-script-file-content)
 Locations must start with `file:`. Multiple locations should be separated with `,`.
 
-At least `file:/deployments/opensearch/service-init/index-definition` is required to index incoming items.
+At least `file:/deployments/opensearch/service-init/default/index-definition` is required to index incoming items.
 
 Default: `file:/deployments/opensearch/service-init`
 
