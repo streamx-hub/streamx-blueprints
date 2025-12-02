@@ -14,7 +14,6 @@ import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
-import java.io.IOException;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +22,7 @@ import org.junit.jupiter.api.Test;
 public class IndexableResourcesProducerIT extends BaseQuarkusIntegrationTest {
 
   @Test
-  void shouldProduceIndexableResource() throws IOException {
+  void shouldProduceIndexableResource() {
     // given
     Page page = new Page("<b>Hello World</b>", "test-page");
     String key = "pages/test-page.html";
@@ -42,7 +41,7 @@ public class IndexableResourcesProducerIT extends BaseQuarkusIntegrationTest {
   }
 
   @Test
-  void shouldProduceIndexableResourceFragment() throws IOException {
+  void shouldProduceIndexableResourceFragment() {
     // given
     Fragment fragment = new Fragment("<b>Header</b>", "test-fragment");
     String key = "fragments/test-fragment.html";

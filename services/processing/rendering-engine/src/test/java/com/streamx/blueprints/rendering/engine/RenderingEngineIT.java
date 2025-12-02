@@ -13,7 +13,6 @@ import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 import io.quarkus.test.junit.TestProfile;
-import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 @QuarkusIntegrationTest
@@ -21,7 +20,7 @@ import org.junit.jupiter.api.Test;
 public class RenderingEngineIT extends BaseQuarkusIntegrationTest {
 
   @Test
-  void shouldRenderPage() throws IOException {
+  void shouldRenderPage() {
     // when: publish product
     String productType = "product/simple";
     String productJson = """
