@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  linux-test-build:
+  native-test-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
