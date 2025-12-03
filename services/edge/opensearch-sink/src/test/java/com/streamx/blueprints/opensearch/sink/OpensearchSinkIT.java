@@ -1,5 +1,6 @@
 package com.streamx.blueprints.opensearch.sink;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,7 +17,7 @@ import io.quarkus.test.junit.TestProfile;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import org.apache.http.client.utils.URIBuilder;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 
@@ -32,72 +33,115 @@ public class OpensearchSinkIT extends BaseQuarkusIntegrationTest {
   }
 
   @Test
-  void shouldIndexAndFindResources() throws Exception {
+  void shouldIndexResourceAndUpdateItsFragments() throws Exception {
     // when
-    publishIndexableResourceFragment(
-        "fragment-1",
-        "{\"content\": \"Fragment A\"}"
-    );
-    publishIndexableResourceFragment(
-        "fragment-2",
-        "{\"content\": \"Fragment B\"}"
-    );
     publishIndexableResource(
         "resource-1",
         "{\"content\": \"Some data\"}",
         List.of("fragment-1", "fragment-2")
     );
+    String expectedUrl = OpensearchTestContainer.getSearchUrl("resource-1");
+    assertSearchResponseContains(expectedUrl, "Some data");
 
-    // and
-    String expectedUrl = new URIBuilder()
-        .setScheme("http")
-        .setHost(OpensearchTestContainer.getHost())
-        .setPort(OpensearchTestContainer.getPort())
-        .setPath("/default/_search")
-        .setCustomQuery("q=_id:\"resource-1\"")
-        .build()
-        .toString();
+    publishIndexableResourceFragment(
+        "fragment-1",
+        "{\"content\": \"Fragment A\"}"
+    );
+    // TODO: https://teamds.atlassian.net/browse/DXP-2466
+    //  the awaiting assert should not be necessary
+    assertSearchResponseContains(expectedUrl, "Fragment A");
+
+    publishIndexableResourceFragment(
+        "fragment-2",
+        "{\"content\": \"Fragment B\"}"
+    );
 
     // then
-    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
-      String urlContent = getUrlContent(expectedUrl);
-      JsonNode tree = objectMapper.readTree(urlContent);
-      JsonNode hits = tree.get("hits").get("hits");
-      assertSameJsons(hits, """
-          [ {
-            "_index" : "default",
-            "_id" : "resource-1",
-            "_score" : 1.0,
-            "_source" : {
-              "fragments" : [ {
-                "key" : "fragment-1",
-                "eventTime" : null,
-                "payload" : {
-                  "content" : "Fragment A"
-                }
-              }, {
-                "key" : "fragment-2",
-                "eventTime" : null,
-                "payload" : {
-                  "content" : "Fragment B"
-                }
-              } ],
-              "namespace" : null,
-              "type" : "resources/simple",
+    assertIndexedResource(expectedUrl, """
+        [ {
+          "_index" : "default",
+          "_id" : "resource-1",
+          "_score" : 1.0,
+          "_source" : {
+            "payload" : {
+              "content" : "Some data"
+            },
+            "namespace" : null,
+            "fragments" : [ {
               "payload" : {
-                "content" : "Some data"
+                "content" : "Fragment A"
+              },
+              "eventTime" : 1234567890,
+              "key" : "fragment-1"
+            }, {
+              "payload" : {
+                "content" : "Fragment B"
+              },
+              "eventTime" : 1234567890,
+              "key" : "fragment-2"
+            } ],
+            "type" : "resources/simple"
+          }
+        } ]"""
+    );
+  }
+
+  @Test
+  void shouldUpdateFragmentsPublishedBeforePublishingResource() throws Exception {
+    // when
+    publishIndexableResourceFragment(
+        "fragment-11",
+        "{\"content\": \"Fragment A\"}"
+    );
+
+    publishIndexableResourceFragment(
+        "fragment-12",
+        "{\"content\": \"Fragment B\"}"
+    );
+
+    publishIndexableResource(
+        "resource-11",
+        "{\"content\": \"Some data\"}",
+        List.of("fragment-11", "fragment-12")
+    );
+
+    String expectedUrl = OpensearchTestContainer.getSearchUrl("resource-11");
+
+    // then
+    assertIndexedResource(expectedUrl, """
+        [ {
+          "_index" : "default",
+          "_id" : "resource-11",
+          "_score" : 1.0,
+          "_source" : {
+            "fragments" : [ {
+              "key" : "fragment-11",
+              "eventTime" : 1234567890,
+              "payload" : {
+                "content" : "Fragment A"
               }
+            }, {
+              "key" : "fragment-12",
+              "eventTime" : 1234567890,
+              "payload" : {
+                "content" : "Fragment B"
+              }
+            } ],
+            "namespace" : null,
+            "type" : "resources/simple",
+            "payload" : {
+              "content" : "Some data"
             }
-          } ]""");
-    });
+          }
+        } ]"""
+    );
   }
 
   private void publishIndexableResourceFragment(String key, String content) {
     CloudEvent event = CloudEventUtils.eventWithData(
         key,
         IndexableResourceFragment.TYPE_PUBLISHED,
-        new IndexableResourceFragment(content, "fragments/simple"),
-        null
+        new IndexableResourceFragment(content, "fragments/simple")
     );
     sendEvent(event, Channels.INDEXABLE_RESOURCE_FRAGMENTS);
   }
@@ -109,6 +153,26 @@ public class OpensearchSinkIT extends BaseQuarkusIntegrationTest {
         new IndexableResource(content, "resources/simple", fragmentKeys)
     );
     sendEvent(event, Channels.INDEXABLE_RESOURCES);
+  }
+
+  private void assertSearchResponseContains(String searchUrl, String responsePath) {
+    await().atMost(Duration.ofSeconds(3)).alias(searchUrl).untilAsserted(() -> {
+      String indexedJson = getUrlContent(searchUrl);
+      assertThat(indexedJson).contains(responsePath);
+    });
+  }
+
+  private void assertIndexedResource(String expectedUrl, String expectedResourceJson) {
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+      String urlContent = getUrlContent(expectedUrl);
+      JsonNode tree = objectMapper.readTree(urlContent);
+      JsonNode hits = tree.get("hits").get("hits");
+      assertSameJsons(
+          hits,
+          expectedResourceJson,
+          Pattern.compile("(?m).*\"eventTime\".*\n") // remove event times from comparison
+      );
+    });
   }
 
   public static class IntegrationTestProfile extends BaseQuarkusIntegrationTestProfile {

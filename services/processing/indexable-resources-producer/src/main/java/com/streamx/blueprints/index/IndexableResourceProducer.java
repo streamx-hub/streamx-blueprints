@@ -17,7 +17,6 @@ import jakarta.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 

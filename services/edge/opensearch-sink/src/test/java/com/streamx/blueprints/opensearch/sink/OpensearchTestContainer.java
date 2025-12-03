@@ -7,8 +7,10 @@ import static org.awaitility.Awaitility.await;
 import com.streamx.blueprints.test.integration.ProcessRunner;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.Properties;
+import org.apache.http.client.utils.URIBuilder;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
@@ -85,5 +87,16 @@ public class OpensearchTestContainer {
   private static void assertCommandDoesNotPrint(String command, String token) {
     assertThat(ProcessRunner.readProcessOutput(command))
         .doesNotContain(token);
+  }
+
+  public static String getSearchUrl(String pagePath) throws URISyntaxException {
+    return new URIBuilder()
+        .setScheme("http")
+        .setHost(getHost())
+        .setPort(getPort())
+        .setPath("/default/_search")
+        .setCustomQuery("q=_id:\"" + pagePath + "\"")
+        .build()
+        .toString();
   }
 }
