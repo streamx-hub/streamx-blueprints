@@ -33,7 +33,7 @@ public class OpensearchSinkIT extends BaseQuarkusIntegrationTest {
   }
 
   @Test
-  void shouldIndexAndFindResources() throws Exception {
+  void shouldIndexResourceAndUpdateItsFragments() throws Exception {
     // when
     publishIndexableResource(
         "resource-1",
@@ -57,38 +57,84 @@ public class OpensearchSinkIT extends BaseQuarkusIntegrationTest {
     );
 
     // then
-    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
-      String urlContent = getUrlContent(expectedUrl);
-      JsonNode tree = objectMapper.readTree(urlContent);
-      JsonNode hits = tree.get("hits").get("hits");
-      assertSameJsons(hits, """
-          [ {
-            "_index" : "default",
-            "_id" : "resource-1",
-            "_score" : 1.0,
-            "_source" : {
+    assertIndexedResource(expectedUrl, """
+        [ {
+          "_index" : "default",
+          "_id" : "resource-1",
+          "_score" : 1.0,
+          "_source" : {
+            "payload" : {
+              "content" : "Some data"
+            },
+            "namespace" : null,
+            "fragments" : [ {
               "payload" : {
-                "content" : "Some data"
+                "content" : "Fragment A"
               },
-              "namespace" : null,
-              "fragments" : [ {
-                "payload" : {
-                  "content" : "Fragment A"
-                },
-                "eventTime" : 1234567890,
-                "key" : "fragment-1"
-              }, {
-                "payload" : {
-                  "content" : "Fragment B"
-                },
-                "eventTime" : 1234567890,
-                "key" : "fragment-2"
-              } ],
-              "type" : "resources/simple"
+              "eventTime" : 1234567890,
+              "key" : "fragment-1"
+            }, {
+              "payload" : {
+                "content" : "Fragment B"
+              },
+              "eventTime" : 1234567890,
+              "key" : "fragment-2"
+            } ],
+            "type" : "resources/simple"
+          }
+        } ]"""
+    );
+  }
+
+  @Test
+  void shouldUpdateFragmentsPublishedBeforePublishingResource() throws Exception {
+    // when
+    publishIndexableResourceFragment(
+        "fragment-11",
+        "{\"content\": \"Fragment A\"}"
+    );
+
+    publishIndexableResourceFragment(
+        "fragment-12",
+        "{\"content\": \"Fragment B\"}"
+    );
+
+    publishIndexableResource(
+        "resource-11",
+        "{\"content\": \"Some data\"}",
+        List.of("fragment-11", "fragment-12")
+    );
+
+    String expectedUrl = OpensearchTestContainer.getSearchUrl("resource-11");
+
+    // then
+    assertIndexedResource(expectedUrl, """
+        [ {
+          "_index" : "default",
+          "_id" : "resource-11",
+          "_score" : 1.0,
+          "_source" : {
+            "fragments" : [ {
+              "key" : "fragment-11",
+              "eventTime" : 1234567890,
+              "payload" : {
+                "content" : "Fragment A"
+              }
+            }, {
+              "key" : "fragment-12",
+              "eventTime" : 1234567890,
+              "payload" : {
+                "content" : "Fragment B"
+              }
+            } ],
+            "namespace" : null,
+            "type" : "resources/simple",
+            "payload" : {
+              "content" : "Some data"
             }
-          } ]""",
-          Pattern.compile("(?m).*\"eventTime\".*\n")); // remove event times from comparison
-    });
+          }
+        } ]"""
+    );
   }
 
   private void publishIndexableResourceFragment(String key, String content) {
@@ -113,6 +159,19 @@ public class OpensearchSinkIT extends BaseQuarkusIntegrationTest {
     await().atMost(Duration.ofSeconds(3)).alias(searchUrl).untilAsserted(() -> {
       String indexedJson = getUrlContent(searchUrl);
       assertThat(indexedJson).contains(responsePath);
+    });
+  }
+
+  private void assertIndexedResource(String expectedUrl, String expectedResourceJson) {
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+      String urlContent = getUrlContent(expectedUrl);
+      JsonNode tree = objectMapper.readTree(urlContent);
+      JsonNode hits = tree.get("hits").get("hits");
+      assertSameJsons(
+          hits,
+          expectedResourceJson,
+          Pattern.compile("(?m).*\"eventTime\".*\n") // remove event times from comparison
+      );
     });
   }
 
