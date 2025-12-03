@@ -1,5 +1,8 @@
 package com.streamx.blueprints.opensearch.sink.index;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.data.IndexableResourceFragment;
@@ -15,6 +18,7 @@ import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -31,18 +35,21 @@ public class DefaultIndexUpdater {
   @Inject
   PublishedIndexableResourceFragmentsStore indexableResourceFragmentsStore;
 
+  @Inject
+  ObjectMapper objectMapper;
+
   public Uni<Void> add(String path, IndexableResource resource, String namespace, String type) {
     return Uni.createFrom()
         .item(path)
         .invoke(() -> log.tracev("Indexing resource: {0} with type: {1}", path, type))
         .flatMap(s -> {
-          var fragmentKeys = Optional.ofNullable(resource.getFragmentKeys()).orElseGet(List::of);
-          var fragmentList = fragmentKeys.stream()
+          List<Fragment> fragments = resource.getFragmentKeys()
+              .stream()
               .map(this::fillFragment)
               .toList();
 
-          var document = new DefaultDocument(
-              fragmentList,
+          DefaultDocument document = new DefaultDocument(
+              fragments,
               namespace,
               type,
               resource.getContentAsString()
@@ -78,30 +85,38 @@ public class DefaultIndexUpdater {
 
   public Uni<Void> updateFragment(String key, String eventType, OffsetDateTime eventTime,
       IndexableResourceFragment fragmentResource) {
-    var content = Optional.ofNullable(fragmentResource)
+    String content = Optional.ofNullable(fragmentResource)
         .filter(ignore -> IndexableResourceFragment.TYPE_PUBLISHED.equals(eventType))
         .map(Resource::getContentAsString)
         .orElse(EMPTY_FRAGMENT);
 
-    var fragment = new Fragment(key, eventTime, content);
+    Fragment fragment = new Fragment(key, eventTime, content);
 
-    var updateFragmentsHandlingConflicts = defaultRepository.updateFragments(fragment)
+    return defaultRepository.updateFragment(fragment)
         .repeat().whilst(this::conflictOccurred)
         .onItem().invoke(() -> log.tracev("Fragment updated: {0}", fragment))
-        .toUni();
-
-    return defaultRepository.refresh()
-        .flatMap((ignore) -> updateFragmentsHandlingConflicts)
+        .toUni()
         .replaceWithVoid()
         .onFailure().invoke(e -> log.errorv(e, "Failed to update fragment {0}", key));
   }
 
-  private boolean conflictOccurred(UpdateResult updateResult) {
-    boolean result = (!updateResult.failures().isEmpty()) || updateResult.versionConflicts() > 0;
-    if (result) {
-      log.debugf("Updating fragments done with failures: %d, versionConflicts: %s. Retrying...",
-          updateResult.failures().size(), updateResult.versionConflicts());
+  private boolean conflictOccurred(UpdateResult result) {
+    boolean conflictOccurred = !result.failures().isEmpty() || result.versionConflicts() > 0;
+    if (conflictOccurred) {
+      String serializedFailures = result.failures().stream()
+          .map(this::formatJson)
+          .collect(Collectors.joining("\n", "\n", "\n"));
+      log.debugf("Updating fragments done with failures: %s, versionConflicts: %s. Retrying...",
+          serializedFailures, result.versionConflicts());
     }
-    return result;
+    return conflictOccurred;
+  }
+
+  private String formatJson(JsonNode jsonNode) {
+    try {
+      return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
+    } catch (JsonProcessingException ex) {
+      return jsonNode.toString();
+    }
   }
 }

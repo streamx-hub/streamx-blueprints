@@ -1,4 +1,4 @@
-PUT /_scripts/updateFragments
+PUT /_scripts/updateFragment
 Content-Type: application/json
 
 {

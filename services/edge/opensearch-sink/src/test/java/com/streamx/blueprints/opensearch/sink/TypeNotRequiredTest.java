@@ -8,10 +8,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-public class TypeNotRequiredTest extends SearchEdgeServiceTestBase {
+public class TypeNotRequiredTest extends SearchServiceTestBase {
 
   @InjectSpy
-  SearchEdgeServiceSink sink;
+  SearchServiceSink sink;
 
   @BeforeEach
   void configureService() {

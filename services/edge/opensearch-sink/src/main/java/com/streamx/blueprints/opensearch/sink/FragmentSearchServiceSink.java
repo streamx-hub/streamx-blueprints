@@ -13,7 +13,7 @@ import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
-public class FragmentSearchEdgeServiceSink {
+public class FragmentSearchServiceSink {
 
   @Inject
   Logger log;
@@ -36,11 +36,7 @@ public class FragmentSearchEdgeServiceSink {
         key, eventType, eventTime);
 
     var resource = CloudEventUtils.getData(event, IndexableResourceFragment.class);
-    return updateIndex(key, eventType, eventTime, resource);
-  }
-
-  private Uni<Void> updateIndex(String key, String eventType, OffsetDateTime eventTime,
-      IndexableResourceFragment resource) {
     return defaultIndexUpdater.updateFragment(key, eventType, eventTime, resource);
   }
+
 }

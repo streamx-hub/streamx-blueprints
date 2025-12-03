@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
-abstract class SearchEdgeServiceTestBase extends BaseOpensearchTest {
+abstract class SearchServiceTestBase extends BaseOpensearchTest {
 
   static final String TEST_KEY = "/test/key";
   static final String TEST_FRAGMENT_KEY = "/fragment/key";

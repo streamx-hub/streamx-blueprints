@@ -59,12 +59,11 @@ public class DefaultRepository {
       }
       """;
 
-
-  private static final String UPDATE_FRAGMENTS_BY_QUERY_COMMAND_TEMPLATE = """
+  private static final String UPDATE_FRAGMENT_BY_QUERY_COMMAND_TEMPLATE = """
       {
         "query": %s,
         "script" : {
-          "id": "updateFragments",
+          "id": "updateFragment",
           "params" : {
             "key" : %s,
             "eventTime": %s,
@@ -182,7 +181,7 @@ public class DefaultRepository {
         .replaceWithVoid();
   }
 
-  public Uni<UpdateResult> updateFragments(Fragment fragment) {
+  public Uni<UpdateResult> updateFragment(Fragment fragment) {
     String endpoint = DEFAULT_INDEX_NAME + "/_update_by_query";
     Request request = new Request("POST", endpoint);
 
@@ -192,13 +191,14 @@ public class DefaultRepository {
       var payload = fragment.payload();
 
       var querySection = UPDATE_SECTION_TEMPLATE.formatted(key, eventTime);
-      var jsonEntity = UPDATE_FRAGMENTS_BY_QUERY_COMMAND_TEMPLATE.formatted(querySection, key,
+      var jsonEntity = UPDATE_FRAGMENT_BY_QUERY_COMMAND_TEMPLATE.formatted(querySection, key,
           eventTime, payload);
 
       request.setJsonEntity(jsonEntity);
       request.addParameter("conflicts", "proceed");
 
       return sendAsync(request)
+          .call(this::refresh)
           .map(response -> mapResponseToJson(request, response))
           .map(response -> objectMapper.convertValue(response, UpdateResult.class));
     } catch (JsonProcessingException e) {
@@ -252,13 +252,8 @@ public class DefaultRepository {
     return client;
   }
 
-  private static class CompletableFutureResponseListener implements ResponseListener {
-
-    private final CompletableFuture<Response> completableFuture;
-
-    private CompletableFutureResponseListener(CompletableFuture<Response> completableFuture) {
-      this.completableFuture = completableFuture;
-    }
+  private record CompletableFutureResponseListener(
+      CompletableFuture<Response> completableFuture) implements ResponseListener {
 
     @Override
     public void onSuccess(Response response) {
