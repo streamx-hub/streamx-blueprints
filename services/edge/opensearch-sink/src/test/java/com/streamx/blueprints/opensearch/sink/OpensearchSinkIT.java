@@ -47,7 +47,8 @@ public class OpensearchSinkIT extends BaseQuarkusIntegrationTest {
         "fragment-1",
         "{\"content\": \"Fragment A\"}"
     );
-    // TODO: the awaiting assert should not be necessary
+    // TODO: https://teamds.atlassian.net/browse/DXP-2466
+    //  the awaiting assert should not be necessary
     assertSearchResponseContains(expectedUrl, "Fragment A");
 
     publishIndexableResourceFragment(
