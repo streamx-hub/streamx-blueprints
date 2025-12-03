@@ -190,6 +190,10 @@ sources:
         produces:
           - "com.streamx.blueprints.page.published.v1"
           - "com.streamx.blueprints.page.unpublished.v1"
+      - ref: "inbox.fragments"
+        produces:
+          - "com.streamx.blueprints.fragment.published.v1"
+          - "com.streamx.blueprints.fragment.unpublished.v1"
       - ref: "inbox.web-resources"
         produces:
           - "com.streamx.blueprints.web-resource.published.v1"

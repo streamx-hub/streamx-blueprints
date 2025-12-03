@@ -7,7 +7,7 @@ import com.streamx.blueprints.data.IndexableResourceFragment;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import org.awaitility.Awaitility;
@@ -36,7 +36,7 @@ class SearchEdgeServiceTest extends SearchEdgeServiceTestBase {
   @Test
   void shouldAccessSearchResultsFromReceivedIndexableResources() {
     var firstResource = new ExampleIndexableResourceContent("Title1", "Content1");
-    var firstResourceFragments = Set.of("fragment");
+    var firstResourceFragments = List.of("fragment");
     validateNoSearchResultsForTestKey();
     validateNoSearchResultsFor(firstResource);
 
@@ -70,7 +70,7 @@ class SearchEdgeServiceTest extends SearchEdgeServiceTestBase {
 
     var firstResource = new ExampleIndexableResourceContent(
         "Title with space", "Content and other");
-    var firstResourceFragments = Set.of(TEST_FRAGMENT_KEY);
+    var firstResourceFragments = List.of(TEST_FRAGMENT_KEY);
     publishResource(firstResource, firstResourceFragments);
     Predicate<ExtractableResponse<Response>> resultsPresent = response ->
         totalHits(response) > 0;
@@ -174,7 +174,7 @@ class SearchEdgeServiceTest extends SearchEdgeServiceTestBase {
     validateNoSearchResultsFor(fragment);
 
     var firstResource = new ExampleIndexableResourceContent("Title1", "Content1");
-    var firstResourceFragments = Set.of(TEST_FRAGMENT_KEY);
+    var firstResourceFragments = List.of(TEST_FRAGMENT_KEY);
     publishResource(firstResource, firstResourceFragments);
     validateSearchResultsFor(firstResource);
     validateNoFragmentSearchResults("fragment");
@@ -211,7 +211,7 @@ class SearchEdgeServiceTest extends SearchEdgeServiceTestBase {
     publishFragment(firstFragment);
 
     var firstResource = new ExampleIndexableResourceContent("Title1", "Content1");
-    var firstResourceFragments = Set.of(TEST_FRAGMENT_KEY);
+    var firstResourceFragments = List.of(TEST_FRAGMENT_KEY);
     publishResource(firstResource, firstResourceFragments);
     validateSearchResultsFor(firstResource);
     validateFragmentSearchResults("fragment");

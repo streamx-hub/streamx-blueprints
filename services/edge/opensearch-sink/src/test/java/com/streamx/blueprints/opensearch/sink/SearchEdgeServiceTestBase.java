@@ -14,7 +14,7 @@ import io.restassured.response.Response;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
@@ -136,10 +136,10 @@ abstract class SearchEdgeServiceTestBase extends BaseOpensearchTest {
   }
 
   protected void publishResource(TestResource content, String testType) {
-    send(content, IndexableResource.TYPE_PUBLISHED, Set.of(), testType);
+    send(content, IndexableResource.TYPE_PUBLISHED, List.of(), testType);
   }
 
-  protected void publishResource(TestResource content, Set<String> fragmentKeys) {
+  protected void publishResource(TestResource content, List<String> fragmentKeys) {
     send(content, IndexableResource.TYPE_PUBLISHED, fragmentKeys, TEST_TYPE);
   }
 
@@ -147,7 +147,8 @@ abstract class SearchEdgeServiceTestBase extends BaseOpensearchTest {
     send(null, IndexableResource.TYPE_UNPUBLISHED, null, null);
   }
 
-  private void send(TestResource content, String eventType, Set<String> fragmentKeys, String type) {
+  private void send(TestResource content, String eventType, List<String> fragmentKeys,
+      String type) {
     try {
       var json = objectMapper.writeValueAsString(content);
       var indexableResource = new IndexableResource(json, type, fragmentKeys);

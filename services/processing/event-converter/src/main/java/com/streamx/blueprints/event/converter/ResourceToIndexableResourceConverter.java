@@ -61,7 +61,7 @@ public class ResourceToIndexableResourceConverter {
     return new IndexableResource(
         incomingResource.getContent(),
         incomingResource.getType(),
-        Collections.emptySet()
+        Collections.emptyList()
     );
   }
 
