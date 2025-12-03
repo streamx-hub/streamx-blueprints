@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 import org.awaitility.core.ConditionTimeoutException;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.BeforeAll;
@@ -118,8 +119,19 @@ public abstract class BaseQuarkusIntegrationTest {
     assertThat(formatJson(actual)).isEqualTo(formatJson(expected));
   }
 
-  protected static void assertSameJsons(JsonNode actual, String expected) {
-    assertThat(formatJson(actual)).isEqualTo(formatJson(expected));
+  protected static void assertSameJsons(JsonNode actualNode, String expected,
+      Pattern... patternsToRemove) {
+    String actualJson = formatJson(actualNode);
+    String expectedJson = formatJson(expected);
+    for (Pattern pattern : patternsToRemove) {
+      actualJson = removePattern(actualJson, pattern);
+      expectedJson = removePattern(expectedJson, pattern);
+    }
+    assertThat(actualJson).isEqualTo(expectedJson);
+  }
+
+  private static String removePattern(String string, Pattern pattern) {
+    return pattern.matcher(string).replaceAll("");
   }
 
   static Map<String, String> propertiesForOutgoingChannels() {
