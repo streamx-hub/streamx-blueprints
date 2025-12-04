@@ -148,13 +148,13 @@ descriptors:
           resources: {}
         environment:
           STREAMX_BLUEPRINTS_WEB_SERVER_SINK_STORAGE_ROOT_DIRECTORY: "/srv/www"
-        ports:
+        servicePorts:
           - "8081:8080"
         volumes:
           - "repository-volume:/srv/www"
       webserver:
         image: "docker.io/library/nginx:1.26.0"
-        ports:
+        servicePorts:
           - "8082:80"
         volumes:
           - "repository-volume:/usr/share/nginx/html"
@@ -170,13 +170,13 @@ descriptors:
         incoming:
           indexable-resources: {}
           indexable-resource-fragments: {}
-        ports:
+        servicePorts:
           - "8083:8080"
         volumes:
           - "repository-volume:/usr/share/opensearch/data"
       opensearch:
         image: "docker.io/opensearchproject/opensearch:2.16.0"
-        ports:
+        servicePorts:
           - "9201:9200"
           - "9301:9300"
         volumes:
