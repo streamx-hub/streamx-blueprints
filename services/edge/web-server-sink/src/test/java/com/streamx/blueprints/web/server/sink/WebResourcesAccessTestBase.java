@@ -159,7 +159,7 @@ public abstract class WebResourcesAccessTestBase {
     unpublish(subject, unpublishEventType);
 
     // then
-    assertCannotAccessViaHttp(expectedPath);
+    assertCannotAccessViaHttp(namespaced(expectedPath));
   }
 
   @Test
