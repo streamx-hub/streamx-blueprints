@@ -14,6 +14,7 @@
   <properties>
     <scrimage-webp.version>4.3.5</scrimage-webp.version>
     <maven-dependency-plugin.version>3.9.0</maven-dependency-plugin.version>
+    <maven-antrun-plugin.version>3.2.0</maven-antrun-plugin.version>
   </properties>
 
   <dependencies>
@@ -76,9 +77,8 @@
 
           <!-- Rename the extracted files for easier access via Dockerfile -->
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>3.2.0</version>
+            <version>${maven-antrun-plugin.version}</version>
             <executions>
               <execution>
                 <id>rename-binaries</id>

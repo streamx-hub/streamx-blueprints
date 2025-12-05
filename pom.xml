@@ -22,12 +22,12 @@
 
     <!--  Maven plugins  -->
     <compiler-plugin.version>3.14.1</compiler-plugin.version>
-    <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
+    <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
     <failsafe-plugin.version>${surefire-plugin.version}</failsafe-plugin.version>
     <surefire-plugin.version>3.5.4</surefire-plugin.version>
     <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
     <jacoco-plugin.version>0.8.14</jacoco-plugin.version>
-    <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
+    <maven-release-plugin.version>3.3.0</maven-release-plugin.version>
     <artifactregistry-maven-wagon.version>2.2.1</artifactregistry-maven-wagon.version>
 
     <!--  StreamX  -->
@@ -168,7 +168,6 @@
           </executions>
         </plugin>
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
           <version>${maven-jar-plugin.version}</version>
         </plugin>
@@ -214,7 +213,6 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
         <version>${checkstyle-plugin.version}</version>
         <configuration>
@@ -311,7 +309,6 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
         <version>${maven-release-plugin.version}</version>
         <configuration>
