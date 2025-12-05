@@ -12,9 +12,7 @@
   <name>StreamX Blueprints : External References Rewriter</name>
 
   <properties>
-    <jsoup.version>1.21.2</jsoup.version>
-    <json-path.version>2.9.0</json-path.version>
-    <camel-quarkus-xpath.version>3.27.0</camel-quarkus-xpath.version>
+    <camel-quarkus-xpath.version>3.30.0</camel-quarkus-xpath.version>
   </properties>
 
   <dependencies>

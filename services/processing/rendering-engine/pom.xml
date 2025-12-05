@@ -13,7 +13,7 @@
   <name>StreamX Blueprints : Rendering Engine</name>
 
   <properties>
-    <pebble.version>3.2.4</pebble.version>
+    <pebble.version>4.0.0</pebble.version>
   </properties>
 
   <dependencies>

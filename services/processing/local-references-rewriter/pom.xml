@@ -11,10 +11,6 @@
   <artifactId>local-references-rewriter</artifactId>
   <name>StreamX Blueprints : Local References Rewriter</name>
 
-  <properties>
-    <jsoup.version>1.21.2</jsoup.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.jsoup</groupId>
