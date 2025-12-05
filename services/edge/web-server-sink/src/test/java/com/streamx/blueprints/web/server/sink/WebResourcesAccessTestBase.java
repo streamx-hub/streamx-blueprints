@@ -26,17 +26,14 @@ import java.time.OffsetDateTime;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 @TestInstance(Lifecycle.PER_CLASS)
-@TestMethodOrder(OrderAnnotation.class)
 public abstract class WebResourcesAccessTestBase {
 
   private static final String TEST_CONTENT = "test content for %s";
@@ -77,20 +74,20 @@ public abstract class WebResourcesAccessTestBase {
   }
 
   @Test
-  void shouldNotUnpublishWholeDirectory() {
+  void shouldNotUnpublishNonEmptyDirectory() {
     // given
     String file = "/directory/file.html";
     String directory = "/directory";
 
     String publishedContent = publish(file, Page::new);
-    assertCanAccessViaHttp(file, publishedContent);
+    assertCanAccessViaHttp(namespaced(file), publishedContent);
 
     // when
     unpublish(directory);
     makeSurePublicationProcessed();
 
     // then
-    assertCanAccessViaHttp(file, publishedContent);
+    assertCanAccessViaHttp(namespaced(file), publishedContent);
   }
 
   @Test
@@ -152,14 +149,11 @@ public abstract class WebResourcesAccessTestBase {
       String subject, String expectedPath, T resource,
       String publishEventType, String unpublishEventType
   ) {
-    // given
-    String expectedFullPath = getExpectedDefaultNamespace() + expectedPath;
-
     // when
     publish(subject, resource, publishEventType);
 
     // then
-    assertCanAccessViaHttp(expectedFullPath, resource.getContentAsString());
+    assertCanAccessViaHttp(namespaced(expectedPath), resource.getContentAsString());
 
     // when
     unpublish(subject, unpublishEventType);
@@ -218,16 +212,18 @@ public abstract class WebResourcesAccessTestBase {
 
   protected abstract String getExpectedDefaultNamespace();
 
+  private String namespaced(String path) {
+    return getExpectedDefaultNamespace() + path;
+  }
+
   private Stream<Arguments> keyToExpectedPath() {
     return Stream.of(
-        Arguments.of("test1.extension", getExpectedDefaultNamespace() + "/test1.extension"),
-        Arguments.of("/test2.extension", getExpectedDefaultNamespace() + "/test2.extension"),
-        Arguments.of("parent1/test3.extension",
-            getExpectedDefaultNamespace() + "/parent1/test3.extension"),
-        Arguments.of("/parent2/test4.extension",
-            getExpectedDefaultNamespace() + "/parent2/test4.extension"),
+        Arguments.of("test1.extension", namespaced("/test1.extension")),
+        Arguments.of("/test2.extension", namespaced("/test2.extension")),
+        Arguments.of("parent1/test3.extension", namespaced("/parent1/test3.extension")),
+        Arguments.of("/parent2/test4.extension", namespaced("/parent2/test4.extension")),
         Arguments.of("parent3/sub-parent1/test5.extension",
-            getExpectedDefaultNamespace() + "/parent3/sub-parent1/test5.extension"),
+            namespaced("/parent3/sub-parent1/test5.extension")),
         Arguments.of("ns1:test1.extension", "ns1/test1.extension"),
         Arguments.of("ns2/ns3:test1.extension", "ns2/ns3/test1.extension")
     );
@@ -237,7 +233,7 @@ public abstract class WebResourcesAccessTestBase {
   private void makeSurePublicationProcessed() {
     String synchronisationFile = "/sync.txt";
     String syncContent = publish(synchronisationFile, Page::new);
-    assertCanAccessViaHttp(synchronisationFile, syncContent);
+    assertCanAccessViaHttp(namespaced(synchronisationFile), syncContent);
   }
 
   private <T> String publish(String subject, BiFunction<String, String, T> createPayloadFn) {
