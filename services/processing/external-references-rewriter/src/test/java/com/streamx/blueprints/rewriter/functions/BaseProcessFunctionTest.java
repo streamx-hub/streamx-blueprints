@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -101,19 +100,25 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
   }
 
   protected List<CloudEvent> waitForEventsInSink(String payloadType, int expectedCount) {
-    AtomicReference<List<CloudEvent>> matchingEventsRef = new AtomicReference<>();
-    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
-      List<CloudEvent> matchingEvents = resourcesSink.received().stream()
-          .map(Message::getPayload)
-          .filter(event -> {
-            Resource payload = CloudEventUtils.getData(event, Resource.class);
-            return payload != null && Objects.equals(payloadType, payload.getType());
-          })
-          .toList();
-      assertThat(matchingEvents).hasSize(expectedCount);
-      matchingEventsRef.set(matchingEvents);
-    });
-    return matchingEventsRef.get();
+    return waitForEventsInSink(payloadType, expectedCount, expectedCount);
+  }
+
+  protected List<CloudEvent> waitForEventsInSink(String payloadType, int expectedCount,
+      int expectedTotalCount) {
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() ->
+        assertThat(resourcesSink.received()).hasSize(expectedTotalCount)
+    );
+
+    List<CloudEvent> matchingEvents = resourcesSink.received().stream()
+        .map(Message::getPayload)
+        .filter(event -> {
+          Resource payload = CloudEventUtils.getData(event, Resource.class);
+          return payload != null && Objects.equals(payloadType, payload.getType());
+        })
+        .toList();
+
+    assertThat(matchingEvents).hasSize(expectedCount);
+    return matchingEvents;
   }
 
   protected void assertPublishedPage(CloudEvent event, String expectedKey, String expectedContent) {

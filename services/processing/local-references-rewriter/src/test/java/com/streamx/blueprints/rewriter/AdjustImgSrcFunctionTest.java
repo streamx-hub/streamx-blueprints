@@ -63,6 +63,7 @@ class AdjustImgSrcFunctionTest {
     assetsChannel = connector.source(Channels.OPTIMIZED_ASSETS);
     adjustedPagesSink = connector.sink(Channels.ADJUSTED_PAGES);
     adjustedPagesSink.clear();
+    OptimizedAssetsStore.clear();
   }
 
   @Test

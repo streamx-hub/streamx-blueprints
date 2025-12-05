@@ -78,7 +78,7 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
         "/page2.html",
         page2Content);
 
-    List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 1);
+    List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 1, 1);
     assertPublishedWebResource(webResourceEvents.getFirst(),
         "/sitemap.xml",
         """
@@ -99,7 +99,7 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     );
 
     // then
-    final List<CloudEvent> pageEvents = waitForEventsInSink(EXTERNAL_PAGE, 2);
+    final List<CloudEvent> pageEvents = waitForEventsInSink(EXTERNAL_PAGE, 2, 3);
     waitForDownloadedAssets(4);
 
     // page1 contains links to image1 and image2
@@ -137,7 +137,7 @@ class ProcessXmlWebResourceFunctionTest extends BaseProcessFunctionTest {
             """);
 
     // and: expect the sitemap file events to be not processed by the second instance
-    waitForEventsInSink(WEB_RESOURCE, 1);
+    waitForEventsInSink(WEB_RESOURCE, 1, 3);
   }
 
   @ParameterizedTest

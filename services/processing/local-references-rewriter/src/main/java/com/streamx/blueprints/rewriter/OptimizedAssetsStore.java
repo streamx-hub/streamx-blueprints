@@ -52,4 +52,8 @@ public class OptimizedAssetsStore {
   public String getOptimizedAssetPath(String originalImagePath) {
     return publishedOptimizedAssets.get(originalImagePath);
   }
+
+  static void clear() {
+    publishedOptimizedAssets.clear();
+  }
 }
