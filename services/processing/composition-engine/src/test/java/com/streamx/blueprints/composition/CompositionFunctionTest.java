@@ -19,6 +19,7 @@ import com.streamx.blueprints.data.Layout;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.Resource;
 import io.cloudevents.CloudEvent;
+import io.cloudevents.CloudEventAttributes;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import io.smallrye.mutiny.Multi;
@@ -28,6 +29,7 @@ import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.time.Duration;
+import java.util.List;
 import java.util.stream.IntStream;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.BeforeEach;
@@ -85,18 +87,14 @@ class CompositionFunctionTest {
     }).when(compositionFunction).consumeComposition(any());
   }
 
-  record ExpectedEvent(String subject, String type, String pageContent, String pageType) {
+  record PublishedPage(String subject, String type, String pageContent, String pageType) {
 
-    static ExpectedEvent publishedPage(String subject, String content, String pageType) {
-      return new ExpectedEvent(subject, Page.TYPE_PUBLISHED, content, pageType);
+    static PublishedPage of(String subject, String content, String pageType) {
+      return new PublishedPage(subject, Page.TYPE_PUBLISHED, content, pageType);
     }
 
-    static ExpectedEvent publishedPage(String subject, String content) {
-      return publishedPage(subject, content, RESOURCE_TYPE);
-    }
-
-    static ExpectedEvent unpublishedPage(String subject) {
-      return new ExpectedEvent(subject, Page.TYPE_UNPUBLISHED, null, null);
+    static PublishedPage of(String subject, String content) {
+      return of(subject, content, RESOURCE_TYPE);
     }
   }
 
@@ -132,7 +130,7 @@ class CompositionFunctionTest {
     publishComposition(compositionKey, composition, layoutKey);
 
     // then
-    assertSingleOutgoingPublishPage(compositionKey, """
+    assertSinglePublishedPage(PublishedPage.of(compositionKey, """
         <html>
           Hello <b>John</b>
         the
@@ -142,7 +140,7 @@ class CompositionFunctionTest {
           FAQs:
             No data
         </html>
-        """);
+        """));
   }
 
 
@@ -168,11 +166,11 @@ class CompositionFunctionTest {
     publishComposition(compositionKey, composition, layoutKey);
 
     // then
-    assertSingleOutgoingPublishPage(compositionKey, """
+    assertSinglePublishedPage(PublishedPage.of(compositionKey, """
         <html>
           Hello .
         </html>
-        """);
+        """));
   }
 
   @Test
@@ -189,8 +187,8 @@ class CompositionFunctionTest {
     publishComposition(compositionKey, "{{#define name=\"name.html\"}}World", layoutKey);
 
     // then
-    assertSingleOutgoingPublishPage(compositionKey, "layout-type-3",
-        "Even more hello, World");
+    assertSinglePublishedPage(PublishedPage.of(compositionKey,
+        "Even more hello, World", "layout-type-3"));
   }
 
   @Test
@@ -210,9 +208,9 @@ class CompositionFunctionTest {
     publishComposition(composition3Key, "{{#define name=\"name.html\"}}Mark", "hi-layout");
 
     // expect 2 pages to be published
-    assertOutgoingPageEvents(
-        ExpectedEvent.publishedPage(composition1Key, "Hello, John"),
-        ExpectedEvent.publishedPage(composition2Key, "Hello, Kate")
+    assertPublishedPages(
+        PublishedPage.of(composition1Key, "Hello, John"),
+        PublishedPage.of(composition2Key, "Hello, Kate")
     );
 
     pagesSink.clear();
@@ -221,9 +219,9 @@ class CompositionFunctionTest {
     publishLayout(layoutKey, "Good morning, {{#insert name=\"name.html\"}}{{}}");
 
     // then: expect the two pages to be recomposed
-    assertOutgoingPageEvents(
-        ExpectedEvent.publishedPage(composition1Key, "Good morning, John"),
-        ExpectedEvent.publishedPage(composition2Key, "Good morning, Kate")
+    assertPublishedPages(
+        PublishedPage.of(composition1Key, "Good morning, John"),
+        PublishedPage.of(composition2Key, "Good morning, Kate")
     );
   }
 
@@ -253,12 +251,12 @@ class CompositionFunctionTest {
     publishComposition(compositionB3, "{{#define name=\"name.html\"}}B3", layoutB);
 
     // expect all the pages to be published
-    assertOutgoingPageEvents(
-        ExpectedEvent.publishedPage(compositionA1, "Hello, A1"),
-        ExpectedEvent.publishedPage(compositionA2, "Hello, A2"),
-        ExpectedEvent.publishedPage(compositionB1, "Goodbye, B1"),
-        ExpectedEvent.publishedPage(compositionB2, "Goodbye, B2"),
-        ExpectedEvent.publishedPage(compositionB3, "Goodbye, B3")
+    assertPublishedPages(
+        PublishedPage.of(compositionA1, "Hello, A1"),
+        PublishedPage.of(compositionA2, "Hello, A2"),
+        PublishedPage.of(compositionB1, "Goodbye, B1"),
+        PublishedPage.of(compositionB2, "Goodbye, B2"),
+        PublishedPage.of(compositionB3, "Goodbye, B3")
     );
 
     pagesSink.clear();
@@ -267,11 +265,7 @@ class CompositionFunctionTest {
     unpublishLayout(layoutB);
 
     // then: expect the pages composed using the unpublished layout, to be unpublished
-    assertOutgoingPageEvents(
-        ExpectedEvent.unpublishedPage(compositionB1),
-        ExpectedEvent.unpublishedPage(compositionB2),
-        ExpectedEvent.unpublishedPage(compositionB3)
-    );
+    assertUnpublishedPages(compositionB1, compositionB2, compositionB3);
   }
 
   @Test
@@ -293,9 +287,9 @@ class CompositionFunctionTest {
     publishLayout(layoutKey, "Title of {{#insert name=\"title.html\"}} page");
 
     // then
-    assertOutgoingPageEvents(
-        ExpectedEvent.publishedPage(activitiesCompositionKey, "Title of Activities page"),
-        ExpectedEvent.publishedPage(carsCompositionKey, "Title of Cars page")
+    assertPublishedPages(
+        PublishedPage.of(activitiesCompositionKey, "Title of Activities page"),
+        PublishedPage.of(carsCompositionKey, "Title of Cars page")
     );
   }
 
@@ -324,7 +318,7 @@ class CompositionFunctionTest {
     // and
     publishComposition(compositionKey, ANY_CONTENT, layoutKey);
     unpublishComposition(compositionKey);
-    assertSingleOutgoingUnpublishPage(compositionKey);
+    assertUnpublishedPages(compositionKey);
     pagesSink.clear();
 
     // when
@@ -344,14 +338,14 @@ class CompositionFunctionTest {
 
     String compositionKey = "composition-4";
     publishComposition(compositionKey, ANY_CONTENT, layoutKey);
-    assertSingleOutgoingPublishPage(compositionKey, layoutType, layoutContent);
+    assertSinglePublishedPage(PublishedPage.of(compositionKey, layoutContent, layoutType));
     pagesSink.clear();
 
     // when
     unpublishComposition(compositionKey);
 
     // then
-    assertSingleOutgoingUnpublishPage(compositionKey);
+    assertUnpublishedPages(compositionKey);
   }
 
   @Test
@@ -368,11 +362,11 @@ class CompositionFunctionTest {
     }
 
     // and: verify pages are composed
-    assertOutgoingPageEvents(
+    assertPublishedPages(
         IntStream
             .range(0, numberOfCompositions)
-            .mapToObj(i -> ExpectedEvent.publishedPage("composition_" + i, "Hello, User " + i))
-            .toArray(ExpectedEvent[]::new)
+            .mapToObj(i -> PublishedPage.of("composition_" + i, "Hello, User " + i))
+            .toArray(PublishedPage[]::new)
     );
     pagesSink.clear();
 
@@ -381,11 +375,11 @@ class CompositionFunctionTest {
     publishLayout(layoutKey, modifiedLayout);
 
     // then: verify pages are re-composed
-    assertOutgoingPageEvents(
+    assertPublishedPages(
         IntStream
             .range(0, numberOfCompositions)
-            .mapToObj(i -> ExpectedEvent.publishedPage("composition_" + i, "Bye, User " + i))
-            .toArray(ExpectedEvent[]::new)
+            .mapToObj(i -> PublishedPage.of("composition_" + i, "Bye, User " + i))
+            .toArray(PublishedPage[]::new)
     );
   }
 
@@ -409,11 +403,11 @@ class CompositionFunctionTest {
     }
 
     // then: expect all compositions except composition_3 to result in composed pages
-    assertOutgoingPageEvents(
-        ExpectedEvent.publishedPage("composition_1", "<img src='image-1.png' />"),
-        ExpectedEvent.publishedPage("composition_2", "<img src='image-2.png' />"),
-        ExpectedEvent.publishedPage("composition_4", "<img src='image-4.png' />"),
-        ExpectedEvent.publishedPage("composition_5", "<img src='image-5.png' />")
+    assertPublishedPages(
+        PublishedPage.of("composition_1", "<img src='image-1.png' />"),
+        PublishedPage.of("composition_2", "<img src='image-2.png' />"),
+        PublishedPage.of("composition_4", "<img src='image-4.png' />"),
+        PublishedPage.of("composition_5", "<img src='image-5.png' />")
     );
   }
 
@@ -440,37 +434,38 @@ class CompositionFunctionTest {
         eventWithoutData(key, Composition.TYPE_UNPUBLISHED));
   }
 
-  private void assertSingleOutgoingPublishPage(String expectedKey, String expectedContent) {
-    assertSingleOutgoingPublishPage(expectedKey, RESOURCE_TYPE, expectedContent);
+  private void assertSinglePublishedPage(PublishedPage expectedPage) {
+    assertPublishedPages(expectedPage);
   }
 
-  private void assertSingleOutgoingPublishPage(String expectedKey, String expectedType,
-      String expectedContent) {
-    ExpectedEvent expectedEvent = ExpectedEvent.publishedPage(
-        expectedKey, expectedContent, expectedType
-    );
-    assertOutgoingPageEvents(expectedEvent);
-  }
-
-  private void assertSingleOutgoingUnpublishPage(String expectedKey) {
-    ExpectedEvent expectedEvent = ExpectedEvent.unpublishedPage(expectedKey);
-    assertOutgoingPageEvents(expectedEvent);
-  }
-
-  private void assertOutgoingPageEvents(ExpectedEvent... expectedEvents) {
+  private void assertPublishedPages(PublishedPage... expectedPages) {
     await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
-        assertThat(pagesSink.received())
-            .hasSameSizeAs(expectedEvents)
-            .map(Message::getPayload)
-            .map(event -> {
-              Resource resource = CloudEventUtils.getData(event, Resource.class);
-              return resource == null
-                  ? ExpectedEvent.unpublishedPage(event.getSubject())
-                  : ExpectedEvent.publishedPage(event.getSubject(), resource.getContentAsString(),
-                      resource.getType());
-            })
-            .containsExactlyInAnyOrder(expectedEvents)
+        assertThat(pagesSink.received()).hasSameSizeAs(expectedPages)
     );
+
+    List<PublishedPage> publishedPages = pagesSink.received().stream()
+        .map(Message::getPayload)
+        .map(event -> {
+          Resource resource = CloudEventUtils.getData(event, Resource.class);
+          return PublishedPage.of(event.getSubject(), resource.getContentAsString(),
+              resource.getType());
+        })
+        .toList();
+
+    assertThat(publishedPages).containsExactlyInAnyOrder(expectedPages);
+  }
+
+  private void assertUnpublishedPages(String... expectedSubjects) {
+    await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+        assertThat(pagesSink.received()).hasSameSizeAs(expectedSubjects)
+    );
+
+    List<String> unpublishedSubjects = pagesSink.received().stream()
+        .map(Message::getPayload)
+        .map(CloudEventAttributes::getSubject)
+        .toList();
+
+    assertThat(unpublishedSubjects).containsExactlyInAnyOrder(expectedSubjects);
   }
 
   private void assertNoOutgoingPageEvents() {
