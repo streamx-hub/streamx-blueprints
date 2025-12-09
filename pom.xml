@@ -39,7 +39,7 @@
     <!-- Quarkus -->
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.20.1</quarkus.platform.version>
+    <quarkus.platform.version>3.30.2</quarkus.platform.version>
     <quarkus-reactive-messaging-http.version>2.5.0-lts</quarkus-reactive-messaging-http.version>
 
     <!--  Images tags  -->
@@ -57,8 +57,8 @@
     <quarkus.container-image.additional-tags>${streamx.container-image.latest-tag}</quarkus.container-image.additional-tags>
 
     <!-- Test dependencies -->
-    <assertj-core.version>3.27.6</assertj-core.version>
-    <quarkus-wiremock-test.version>1.5.0</quarkus-wiremock-test.version>
+    <assertj-core.version>4.0.0-M1</assertj-core.version>
+    <quarkus-wiremock-test.version>1.5.2</quarkus-wiremock-test.version>
   </properties>
 
   <scm>

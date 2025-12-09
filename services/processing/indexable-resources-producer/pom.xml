@@ -13,7 +13,7 @@
   <name>StreamX Blueprints : Indexable Resources Producer</name>
 
   <properties>
-    <tika.version>2.1.0</tika.version>
+    <tika.version>2.3.0</tika.version>
   </properties>
 
   <dependencies>
