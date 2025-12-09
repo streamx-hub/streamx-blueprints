@@ -15,6 +15,7 @@ import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.data.WebResource;
 import com.streamx.blueprints.web.server.Channels;
+import com.streamx.blueprints.web.server.Configuration;
 import com.streamx.blueprints.web.server.storage.FileSystemResourceStorage;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.mockito.InjectSpy;
@@ -22,10 +23,13 @@ import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
+import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -47,6 +51,14 @@ public abstract class WebResourcesAccessTestBase {
 
   @InjectSpy
   FileSystemResourceStorage fileSystemResourceStorage;
+
+  @Inject
+  Configuration configuration;
+
+  @BeforeEach
+  void clearRepository() {
+    FileUtils.deleteQuietly(new File(configuration.storageRootDirectory()));
+  }
 
   @ParameterizedTest
   @MethodSource("keyToExpectedPath")
