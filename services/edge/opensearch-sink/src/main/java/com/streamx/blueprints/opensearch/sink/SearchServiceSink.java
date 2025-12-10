@@ -16,7 +16,7 @@ import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
-public class SearchEdgeServiceSink {
+public class SearchServiceSink {
 
   @Inject
   Logger log;
@@ -38,10 +38,10 @@ public class SearchEdgeServiceSink {
     log.tracef("Indexing resource: key %s, event type %s, event time %s, resource type %s",
         key, eventType, eventTime, resourceType);
 
-    if (isUnpublish(eventType) || StringUtils.isNotBlank(resourceType) || !isTypeRequired()) {
-      return updateIndex(key, eventType, resource, resourceType);
+    if (isPublish(eventType) && isTypeMissing(resourceType)) {
+      return Uni.createFrom().voidItem();
     }
-    return Uni.createFrom().voidItem();
+    return updateIndex(key, eventType, resource, resourceType);
   }
 
   private Uni<Void> updateIndex(
@@ -57,6 +57,10 @@ public class SearchEdgeServiceSink {
 
     log.tracef("Skipping storing of page with event type %s", eventType);
     return Uni.createFrom().voidItem();
+  }
+
+  private boolean isTypeMissing(String resourceType) {
+    return isTypeRequired() && StringUtils.isBlank(resourceType);
   }
 
   public boolean isTypeRequired() {

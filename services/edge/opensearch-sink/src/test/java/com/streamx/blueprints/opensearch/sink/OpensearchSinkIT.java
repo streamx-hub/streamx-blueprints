@@ -41,15 +41,12 @@ public class OpensearchSinkIT extends BaseQuarkusIntegrationTest {
         List.of("fragment-1", "fragment-2")
     );
     String expectedUrl = OpensearchTestContainer.getSearchUrl("resource-1");
-    assertSearchResponseContains(expectedUrl, "Some data");
+    waitUntilSearchResponseContains(expectedUrl, "Some data");
 
     publishIndexableResourceFragment(
         "fragment-1",
         "{\"content\": \"Fragment A\"}"
     );
-    // TODO: https://teamds.atlassian.net/browse/DXP-2466
-    //  the awaiting assert should not be necessary
-    assertSearchResponseContains(expectedUrl, "Fragment A");
 
     publishIndexableResourceFragment(
         "fragment-2",
@@ -155,8 +152,8 @@ public class OpensearchSinkIT extends BaseQuarkusIntegrationTest {
     sendEvent(event, Channels.INDEXABLE_RESOURCES);
   }
 
-  private void assertSearchResponseContains(String searchUrl, String responsePath) {
-    await().atMost(Duration.ofSeconds(3)).alias(searchUrl).untilAsserted(() -> {
+  private void waitUntilSearchResponseContains(String searchUrl, String responsePath) {
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
       String indexedJson = getUrlContent(searchUrl);
       assertThat(indexedJson).contains(responsePath);
     });
