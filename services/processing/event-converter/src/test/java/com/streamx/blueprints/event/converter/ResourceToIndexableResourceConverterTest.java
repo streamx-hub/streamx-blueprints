@@ -51,7 +51,7 @@ public class ResourceToIndexableResourceConverterTest {
   }
 
   @Test
-  void shouldConvertDataPublishEvent_ToIndexableResourcePublishEvent() throws Exception {
+  void shouldConvertDataPublishEvent_ToIndexableResourcePublishEvent() {
     // given
     Data data = new Data("{\"key\": \"value\"}", RESOURCE_TYPE);
 
@@ -64,7 +64,7 @@ public class ResourceToIndexableResourceConverterTest {
   }
 
   @Test
-  void shouldConvertWebResourcePublishEvent_ToIndexableResourcePublishEvent() throws Exception {
+  void shouldConvertWebResourcePublishEvent_ToIndexableResourcePublishEvent() {
     // given
     WebResource webResource = new WebResource("{\"key\": \"value\"}", RESOURCE_TYPE);
 
@@ -77,7 +77,7 @@ public class ResourceToIndexableResourceConverterTest {
   }
 
   @Test
-  void shouldForwardIndexableResourcePublishEvent() throws Exception {
+  void shouldForwardIndexableResourcePublishEvent() {
     // given
     IndexableResource resource = new IndexableResource("content", "type",
         List.of("fragment-1", "fragment-2"));
