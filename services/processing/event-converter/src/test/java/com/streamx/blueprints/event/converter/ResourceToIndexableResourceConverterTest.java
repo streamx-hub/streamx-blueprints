@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.Composition;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.DownloadRequest;
 import com.streamx.blueprints.data.Fragment;
@@ -22,6 +23,7 @@ import jakarta.inject.Inject;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -49,7 +51,7 @@ public class ResourceToIndexableResourceConverterTest {
   }
 
   @Test
-  void shouldConvertDataPublishEvent_ToIndexableResourcePublishEvent() {
+  void shouldConvertDataPublishEvent_ToIndexableResourcePublishEvent() throws Exception {
     // given
     Data data = new Data("{\"key\": \"value\"}", RESOURCE_TYPE);
 
@@ -62,7 +64,7 @@ public class ResourceToIndexableResourceConverterTest {
   }
 
   @Test
-  void shouldConvertWebResourcePublishEvent_ToIndexableResourcePublishEvent() {
+  void shouldConvertWebResourcePublishEvent_ToIndexableResourcePublishEvent() throws Exception {
     // given
     WebResource webResource = new WebResource("{\"key\": \"value\"}", RESOURCE_TYPE);
 
@@ -72,6 +74,20 @@ public class ResourceToIndexableResourceConverterTest {
     // then
     CloudEvent outgoingEvent = waitForSingleOutgoingEvent();
     assertOutgoingPublishEvent(outgoingEvent, incomingEvent, webResource);
+  }
+
+  @Test
+  void shouldForwardIndexableResourcePublishEvent() throws Exception {
+    // given
+    IndexableResource resource = new IndexableResource("content", "type",
+        List.of("fragment-1", "fragment-2"));
+
+    // when
+    CloudEvent incomingEvent = publish(resource, IndexableResource.TYPE_PUBLISHED);
+
+    // then
+    CloudEvent outgoingEvent = waitForSingleOutgoingEvent();
+    assertOutgoingPublishEvent(outgoingEvent, incomingEvent, resource);
   }
 
   @ParameterizedTest
@@ -89,6 +105,18 @@ public class ResourceToIndexableResourceConverterTest {
     // then
     CloudEvent outgoingEvent = waitForSingleOutgoingEvent();
     assertOutgoingUnpublishEvent(outgoingEvent, incomingEvent);
+  }
+
+  @Test
+  void shouldSkipConvertingIncomingCompositionEventDueToAdditionalFieldInModel() {
+    // given
+    Resource composition = new Composition("key", "type", "layoutKey");
+
+    // when
+    publish(composition, Composition.TYPE_PUBLISHED);
+
+    // then
+    assertNoOutgoingEvents();
   }
 
   @Test
@@ -152,6 +180,11 @@ public class ResourceToIndexableResourceConverterTest {
     assertThat(outgoingResource.getContent())
         .isNotNull()
         .isEqualTo(incomingResource.getContent());
+
+    if (incomingResource instanceof IndexableResource i) {
+      assertThat(outgoingResource.getFragmentKeys())
+          .containsExactlyElementsOf(i.getFragmentKeys());
+    }
   }
 
   private void assertOutgoingUnpublishEvent(CloudEvent outgoingEvent, CloudEvent incomingEvent) {
