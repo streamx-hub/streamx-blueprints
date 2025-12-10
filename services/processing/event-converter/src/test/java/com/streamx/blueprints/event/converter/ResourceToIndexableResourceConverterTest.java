@@ -110,7 +110,7 @@ public class ResourceToIndexableResourceConverterTest {
   @Test
   void shouldSkipConvertingIncomingCompositionEventDueToAdditionalFieldInModel() {
     // given
-    Resource composition = new Composition("key", "type", "layoutKey");
+    Resource composition = new Composition("content", "type", "layoutKey");
 
     // when
     publish(composition, Composition.TYPE_PUBLISHED);
