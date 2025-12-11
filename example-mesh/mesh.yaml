@@ -484,7 +484,6 @@ processing:
             ref: outbox.web-resources
         environment:
           STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_BASE_URL: "http://localhost:8081"
-          STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_OUTPUT_KEY: "sitemap.xml"
           STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_DIRTY_CHECK_INTERVAL: "1s"
           STREAMX_BLUEPRINTS_SITEMAP_GENERATOR_DIRTY_CHECK_MAX_DIRTY_SEQUENCE_COUNT: "1"
 
@@ -516,7 +515,7 @@ edge:
       webserver:
         volumesFrom:
           configs:
-            - "web-delivery/overridden-nginx.conf:/etc/nginx/conf.d/default.conf"
+            - "web-server-sink/overridden-nginx.conf:/etc/nginx/conf.d/default.conf"
 
   blueprint-opensearch-sink:
     descriptor: opensearch-sink

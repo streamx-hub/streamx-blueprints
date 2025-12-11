@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 public class SitemapGeneratorIT extends BaseQuarkusIntegrationTest {
 
   private static final String BASE_URL = "https://www.streamx.dev";
-  private static final String SITEMAP_FILE_NAME = "sitemap.xml";
+  private static final String EXPECTED_SITEMAP_FILE_NAME = "/sitemaps/www.streamx.dev/sitemap.xml";
 
   @Test
   void shouldGenerateSitemap() {
@@ -38,7 +38,7 @@ public class SitemapGeneratorIT extends BaseQuarkusIntegrationTest {
 
   private static void assertOutgoingEvent(CloudEvent outgoingEvent, String sourcePagePath) {
     assertThat(outgoingEvent.getSource()).asString().isEqualTo("sitemap-generator");
-    assertThat(outgoingEvent.getSubject()).isEqualTo(SITEMAP_FILE_NAME);
+    assertThat(outgoingEvent.getSubject()).isEqualTo(EXPECTED_SITEMAP_FILE_NAME);
     assertThat(outgoingEvent.getType()).isEqualTo(WebResource.TYPE_PUBLISHED);
 
     var outgoingSitemap = CloudEventUtils.getData(outgoingEvent, WebResource.class);
@@ -58,7 +58,6 @@ public class SitemapGeneratorIT extends BaseQuarkusIntegrationTest {
     protected Map<String, String> getServiceConfigProperties() {
       return Map.of(
           "streamx.blueprints.sitemap-generator.base-url", BASE_URL,
-          "streamx.blueprints.sitemap-generator.output-key", SITEMAP_FILE_NAME,
           "streamx.blueprints.sitemap-generator.dirty-check.interval", "1s",
           "streamx.blueprints.sitemap-generator.dirty-check.delay", "1s"
       );

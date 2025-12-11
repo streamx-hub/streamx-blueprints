@@ -1,6 +1,7 @@
 package com.streamx.blueprints.web.server.sink;
 
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,6 +25,7 @@ import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.io.File;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
@@ -62,20 +64,11 @@ public abstract class WebResourcesAccessTestBase {
 
   @ParameterizedTest
   @MethodSource("keyToExpectedPath")
-  void shouldAccessPublishedPage(String subject, String expectedPath) {
+  void shouldAccessPublishedPageAndNotAccessUnpublishedPage(String subject, String expectedPath) {
     // when
     String publishedContent = publish(subject, Page::new);
 
     // then
-    assertCanAccessViaHttp(expectedPath, publishedContent);
-  }
-
-
-  @ParameterizedTest
-  @MethodSource("keyToExpectedPath")
-  void shouldNotAccessUnpublishedPage(String subject, String expectedPath) {
-    // given
-    String publishedContent = publish(subject, Page::new);
     assertCanAccessViaHttp(expectedPath, publishedContent);
 
     // when
@@ -83,6 +76,33 @@ public abstract class WebResourcesAccessTestBase {
 
     // then
     assertCannotAccessViaHttp(expectedPath);
+  }
+
+  @Test
+  void shouldHandleSitemapXml() {
+    // by design, namespaced sitemaps are not supported as not an actual use case
+    assumeThat(getExpectedDefaultNamespace()).isEmpty();
+
+    // given
+    String subject = "/sitemaps/localhost/8081/sitemap.xml"; // expected internal publish key
+    String expectedRequestPath = "/sitemap.xml"; // expected end user's URL path
+
+    // when
+    String content = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        </urlset>""";
+    WebResource payload = new WebResource(content, RESOURCE_TYPE);
+    publish(subject, payload);
+
+    // then
+    assertCanAccessViaHttp(namespaced(expectedRequestPath), content);
+
+    // when
+    unpublish(subject);
+
+    // then
+    assertCannotAccessViaHttp(expectedRequestPath);
   }
 
   @Test
@@ -281,7 +301,7 @@ public abstract class WebResourcesAccessTestBase {
   }
 
   private static void assertCanAccessViaHttp(String path, String content) {
-    await().untilAsserted(() ->
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() ->
         given().basePath("/")
             .when()
             .get(path)
@@ -291,7 +311,7 @@ public abstract class WebResourcesAccessTestBase {
   }
 
   private static void assertCannotAccessViaHttp(String path) {
-    await().untilAsserted(() ->
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() ->
         given().basePath("/")
             .when()
             .get(path)

@@ -25,11 +25,8 @@ class FileSystemTest {
   @Test
   void expectEmptyFileCreatedWhenDataIsEmpty() {
     Path path = getPathToStorageFile("empty.txt");
-    UniAssertSubscriber<Void> subscriber =
-        tested.writeFile(path, new byte[0])
-            .subscribe().withSubscriber(UniAssertSubscriber.create());
+    writeFile(path, "");
 
-    subscriber.awaitItem();
     assertThat(path)
         .exists()
         .hasSize(0);
@@ -38,24 +35,18 @@ class FileSystemTest {
   @Test
   void expectFileWithDataCreated() {
     Path path = getPathToStorageFile("sample.txt");
-    UniAssertSubscriber<Void> subscriber =
-        tested.writeFile(path, "test-value".getBytes())
-            .subscribe().withSubscriber(UniAssertSubscriber.create());
+    writeFile(path, "test-value");
 
-    subscriber.awaitItem();
     assertThat(path)
         .exists()
         .hasContent("test-value");
   }
 
   @Test
-  void expectFileAndParendDirectoriesCreated() {
+  void expectFileAndParentDirectoriesCreated() {
     Path path = getPathToStorageFile("some/directory/test.txt");
-    UniAssertSubscriber<Void> subscriber =
-        tested.writeFile(path, new byte[0])
-            .subscribe().withSubscriber(UniAssertSubscriber.create());
+    writeFile(path, "");
 
-    subscriber.awaitItem();
     assertThat(path).exists();
   }
 
@@ -66,11 +57,8 @@ class FileSystemTest {
     Files.writeString(path, "existing-value");
     assertThat(path).exists();
 
-    UniAssertSubscriber<Void> subscriber =
-        tested.writeFile(path, "new-value".getBytes())
-            .subscribe().withSubscriber(UniAssertSubscriber.create());
+    writeFile(path, "new-value");
 
-    subscriber.awaitItem();
     assertThat(path)
         .exists()
         .hasContent("new-value");
@@ -108,4 +96,10 @@ class FileSystemTest {
     return Path.of(configuration.storageRootDirectory(), relativePath);
   }
 
+  private void writeFile(Path path, String content) {
+    tested.writeFile(path, content.getBytes())
+        .subscribe()
+        .withSubscriber(UniAssertSubscriber.create())
+        .awaitItem();
+  }
 }

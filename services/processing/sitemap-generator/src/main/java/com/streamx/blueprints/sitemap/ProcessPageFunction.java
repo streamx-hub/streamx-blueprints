@@ -4,10 +4,12 @@ import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.WebResource;
 import com.streamx.blueprints.sitemap.configuration.Configuration;
 import io.cloudevents.CloudEvent;
+import io.netty.util.internal.StringUtil;
 import io.quarkus.scheduler.Scheduled;
 import io.quarkus.scheduler.Scheduled.ConcurrentExecution;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -51,8 +53,15 @@ class ProcessPageFunction {
   public void publishSitemapIfNeeded() {
     if (dirtySequenceStateManager.checkIfActionIsNeededForNewSequence()) {
       WebResource sitemapWebResource = sitemapService.createSitemapResource();
+
+      String baseUrl = configuration.baseUrl(); // TODO change to collection of base urls
+      String hostAndPort = StringUtils.substringAfter(baseUrl, "//")
+          .replace(':', '/');
+
+      String key = "/sitemaps/" + hostAndPort + "/sitemap.xml";
+
       CloudEvent sitemapEvent = CloudEventUtils.eventWithData(
-          configuration.outputKey(), WebResource.TYPE_PUBLISHED, sitemapWebResource
+          key, WebResource.TYPE_PUBLISHED, sitemapWebResource
       );
       emitter.send(sitemapEvent);
     }

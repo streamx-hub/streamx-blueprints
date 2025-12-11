@@ -11,8 +11,6 @@ public interface Configuration {
 
   String baseUrl();
 
-  String outputKey();
-
   Optional<String> outputType();
 
   boolean generateLastmodAttribute();

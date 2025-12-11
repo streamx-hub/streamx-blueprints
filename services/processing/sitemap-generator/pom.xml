@@ -26,6 +26,10 @@
       <artifactId>jsitemapgenerator</artifactId>
       <version>${jsitemapgenerator.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+    </dependency>
   </dependencies>
 
 </project>

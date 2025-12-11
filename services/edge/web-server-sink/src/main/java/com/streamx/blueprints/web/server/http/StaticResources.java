@@ -14,11 +14,26 @@ public class StaticResources {
   FileSystemResourceStorage storage;
 
   void installRoute(@Observes StartupEvent startupEvent, Router router) {
-    FileSystemAccess handlerVisibility = storage.getStorageRootDirectory().startsWith("/")
-        ? FileSystemAccess.ROOT : FileSystemAccess.RELATIVE;
-    router.route()
-        .handler(StaticHandler
-            .create(handlerVisibility, storage.getStorageRootDirectory())
-            .setCachingEnabled(false));
+    String storageRootDirectory = storage.getStorageRootDirectory();
+    installSitemapRoute(router, storageRootDirectory);
+    installDefaultRoute(router, storageRootDirectory);
+  }
+
+  private static void installSitemapRoute(Router router, String storageRootDirectory) {
+    router.route("/sitemap.xml").handler(new SitemapHandler(storageRootDirectory));
+  }
+
+  private static void installDefaultRoute(Router router, String storageRootDirectory) {
+    FileSystemAccess access = getAccessType(storageRootDirectory);
+    StaticHandler handler = StaticHandler
+        .create(access, storageRootDirectory)
+        .setCachingEnabled(false);
+    router.route().handler(handler);
+  }
+
+  private static FileSystemAccess getAccessType(String storageRootDirectory) {
+    return storageRootDirectory.startsWith("/")
+        ? FileSystemAccess.ROOT
+        : FileSystemAccess.RELATIVE;
   }
 }
