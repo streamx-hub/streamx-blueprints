@@ -20,6 +20,8 @@ import java.io.File;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 @QuarkusTest
 public class TestSkippedProcessingOfNamespaceInIngestionKey implements HttpAccessTraits {
@@ -45,6 +47,7 @@ public class TestSkippedProcessingOfNamespaceInIngestionKey implements HttpAcces
   }
 
   @Test
+  @DisabledOnOs(OS.WINDOWS) // colons are not allowed as file names on Windows
   void shouldSkipProcessingNamespaceInIngestionKey() {
     // given
     String key = "/resources/jcr:uuid/file.xml";

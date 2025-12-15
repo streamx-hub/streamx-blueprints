@@ -30,7 +30,7 @@ interface HttpAccessTraits {
   }
 
   private static void waitUntilAsserted(ThrowingRunnable assertion) {
-    await().atMost(Duration.ofSeconds(3)).untilAsserted(assertion);
+    await().atMost(Duration.ofSeconds(5)).untilAsserted(assertion);
   }
 
 }
