@@ -14,4 +14,7 @@ public interface Configuration {
 
   @WithDefault("/tmp/streamx")
   String storageRootDirectory();
+
+  @WithDefault("true")
+  boolean processNamespaceInIngestionKeys();
 }

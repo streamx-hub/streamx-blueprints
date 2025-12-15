@@ -67,7 +67,7 @@ public class WebServerSink {
   private <T extends Resource> Uni<Void> process(T resource, String subject,
       String type, long eventTime) {
     boolean isHtmlResource = htmlResourceTypes.contains(type);
-    String path = getPathFrom(subject, isHtmlResource);
+    String path = getStoragePath(subject, isHtmlResource);
     log.tracef("Storing %s resource: subject %s, type %s, event time %s under path %s",
         (isHtmlResource ? "HTML" : "non-HTML"), subject, type, eventTime, path);
     return updateStorage(resource, path, type, isHtmlResource);
@@ -98,10 +98,22 @@ public class WebServerSink {
     }
   }
 
-  private String getPathFrom(String subject, boolean isHtmlResource) {
+  private String getStoragePath(String subject, boolean isHtmlResource) {
+    String path = processNamespaceInIngestionKeys()
+        ? handleNamespaceInIngestionKey(subject)
+        : subject;
+    return isHtmlResource
+        ? computeHtmlResourcePath(path)
+        : path;
+  }
+
+  boolean processNamespaceInIngestionKeys() {
+    return configuration.processNamespaceInIngestionKeys();
+  }
+
+  private String handleNamespaceInIngestionKey(String subject) {
     String namespace = CloudEventUtils.getSubjectNamespace(subject).orElse(defaultNamespace);
-    String path = namespace + "/" + CloudEventUtils.getSubjectWithoutNamespace(subject);
-    return isHtmlResource ? computeHtmlResourcePath(path) : path;
+    return namespace + "/" + CloudEventUtils.getSubjectWithoutNamespace(subject);
   }
 
   static String computeHtmlResourcePath(String path) {

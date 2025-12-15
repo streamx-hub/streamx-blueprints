@@ -1,8 +1,5 @@
 package com.streamx.blueprints.web.server.sink;
 
-import static io.restassured.RestAssured.given;
-import static org.awaitility.Awaitility.await;
-import static org.hamcrest.core.StringContains.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -38,7 +35,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 @TestInstance(Lifecycle.PER_CLASS)
-public abstract class WebResourcesAccessTestBase {
+public abstract class WebResourcesAccessTestBase implements HttpAccessTraits {
 
   private static final String TEST_CONTENT = "test content for %s";
   private static final byte[] TEST_BINARY_CONTENT = {0, 1, 2};
@@ -278,26 +275,6 @@ public abstract class WebResourcesAccessTestBase {
         ? CloudEventUtils.eventWithoutData(subject, type, eventTime)
         : CloudEventUtils.eventWithData(subject, type, payload, eventTime);
     resourcesSource.send(event);
-  }
-
-  private static void assertCanAccessViaHttp(String path, String content) {
-    await().untilAsserted(() ->
-        given().basePath("/")
-            .when()
-            .get(path)
-            .then()
-            .statusCode(200)
-            .body(containsString(content)));
-  }
-
-  private static void assertCannotAccessViaHttp(String path) {
-    await().untilAsserted(() ->
-        given().basePath("/")
-            .when()
-            .get(path)
-            .then()
-            .statusCode(404)
-    );
   }
 
 }

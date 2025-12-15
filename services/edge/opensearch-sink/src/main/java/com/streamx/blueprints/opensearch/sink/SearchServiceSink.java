@@ -35,12 +35,13 @@ public class SearchServiceSink {
     OffsetDateTime eventTime = event.getTime();
     String resourceType = Optional.ofNullable(resource).map(Resource::getType).orElse(null);
 
-    log.tracef("Indexing resource: key %s, event type %s, event time %s, resource type %s",
-        key, eventType, eventTime, resourceType);
-
     if (isPublish(eventType) && isTypeMissing(resourceType)) {
+      log.warnf("Cannot index published resource %s: missing resource type", key);
       return Uni.createFrom().voidItem();
     }
+
+    log.tracef("Indexing resource: key %s, event type %s, event time %s, resource type %s",
+        key, eventType, eventTime, resourceType);
     return updateIndex(key, eventType, resource, resourceType);
   }
 
