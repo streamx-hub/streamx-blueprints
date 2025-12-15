@@ -17,6 +17,12 @@ default: `/tmp/streamx`
 
 `streamx.blueprints.web-server-sink.default-namespace` - optional value, will be used as fallback value if resource has not namespace
 
+`streamx.blueprints.web-server-sink.process-namespace-in-ingestionKeys` - When set to `true`,
+the subjects of incoming events are parsed to find a colon (`:`), which is treated as a namespace separator.
+The colon is replaced with a slash (`/`) before the event data (incoming resource) is saved to disk.
+
+Set this to `false` to store incoming event data using the unchanged subject as the resource path.
+
 `streamx.url-include-replacement-provider` - an URL Include Replacement Provider. Available predefined values are: `EsiInclude` and `SsiInclude`.
 This is an optional configuration entry. When specified, the service receives access to `urlIncludeReplacer` object.
 This object is capable of parsing incoming pages and replace URL include directives (`{{#include src="url"}}`) in the page content with supplied replacement, such as Server Side Include tags or Edge Side Include tags.
