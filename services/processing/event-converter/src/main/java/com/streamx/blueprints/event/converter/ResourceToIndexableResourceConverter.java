@@ -25,20 +25,30 @@ public class ResourceToIndexableResourceConverter {
     log.tracef("Converting event with key %s, type %s and time %s to IndexableResource event",
         key, eventType, incomingEvent.getTime());
 
-    Resource incomingResource;
-    try {
-      incomingResource = CloudEventUtils.getData(incomingEvent, Resource.class);
-    } catch (IllegalStateException e) {
-      log.warnf(e, "Cannot extract %s from event %s of type %s", Resource.class, key, eventType);
-      return null;
+    if (CloudEventUtils.isUnpublishingType(eventType)) {
+      return unpublishedEvent(incomingEvent);
     }
 
     if (CloudEventUtils.isPublishingType(eventType)) {
-      return publishedEvent(incomingEvent, incomingResource);
-    }
+      try {
+        var indexableResource = CloudEventUtils.getData(incomingEvent, IndexableResource.class);
+        if (indexableResource != null && indexableResource.getFragmentKeys() != null) {
+          log.tracef("Forwarding unchanged IndexableResource event %s", key);
+          return incomingEvent;
+        }
+      } catch (IllegalStateException ignored) {
+        // this is not an IndexableResource - proceed with parsing it as a Resource
+      }
 
-    if (CloudEventUtils.isUnpublishingType(eventType)) {
-      return unpublishedEvent(incomingEvent);
+      Resource incomingResource;
+      try {
+        incomingResource = CloudEventUtils.getData(incomingEvent, Resource.class);
+      } catch (IllegalStateException e) {
+        log.warnf(e, "Cannot extract %s from event %s of type %s", Resource.class, key, eventType);
+        return null;
+      }
+
+      return publishedEvent(incomingEvent, incomingResource);
     }
 
     return skippedEvent(incomingEvent);
