@@ -17,7 +17,7 @@ default: `/tmp/streamx`
 
 `streamx.blueprints.web-server-sink.default-namespace` - optional value, will be used as fallback value if resource has not namespace
 
-`streamx.blueprints.web-server-sink.process-namespace-in-ingestionKeys` - When set to `true`,
+`streamx.blueprints.web-server-sink.process-namespace-in-ingestion-keys` - When set to `true`,
 the subjects of incoming events are parsed to find a colon (`:`), which is treated as a namespace separator.
 The colon is replaced with a slash (`/`) before the event data (incoming resource) is saved to disk.
 
