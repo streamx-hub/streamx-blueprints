@@ -43,7 +43,7 @@ public class TestSkippedProcessingOfNamespaceInIngestionKey implements HttpAcces
 
   @BeforeEach
   void configureMocks() {
-    doReturn(false).when(webServerSink).processNamespaceInIngestionKeys();
+    doReturn(false).when(webServerSink).shouldProcessNamespaceInIngestionKeys();
   }
 
   @Test

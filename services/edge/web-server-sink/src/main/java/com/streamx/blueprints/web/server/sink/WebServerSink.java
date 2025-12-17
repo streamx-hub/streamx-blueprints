@@ -99,19 +99,19 @@ public class WebServerSink {
   }
 
   private String getStoragePath(String subject, boolean isHtmlResource) {
-    String path = processNamespaceInIngestionKeys()
-        ? handleNamespaceInIngestionKey(subject)
+    String path = shouldProcessNamespaceInIngestionKeys()
+        ? normalizeIngestionSubject(subject)
         : subject;
     return isHtmlResource
         ? computeHtmlResourcePath(path)
         : path;
   }
 
-  boolean processNamespaceInIngestionKeys() {
+  boolean shouldProcessNamespaceInIngestionKeys() {
     return configuration.processNamespaceInIngestionKeys();
   }
 
-  private String handleNamespaceInIngestionKey(String subject) {
+  private String normalizeIngestionSubject(String subject) {
     String namespace = CloudEventUtils.getSubjectNamespace(subject).orElse(defaultNamespace);
     return namespace + "/" + CloudEventUtils.getSubjectWithoutNamespace(subject);
   }
