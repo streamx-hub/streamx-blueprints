@@ -106,6 +106,17 @@ descriptors:
             to: incoming-page-compose-requests
             using: internal-relay
 
+  data-collector:
+    type: "processing"
+    containers:
+      processor:
+        image: "ghcr.io/streamx-com/streamx-blueprints/data-collector:latest-jvm"
+        incoming:
+          data: {}
+        outgoing:
+          collected-data: {}
+          web-resources: {}
+
   sitemap-generator:
     type: "processing"
     containers:
@@ -128,26 +139,15 @@ descriptors:
           indexable-resources: {}
           indexable-resource-fragments: {}
 
-  data-collector:
-    type: "processing"
-    containers:
-      processor:
-        image: "ghcr.io/streamx-com/streamx-blueprints/data-collector:latest-jvm"
-        incoming:
-          data: {}
-        outgoing:
-          collected-data: {}
-          web-resources: {}
-
   web-server-sink:
     type: "edge"
+    volumes:
+      repository-volume: {}
     containers:
       sink:
         image: "ghcr.io/streamx-com/streamx-blueprints/web-server-sink:latest-jvm"
         incoming:
           resources: {}
-        environment:
-          STREAMX_BLUEPRINTS_WEB_SERVER_SINK_STORAGE_ROOT_DIRECTORY: "/srv/www"
         servicePorts:
           - "8081:8080"
         volumes:
@@ -159,11 +159,11 @@ descriptors:
         volumes:
           - "repository-volume:/usr/share/nginx/html"
         healthCheck: null
-    volumes:
-      repository-volume: {}
 
   opensearch-sink:
     type: "edge"
+    volumes:
+      repository-volume: {}
     containers:
       sink:
         image: "ghcr.io/streamx-com/streamx-blueprints/opensearch-sink:latest-jvm"
@@ -226,9 +226,13 @@ sources:
 ingestion:
   rest-ingestion:
     containers:
-      service:
+      proxy:
         environment:
-          QUARKUS_HTTP_AUTH_PERMISSION_BEARER_POLICY: permit
+          QUARKUS_HTTP_AUTH_PERMISSION_BEARER_POLICY: "permit"
+          STREAMX_PROXY_CONFIG_SUBJECT_REGEX_REWRITE_ENABLED: "true"
+          STREAMX_PROXY_CONFIG_SUBJECT_REGEX_REWRITE_TYPES_PAGES_TYPES: "com.streamx.blueprints.page.published.v1,com.streamx.blueprints.page.unpublished.v1"
+          STREAMX_PROXY_CONFIG_SUBJECT_REGEX_REWRITE_TYPES_PAGES_PATTERNS_CONFIG1_MATCH_PATTERN: "^(.*)to-be-rewritten(.*)$"
+          STREAMX_PROXY_CONFIG_SUBJECT_REGEX_REWRITE_TYPES_PAGES_PATTERNS_CONFIG1_REWRITE_PATTERN: "$1/rewritten/$2"
 
 processing:
   web-resources-relay:
@@ -513,6 +517,9 @@ edge:
         incoming:
           resources:
             ref: outbox.pages,outbox.fragments,relay.optimized-assets,outbox.assets,outbox.web-resources
+        environment:
+          STREAMX_BLUEPRINTS_WEB_SERVER_SINK_STORAGE_ROOT_DIRECTORY: "/srv/www"
+
       webserver:
         volumesFrom:
           configs:
@@ -520,8 +527,6 @@ edge:
 
   blueprint-opensearch-sink:
     descriptor: opensearch-sink
-    volumes:
-      repository-volume: {}
     containers:
       sink:
         incoming:
@@ -534,6 +539,7 @@ edge:
             - "opensearch/service-init:/deployments/opensearch/service-init/additional"
         environment:
           QUARKUS_ELASTICSEARCH_HOSTS: "blueprint-opensearch-sink.opensearch:9200"
+
       opensearch:
         environment:
           DISABLE_SECURITY_PLUGIN: "true"
