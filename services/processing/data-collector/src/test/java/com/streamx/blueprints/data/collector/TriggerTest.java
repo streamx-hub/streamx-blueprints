@@ -46,8 +46,8 @@ class TriggerTest {
   private ProcessDataFunction cut;
 
   @BeforeAll
-  static void setApplicationName() {
-    System.setProperty("quarkus.application.name", TriggerTest.class.getSimpleName());
+  static void setServiceInstanceId() {
+    System.setProperty("streamx.service.instance-id", TriggerTest.class.getSimpleName());
   }
 
   @BeforeEach
