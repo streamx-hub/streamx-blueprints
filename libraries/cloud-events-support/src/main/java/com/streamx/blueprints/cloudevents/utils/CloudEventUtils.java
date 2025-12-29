@@ -18,18 +18,22 @@ import java.time.ZoneOffset;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 public class CloudEventUtils {
 
-  public static final String NAMESPACE_SEPARATOR = ":";
+  private static final String NAMESPACE_SEPARATOR = ":";
 
   private static final String PUBLISH_TYPE_SEARCH_TERM = ".published.";
 
   private static final String UNPUBLISH_TYPE_SEARCH_TERM = ".unpublished.";
 
-  private static final URI DEFAULT_SOURCE = ConfigProvider.getConfig()
-      .getOptionalValue("quarkus.application.name", String.class)
+  private static final Config config = ConfigProvider.getConfig();
+
+  private static final URI DEFAULT_SOURCE = config
+      .getOptionalValue("streamx.service.instance-id", String.class)
+      .or(() -> config.getOptionalValue("quarkus.application.name", String.class))
       .map(URI::create)
       .orElse(null);
 
@@ -37,7 +41,6 @@ public class CloudEventUtils {
   private static final ObjectMapper strictObjectMapper = new ObjectMapper();
   private static final ObjectMapper tolerantObjectMapper = new ObjectMapper()
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
 
   private CloudEventUtils() {
     // no instance

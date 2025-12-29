@@ -36,8 +36,8 @@ public abstract class BaseQuarkusIntegrationTest {
   protected WireMock wiremock;
 
   @BeforeAll
-  static void setEventSource() {
-    System.setProperty("quarkus.application.name",
+  static void setServiceInstanceId() {
+    System.setProperty("streamx.service.instance-id",
         BaseQuarkusIntegrationTest.class.getSimpleName());
   }
 
