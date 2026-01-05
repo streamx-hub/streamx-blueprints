@@ -42,4 +42,5 @@ example-mesh/secrets/*
 !example-mesh/secrets/.gitkeep
 
 # ignore edge services repositories
-example-mesh/repository/**
+**/repository/blueprint-opensearch-sink/**
+**/repository/blueprint-web-server-sink/**
