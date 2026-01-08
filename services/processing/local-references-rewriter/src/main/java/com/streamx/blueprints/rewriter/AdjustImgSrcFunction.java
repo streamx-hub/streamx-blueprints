@@ -26,20 +26,12 @@ public class AdjustImgSrcFunction {
   Configuration configuration;
 
   @Inject
-  OptimizedAssetsStore assetStore;
-
-  @Inject
   ImgSrcAdjuster imgSrcAdjuster;
 
   @PostConstruct
   void init() {
     lowercasedProcessedPagePathPattern =
         Pattern.compile(configuration.processedPagePathPattern().toLowerCase());
-  }
-
-  @Incoming(Channels.OPTIMIZED_ASSETS)
-  public void registerAsset(CloudEvent optimizedAssetEvent) {
-    assetStore.register(optimizedAssetEvent);
   }
 
   /**

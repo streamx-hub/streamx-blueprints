@@ -10,6 +10,7 @@ import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.OptimizedAsset;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.Resource;
+import com.streamx.blueprints.test.unit.StatefulInMemorySource;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
@@ -44,7 +45,7 @@ class AdjustImgSrcFunctionTest {
   private static final Set<String> PAGE_EVENTS = Set.of(Page.TYPE_PUBLISHED, Page.TYPE_UNPUBLISHED);
 
   private InMemorySource<CloudEvent> pagesChannel;
-  private InMemorySource<CloudEvent> assetsChannel;
+  private StatefulInMemorySource assetsChannel;
   private InMemorySink<CloudEvent> adjustedPagesSink;
 
   @InjectSpy
@@ -60,10 +61,11 @@ class AdjustImgSrcFunctionTest {
   @BeforeEach
   void init() {
     pagesChannel = connector.source(Channels.INCOMING_PAGES);
-    assetsChannel = connector.source(Channels.OPTIMIZED_ASSETS);
+    assetsChannel = new StatefulInMemorySource(connector,
+        Channels.OPTIMIZED_ASSETS, Channels.OPTIMIZED_ASSETS_STATE);
     adjustedPagesSink = connector.sink(Channels.ADJUSTED_PAGES);
     adjustedPagesSink.clear();
-    OptimizedAssetsStore.clear();
+    optimizedAssetsStore.clear();
   }
 
   @Test

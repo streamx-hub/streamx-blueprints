@@ -30,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 @ConnectWireMock
 public abstract class BaseQuarkusIntegrationTest {
 
+  private static final String INTEGRATION_TEST = "integration-test";
   protected static final String SERVICE_BASE_URL = "http://localhost:8081";
 
   // will be injected automatically when the test class is annotated with @ConnectWireMock
@@ -37,8 +38,7 @@ public abstract class BaseQuarkusIntegrationTest {
 
   @BeforeAll
   static void setServiceInstanceId() {
-    System.setProperty("streamx.service.instance-id",
-        BaseQuarkusIntegrationTest.class.getSimpleName());
+    System.setProperty("streamx.service.instance-id", INTEGRATION_TEST);
   }
 
   @BeforeEach

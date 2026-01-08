@@ -102,5 +102,19 @@ public class RocksDbRepository<T> implements StateRepository<T> {
       return Map.entry(key, deserializeValue(key, value));
     }
   }
+
+  @Override
+  public void removeByValue(@Nonnull T value) {
+    try (RocksIterator it = rocksDb.newIterator()) {
+      for (it.seekToFirst(); it.isValid(); it.next()) {
+        String key = new String(it.key());
+        T currentValue = deserializeValue(key, it.value());
+        if (value.equals(currentValue)) {
+          remove(key);
+        }
+      }
+    }
+  }
+
 }
 

@@ -43,4 +43,14 @@ public interface StateRepository<T> {
    * @param key the key
    */
   void remove(@Nonnull String key);
+
+  /**
+   * Removes all entries associated with the given value
+   *
+   * @param value the value. It must implement the equals/hashCode contract
+   *
+   * @apiNote <b>Performance Warning:</b> This implementation performs a full scan of the underlying
+   * storage. It is discouraged for use with large datasets.
+   */
+  void removeByValue(@Nonnull T value);
 }

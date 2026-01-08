@@ -1,59 +1,77 @@
 package com.streamx.blueprints.rewriter;
 
+import static java.util.Objects.requireNonNull;
+
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.OptimizedAsset;
+import com.streamx.blueprints.state.RepositoryFactory;
+import com.streamx.blueprints.state.StateRepository;
 import io.cloudevents.CloudEvent;
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class OptimizedAssetsStore {
 
-  // key: original asset path, value: optimized image path
-  private static final Map<String, String> publishedOptimizedAssets = new ConcurrentHashMap<>();
+  @Inject
+  RepositoryFactory repositoryFactory;
+
+  private StateRepository<String> originalPathToOptimizedPath;
+
+  @PostConstruct
+  void initRepository() {
+    originalPathToOptimizedPath = repositoryFactory.getOrCreate("optimized-assets", String.class);
+  }
 
   @Inject
   Logger log;
 
-  public void register(CloudEvent optimizedAssetEvent) {
+  @Incoming(Channels.OPTIMIZED_ASSETS)
+  public void consumeAsset(CloudEvent optimizedAssetEvent) {
+    // no need to process the asset
+  }
+
+  @Incoming(Channels.OPTIMIZED_ASSETS_STATE)
+  public void registerAsset(CloudEvent optimizedAssetEvent) {
     String key = CloudEventUtils.getSubject(optimizedAssetEvent);
     String eventType = optimizedAssetEvent.getType();
     if (OptimizedAsset.TYPE_PUBLISHED.equals(eventType)) {
       log.tracef("Registering optimized asset %s", key);
-      addAsset(optimizedAssetEvent, key);
+      addOptimizedAsset(optimizedAssetEvent, key);
     } else if (OptimizedAsset.TYPE_UNPUBLISHED.equals(eventType)) {
       log.tracef("Unregistering optimized asset %s", key);
-      removeAsset(key);
+      removeOptimizedAsset(key);
     } else {
       log.warnf("Received optimized asset %s with unexpected type: %s", key, eventType);
     }
   }
 
-  private void addAsset(CloudEvent optimizedAssetEvent, String key) {
+  private void addOptimizedAsset(CloudEvent optimizedAssetEvent, String optimizedAssetPath) {
     try {
       var optimizedAsset = CloudEventUtils.getData(optimizedAssetEvent, OptimizedAsset.class);
-      publishedOptimizedAssets.put(optimizedAsset.getOriginalPath(), key);
+      String originalAssetPath = requireNonNull(optimizedAsset).getOriginalPath();
+      originalPathToOptimizedPath.put(originalAssetPath, optimizedAssetPath);
     } catch (RuntimeException ex) {
-      log.warnf(ex, "Error extracting OptimizedAsset from event %s", key);
+      log.warnf(ex, "Error extracting OptimizedAsset from event %s", optimizedAssetPath);
     }
   }
 
-  private void removeAsset(String key) {
-    publishedOptimizedAssets.entrySet().removeIf(
-        item -> item.getValue().equals(key)
-    );
+  private void removeOptimizedAsset(String optimizedAssetPath) {
+    originalPathToOptimizedPath.removeByValue(optimizedAssetPath);
   }
 
   @Nullable
   public String getOptimizedAssetPath(String originalImagePath) {
-    return publishedOptimizedAssets.get(originalImagePath);
+    return originalPathToOptimizedPath.get(originalImagePath);
   }
 
-  static void clear() {
-    publishedOptimizedAssets.clear();
+  void clear() {
+    originalPathToOptimizedPath.entries().map(Map.Entry::getKey)
+        .forEach(originalPathToOptimizedPath::remove);
   }
 }

@@ -37,4 +37,9 @@ public class InMemoryRepository<T> implements StateRepository<T> {
   public void remove(@Nonnull String key) {
     data.remove(key);
   }
+
+  @Override
+  public void removeByValue(@Nonnull T value) {
+    data.entrySet().removeIf(entry -> value.equals(entry.getValue()));
+  }
 }

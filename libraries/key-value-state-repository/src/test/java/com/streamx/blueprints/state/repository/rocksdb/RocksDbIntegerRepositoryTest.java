@@ -54,6 +54,25 @@ class RocksDbIntegerRepositoryTest extends BaseRocksDbRepositoryTest {
   }
 
   @Test
+  void shouldRemoveByValue() {
+    // given
+    RocksDbRepository<Integer> repository = createRepository();
+    repository.put("key-1", 1);
+    repository.put("key-2", 2);
+    repository.put("key-3", 2);
+    repository.put("key-4", 4);
+
+    // when
+    repository.removeByValue(2);
+
+    // then
+    assertThat(getRepositoryEntries(repository))
+        .hasSize(2)
+        .containsEntry("key-1", 1)
+        .containsEntry("key-4", 4);
+  }
+
+  @Test
   void repositoriesWithSameIdentifierButFromDifferentServicesShouldBeIsolated() {
     // given
     configureServiceInstanceId("service-1");
