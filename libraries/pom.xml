@@ -15,6 +15,7 @@
   <modules>
     <module>cloud-events-support</module>
     <module>data-model</module>
+    <module>state-manager</module>
   </modules>
 
 </project>

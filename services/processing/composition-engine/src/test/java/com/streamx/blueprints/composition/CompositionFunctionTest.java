@@ -3,7 +3,9 @@ package com.streamx.blueprints.composition;
 import static com.streamx.blueprints.cloudevents.utils.CloudEventUtils.eventWithData;
 import static com.streamx.blueprints.cloudevents.utils.CloudEventUtils.eventWithoutData;
 import static com.streamx.blueprints.composition.Channels.INCOMING_COMPOSITIONS;
+import static com.streamx.blueprints.composition.Channels.INCOMING_COMPOSITIONS_STATE;
 import static com.streamx.blueprints.composition.Channels.INCOMING_LAYOUTS;
+import static com.streamx.blueprints.composition.Channels.INCOMING_LAYOUTS_STATE;
 import static com.streamx.blueprints.composition.Channels.INCOMING_PAGE_COMPOSE_REQUESTS;
 import static com.streamx.blueprints.composition.Channels.OUTGOING_PAGES;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,7 +44,9 @@ class CompositionFunctionTest {
   private static final String RESOURCE_TYPE = "any";
 
   private InMemorySource<CloudEvent> layoutsSource;
+  private InMemorySource<CloudEvent> layoutsStateSource;
   private InMemorySource<CloudEvent> compositionsSource;
+  private InMemorySource<CloudEvent> compositionsStateSource;
   private InMemorySource<CloudEvent> incomingPageComposeRequestsSource;
   private InMemorySink<CloudEvent> pagesSink;
 
@@ -61,7 +65,11 @@ class CompositionFunctionTest {
 
   private void initInMemoryObjects() {
     layoutsSource = connector.source(INCOMING_LAYOUTS);
+    layoutsStateSource = connector.source(INCOMING_LAYOUTS_STATE);
+
     compositionsSource = connector.source(INCOMING_COMPOSITIONS);
+    compositionsStateSource = connector.source(INCOMING_COMPOSITIONS_STATE);
+
     incomingPageComposeRequestsSource = connector.source(INCOMING_PAGE_COMPOSE_REQUESTS);
 
     pagesSink = connector.sink(OUTGOING_PAGES);
@@ -416,22 +424,32 @@ class CompositionFunctionTest {
   }
 
   private void publishLayout(String key, String type, String content) {
-    layoutsSource.send(eventWithData(key, Layout.TYPE_PUBLISHED, new Layout(content, type)));
+    Layout layout = new Layout(content, type);
+    CloudEvent event = eventWithData(key, Layout.TYPE_PUBLISHED, layout);
+    send(event, layoutsStateSource, layoutsSource);
   }
 
   private void unpublishLayout(String key) {
-    layoutsSource.send(eventWithoutData(key, Layout.TYPE_UNPUBLISHED));
+    CloudEvent event = eventWithoutData(key, Layout.TYPE_UNPUBLISHED);
+    send(event, layoutsStateSource, layoutsSource);
   }
 
   private void publishComposition(String key, String content, String layoutKey) {
-    compositionsSource.send(
-        eventWithData(key, Composition.TYPE_PUBLISHED,
-            new Composition(content, RESOURCE_TYPE, layoutKey)));
+    Composition composition = new Composition(content, RESOURCE_TYPE, layoutKey);
+    CloudEvent event = eventWithData(key, Composition.TYPE_PUBLISHED, composition);
+    send(event, compositionsStateSource, compositionsSource);
   }
 
   private void unpublishComposition(String key) {
-    compositionsSource.send(
-        eventWithoutData(key, Composition.TYPE_UNPUBLISHED));
+    CloudEvent event = eventWithoutData(key, Composition.TYPE_UNPUBLISHED);
+    send(event, compositionsStateSource, compositionsSource);
+  }
+
+  @SafeVarargs
+  private void send(CloudEvent event, InMemorySource<CloudEvent>... sources) {
+    for (InMemorySource<CloudEvent> source : sources) {
+      source.send(event);
+    }
   }
 
   private void assertSinglePublishedPage(PublishedPage expectedPage) {
