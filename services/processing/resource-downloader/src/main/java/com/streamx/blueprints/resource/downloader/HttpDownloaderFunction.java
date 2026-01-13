@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.IntegerRange;
+import org.apache.commons.lang3.Strings;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -50,11 +51,10 @@ public class HttpDownloaderFunction {
       new ConcurrentHashMap<>();
 
   private int downloadTimeoutMillis;
-
   private long repeatIntervalMillis;
 
   void onStart(@Observes StartupEvent ev) {
-    downloadTimeoutMillis = configuration.downloadTimeoutMilliseconds();
+    downloadTimeoutMillis = configuration.downloadTimeoutMillis();
     repeatIntervalMillis = configuration.repeatIntervalMillis();
     initRepeatableDownloadAndEmit();
   }
@@ -81,17 +81,39 @@ public class HttpDownloaderFunction {
       return;
     }
 
-    log.tracef("Processing download request: %s", request);
+    String url = request.url();
+    String eventType = event.getType();
+    log.tracef("Processing %s download request: %s", eventType, request);
 
-    switch (event.getType()) {
-      case DOWNLOAD_EVENT_TYPE -> downloadAndEmit(request);
-      case REPEATABLE_DOWNLOAD_EVENT_TYPE -> {
-        downloadAndEmit(request);
-        repeatableDownloadsStore.put(request.url(), request);
-      }
-      case STOP_REPEATABLE_DOWNLOAD_EVENT_TYPE -> repeatableDownloadsStore.remove(request.url());
-      default -> log.warnf("Unexpected DownloadRequest event type: %s", event.getType());
+    if (shouldDownloadAndEmit(eventType)) {
+      downloadAndEmit(request);
     }
+
+    if (shouldAddToStore(eventType, url)) {
+      repeatableDownloadsStore.put(url, request);
+    }
+
+    if (shouldRemoveFromStore(eventType)) {
+      repeatableDownloadsStore.remove(url);
+    }
+  }
+
+  private static boolean shouldDownloadAndEmit(String eventType) {
+    return Strings.CS.equalsAny(eventType, DOWNLOAD_EVENT_TYPE, REPEATABLE_DOWNLOAD_EVENT_TYPE);
+  }
+
+  private boolean shouldAddToStore(String eventType, String url) {
+    return eventType.equals(REPEATABLE_DOWNLOAD_EVENT_TYPE) || matchesRepeatableUrlPattern(url);
+  }
+
+  private static boolean shouldRemoveFromStore(String eventType) {
+    return eventType.equals(STOP_REPEATABLE_DOWNLOAD_EVENT_TYPE);
+  }
+
+  private boolean matchesRepeatableUrlPattern(String url) {
+    return configuration.repeatableUrlPattern()
+        .map(pattern -> pattern.matcher(url).matches())
+        .orElse(false);
   }
 
   private HttpGet prepareHttpGetRequest(String url) {

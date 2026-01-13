@@ -57,7 +57,7 @@ public class LastModifiedTimestampRegistry {
 
   @PostConstruct
   void init() {
-    headTimeoutMillis = configuration.headTimeoutMilliseconds();
+    headTimeoutMillis = configuration.headTimeoutMillis();
   }
 
   public void store(DownloadRequest request) {

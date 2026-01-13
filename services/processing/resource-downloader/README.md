@@ -91,15 +91,22 @@ In this scenario, one final download may occur before the cancellation takes eff
 
 ## Configuration
 
-- `streamx.blueprints.resource-downloader.head-timeout-milliseconds`  
+- `streamx.blueprints.resource-downloader.head-timeout-millis`  
   Defines the timeout (in milliseconds) for the HTTP `HEAD` request used to inspect the headers of a
   resource at the given URL.
   **Default**: 1500 milliseconds
 
 
-- `streamx.blueprints.resource-downloader.download-timeout-milliseconds`  
+- `streamx.blueprints.resource-downloader.download-timeout-millis`  
   Defines the timeout (in milliseconds) for the HTTP GET request used to download the resource.  
   **Default**: 5000 milliseconds
+
+
+- `streamx.blueprints.resource-downloader.repeatable-url-pattern`  
+  An optional Regular Expression used to automatically promote standard download requests to "repeatable" status based on their URL.
+  If an incoming `DownloadRequest` has a URL that matches this pattern, the service will treat it as a repeatable request
+  even if the event type is the standard `DownloadRequest.DOWNLOAD_EVENT_TYPE`.
+  This allows you to enforce global policies for specific domains or file types without requiring the event sender to change the `CloudEvent` type.
 
 
 - `streamx.blueprints.resource-downloader.repeat-interval-millis`  
