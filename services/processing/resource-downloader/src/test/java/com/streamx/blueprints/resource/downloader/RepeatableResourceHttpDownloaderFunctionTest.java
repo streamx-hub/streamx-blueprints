@@ -186,8 +186,7 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
         DownloadRequest.STOP_REPEATABLE_DOWNLOAD_EVENT_TYPE);
   }
 
-  private void mockGetResponseEntity(String firstResponse)
-      throws IOException {
+  private void mockGetResponseEntity(String firstResponse) throws IOException {
     when(getHttpResponse.getEntity()).thenReturn(httpEntity);
     when(getHttpResponse.getFirstHeader(HttpHeaders.CONTENT_TYPE))
         .thenReturn(new BasicHeader(HttpHeaders.CONTENT_TYPE, "application/json"));
