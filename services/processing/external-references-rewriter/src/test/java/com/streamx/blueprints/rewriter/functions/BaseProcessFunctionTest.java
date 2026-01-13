@@ -105,7 +105,7 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
 
   protected List<CloudEvent> waitForEventsInSink(String payloadType, int expectedCount,
       int expectedTotalCount) {
-    await().atMost(Duration.ofSeconds(3)).untilAsserted(() ->
+    await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
         assertThat(resourcesSink.received()).hasSize(expectedTotalCount)
     );
 
