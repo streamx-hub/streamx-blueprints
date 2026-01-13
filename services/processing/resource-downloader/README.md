@@ -84,7 +84,6 @@ To stop a recurring download, send a `DownloadRequest` `CloudEvent` with the fol
  - **Unregistration**: The URL is removed from the periodic download collection.
  - **Finalization**: Future scheduled downloads for this URL will cease.
 
-
 #### Race Condition Note:  
 Because repeatable downloads are executed in a separate background thread,
 a cancellation request might arrive while a download is already in progress.
