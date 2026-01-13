@@ -1,13 +1,18 @@
 package com.streamx.blueprints.resource.downloader;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.streamx.blueprints.data.DownloadRequest;
+import com.streamx.blueprints.resource.downloader.RepeatableResourceHttpDownloaderFunctionTest.TestConfig;
 import com.streamx.blueprints.resource.downloader.mock.MockWebClientsFactory;
 import com.streamx.blueprints.resource.downloader.testutils.TestWebServer;
 import io.cloudevents.CloudEvent;
@@ -17,6 +22,7 @@ import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
@@ -32,7 +38,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
-@TestProfile(RepeatableResourceHttpDownloaderFunctionTest.Configuration.class)
+@TestProfile(TestConfig.class)
 class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
 
   private static final String TEST_LAST_MODIFIED_HEADER_VALUE = "Tue, 05 Aug 2025 11:13:45 GMT";
@@ -43,15 +49,18 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
   @Inject
   HttpDownloaderFunction httpDownloaderFunction;
 
+  @Inject
+  Configuration configuration;
+
   private final CloseableHttpResponse headHttpResponse = mock(CloseableHttpResponse.class);
   private final StatusLine headStatusLine = mock(StatusLine.class);
   private final CloseableHttpResponse getHttpResponse = mock(CloseableHttpResponse.class);
   private final StatusLine getStatusLine = mock(StatusLine.class);
+  private final HttpEntity httpEntity = mock(HttpEntity.class);
   private CloseableHttpClient httpClient;
 
   @BeforeEach
   void doInit() throws IOException {
-    super.init();
     httpClient = mockWebClientsFactory.httpClient();
     reset(httpClient);
     when(httpClient.execute(any(HttpHead.class))).thenReturn(headHttpResponse);
@@ -61,6 +70,7 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
 
     when(httpClient.execute(any(HttpGet.class))).thenReturn(getHttpResponse);
     when(getHttpResponse.getStatusLine()).thenReturn(getStatusLine);
+    when(getStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_OK);
   }
 
   @AfterEach
@@ -71,33 +81,29 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
   @Test
   void shouldDownloadRepeatableResourceOnlyOnce() throws IOException {
     // given
-    String testPath = "/repeating-test-download-1.json";
-    String testContent = """
-        {
-          "name": "shouldDownloadRepeatableResourceOnlyOnce"
-        }
-        """;
+    String resourcePath = "/resource-1.json";
+    String resourceContent = "{\"foo\": \"bar-1\"}";
+    String testContentUrl = TestWebServer.uploadJsonFile(resourcePath, resourceContent);
 
-    when(headStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_OK, HttpStatus.SC_NOT_MODIFIED);
+    configureSubsequentHeadResponseCodes(
+        HttpStatus.SC_OK,
+        HttpStatus.SC_NOT_MODIFIED // the resource is not modified when 2nd download
+    );
 
-    when(getStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_OK);
-    HttpEntity httpEntity = mockGetResponseEntity();
-    when(httpEntity.getContent()).thenReturn(new ByteArrayInputStream(testContent.getBytes()));
-
-    String testContentUrl = TestWebServer.uploadJsonFile(testPath, testContent);
+    mockGetResponseEntity(resourceContent);
 
     // when
-    sendDownloadRequest(testContentUrl, testPath);
+    sendRepeatableDownloadRequest(testContentUrl, resourcePath);
 
     // then
-    CloudEvent webResourceEvent = waitForSingleDownloadedWebResource(testPath);
-    assertEventContent(webResourceEvent, testContent);
+    CloudEvent webResourceEvent = waitForSingleDownloadedWebResource(resourcePath);
+    assertEventContent(webResourceEvent, resourceContent);
 
     // when 2
-    sendDownloadRequest(testContentUrl, testPath);
+    sendRepeatableDownloadRequest(testContentUrl, resourcePath);
 
     // then: expect no re-download
-    waitForSingleDownloadedWebResource(testPath);
+    waitForSingleDownloadedWebResource(resourcePath);
     verify(httpClient, atLeast(3)).execute(any(HttpHead.class));
     verify(httpClient, atLeast(1)).execute(any(HttpGet.class));
     verify(httpEntity, times(1)).getContent();
@@ -106,34 +112,29 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
   @Test
   void shouldDownloadRepeatableResourceTwice() throws IOException {
     // given
-    String testPath = "/repeating-test-download-2.json";
-    String testContent = """
-        {
-          "name": "shouldDownloadRepeatableResourceTwice"
-        }
-        """;
+    String resourcePath = "/resource-2.json";
+    String resourceContent = "{\"foo\": \"bar-2\"}";
+    String testContentUrl = TestWebServer.uploadJsonFile(resourcePath, resourceContent);
 
-    when(headStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_OK, HttpStatus.SC_OK,
-        HttpStatus.SC_NOT_MODIFIED);
+    configureSubsequentHeadResponseCodes(
+        HttpStatus.SC_OK,
+        HttpStatus.SC_OK,
+        HttpStatus.SC_NOT_MODIFIED // the resource is not modified when 3rd download
+    );
 
-    when(getStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_OK);
+    mockGetResponseEntity(resourceContent);
 
-    String testContentUrl = TestWebServer.uploadJsonFile(testPath, testContent);
-    HttpEntity httpEntity = mockGetResponseEntity();
-    when(httpEntity.getContent()).thenReturn(new ByteArrayInputStream(testContent.getBytes()),
-        new ByteArrayInputStream(testContent.getBytes()));
     // when
-    sendDownloadRequest(testContentUrl, testPath);
+    sendRepeatableDownloadRequest(testContentUrl, resourcePath);
     // when 2
-    sendDownloadRequest(testContentUrl, testPath);
+    sendRepeatableDownloadRequest(testContentUrl, resourcePath);
     // when 3
-    sendDownloadRequest(testContentUrl, testPath);
+    sendRepeatableDownloadRequest(testContentUrl, resourcePath);
 
     // then
-    List<CloudEvent> webResourceEvents = waitForDownloadedResources(testPath,
-        downloadedWebResourcesSink, EMITTED_WEB_RESOURCE_TYPE, 2);
-    assertEventContent(webResourceEvents.getFirst(), testContent);
-    assertEventContent(webResourceEvents.get(1), testContent);
+    List<CloudEvent> webResourceEvents = waitForDownloadedWebResources(resourcePath, 2);
+    assertEventContent(webResourceEvents.getFirst(), resourceContent);
+    assertEventContent(webResourceEvents.get(1), resourceContent);
 
     // then: expect no re-download
     verify(httpClient, atLeast(3)).execute(any(HttpHead.class));
@@ -141,20 +142,64 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     verify(httpEntity, times(2)).getContent();
   }
 
-  private HttpEntity mockGetResponseEntity() {
-    HttpEntity httpEntity = mock(HttpEntity.class);
+  @Test
+  void shouldStopDownloadingRepeatableResource() throws IOException {
+    // given
+    String resourcePath = "/resource-3.json";
+    String resourceContent = "{\"foo\": \"bar-3\"}";
+    String testContentUrl = TestWebServer.uploadJsonFile(resourcePath, resourceContent);
+
+    configureSubsequentHeadResponseCodes(
+        HttpStatus.SC_OK // the resource is changed when every download
+    );
+
+    mockGetResponseEntity(resourceContent);
+
+    // when
+    sendRepeatableDownloadRequest(testContentUrl, resourcePath);
+
+    // then: wait for some downloads (3)
+    List<CloudEvent> webResourceEvents = waitForDownloadedWebResources(resourcePath, 3);
+    webResourceEvents.forEach(e -> assertEventContent(e, resourceContent));
+
+    // and when:
+    sendStopRepeatableDownloadRequest(testContentUrl);
+
+    // then: expect no re-download (allow one more download until the stop request gets processed)
+    long millisToWait = configuration.repeatIntervalMillis() * 3;
+    await().during(Duration.ofMillis(millisToWait)).untilAsserted(() ->
+        assertThat(downloadedWebResourcesSink.received()).hasSizeBetween(3, 4)
+    );
+  }
+
+  private void configureSubsequentHeadResponseCodes(Integer first, Integer... next) {
+    when(headStatusLine.getStatusCode()).thenReturn(first, next);
+  }
+
+  private void sendRepeatableDownloadRequest(String url, String emitKey) {
+    sendDownloadRequest(url, emitKey, DownloadRequest.REPEATABLE_DOWNLOAD_EVENT_TYPE);
+  }
+
+  private void sendStopRepeatableDownloadRequest(String url) {
+    DownloadRequest downloadRequest = new DownloadRequest(url, null, null, null, null);
+    sendDownloadRequest(downloadRequest, "any-emit-key",
+        DownloadRequest.STOP_REPEATABLE_DOWNLOAD_EVENT_TYPE);
+  }
+
+  private void mockGetResponseEntity(String firstResponse)
+      throws IOException {
     when(getHttpResponse.getEntity()).thenReturn(httpEntity);
     when(getHttpResponse.getFirstHeader(HttpHeaders.CONTENT_TYPE))
         .thenReturn(new BasicHeader(HttpHeaders.CONTENT_TYPE, "application/json"));
-    return httpEntity;
+    doAnswer(invocationOnMock -> new ByteArrayInputStream(firstResponse.getBytes()))
+        .when(httpEntity).getContent();
   }
 
-  public static class Configuration implements
-      QuarkusTestProfile {
+  public static class TestConfig implements QuarkusTestProfile {
 
     @Override
     public String getConfigProfile() {
-      return "repeating-test-download";
+      return "repeatable-download-test";
     }
   }
 

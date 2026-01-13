@@ -101,7 +101,8 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
     String pageRelativeUrl = "/pages/null-payload-page.html";
 
     // when
-    var event = CloudEventUtils.eventWithoutData(pageRelativeUrl, DownloadRequest.EVENT_TYPE);
+    var event = CloudEventUtils.eventWithoutData(pageRelativeUrl,
+        DownloadRequest.DOWNLOAD_EVENT_TYPE);
     sendDownloadRequest(event);
 
     // then

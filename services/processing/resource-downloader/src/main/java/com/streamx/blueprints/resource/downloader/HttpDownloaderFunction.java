@@ -1,5 +1,9 @@
 package com.streamx.blueprints.resource.downloader;
 
+import static com.streamx.blueprints.data.DownloadRequest.DOWNLOAD_EVENT_TYPE;
+import static com.streamx.blueprints.data.DownloadRequest.REPEATABLE_DOWNLOAD_EVENT_TYPE;
+import static com.streamx.blueprints.data.DownloadRequest.STOP_REPEATABLE_DOWNLOAD_EVENT_TYPE;
+
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.DownloadRequest;
 import io.cloudevents.CloudEvent;
@@ -42,7 +46,7 @@ public class HttpDownloaderFunction {
   @Inject
   CloseableHttpClient httpClient;
 
-  private static final Map<String, DownloadRequest> repeatingDownloadsStore =
+  private static final Map<String, DownloadRequest> repeatableDownloadsStore =
       new ConcurrentHashMap<>();
 
   private int downloadTimeoutMillis;
@@ -52,14 +56,14 @@ public class HttpDownloaderFunction {
   void onStart(@Observes StartupEvent ev) {
     downloadTimeoutMillis = configuration.downloadTimeoutMilliseconds();
     repeatIntervalMillis = configuration.repeatIntervalMillis();
-    initRepeatingDownloadAndEmit();
+    initRepeatableDownloadAndEmit();
   }
 
-  private void initRepeatingDownloadAndEmit() {
+  private void initRepeatableDownloadAndEmit() {
     Multi.createFrom().ticks()
         .every(Duration.ofMillis(repeatIntervalMillis))
         .flatMap(l -> {
-          Collection<DownloadRequest> items = repeatingDownloadsStore.values();
+          Collection<DownloadRequest> items = repeatableDownloadsStore.values();
           return Multi.createFrom().iterable(items);
         })
         .onFailure().invoke(err ->
@@ -79,18 +83,15 @@ public class HttpDownloaderFunction {
 
     log.tracef("Processing download request: %s", request);
 
-    downloadAndEmit(request);
-
-    String url = request.url();
-    if (isRepeatableDownload(url)) {
-      repeatingDownloadsStore.put(url, request);
+    switch (event.getType()) {
+      case DOWNLOAD_EVENT_TYPE -> downloadAndEmit(request);
+      case REPEATABLE_DOWNLOAD_EVENT_TYPE -> {
+        downloadAndEmit(request);
+        repeatableDownloadsStore.put(request.url(), request);
+      }
+      case STOP_REPEATABLE_DOWNLOAD_EVENT_TYPE -> repeatableDownloadsStore.remove(request.url());
+      default -> log.warnf("Unexpected DownloadRequest event type: %s", event.getType());
     }
-  }
-
-  private boolean isRepeatableDownload(String url) {
-    return configuration.urlRepeatingPattern()
-        .map(pattern -> pattern.matcher(url).matches())
-        .orElse(false);
   }
 
   private HttpGet prepareHttpGetRequest(String url) {
@@ -134,7 +135,7 @@ public class HttpDownloaderFunction {
   }
 
   void resetStore() {
-    repeatingDownloadsStore.clear();
+    repeatableDownloadsStore.clear();
   }
 
 }

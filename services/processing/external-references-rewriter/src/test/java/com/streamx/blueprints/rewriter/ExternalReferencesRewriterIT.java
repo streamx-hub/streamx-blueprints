@@ -73,7 +73,7 @@ public class ExternalReferencesRewriterIT extends BaseQuarkusIntegrationTest {
     assertThat(outgoingEvent.getId()).isNotEqualTo(sourceEvent.getId());
     assertThat(outgoingEvent.getSource()).hasPath("external-references-rewriter");
     assertThat(outgoingEvent.getSubject()).isEqualTo("/https_www.google.com/logo.jpg");
-    assertThat(outgoingEvent.getType()).isEqualTo(DownloadRequest.EVENT_TYPE);
+    assertThat(outgoingEvent.getType()).isEqualTo(DownloadRequest.DOWNLOAD_EVENT_TYPE);
     assertThat(outgoingEvent.getTime()).isNotEqualTo(sourceEvent.getTime());
 
     var outgoingResource = CloudEventUtils.getData(outgoingEvent, DownloadRequest.class);

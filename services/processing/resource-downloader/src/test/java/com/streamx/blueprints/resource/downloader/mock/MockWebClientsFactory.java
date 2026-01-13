@@ -14,7 +14,7 @@ public class MockWebClientsFactory {
   private static final CloseableHttpClient httpClient = mock(CloseableHttpClient.class);
 
   @Produces
-  @IfBuildProfile(value = "repeating-test-download")
+  @IfBuildProfile(value = "repeatable-download-test")
   public CloseableHttpClient httpClient() {
     return httpClient;
   }
