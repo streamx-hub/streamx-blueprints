@@ -21,10 +21,10 @@ class AggregateByPropertyValueCollectorFilterByProductIdTest
     JsonNode jsonNode1 = readReceivedData(0);
     JsonNode jsonNode2 = readReceivedData(1);
 
-    assertKey(jsonNode1, "collected:products:cheapest-by-category:Featured_products");
+    assertKey(jsonNode1, "collected:products:cheapest-by-category:End_Tables");
     assertProductId(jsonNode1, PRODUCT_1_ID);
 
-    assertKey(jsonNode2, "collected:products:cheapest-by-category:End_Tables");
+    assertKey(jsonNode2, "collected:products:cheapest-by-category:Featured_products");
     assertProductId(jsonNode2, PRODUCT_1_ID);
   }
 

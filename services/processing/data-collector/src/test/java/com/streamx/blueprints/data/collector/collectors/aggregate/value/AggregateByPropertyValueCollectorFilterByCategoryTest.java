@@ -23,16 +23,18 @@ class AggregateByPropertyValueCollectorFilterByCategoryTest
     JsonNode jsonNode1 = readReceivedData(0);
     JsonNode jsonNode2 = readReceivedData(1);
 
-    assertKey(jsonNode1, "collected:products:cheapest-by-category:Featured_products");
-    assertProductId(jsonNode1, PRODUCT_1_ID);
+    assertKey(jsonNode1, "collected:products:cheapest-by-category:End_Tables");
+    assertProductIds(jsonNode1, PRODUCT_1_ID, PRODUCT_3_ID);
+    assertPrice(jsonNode1, 0, 670);
+    assertPrice(jsonNode1, 1, 700);
 
-    assertKey(jsonNode2, "collected:products:cheapest-by-category:End_Tables");
-    assertProductIds(jsonNode2, PRODUCT_1_ID, PRODUCT_3_ID);
+    assertKey(jsonNode2, "collected:products:cheapest-by-category:Featured_products");
+    assertProductId(jsonNode2, PRODUCT_1_ID);
+  }
 
-    assertThat(jsonNode2.get("values").get(0).get("price").get("value").intValue())
-        .isEqualTo(670);
-    assertThat(jsonNode2.get("values").get(1).get("price").get("value").intValue())
-        .isEqualTo(700);
+  private static void assertPrice(JsonNode dataNode, int valueIndex, int expectedPrice) {
+    assertThat(dataNode.get("values").get(valueIndex).get("price").get("value").intValue())
+        .isEqualTo(expectedPrice);
   }
 
   public static class Configuration implements QuarkusTestProfile {
