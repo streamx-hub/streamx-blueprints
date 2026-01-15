@@ -29,10 +29,10 @@ abstract class AbstractDownloaderFunctionTest {
   protected static final String EMITTED_WEB_RESOURCE_TYPE = "web-resource/external";
   protected static final String EMITTED_ASSET_TYPE = "asset/external";
 
-  protected InMemorySource<CloudEvent> downloadRequestsChannel;
-  protected InMemorySink<CloudEvent> downloadedPagesSink;
-  protected InMemorySink<CloudEvent> downloadedAssetsSink;
-  protected InMemorySink<CloudEvent> downloadedWebResourcesSink;
+  private InMemorySource<CloudEvent> downloadRequestsChannel;
+  private InMemorySink<CloudEvent> downloadedPagesSink;
+  private InMemorySink<CloudEvent> downloadedAssetsSink;
+  private InMemorySink<CloudEvent> downloadedWebResourcesSink;
 
   @Inject
   @Any
@@ -101,8 +101,8 @@ abstract class AbstractDownloaderFunctionTest {
         expectedSize);
   }
 
-  private List<CloudEvent> waitForDownloadedResources(String key, InMemorySink<CloudEvent> sink,
-      String payloadType, int expectedSize) {
+  private static List<CloudEvent> waitForDownloadedResources(String key,
+      InMemorySink<CloudEvent> sink, String payloadType, int expectedSize) {
     await().atMost(Duration.ofSeconds(3)).untilAsserted(() ->
         assertThat(sink.received()).hasSize(expectedSize)
     );
@@ -118,6 +118,21 @@ abstract class AbstractDownloaderFunctionTest {
 
     assertThat(matchingEvents).hasSize(expectedSize);
     return matchingEvents;
+  }
+
+  protected long getDownloadedWebResourcesCount() {
+    return getDownloadedResourcesCount(downloadedWebResourcesSink, EMITTED_WEB_RESOURCE_TYPE);
+  }
+
+  private static long getDownloadedResourcesCount(InMemorySink<CloudEvent> sink,
+      String payloadType) {
+    return sink.received().stream()
+        .map(Message::getPayload)
+        .filter(event -> {
+          Resource resource = CloudEventUtils.getData(event, Resource.class);
+          return resource != null && payloadType.equals(resource.getType());
+        })
+        .count();
   }
 
   protected void assertNoDownloadedResources() {

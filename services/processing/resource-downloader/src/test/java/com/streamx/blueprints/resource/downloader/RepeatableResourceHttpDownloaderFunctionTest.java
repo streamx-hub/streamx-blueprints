@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -167,12 +168,23 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
 
     // and when:
     sendStopRepeatableDownloadRequest(testContentUrl);
+    AtomicLong downloadsCount = new AtomicLong(getDownloadedWebResourcesCount());
 
-    // then: expect no re-download (allow one more download until the stop request gets processed)
-    long millisToWait = configuration.repeatIntervalMillis() * 3;
-    await().during(Duration.ofMillis(millisToWait)).untilAsserted(() ->
-        assertThat(downloadedWebResourcesSink.received()).hasSizeBetween(3, 4)
-    );
+    // then: expect eventual stop of new downloads
+    Duration pollInterval = Duration.ofMillis(configuration.repeatIntervalMillis() * 3);
+    await()
+        .atMost(Duration.ofSeconds(3))
+        .pollInterval(pollInterval)
+        .untilAsserted(() -> {
+          long currentDownloadsCount = getDownloadedWebResourcesCount();
+          try {
+            // after 3x the time of repeating download interval - we expect no more downloads
+            assertThat(currentDownloadsCount).isEqualTo(downloadsCount.get());
+          } finally {
+            // this happens if a download was already in process when receiving the stop request
+            downloadsCount.set(currentDownloadsCount);
+          }
+        });
   }
 
   @Test
