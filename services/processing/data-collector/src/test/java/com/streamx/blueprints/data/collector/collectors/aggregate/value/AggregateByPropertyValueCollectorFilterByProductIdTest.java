@@ -18,13 +18,13 @@ class AggregateByPropertyValueCollectorFilterByProductIdTest
     publishData(PRODUCT_3_ID);
 
     waitForReceivedDataEvents(2);
-    JsonNode jsonNode1 = readReceivedData(0);
-    JsonNode jsonNode2 = readReceivedData(1);
 
-    assertKey(jsonNode1, "collected:products:cheapest-by-category:Featured_products");
+    JsonNode jsonNode1 = readReceivedData(0);
+    assertKey(jsonNode1, "collected:products:cheapest-by-category:End_Tables");
     assertProductId(jsonNode1, PRODUCT_1_ID);
 
-    assertKey(jsonNode2, "collected:products:cheapest-by-category:End_Tables");
+    JsonNode jsonNode2 = readReceivedData(1);
+    assertKey(jsonNode2, "collected:products:cheapest-by-category:Featured_products");
     assertProductId(jsonNode2, PRODUCT_1_ID);
   }
 

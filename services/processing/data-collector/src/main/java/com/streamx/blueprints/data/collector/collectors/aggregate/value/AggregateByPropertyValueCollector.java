@@ -23,7 +23,7 @@ import com.streamx.blueprints.data.collector.collectors.DataFilter;
 import com.streamx.blueprints.data.collector.stores.PublishedDataStore;
 import com.streamx.blueprints.data.collector.utils.JsonUtils;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -89,7 +89,7 @@ public class AggregateByPropertyValueCollector implements Collector {
   public List<CollectedOutput> collect() {
     long startTime = System.currentTimeMillis();
 
-    Map<String, List<JsonNode>> groupedData = new HashMap<>();
+    Map<String, List<JsonNode>> groupedData = new LinkedHashMap<>();
     dataStore.getAll().stream()
         .filter(value -> !Resource.isEmpty(value.data()))
         .filter(value -> isMatchingDataPatterns(value.key(), value.data()))
