@@ -29,7 +29,7 @@ public final class RocksDbManager {
       try {
         return RocksDB.open(options, path);
       } catch (RocksDBException e) {
-        throw new RuntimeException("Unable to open RocksDb at path " + path, e);
+        throw new RuntimeException("Unable to open RocksDB at path " + path, e);
       }
     });
   }
@@ -49,7 +49,7 @@ public final class RocksDbManager {
       FileUtils.forceMkdir(databaseDir);
       return databaseDir;
     } catch (IOException ex) {
-      throw new IllegalStateException("Cannot create RocksDB directory at " + databaseDir, ex);
+      throw new RuntimeException("Cannot create RocksDB directory at " + databaseDir, ex);
     }
   }
 
