@@ -174,6 +174,8 @@ descriptors:
           - 8083:8080
         volumes:
           - repository-volume:/usr/share/opensearch/data
+        environment:
+          QUARKUS_ELASTICSEARCH_HOSTS: ${STREAMX_OWNER_SERVICE_NAME}.opensearch:9200
       opensearch:
         image: docker.io/opensearchproject/opensearch:2.16.0
         servicePorts:
@@ -535,8 +537,6 @@ edge:
         volumesFrom:
           configs:
             - opensearch/service-init:/deployments/opensearch/service-init/additional
-        environment:
-          QUARKUS_ELASTICSEARCH_HOSTS: blueprint-opensearch-sink.opensearch:9200
 
       opensearch:
         environment:
