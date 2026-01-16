@@ -31,7 +31,7 @@
     <artifactregistry-maven-wagon.version>2.2.1</artifactregistry-maven-wagon.version>
 
     <!--  StreamX  -->
-    <streamx.version>2.0.3</streamx.version>
+    <streamx.version>2.0.9</streamx.version>
 
     <!-- CloudEvents -->
     <cloudevents-impl.version>4.0.1</cloudevents-impl.version>
