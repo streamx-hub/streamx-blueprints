@@ -1,26 +1,14 @@
 package com.streamx.blueprints.state;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.streamx.blueprints.state.repository.rocksdb.RocksDbRepository;
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
-import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class RocksDbIntegerEventRepositoryTest extends BaseStateRepositoryTest {
-
-  @BeforeEach
-  void init() {
-    File dbPath = new File("target/rocksdb-test");
-    FileUtils.deleteQuietly(dbPath);
-
-    setConfigProperty(PropertyNames.STATE_BACKEND, "rocksdb");
-    setConfigProperty(PropertyNames.STATE_ROCKSDB_PATH, dbPath.getAbsolutePath());
-  }
+class RocksDbIntegerEventRepositoryTest extends BaseRocksDbRepositoryTest {
 
   @Test
   void shouldReturnInsertedValue() {
@@ -40,7 +28,7 @@ public class RocksDbIntegerEventRepositoryTest extends BaseStateRepositoryTest {
     assertThat(otherRepositoryInstance.get(key)).isEqualTo(value);
 
     // cleanup
-    repository.clear();
+    repository.remove(key);
   }
 
   @Test
@@ -71,9 +59,29 @@ public class RocksDbIntegerEventRepositoryTest extends BaseStateRepositoryTest {
     repository.clear();
   }
 
+  @Test
+  void shouldNotFailGettingDataIfNoData() {
+    // when
+    StateRepository<Integer> repository = createRepository();
+
+    // then
+    assertThat(repository.get("abc")).isNull();
+    assertThat(repository.entries()).isEmpty();
+  }
+
+  @Test
+  void shouldFailRemovingNullKey() {
+    // when
+    StateRepository<Integer> repository = createRepository();
+
+    // then
+    assertThatThrownBy(() -> repository.remove(null))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("Error removing entry with key null from RocksDB")
+        .hasRootCauseInstanceOf(NullPointerException.class);
+  }
+
   private StateRepository<Integer> createRepository() {
-    var repository = RepositoryFactory.createRepository(config, Integer.class, "integers");
-    assertThat(repository).isInstanceOf(RocksDbRepository.class);
-    return repository;
+    return createRepository(Integer.class, "integers");
   }
 }

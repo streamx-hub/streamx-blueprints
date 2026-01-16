@@ -6,15 +6,9 @@ import com.streamx.blueprints.state.repository.inmemory.InMemoryRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class InMemoryStringRepositoryTest extends BaseStateRepositoryTest {
-
-  @BeforeEach
-  void init() {
-    setConfigProperty(PropertyNames.STATE_BACKEND, "in-memory");
-  }
+class InMemoryStringRepositoryTest extends BaseInMemoryRepositoryTest {
 
   @Test
   void shouldReturnInsertedValue() {
@@ -34,7 +28,7 @@ public class InMemoryStringRepositoryTest extends BaseStateRepositoryTest {
     assertThat(otherRepositoryInstance.get(key)).isEqualTo(value);
 
     // cleanup
-    repository.clear();
+    repository.remove(key);
   }
 
   @Test
@@ -65,9 +59,7 @@ public class InMemoryStringRepositoryTest extends BaseStateRepositoryTest {
     repository.clear();
   }
 
-  private StateRepository<String> createRepository() {
-    var repository = RepositoryFactory.createRepository(config, String.class, "strings");
-    assertThat(repository).isInstanceOf(InMemoryRepository.class);
-    return repository;
+  private InMemoryRepository<String> createRepository() {
+    return createRepository(String.class, "strings");
   }
 }

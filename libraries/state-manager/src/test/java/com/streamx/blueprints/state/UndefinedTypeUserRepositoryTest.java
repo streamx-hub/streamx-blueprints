@@ -9,7 +9,7 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class UndefinedUserRepositoryTest extends BaseStateRepositoryTest {
+class UndefinedTypeUserRepositoryTest extends BaseStateRepositoryTest {
 
   @BeforeEach
   void init() {
@@ -38,7 +38,7 @@ public class UndefinedUserRepositoryTest extends BaseStateRepositoryTest {
     assertThat(otherRepositoryInstance.get(key)).isEqualTo(value);
 
     // cleanup
-    repository.clear();
+    repository.remove(key);
   }
 
   @Test

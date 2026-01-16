@@ -9,6 +9,7 @@ import com.streamx.ce.serialization.json.CloudEventJsonSerializer;
 import io.cloudevents.CloudEvent;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -58,16 +59,23 @@ public class RocksDbRepository<T> implements StateRepository<T> {
   public T get(@Nonnull String key) {
     try {
       byte[] value = rocksDb.get(key.getBytes());
+      return deserializeValue(key, value);
+    } catch (Exception e) {
+      throw new RuntimeException("Error getting value of key " + key + " from RocksDB", e);
+    }
+  }
+
+  protected T deserializeValue(String key, byte[] value) {
+    try {
       if (value == null) {
         return null;
       }
       if (cloudEventKeys.contains(key)) {
         return (T) eventDeserializer.deserialize(value);
-      } else {
-        return mapper.readValue(value, valueClass);
       }
+      return mapper.readValue(value, valueClass);
     } catch (Exception e) {
-      throw new RuntimeException("Error getting value of key " + key + " from RocksDB", e);
+      throw new RuntimeException("Error deserializing value of key " + key + " from RocksDB", e);
     }
   }
 
@@ -76,13 +84,12 @@ public class RocksDbRepository<T> implements StateRepository<T> {
     RocksIterator iterator = rocksDb.newIterator();
     iterator.seekToFirst();
 
-    Spliterator<String> spliterator = Spliterators.spliteratorUnknownSize(
+    Spliterator<Map.Entry<String, T>> spliterator = Spliterators.spliteratorUnknownSize(
         new RocksDbIteratorWrapper(iterator),
         Spliterator.ORDERED
     );
     return StreamSupport
         .stream(spliterator, false)
-        .map(key -> Map.entry(key, get(key)))
         .onClose(iterator::close);
   }
 
@@ -105,8 +112,28 @@ public class RocksDbRepository<T> implements StateRepository<T> {
         String key = new String(it.key());
         remove(key);
       }
-    } catch (Exception e) {
-      throw new RuntimeException("Error clearing RocksDB", e);
+    }
+  }
+
+  class RocksDbIteratorWrapper implements Iterator<Entry<String, T>> {
+
+    private final RocksIterator rocksIterator;
+
+    RocksDbIteratorWrapper(RocksIterator rocksIterator) {
+      this.rocksIterator = rocksIterator;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return rocksIterator.isValid();
+    }
+
+    @Override
+    public Map.Entry<String, T> next() {
+      String key = new String(rocksIterator.key());
+      byte[] value = rocksIterator.value();
+      rocksIterator.next();
+      return Map.entry(key, deserializeValue(key, value));
     }
   }
 }
