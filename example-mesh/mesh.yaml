@@ -252,7 +252,7 @@ processing:
       service:
         incoming:
           events:
-            ref: inbox.assets
+            ref: inbox.assets,relay.optimized-assets
         outgoing:
           relayed-events:
             ref: outbox.assets
@@ -514,7 +514,7 @@ edge:
       sink:
         incoming:
           resources:
-            ref: outbox.pages,outbox.fragments,relay.optimized-assets,outbox.assets,outbox.web-resources
+            ref: outbox.pages,outbox.fragments,outbox.assets,outbox.web-resources
         environment:
           STREAMX_BLUEPRINTS_WEB_SERVER_SINK_STORAGE_ROOT_DIRECTORY: /srv/www
 
