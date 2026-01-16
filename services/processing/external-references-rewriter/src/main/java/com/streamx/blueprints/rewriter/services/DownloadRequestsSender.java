@@ -24,6 +24,9 @@ public class DownloadRequestsSender {
   @Channel(Channels.DOWNLOAD_REQUESTS)
   Emitter<CloudEvent> downloadRequestEmitter;
 
+  /**
+   * Sends a standard, non-repeatable download request
+   */
   public void sendRequest(ExternalResource resource) {
     String absoluteUrl = resource.getAbsoluteUrl();
     String streamxKey = resource.getStreamxKey();
@@ -39,7 +42,7 @@ public class DownloadRequestsSender {
 
     CloudEvent cloudEvent = CloudEventUtils.eventWithData(
         streamxKey,
-        DownloadRequest.EVENT_TYPE,
+        DownloadRequest.DOWNLOAD_EVENT_TYPE,
         downloadRequest
     );
 

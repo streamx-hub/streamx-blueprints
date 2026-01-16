@@ -36,13 +36,6 @@ If the resource has not changed since the last successful download, the request 
 - For binary resources (assets), if the HTTP response includes a `Content-Encoding: gzip` header,
 the service automatically decompresses the response body before emitting it.
 
-- For resources that might change or get frequently updated by other services, we can register such
-  a resource for interval download.  
-  By configuring `streamx.blueprints.resource-downloader.url-repeating-pattern` (optionally
-  `streamx.blueprints.resource-downloader.repeat-interval-millis`)
-  We can enable this feature. Every configurable interval period, the service will check if the
-  resource has changed, and download it again to the storage if so.
-
 ## Sample usage (relevant code snippets only):
 ```java
   @Channel(Channels.DOWNLOAD_REQUESTS)
@@ -58,35 +51,67 @@ the service automatically decompresses the response body before emitting it.
 
   CloudEvent event = CloudEventUtils.builderWithJsonData(downloadRequest)
     .withSubject(emitKey)
-    .withType(DownloadRequest.EVENT_TYPE)
+    .withType(DownloadRequest.DOWNLOAD_EVENT_TYPE)
     .build();
 
   downloadRequestEmitter.send(event);
 ```
 
+## Repeatable Downloads  
+
+The service supports **Repeatable Downloads**, allowing you to schedule a specific URL to be downloaded at regular intervals.
+
+This is useful for resources that might change or get frequently updated by other services.
+Such resources can be registered for repeatable download.
+Every configurable interval period, the service will check if the
+resource has changed, and download it again to the storage if so.
+
+### Scheduling a Repeatable Download
+To schedule a recurring download, send a `DownloadRequest` `CloudEvent` with the following type:
+
+`DownloadRequest.REPEATABLE_DOWNLOAD_EVENT_TYPE`
+
+#### Behavior:  
+ - **Immediate Action**: The resource is downloaded immediately upon registration.
+ - **Scheduling**: The URL is added to the internal scheduler and will be re-downloaded periodically based on your configuration.
+
+### Cancelling a Repeatable Download
+To stop a recurring download, send a `DownloadRequest` `CloudEvent` with the following type:
+
+`DownloadRequest.STOP_REPEATABLE_DOWNLOAD_EVENT_TYPE`
+
+#### Behavior:  
+ - **Unregistration**: The URL is removed from the periodic download collection.
+ - **Finalization**: Future scheduled downloads for this URL will cease.
+
+#### Race Condition Note:  
+Because repeatable downloads are executed in a separate background thread,
+a cancellation request might arrive while a download is already in progress.
+In this scenario, one final download may occur before the cancellation takes effect.
+
 ## Configuration
 
-- `streamx.blueprints.resource-downloader.head-timeout-milliseconds`  
+- `streamx.blueprints.resource-downloader.head-timeout-millis`  
   Defines the timeout (in milliseconds) for the HTTP `HEAD` request used to inspect the headers of a
   resource at the given URL.
-**Default**: 1500 milliseconds
+  **Default**: 1500 milliseconds
 
 
-- `streamx.blueprints.resource-downloader.download-timeout-milliseconds`  
-Defines the timeout (in milliseconds) for the HTTP GET request used to download the resource.  
-**Default**: 5000 milliseconds
+- `streamx.blueprints.resource-downloader.download-timeout-millis`  
+  Defines the timeout (in milliseconds) for the HTTP GET request used to download the resource.  
+  **Default**: 5000 milliseconds
 
 
-- `streamx.blueprints.resource-downloader.url-repeating-pattern`
-  A regular expression is used to include certain external resource URLs (such as indexes updated
-  frequently) for repeating in configurable intervals.
-  Optional — if not set, then the repeating function is turned off.
+- `streamx.blueprints.resource-downloader.repeatable-url-pattern`  
+  An optional Regular Expression used to automatically promote standard download requests to "repeatable" status based on their URL.
+  If an incoming `DownloadRequest` has a URL that matches this pattern, the service will treat it as a repeatable request
+  even if the event type is the standard `DownloadRequest.DOWNLOAD_EVENT_TYPE`.
+  This allows you to enforce global policies for specific domains or file types without requiring the event sender to change the `CloudEvent` type.
 
 
-- `streamx.blueprints.resource-downloader.repeat-interval-millis`
-  Defines the time (in milliseconds) between resource that matches `url-repeating-pattern`, will be
-  requested for download, and if changed
-  new version of it will be stored at the edge service.
+- `streamx.blueprints.resource-downloader.repeat-interval-millis`  
+  Defines the interval (in milliseconds) between scheduled download attempts for repeatable resources.
+  A new version of the resource is only downloaded if the remote content has changed since the last successful download.  
   **Default**: 30000 milliseconds
 
 

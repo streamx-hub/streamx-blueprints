@@ -125,7 +125,7 @@ public class ResourceToIndexableResourceConverterTest {
     DownloadRequest downloadRequest = new DownloadRequest("any", "any", "any", "any", "any");
 
     // when
-    publish(downloadRequest, DownloadRequest.EVENT_TYPE);
+    publish(downloadRequest, DownloadRequest.DOWNLOAD_EVENT_TYPE);
 
     // then
     assertNoOutgoingEvents();

@@ -9,13 +9,14 @@ import java.util.regex.Pattern;
 public interface Configuration {
 
   @WithDefault("1500")
-  int headTimeoutMilliseconds();
+  int headTimeoutMillis();
 
   @WithDefault("5000")
-  int downloadTimeoutMilliseconds();
-
-  Optional<Pattern> urlRepeatingPattern();
+  int downloadTimeoutMillis();
 
   @WithDefault("30000")
   long repeatIntervalMillis();
+
+  Optional<Pattern> repeatableUrlPattern();
+
 }
