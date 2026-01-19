@@ -18,7 +18,7 @@ public class PublishedDataStore {
   private StateRepository<PreservedData> store;
 
   @PostConstruct
-  void initRepositories() {
+  void initRepository() {
     Config config = ConfigProvider.getConfig();
     store = RepositoryFactory.createRepository(config, PreservedData.class, "preserved-data");
   }
