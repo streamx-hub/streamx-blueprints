@@ -37,11 +37,11 @@ class RocksDbCloudEventRepositoryTest extends BaseRocksDbRepositoryTest {
     repository.put(key, inputEvent);
 
     // then
-    CloudEventTestUtils.assertSameEvents(inputEvent, repository.get(key));
+    CloudEventTestUtils.assertSameEvents(repository.get(key), inputEvent);
 
     // and: should reopen existing repository
     RocksDbRepository<CloudEvent> otherRepositoryInstance = createRepository();
-    CloudEventTestUtils.assertSameEvents(inputEvent, otherRepositoryInstance.get(key));
+    CloudEventTestUtils.assertSameEvents(otherRepositoryInstance.get(key), inputEvent);
 
     // cleanup
     repository.remove(key);
