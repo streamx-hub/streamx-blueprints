@@ -6,7 +6,6 @@ import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.data.WebResource;
 import com.streamx.blueprints.data.collector.collectors.Collector.CollectedOutput;
 import com.streamx.blueprints.data.collector.configuration.Configuration;
-import com.streamx.blueprints.data.collector.stores.PublishedDataStore;
 import io.cloudevents.CloudEvent;
 import io.quarkus.scheduler.Scheduled;
 import io.quarkus.scheduler.Scheduled.ConcurrentExecution;
@@ -27,9 +26,6 @@ class ProcessDataFunction {
 
   @Inject
   Logger log;
-
-  @Inject
-  PublishedDataStore dataStore;
 
   @Inject
   @Channel(Channels.Outgoing.COLLECTED_DATA)

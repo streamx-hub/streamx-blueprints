@@ -1,7 +1,6 @@
 package com.streamx.blueprints.data.collector;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -11,13 +10,11 @@ import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.collector.collectors.Collector.CollectedOutput;
 import com.streamx.blueprints.data.collector.configuration.Configuration;
 import com.streamx.blueprints.data.collector.configuration.DirtyCheck;
-import com.streamx.blueprints.data.collector.stores.PublishedDataStore;
 import io.cloudevents.CloudEvent;
 import java.util.List;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -39,6 +36,10 @@ class TriggerTest {
   @Mock
   private DirtyCheck dirtyCheck;
 
+  @SuppressWarnings("unused") // used by @InjectMocks
+  @Mock
+  private Logger log;
+
   @Mock
   private WebResourcesService webResourcesService;
 
@@ -48,12 +49,6 @@ class TriggerTest {
   @BeforeAll
   static void setServiceInstanceId() {
     System.setProperty("streamx.service.instance-id", TriggerTest.class.getSimpleName());
-  }
-
-  @BeforeEach
-  void injectIrrelevantMocks() {
-    cut.log = mock(Logger.class);
-    cut.dataStore = mock(PublishedDataStore.class);
   }
 
   @Test
