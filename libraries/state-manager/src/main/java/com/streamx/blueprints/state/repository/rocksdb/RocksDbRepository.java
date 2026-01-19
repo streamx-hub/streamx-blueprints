@@ -34,7 +34,8 @@ public class RocksDbRepository<T> implements StateRepository<T> {
   private final RocksDB rocksDb;
   private final Class<T> valueClass;
 
-  public RocksDbRepository(Config config, Class<T> valueClass, String instanceId, String identifier) {
+  public RocksDbRepository(Config config, Class<T> valueClass, String instanceId,
+      String identifier) {
     this.rocksDb = RocksDbManager.getOrCreateDb(config, instanceId, identifier);
     this.valueClass = valueClass;
   }
