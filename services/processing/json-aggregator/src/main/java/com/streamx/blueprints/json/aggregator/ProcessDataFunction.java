@@ -18,7 +18,7 @@ import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
 @ApplicationScoped
-public class ProcessDataFunction extends AbstractFunction {
+public class ProcessDataFunction extends BaseProcessingFunction {
 
   @Override
   protected boolean requiresHashInKey() {

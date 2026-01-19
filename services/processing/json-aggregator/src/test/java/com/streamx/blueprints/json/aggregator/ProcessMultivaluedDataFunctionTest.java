@@ -1,10 +1,10 @@
 package com.streamx.blueprints.json.aggregator;
 
+import com.streamx.blueprints.test.unit.StatefulInMemorySource;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
-import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +19,7 @@ class ProcessMultivaluedDataFunctionTest extends ProcessDataFunctionBaseTest {
   @Any
   InMemoryConnector connector;
 
-  InMemorySource<CloudEvent> dataSource;
+  StatefulInMemorySource dataSource;
 
   InMemorySink<CloudEvent> multiValuedSink;
 
@@ -29,13 +29,14 @@ class ProcessMultivaluedDataFunctionTest extends ProcessDataFunctionBaseTest {
   }
 
   @Override
-  protected InMemorySource<CloudEvent> getDataSource() {
+  protected StatefulInMemorySource getDataSource() {
     return dataSource;
   }
 
   @BeforeEach
   void beforeEach() {
-    dataSource = connector.source(Channels.MULTIVALUED_DATA);
+    dataSource = new StatefulInMemorySource(connector,
+        Channels.MULTIVALUED_DATA, Channels.MULTIVALUED_DATA_STATE);
     multiValuedSink = connector.sink(Channels.AGGREGATED_MULTIVALUED_DATA);
     multiValuedSink.clear();
   }

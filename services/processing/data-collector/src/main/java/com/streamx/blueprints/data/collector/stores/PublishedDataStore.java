@@ -2,15 +2,18 @@ package com.streamx.blueprints.data.collector.stores;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
+import com.streamx.blueprints.data.collector.Channels;
 import com.streamx.blueprints.state.RepositoryFactory;
 import com.streamx.blueprints.state.StateRepository;
 import io.cloudevents.CloudEvent;
+import io.smallrye.mutiny.Uni;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.Dependent;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 @Dependent
 public class PublishedDataStore {
@@ -23,7 +26,8 @@ public class PublishedDataStore {
     store = RepositoryFactory.createRepository(config, PreservedData.class, "preserved-data");
   }
 
-  public void register(CloudEvent dataEvent) {
+  @Incoming(Channels.Incoming.DATA_STATE)
+  Uni<Void> registerData(CloudEvent dataEvent) {
     String key = CloudEventUtils.getSubject(dataEvent);
     Data data = CloudEventUtils.getData(dataEvent, Data.class);
     String eventType = dataEvent.getType();
@@ -32,6 +36,7 @@ public class PublishedDataStore {
     } else {
       store.remove(key);
     }
+    return Uni.createFrom().voidItem();
   }
 
   public Stream<Entry<String, PreservedData>> getEntriesStream() {

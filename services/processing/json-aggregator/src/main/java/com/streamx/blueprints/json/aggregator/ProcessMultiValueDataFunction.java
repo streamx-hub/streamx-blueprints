@@ -18,7 +18,7 @@ import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
 @ApplicationScoped
-public class ProcessMultiValueDataFunction extends AbstractFunction {
+public class ProcessMultiValueDataFunction extends BaseProcessingFunction {
 
   @Override
   protected boolean requiresHashInKey() {
@@ -45,7 +45,7 @@ public class ProcessMultiValueDataFunction extends AbstractFunction {
     try {
       JsonNode jsonNode = objectMapper.readTree(baseJson);
       ArrayNode result = (ArrayNode) jsonNode.get(config.outputNamespace());
-      List<PreservedData> toMerge = store.getAll().stream()
+      List<PreservedData> toMerge = store.getAll()
           .filter(res -> DataKey.hasHashAndSameNamespaceAndId(res.getKey(), namespace, id))
           .map(Map.Entry::getValue)
           .toList();

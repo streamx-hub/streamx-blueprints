@@ -5,6 +5,7 @@ import static org.awaitility.Awaitility.await;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
+import com.streamx.blueprints.test.unit.StatefulInMemorySource;
 import io.cloudevents.CloudEvent;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
 import io.smallrye.reactive.messaging.memory.InMemorySource;
@@ -13,7 +14,7 @@ import org.eclipse.microprofile.reactive.messaging.Message;
 
 abstract class ProcessDataFunctionBaseTest {
 
-  protected abstract InMemorySource<CloudEvent> getDataSource();
+  protected abstract StatefulInMemorySource getDataSource();
 
   protected abstract InMemorySink<CloudEvent> getDataSink();
 

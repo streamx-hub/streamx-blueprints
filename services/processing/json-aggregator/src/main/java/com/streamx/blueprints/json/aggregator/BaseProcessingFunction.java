@@ -23,7 +23,7 @@ import java.util.Set;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.jboss.logging.Logger;
 
-abstract class AbstractFunction {
+abstract class BaseProcessingFunction {
 
   protected static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -59,11 +59,9 @@ abstract class AbstractFunction {
   protected Multi<Message<CloudEvent>> processDataMessage(Message<CloudEvent> message) {
     CloudEvent event = message.getPayload();
     Data data = CloudEventUtils.getData(event, Data.class);
-    String eventType = event.getType();
     String key = CloudEventUtils.getSubject(event);
     OffsetDateTime eventTime = event.getTime();
 
-    store.register(data, eventType, key);
     log.tracef("Processing message [%s] with event time %s", key, eventTime);
 
     try {
