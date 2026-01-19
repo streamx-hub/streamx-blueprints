@@ -37,7 +37,7 @@ descriptors:
   json-aggregator:
     type: processing
     volumes:
-      repository-volume: {}
+      state: {}
     containers:
       processor:
         image: ghcr.io/streamx-com/streamx-blueprints/json-aggregator:latest-jvm
@@ -55,7 +55,7 @@ descriptors:
             to: multivalued-data-state
             using: sync-state
         volumes:
-          - repository-volume:/tmp/rocksdb
+          - state:/tmp/rocksdb
 
   external-references-rewriter:
     type: processing
@@ -110,7 +110,7 @@ descriptors:
   composition-engine:
     type: processing
     volumes:
-      repository-volume: {}
+      state: {}
     containers:
       processor:
         image: ghcr.io/streamx-com/streamx-blueprints/composition-engine:latest-jvm
@@ -130,12 +130,12 @@ descriptors:
             to: compositions-state
             using: sync-state
         volumes:
-          - repository-volume:/tmp/rocksdb
+          - state:/tmp/rocksdb
 
   data-collector:
     type: processing
     volumes:
-      repository-volume: {}
+      state: {}
     containers:
       processor:
         image: ghcr.io/streamx-com/streamx-blueprints/data-collector:latest-jvm
@@ -149,7 +149,7 @@ descriptors:
             to: data-state
             using: sync-state
         volumes:
-          - repository-volume:/tmp/rocksdb
+          - state:/tmp/rocksdb
 
   sitemap-generator:
     type: processing
