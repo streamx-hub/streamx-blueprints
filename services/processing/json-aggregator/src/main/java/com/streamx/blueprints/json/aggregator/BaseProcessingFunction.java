@@ -5,7 +5,6 @@ import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.json.aggregator.configuration.AggregatorConfiguration;
 import com.streamx.blueprints.json.aggregator.configuration.Configuration;
-import com.streamx.blueprints.json.aggregator.stores.DataStore;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -28,9 +27,6 @@ abstract class BaseProcessingFunction {
   protected static final ObjectMapper objectMapper = new ObjectMapper();
 
   Logger log;
-
-  @Inject
-  DataStore store;
 
   @Inject
   AggregatorConfiguration aggregatorConfig;
