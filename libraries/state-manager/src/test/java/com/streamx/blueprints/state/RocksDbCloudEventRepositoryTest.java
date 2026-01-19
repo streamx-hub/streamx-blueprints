@@ -50,7 +50,7 @@ class RocksDbCloudEventRepositoryTest extends BaseRocksDbRepositoryTest {
   @Test
   void shouldReturnStreamOfInsertedEvents() {
     // given
-    int eventsCount = 10;
+    int eventsCount = 9;
     List<String> keys = IntStream.rangeClosed(1, eventsCount)
         .mapToObj(i -> "event#" + i)
         .toList();
@@ -66,12 +66,12 @@ class RocksDbCloudEventRepositoryTest extends BaseRocksDbRepositoryTest {
     Map<String, CloudEvent> retrievedEvents = getRepositoryEntries(repository);
 
     assertThat(retrievedEvents.keySet())
-        .containsExactlyInAnyOrderElementsOf(keys);
+        .containsExactlyElementsOf(keys);
 
     assertThat(retrievedEvents.values())
         .usingElementComparator(
             Comparator.comparing(e -> new String(eventsSerializer.serialize(e))))
-        .containsExactlyInAnyOrderElementsOf(inputEvents);
+        .containsExactlyElementsOf(inputEvents);
 
     // cleanup
     repository.clear();

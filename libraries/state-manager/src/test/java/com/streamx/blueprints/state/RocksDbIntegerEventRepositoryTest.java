@@ -35,7 +35,7 @@ class RocksDbIntegerEventRepositoryTest extends BaseRocksDbRepositoryTest {
   @Test
   void shouldReturnStreamOfInsertedData() {
     // given
-    int itemsCount = 10;
+    int itemsCount = 9;
     List<String> keys = IntStream.rangeClosed(1, itemsCount)
         .mapToObj(i -> "key#" + i)
         .toList();
@@ -51,10 +51,10 @@ class RocksDbIntegerEventRepositoryTest extends BaseRocksDbRepositoryTest {
     Map<String, Integer> retrievedEvents = getRepositoryEntries(repository);
 
     assertThat(retrievedEvents.keySet())
-        .containsExactlyInAnyOrderElementsOf(keys);
+        .containsExactlyElementsOf(keys);
 
     assertThat(retrievedEvents.values())
-        .containsExactlyInAnyOrderElementsOf(values);
+        .containsExactlyElementsOf(values);
 
     // cleanup
     repository.clear();

@@ -2,6 +2,7 @@ package com.streamx.blueprints.state;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,6 +28,10 @@ abstract class BaseStateRepositoryTest extends BaseConfigTest {
         .entries()
         .collect(Collectors.toMap(
             Entry::getKey,
-            Entry::getValue));
+            Entry::getValue,
+            (u, v) -> {
+              throw new IllegalStateException("Duplicate keys not expected: " + u);
+            },
+            LinkedHashMap::new));
   }
 }
