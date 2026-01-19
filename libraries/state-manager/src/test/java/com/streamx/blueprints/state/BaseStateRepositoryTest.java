@@ -12,7 +12,7 @@ abstract class BaseStateRepositoryTest extends BaseConfigTest {
 
   @BeforeEach
   void initRepositoryFactory() {
-    setConfigProperty("streamx.service.instance-id", getClass().getName());
+    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, getClass().getName());
   }
 
   protected <T> void addData(StateRepository<T> repository, List<String> keys, List<T> values) {

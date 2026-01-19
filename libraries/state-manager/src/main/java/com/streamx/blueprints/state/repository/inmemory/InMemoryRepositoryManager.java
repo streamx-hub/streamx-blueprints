@@ -12,8 +12,9 @@ public final class InMemoryRepositoryManager {
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> InMemoryRepository<T> getOrCreate(String identifier) {
-    return (InMemoryRepository<T>) repositories.computeIfAbsent(identifier, i ->
+  public static <T> InMemoryRepository<T> getOrCreate(String instanceId, String identifier) {
+    String fullIdentifier = instanceId + '\0' + identifier;
+    return (InMemoryRepository<T>) repositories.computeIfAbsent(fullIdentifier, i ->
         new InMemoryRepository<>()
     );
   }

@@ -3,6 +3,7 @@ package com.streamx.blueprints.state.repository.rocksdb;
 import com.streamx.blueprints.state.PropertyNames;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
@@ -14,7 +15,9 @@ import org.rocksdb.RocksDBException;
 
 public final class RocksDbManager {
 
-  private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("^[a-zA-Z0-9-]+$");
+  private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("^[a-zA-Z0-9-.]+$");
+  private static final String IDENTIFIER_PATTERN_DESCRIPTION =
+      "only letters, digits, dashes and dots allowed";
 
   private static final Map<String, RocksDB> rocksDbMap = new ConcurrentHashMap<>();
   private static final Options options = new Options().setCreateIfMissing(true);
@@ -23,9 +26,10 @@ public final class RocksDbManager {
     // no instances
   }
 
-  public static RocksDB getOrCreateDb(Config config, String identifier) {
-    File rocksDbDir = initDatabaseDir(config, identifier);
-    return rocksDbMap.computeIfAbsent(rocksDbDir.getAbsolutePath(), path -> {
+  public static RocksDB getOrCreateDb(Config config, String instanceId, String identifier) {
+    File rocksDbDir = initDbDir(config, instanceId, identifier);
+    String rocksDbDirPath = normalizePath(rocksDbDir);
+    return rocksDbMap.computeIfAbsent(rocksDbDirPath, path -> {
       try {
         return RocksDB.open(options, path);
       } catch (RocksDBException e) {
@@ -34,29 +38,48 @@ public final class RocksDbManager {
     });
   }
 
-  private static File initDatabaseDir(Config config, String identifier) {
-    validateIdentifier(identifier);
+  private static String normalizePath(File rocksDbDir) {
+    return rocksDbDir.toPath().toAbsolutePath().normalize().toString();
+  }
 
-    String rocksDbRootDir = config.getOptionalValue(PropertyNames.STATE_ROCKSDB_PATH, String.class)
-        .orElse("/tmp/rocksdb");
-    String instanceId = config.getOptionalValue("streamx.service.instance-id", String.class)
-        .orElse("unnamed");
+  private static File initDbDir(Config config, String instanceId, String identifier) {
+    validateIdentifier(instanceId, "instanceId");
+    validateIdentifier(identifier, "identifier");
 
-    File instanceDatabasesDir = new File(rocksDbRootDir, instanceId);
-    File databaseDir = new File(instanceDatabasesDir, identifier);
+    File instanceDbsDir = getInstanceDbsDir(config, instanceId);
+    File dbDir = new File(instanceDbsDir, identifier);
 
     try {
-      FileUtils.forceMkdir(databaseDir);
-      return databaseDir;
+      FileUtils.forceMkdir(dbDir);
+      return dbDir;
     } catch (IOException ex) {
-      throw new RuntimeException("Cannot create RocksDB directory at " + databaseDir, ex);
+      throw new RuntimeException("Cannot create RocksDB directory at " + dbDir, ex);
     }
   }
 
-  private static void validateIdentifier(String identifier) {
+  private static File getInstanceDbsDir(Config config, String instanceId) {
+    String rocksDbRootDir = config.getOptionalValue(PropertyNames.STATE_ROCKSDB_PATH, String.class)
+        .orElse("/tmp/rocksdb");
+    return new File(rocksDbRootDir, instanceId);
+  }
+
+  private static void validateIdentifier(String identifier, String fieldName) {
     if (!IDENTIFIER_PATTERN.matcher(identifier).matches()) {
       throw new IllegalArgumentException(
-          "Invalid identifier: " + identifier + " - only letters, digits and dashes allowed");
+          "Invalid " + fieldName + ": " + identifier + " - " + IDENTIFIER_PATTERN_DESCRIPTION);
+    }
+  }
+
+  public static void closeInstanceDbs(Config config) {
+    String serviceInstanceId = config
+        .getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class)
+        .orElseThrow();
+    for (String dbPath : rocksDbMap.keySet()) {
+      String dbInstanceId = Path.of(dbPath).getParent().getFileName().toString();
+      if (dbInstanceId.equals(serviceInstanceId)) {
+        rocksDbMap.get(dbPath).close();
+        rocksDbMap.remove(dbPath);
+      }
     }
   }
 

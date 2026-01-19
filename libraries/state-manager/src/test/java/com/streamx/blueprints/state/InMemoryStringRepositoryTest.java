@@ -17,14 +17,14 @@ class InMemoryStringRepositoryTest extends BaseInMemoryRepositoryTest {
     String value = "value-1";
 
     // when
-    StateRepository<String> repository = createRepository();
+    InMemoryRepository<String> repository = createRepository();
     repository.put(key, value);
 
     // then
     assertThat(repository.get(key)).isEqualTo(value);
 
     // and: should reopen existing repository
-    StateRepository<String> otherRepositoryInstance = createRepository();
+    InMemoryRepository<String> otherRepositoryInstance = createRepository();
     assertThat(otherRepositoryInstance.get(key)).isEqualTo(value);
 
     // cleanup
@@ -43,7 +43,7 @@ class InMemoryStringRepositoryTest extends BaseInMemoryRepositoryTest {
         .toList();
 
     // when
-    StateRepository<String> repository = createRepository();
+    InMemoryRepository<String> repository = createRepository();
     addData(repository, keys, values);
 
     // then
@@ -57,6 +57,44 @@ class InMemoryStringRepositoryTest extends BaseInMemoryRepositoryTest {
 
     // cleanup
     repository.clear();
+  }
+
+  @Test
+  void repositoriesWithSameIdentifierButFromDifferentServicesShouldBeIsolated() {
+    // given
+    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, "service-1");
+    InMemoryRepository<String> service1Numbers = createRepository();
+
+    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, "service-2");
+    InMemoryRepository<String> service2Numbers = createRepository();
+
+    // when
+    service1Numbers.put("key", "A");
+    service2Numbers.put("key", "B");
+
+    // then
+    assertThat(service1Numbers.get("key")).isEqualTo("A");
+    assertThat(service2Numbers.get("key")).isEqualTo("B");
+  }
+
+  @Test
+  void repositoriesWithSameIdentifierAndSameServiceShouldBeSynchronized() {
+    // given
+    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, "service");
+    InMemoryRepository<String> repository1 = createRepository();
+    InMemoryRepository<String> repository2 = createRepository();
+
+    // when
+    repository1.put("key-1", "A");
+    repository1.put("key-2", "A");
+    repository2.put("key-1", "B");
+
+    // then
+    assertThat(repository1.get("key-1")).isEqualTo("B");
+    assertThat(repository1.get("key-2")).isEqualTo("A");
+
+    assertThat(repository2.get("key-1")).isEqualTo("B");
+    assertThat(repository2.get("key-2")).isEqualTo("A");
   }
 
   private InMemoryRepository<String> createRepository() {

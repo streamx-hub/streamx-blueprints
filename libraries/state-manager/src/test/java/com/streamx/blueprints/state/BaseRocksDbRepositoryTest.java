@@ -2,6 +2,7 @@ package com.streamx.blueprints.state;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.streamx.blueprints.state.repository.rocksdb.RocksDbManager;
 import com.streamx.blueprints.state.repository.rocksdb.RocksDbRepository;
 import java.io.File;
 import java.io.IOException;
@@ -22,7 +23,13 @@ abstract class BaseRocksDbRepositoryTest extends BaseStateRepositoryTest {
   @AfterEach
   void dropRocksDb() throws IOException {
     if (dbPath.exists()) {
-      FileUtils.forceDelete(dbPath);
+      RocksDbManager.closeInstanceDbs(config);
+
+      String serviceInstanceId = config
+          .getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class)
+          .orElseThrow();
+
+      FileUtils.deleteDirectory(new File(dbPath, serviceInstanceId));
     }
   }
 

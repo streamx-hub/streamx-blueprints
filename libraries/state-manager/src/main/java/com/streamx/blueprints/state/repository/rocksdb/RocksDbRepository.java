@@ -18,6 +18,7 @@ import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.eclipse.microprofile.config.Config;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksIterator;
 
@@ -33,8 +34,8 @@ public class RocksDbRepository<T> implements StateRepository<T> {
   private final RocksDB rocksDb;
   private final Class<T> valueClass;
 
-  public RocksDbRepository(RocksDB rocksDb, Class<T> valueClass) {
-    this.rocksDb = rocksDb;
+  public RocksDbRepository(Config config, Class<T> valueClass, String instanceId, String identifier) {
+    this.rocksDb = RocksDbManager.getOrCreateDb(config, instanceId, identifier);
     this.valueClass = valueClass;
   }
 

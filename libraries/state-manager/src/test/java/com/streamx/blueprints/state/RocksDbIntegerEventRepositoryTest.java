@@ -3,6 +3,7 @@ package com.streamx.blueprints.state;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.streamx.blueprints.state.repository.rocksdb.RocksDbRepository;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -17,14 +18,14 @@ class RocksDbIntegerEventRepositoryTest extends BaseRocksDbRepositoryTest {
     int value = 123;
 
     // when
-    StateRepository<Integer> repository = createRepository();
+    RocksDbRepository<Integer> repository = createRepository();
     repository.put(key, value);
 
     // then
     assertThat(repository.get(key)).isEqualTo(value);
 
     // and: should reopen existing repository
-    StateRepository<Integer> otherRepositoryInstance = createRepository();
+    RocksDbRepository<Integer> otherRepositoryInstance = createRepository();
     assertThat(otherRepositoryInstance.get(key)).isEqualTo(value);
 
     // cleanup
@@ -43,7 +44,7 @@ class RocksDbIntegerEventRepositoryTest extends BaseRocksDbRepositoryTest {
         .toList();
 
     // when
-    StateRepository<Integer> repository = createRepository();
+    RocksDbRepository<Integer> repository = createRepository();
     addData(repository, keys, values);
 
     // then
@@ -60,9 +61,47 @@ class RocksDbIntegerEventRepositoryTest extends BaseRocksDbRepositoryTest {
   }
 
   @Test
+  void repositoriesWithSameIdentifierButFromDifferentServicesShouldBeIsolated() {
+    // given
+    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, "service-1");
+    RocksDbRepository<Integer> service1Numbers = createRepository();
+
+    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, "service-2");
+    RocksDbRepository<Integer> service2Numbers = createRepository();
+
+    // when
+    service1Numbers.put("key", 1);
+    service2Numbers.put("key", 2);
+
+    // then
+    assertThat(service1Numbers.get("key")).isEqualTo(1);
+    assertThat(service2Numbers.get("key")).isEqualTo(2);
+  }
+
+  @Test
+  void repositoriesWithSameIdentifierAndSameServiceShouldBeSynchronized() {
+    // given
+    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, "service");
+    RocksDbRepository<Integer> repository1 = createRepository();
+    RocksDbRepository<Integer> repository2 = createRepository();
+
+    // when
+    repository1.put("key-1", 1);
+    repository1.put("key-2", 1);
+    repository2.put("key-1", 2);
+
+    // then
+    assertThat(repository1.get("key-1")).isEqualTo(2);
+    assertThat(repository1.get("key-2")).isEqualTo(1);
+
+    assertThat(repository2.get("key-1")).isEqualTo(2);
+    assertThat(repository2.get("key-2")).isEqualTo(1);
+  }
+
+  @Test
   void shouldNotFailGettingDataIfNoData() {
     // when
-    StateRepository<Integer> repository = createRepository();
+    RocksDbRepository<Integer> repository = createRepository();
 
     // then
     assertThat(repository.get("abc")).isNull();
@@ -72,7 +111,7 @@ class RocksDbIntegerEventRepositoryTest extends BaseRocksDbRepositoryTest {
   @Test
   void shouldFailRemovingNullKey() {
     // when
-    StateRepository<Integer> repository = createRepository();
+    RocksDbRepository<Integer> repository = createRepository();
 
     // then
     assertThatThrownBy(() -> repository.remove(null))
@@ -81,7 +120,7 @@ class RocksDbIntegerEventRepositoryTest extends BaseRocksDbRepositoryTest {
         .hasRootCauseInstanceOf(NullPointerException.class);
   }
 
-  private StateRepository<Integer> createRepository() {
+  private RocksDbRepository<Integer> createRepository() {
     return createRepository(Integer.class, "integers");
   }
 }

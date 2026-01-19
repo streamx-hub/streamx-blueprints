@@ -3,6 +3,7 @@ package com.streamx.blueprints.state;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.streamx.blueprints.state.repository.rocksdb.RocksDbRepository;
 import org.junit.jupiter.api.Test;
 
 class RocksDbInvalidTypeRepositoryTest extends BaseRocksDbRepositoryTest {
@@ -25,7 +26,7 @@ class RocksDbInvalidTypeRepositoryTest extends BaseRocksDbRepositoryTest {
     NonJsonSerializableClass value = new NonJsonSerializableClass(1, "abc");
 
     // when & then
-    StateRepository<NonJsonSerializableClass> repository = createRepository();
+    RocksDbRepository<NonJsonSerializableClass> repository = createRepository();
     assertThatThrownBy(() -> repository.put(key, value))
         .isInstanceOf(RuntimeException.class)
         .hasMessage("Error putting entry with key key-1 to RocksDB")
@@ -37,7 +38,7 @@ class RocksDbInvalidTypeRepositoryTest extends BaseRocksDbRepositoryTest {
         );
   }
 
-  private StateRepository<NonJsonSerializableClass> createRepository() {
+  private RocksDbRepository<NonJsonSerializableClass> createRepository() {
     return createRepository(NonJsonSerializableClass.class, "data");
   }
 }

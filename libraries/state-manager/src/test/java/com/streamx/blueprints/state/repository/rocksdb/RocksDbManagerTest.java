@@ -14,25 +14,32 @@ class RocksDbManagerTest extends BaseConfigTest {
 
   @Test
   void shouldNotAllowInvalidRocksDbIdentifier() {
-    assertThatThrownBy(() -> RocksDbManager.getOrCreateDb(config, "a/b/c"))
+    assertThatThrownBy(() -> RocksDbManager.getOrCreateDb(config, "service-1", "a/b/c"))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Invalid identifier: a/b/c - only letters, digits and dashes allowed");
+        .hasMessage("Invalid identifier: a/b/c - only letters, digits, dashes and dots allowed");
+  }
+
+  @Test
+  void shouldNotAllowInvalidServiceInstanceId() {
+    assertThatThrownBy(() -> RocksDbManager.getOrCreateDb(config, "d/e/f", "pages"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid instanceId: d/e/f - only letters, digits, dashes and dots allowed");
   }
 
   @Test
   void shouldNotAllowCreatingRocksDbOnPathTakenByExistingFile() throws IOException {
     // given
     setConfigProperty(PropertyNames.STATE_ROCKSDB_PATH, "target/foo");
-    setConfigProperty("streamx.service.instance-id", "service-1");
+    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, "service-1");
 
-    String expectedRocksDbDir = "target/foo/service-1/db-1";
+    String expectedRocksDbDir = "target/foo/service-1/db-1".replace("/", File.separator);
     FileUtils.writeStringToFile(new File(expectedRocksDbDir), "text file content", UTF_8);
 
     // when & then
-    assertThatThrownBy(() -> RocksDbManager.getOrCreateDb(config, "db-1"))
+    assertThatThrownBy(() -> RocksDbManager.getOrCreateDb(config, "service-1", "db-1"))
         .isInstanceOf(RuntimeException.class)
-        .hasMessage("Cannot create RocksDB directory at target/foo/service-1/db-1")
+        .hasMessage("Cannot create RocksDB directory at " + expectedRocksDbDir)
         .hasRootCauseInstanceOf(IOException.class)
-        .hasRootCauseMessage("Cannot create directory 'target/foo/service-1/db-1'.");
+        .hasRootCauseMessage("Cannot create directory '" + expectedRocksDbDir + "'.");
   }
 }

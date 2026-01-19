@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.state.repository.rocksdb.RocksDbRepository;
 import com.streamx.ce.serialization.CloudEventSerializer;
 import com.streamx.ce.serialization.json.CloudEventJsonSerializer;
 import io.cloudevents.CloudEvent;
@@ -21,7 +22,7 @@ class RocksDbCloudEventRepositoryTest extends BaseRocksDbRepositoryTest {
 
   @BeforeAll
   static void setupCloudEventUtils() {
-    System.setProperty("streamx.service.instance-id",
+    System.setProperty(PropertyNames.SERVICE_INSTANCE_ID,
         RocksDbCloudEventRepositoryTest.class.getName());
   }
 
@@ -32,14 +33,14 @@ class RocksDbCloudEventRepositoryTest extends BaseRocksDbRepositoryTest {
     CloudEvent inputEvent = createRandomEvent();
 
     // when
-    StateRepository<CloudEvent> repository = createRepository();
+    RocksDbRepository<CloudEvent> repository = createRepository();
     repository.put(key, inputEvent);
 
     // then
     CloudEventTestUtils.assertSameEvents(inputEvent, repository.get(key));
 
     // and: should reopen existing repository
-    StateRepository<CloudEvent> otherRepositoryInstance = createRepository();
+    RocksDbRepository<CloudEvent> otherRepositoryInstance = createRepository();
     CloudEventTestUtils.assertSameEvents(inputEvent, otherRepositoryInstance.get(key));
 
     // cleanup
@@ -58,7 +59,7 @@ class RocksDbCloudEventRepositoryTest extends BaseRocksDbRepositoryTest {
         .toList();
 
     // when
-    StateRepository<CloudEvent> repository = createRepository();
+    RocksDbRepository<CloudEvent> repository = createRepository();
     addData(repository, keys, inputEvents);
 
     // then
@@ -76,7 +77,7 @@ class RocksDbCloudEventRepositoryTest extends BaseRocksDbRepositoryTest {
     repository.clear();
   }
 
-  private StateRepository<CloudEvent> createRepository() {
+  private RocksDbRepository<CloudEvent> createRepository() {
     return createRepository(CloudEvent.class, "events");
   }
 

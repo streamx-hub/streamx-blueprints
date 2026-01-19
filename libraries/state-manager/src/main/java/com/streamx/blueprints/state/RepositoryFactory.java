@@ -2,10 +2,8 @@ package com.streamx.blueprints.state;
 
 import com.streamx.blueprints.state.repository.inmemory.InMemoryRepository;
 import com.streamx.blueprints.state.repository.inmemory.InMemoryRepositoryManager;
-import com.streamx.blueprints.state.repository.rocksdb.RocksDbManager;
 import com.streamx.blueprints.state.repository.rocksdb.RocksDbRepository;
 import org.eclipse.microprofile.config.Config;
-import org.rocksdb.RocksDB;
 
 public final class RepositoryFactory {
 
@@ -17,12 +15,13 @@ public final class RepositoryFactory {
       String identifier) {
     String backend = config.getOptionalValue(PropertyNames.STATE_BACKEND, String.class)
         .orElse(InMemoryRepository.BACKEND);
+    String instanceId = config.getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class)
+        .orElse("unnamed");
     if (backend.equals(RocksDbRepository.BACKEND)) {
-      RocksDB rocksDb = RocksDbManager.getOrCreateDb(config, identifier);
-      return new RocksDbRepository<>(rocksDb, valueClass);
+      return new RocksDbRepository<>(config, valueClass, instanceId, identifier);
     }
     if (backend.equals(InMemoryRepository.BACKEND)) {
-      return InMemoryRepositoryManager.getOrCreate(identifier);
+      return InMemoryRepositoryManager.getOrCreate(instanceId, identifier);
     }
     throw new UnsupportedOperationException("No StateRepository for backend " + backend);
   }
