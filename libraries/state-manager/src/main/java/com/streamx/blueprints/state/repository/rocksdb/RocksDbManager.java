@@ -16,6 +16,7 @@ public final class RocksDbManager {
 
   private static final Map<String, RocksDB> rocksDbMap = new ConcurrentHashMap<>();
   private static final Options options = new Options().setCreateIfMissing(true);
+  private static final String DEFAULT_ROCKSDB_PATH = "/tmp/rocksdb";
 
   private RocksDbManager() {
     // no instances
@@ -51,7 +52,7 @@ public final class RocksDbManager {
 
   private static File getInstanceDbsDir(Config config, String instanceId) {
     String rocksDbRootDir = config.getOptionalValue(PropertyNames.STATE_ROCKSDB_PATH, String.class)
-        .orElse("/tmp/rocksdb");
+        .orElse(DEFAULT_ROCKSDB_PATH);
     return new File(rocksDbRootDir, instanceId);
   }
 
