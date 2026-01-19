@@ -20,7 +20,7 @@ class RocksDbInvalidTypeRepositoryTest extends BaseRocksDbRepositoryTest {
   }
 
   @Test
-  void shouldReturnInsertedValue() {
+  void shouldFailInsertingNonSerializableValue() {
     // given
     String key = "key-1";
     NonJsonSerializableClass value = new NonJsonSerializableClass(1, "abc");
