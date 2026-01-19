@@ -2,16 +2,26 @@ package com.streamx.blueprints.data.collector.stores;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
+import com.streamx.blueprints.state.RepositoryFactory;
+import com.streamx.blueprints.state.StateRepository;
 import io.cloudevents.CloudEvent;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.Dependent;
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map.Entry;
+import java.util.stream.Stream;
+import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigProvider;
 
 @Dependent
 public class PublishedDataStore {
 
-  private static final Map<String, PreservedData> store = new ConcurrentHashMap<>();
+  private StateRepository<PreservedData> store;
+
+  @PostConstruct
+  void initRepositories() {
+    Config config = ConfigProvider.getConfig();
+    store = RepositoryFactory.createRepository(config, PreservedData.class, "preserved-data");
+  }
 
   public void register(CloudEvent dataEvent) {
     String key = CloudEventUtils.getSubject(dataEvent);
@@ -24,7 +34,7 @@ public class PublishedDataStore {
     }
   }
 
-  public Collection<PreservedData> getAll() {
-    return store.values();
+  public Stream<Entry<String, PreservedData>> getEntriesStream() {
+    return store.entries();
   }
 }

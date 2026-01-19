@@ -5,11 +5,12 @@ import static org.awaitility.Awaitility.await;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
+import com.streamx.blueprints.data.collector.Channels.Incoming;
 import com.streamx.blueprints.data.collector.Channels.Outgoing;
+import com.streamx.blueprints.test.unit.StatefulInMemorySource;
 import io.cloudevents.CloudEvent;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
-import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.time.Duration;
@@ -26,12 +27,12 @@ abstract class AbstractCollectorTest {
   @Inject
   TestCollectorFactory testCollectorFactory;
 
-  InMemorySource<CloudEvent> dataSource;
-  InMemorySink<CloudEvent> collectedDataSink;
+  private StatefulInMemorySource dataSource;
+  private InMemorySink<CloudEvent> collectedDataSink;
 
   @BeforeEach
   void beforeEach() {
-    dataSource = connector.source(Channels.Incoming.DATA);
+    dataSource = new StatefulInMemorySource(connector, Incoming.DATA, Incoming.DATA_STATE);
     collectedDataSink = connector.sink(Outgoing.COLLECTED_DATA);
     collectedDataSink.clear();
   }

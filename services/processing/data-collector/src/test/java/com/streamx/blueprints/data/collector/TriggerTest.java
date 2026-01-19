@@ -124,7 +124,7 @@ class TriggerTest {
   }
 
   private void simulateProcessingDataEvent() {
-    cut.process(CloudEventUtils.eventWithData(
+    cut.processData(CloudEventUtils.eventWithData(
         "any-key",
         Data.TYPE_PUBLISHED,
         new Data("any-content", "any-type"),

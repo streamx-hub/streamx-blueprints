@@ -61,14 +61,12 @@ public class CompositionEngineIT extends BaseQuarkusIntegrationTest {
 
   private static void sendLayout(String key, Layout data) {
     CloudEvent event = CloudEventUtils.eventWithData(key, Layout.TYPE_PUBLISHED, data);
-    sendEvent(event, Channels.INCOMING_LAYOUTS_STATE);
-    sendEvent(event, Channels.INCOMING_LAYOUTS);
+    sendStatefulEvent(event, Channels.INCOMING_LAYOUTS_STATE, Channels.INCOMING_LAYOUTS);
   }
 
   private static void sendComposition(String key, Composition data) {
     CloudEvent event = CloudEventUtils.eventWithData(key, Composition.TYPE_PUBLISHED, data);
-    sendEvent(event, Channels.INCOMING_COMPOSITIONS_STATE);
-    sendEvent(event, Channels.INCOMING_COMPOSITIONS);
+    sendStatefulEvent(event, Channels.INCOMING_COMPOSITIONS_STATE, Channels.INCOMING_COMPOSITIONS);
   }
 
 }

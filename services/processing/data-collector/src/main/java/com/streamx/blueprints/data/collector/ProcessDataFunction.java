@@ -11,6 +11,7 @@ import io.cloudevents.CloudEvent;
 import io.quarkus.scheduler.Scheduled;
 import io.quarkus.scheduler.Scheduled.ConcurrentExecution;
 import io.smallrye.common.annotation.NonBlocking;
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
@@ -47,10 +48,15 @@ class ProcessDataFunction {
   private final AtomicBoolean dirty = new AtomicBoolean(false);
   private final AtomicLong previouslyDirtyCount = new AtomicLong(0);
 
+  @Incoming(Channels.Incoming.DATA_STATE)
+  Uni<Void> registerData(CloudEvent dataEvent) {
+    dataStore.register(dataEvent);
+    return Uni.createFrom().voidItem();
+  }
+
   @Incoming(Channels.Incoming.DATA)
   @Outgoing(Channels.Outgoing.WEB_RESOURCES)
-  CloudEvent process(CloudEvent dataEvent) {
-    dataStore.register(dataEvent);
+  CloudEvent processData(CloudEvent dataEvent) {
     String key = CloudEventUtils.getSubject(dataEvent);
     Data data = CloudEventUtils.getData(dataEvent, Data.class);
     String eventType = dataEvent.getType();
