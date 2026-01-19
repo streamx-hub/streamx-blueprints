@@ -70,7 +70,7 @@ class UndefinedTypeUserRepositoryTest extends BaseStateRepositoryTest {
   }
 
   private StateRepository<User> createRepository() {
-    var repository = RepositoryFactory.createRepository(config, User.class, "users");
+    var repository = RepositoryFactory.createRepository(User.class, "users");
     // when repository type is not specified via property - expect in memory as default
     assertThat(repository).isInstanceOf(InMemoryRepository.class);
     return repository;

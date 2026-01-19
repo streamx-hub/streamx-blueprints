@@ -5,6 +5,7 @@ import com.streamx.blueprints.state.repository.inmemory.InMemoryRepositoryManage
 import com.streamx.blueprints.state.repository.rocksdb.RocksDbRepository;
 import java.util.regex.Pattern;
 import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigProvider;
 
 public final class RepositoryFactory {
 
@@ -16,8 +17,9 @@ public final class RepositoryFactory {
     // no instances
   }
 
-  public static <T> StateRepository<T> createRepository(Config config, Class<T> valueClass,
+  public static <T> StateRepository<T> createRepository(Class<T> valueClass,
       String identifier) {
+    Config config = ConfigProvider.getConfig();
     String backend = config.getOptionalValue(PropertyNames.STATE_BACKEND, String.class)
         .orElse(InMemoryRepository.BACKEND);
     String instanceId = config.getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class)

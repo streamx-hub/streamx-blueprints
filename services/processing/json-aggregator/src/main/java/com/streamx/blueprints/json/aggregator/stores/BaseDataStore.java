@@ -8,16 +8,13 @@ import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Uni;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
-import org.eclipse.microprofile.config.Config;
-import org.eclipse.microprofile.config.ConfigProvider;
 
 abstract class BaseDataStore {
 
   private StateRepository<PreservedData> repository;
 
   protected void initRepository(String identifier) {
-    Config config = ConfigProvider.getConfig();
-    repository = RepositoryFactory.createRepository(config, PreservedData.class, identifier);
+    repository = RepositoryFactory.createRepository(PreservedData.class, identifier);
   }
 
   protected Uni<Void> register(CloudEvent event) {

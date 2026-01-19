@@ -14,8 +14,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
-import org.eclipse.microprofile.config.Config;
-import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 @ApplicationScoped
@@ -26,9 +24,8 @@ public class State {
 
   @PostConstruct
   void initRepositories() {
-    Config config = ConfigProvider.getConfig();
-    layouts = RepositoryFactory.createRepository(config, Layout.class, "layouts");
-    compositions = RepositoryFactory.createRepository(config, Composition.class, "compositions");
+    layouts = RepositoryFactory.createRepository(Layout.class, "layouts");
+    compositions = RepositoryFactory.createRepository(Composition.class, "compositions");
   }
 
   @Incoming(Channels.INCOMING_LAYOUTS_STATE)

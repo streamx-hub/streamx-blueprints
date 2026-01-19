@@ -11,8 +11,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.Dependent;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
-import org.eclipse.microprofile.config.Config;
-import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 @Dependent
@@ -22,8 +20,7 @@ public class PublishedDataStore {
 
   @PostConstruct
   void initRepository() {
-    Config config = ConfigProvider.getConfig();
-    store = RepositoryFactory.createRepository(config, PreservedData.class, "preserved-data");
+    store = RepositoryFactory.createRepository(PreservedData.class, "preserved-data");
   }
 
   @Incoming(Channels.Incoming.DATA_STATE)

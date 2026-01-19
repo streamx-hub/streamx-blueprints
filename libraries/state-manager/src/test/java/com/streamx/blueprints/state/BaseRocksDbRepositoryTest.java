@@ -25,16 +25,13 @@ abstract class BaseRocksDbRepositoryTest extends BaseStateRepositoryTest {
     if (dbPath.exists()) {
       RocksDbManager.closeInstanceDbs(config);
 
-      String serviceInstanceId = config
-          .getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class)
-          .orElseThrow();
-
+      String serviceInstanceId = getConfigProperty(PropertyNames.SERVICE_INSTANCE_ID);
       FileUtils.deleteDirectory(new File(dbPath, serviceInstanceId));
     }
   }
 
   protected <T> RocksDbRepository<T> createRepository(Class<T> valueClass, String identifier) {
-    var repository = RepositoryFactory.createRepository(config, valueClass, identifier);
+    var repository = RepositoryFactory.createRepository(valueClass, identifier);
     assertThat(repository).isInstanceOf(RocksDbRepository.class);
     return (RocksDbRepository<T>) repository;
   }
