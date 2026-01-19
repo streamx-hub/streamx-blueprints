@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.microprofile.config.Config;
 import org.rocksdb.Options;
@@ -14,10 +13,6 @@ import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
 public final class RocksDbManager {
-
-  private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("^[a-zA-Z0-9-.]+$");
-  private static final String IDENTIFIER_PATTERN_DESCRIPTION =
-      "only letters, digits, dashes and dots allowed";
 
   private static final Map<String, RocksDB> rocksDbMap = new ConcurrentHashMap<>();
   private static final Options options = new Options().setCreateIfMissing(true);
@@ -43,9 +38,6 @@ public final class RocksDbManager {
   }
 
   private static File initDbDir(Config config, String instanceId, String identifier) {
-    validateIdentifier(instanceId, "instanceId");
-    validateIdentifier(identifier, "identifier");
-
     File instanceDbsDir = getInstanceDbsDir(config, instanceId);
     File dbDir = new File(instanceDbsDir, identifier);
 
@@ -61,13 +53,6 @@ public final class RocksDbManager {
     String rocksDbRootDir = config.getOptionalValue(PropertyNames.STATE_ROCKSDB_PATH, String.class)
         .orElse("/tmp/rocksdb");
     return new File(rocksDbRootDir, instanceId);
-  }
-
-  private static void validateIdentifier(String identifier, String fieldName) {
-    if (!IDENTIFIER_PATTERN.matcher(identifier).matches()) {
-      throw new IllegalArgumentException(
-          "Invalid " + fieldName + ": " + identifier + " - " + IDENTIFIER_PATTERN_DESCRIPTION);
-    }
   }
 
   public static void closeInstanceDbs(Config config) {

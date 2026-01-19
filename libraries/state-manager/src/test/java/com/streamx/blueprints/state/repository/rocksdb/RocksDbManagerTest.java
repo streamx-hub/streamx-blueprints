@@ -13,20 +13,6 @@ import org.junit.jupiter.api.Test;
 class RocksDbManagerTest extends BaseConfigTest {
 
   @Test
-  void shouldNotAllowInvalidRocksDbIdentifier() {
-    assertThatThrownBy(() -> RocksDbManager.getOrCreateDb(config, "service-1", "a/b/c"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Invalid identifier: a/b/c - only letters, digits, dashes and dots allowed");
-  }
-
-  @Test
-  void shouldNotAllowInvalidServiceInstanceId() {
-    assertThatThrownBy(() -> RocksDbManager.getOrCreateDb(config, "d/e/f", "pages"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Invalid instanceId: d/e/f - only letters, digits, dashes and dots allowed");
-  }
-
-  @Test
   void shouldNotAllowCreatingRocksDbOnPathTakenByExistingFile() throws IOException {
     // given
     setConfigProperty(PropertyNames.STATE_ROCKSDB_PATH, "target/foo");
