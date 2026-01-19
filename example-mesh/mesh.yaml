@@ -123,6 +123,8 @@ descriptors:
 
   data-collector:
     type: processing
+    volumes:
+      repository-volume: {}
     containers:
       processor:
         image: ghcr.io/streamx-com/streamx-blueprints/data-collector:latest-jvm
@@ -131,6 +133,12 @@ descriptors:
         outgoing:
           collected-data: {}
           web-resources: {}
+        autoRef:
+          - from: data
+            to: data-state
+            using: sync-state
+        volumes:
+          - repository-volume:/tmp/rocksdb
 
   sitemap-generator:
     type: processing
