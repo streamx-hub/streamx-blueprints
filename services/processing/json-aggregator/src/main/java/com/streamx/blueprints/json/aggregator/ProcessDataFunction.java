@@ -3,10 +3,12 @@ package com.streamx.blueprints.json.aggregator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.json.aggregator.configuration.Configuration;
+import com.streamx.blueprints.json.aggregator.stores.DataStore;
 import com.streamx.blueprints.json.aggregator.stores.PreservedData;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -18,7 +20,10 @@ import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
 @ApplicationScoped
-public class ProcessDataFunction extends AbstractFunction {
+public class ProcessDataFunction extends BaseProcessingFunction {
+
+  @Inject
+  DataStore store;
 
   @Override
   protected boolean requiresHashInKey() {

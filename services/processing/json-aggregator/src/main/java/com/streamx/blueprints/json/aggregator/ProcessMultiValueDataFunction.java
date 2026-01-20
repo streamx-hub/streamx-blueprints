@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.json.aggregator.configuration.Configuration;
+import com.streamx.blueprints.json.aggregator.stores.MultivaluedDataStore;
 import com.streamx.blueprints.json.aggregator.stores.PreservedData;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +20,10 @@ import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
 @ApplicationScoped
-public class ProcessMultiValueDataFunction extends AbstractFunction {
+public class ProcessMultiValueDataFunction extends BaseProcessingFunction {
+
+  @Inject
+  MultivaluedDataStore store;
 
   @Override
   protected boolean requiresHashInKey() {
@@ -45,7 +50,7 @@ public class ProcessMultiValueDataFunction extends AbstractFunction {
     try {
       JsonNode jsonNode = objectMapper.readTree(baseJson);
       ArrayNode result = (ArrayNode) jsonNode.get(config.outputNamespace());
-      List<PreservedData> toMerge = store.getAll().stream()
+      List<PreservedData> toMerge = store.getAll()
           .filter(res -> DataKey.hasHashAndSameNamespaceAndId(res.getKey(), namespace, id))
           .map(Map.Entry::getValue)
           .toList();

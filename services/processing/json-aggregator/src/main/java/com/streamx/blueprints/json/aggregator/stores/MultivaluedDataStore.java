@@ -8,15 +8,15 @@ import jakarta.enterprise.context.Dependent;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 @Dependent
-public class DataStore extends BaseDataStore {
+public class MultivaluedDataStore extends BaseDataStore {
 
   @PostConstruct
   void initRepository() {
-    initRepository("data");
+    initRepository("multivalued-data");
   }
 
-  @Incoming(Channels.DATA_STATE)
-  public Uni<Void> registerData(CloudEvent event) {
+  @Incoming(Channels.MULTIVALUED_DATA_STATE)
+  public Uni<Void> registerMultivaluedData(CloudEvent event) {
     return register(event);
   }
 }

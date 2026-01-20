@@ -1,12 +1,15 @@
 package com.streamx.blueprints.json.aggregator;
 
-final class Channels {
+public final class Channels {
 
-  static final String DATA = "data";
-  static final String MULTIVALUED_DATA = "multivalued-data";
+  public static final String DATA = "data";
+  public static final String DATA_STATE = "data-state";
 
-  static final String AGGREGATED_DATA = "aggregated-data";
-  static final String AGGREGATED_MULTIVALUED_DATA = "aggregated-multivalued-data";
+  public static final String MULTIVALUED_DATA = "multivalued-data";
+  public static final String MULTIVALUED_DATA_STATE = "multivalued-data-state";
+
+  public static final String AGGREGATED_DATA = "aggregated-data";
+  public static final String AGGREGATED_MULTIVALUED_DATA = "aggregated-multivalued-data";
 
   private Channels() {
     // no instances
