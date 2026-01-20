@@ -15,6 +15,7 @@
   <modules>
     <module>cloud-events-support</module>
     <module>data-model</module>
+    <module>key-value-state-repository</module>
   </modules>
 
 </project>

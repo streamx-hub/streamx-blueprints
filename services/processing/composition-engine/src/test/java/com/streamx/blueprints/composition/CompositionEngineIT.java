@@ -27,7 +27,7 @@ public class CompositionEngineIT extends BaseQuarkusIntegrationTest {
         </html>
         """;
     Layout layout = new Layout(layoutContent, "page-layouts");
-    sendEvent(layoutKey, Layout.TYPE_PUBLISHED, layout, Channels.INCOMING_LAYOUTS);
+    sendLayout(layoutKey, layout);
 
     // and: publish composition
     String compositionKey = "/john-page.html";
@@ -37,8 +37,7 @@ public class CompositionEngineIT extends BaseQuarkusIntegrationTest {
         """;
 
     Composition composition = new Composition(compositionContent, null, layoutKey);
-    sendEvent(compositionKey, Composition.TYPE_PUBLISHED, composition,
-        Channels.INCOMING_COMPOSITIONS);
+    sendComposition(compositionKey, composition);
 
     // then: expect page compose request to be produced by the service and relayed to input channel
     sendFromOutgoingToIncomingChannel(
@@ -58,6 +57,16 @@ public class CompositionEngineIT extends BaseQuarkusIntegrationTest {
           Hello John.
         </html>
         """);
+  }
+
+  private static void sendLayout(String key, Layout data) {
+    CloudEvent event = CloudEventUtils.eventWithData(key, Layout.TYPE_PUBLISHED, data);
+    sendStatefulEvent(event, Channels.INCOMING_LAYOUTS_STATE, Channels.INCOMING_LAYOUTS);
+  }
+
+  private static void sendComposition(String key, Composition data) {
+    CloudEvent event = CloudEventUtils.eventWithData(key, Composition.TYPE_PUBLISHED, data);
+    sendStatefulEvent(event, Channels.INCOMING_COMPOSITIONS_STATE, Channels.INCOMING_COMPOSITIONS);
   }
 
 }

@@ -3,7 +3,9 @@ package com.streamx.blueprints.composition;
 import static com.streamx.blueprints.cloudevents.utils.CloudEventUtils.eventWithData;
 import static com.streamx.blueprints.cloudevents.utils.CloudEventUtils.eventWithoutData;
 import static com.streamx.blueprints.composition.Channels.INCOMING_COMPOSITIONS;
+import static com.streamx.blueprints.composition.Channels.INCOMING_COMPOSITIONS_STATE;
 import static com.streamx.blueprints.composition.Channels.INCOMING_LAYOUTS;
+import static com.streamx.blueprints.composition.Channels.INCOMING_LAYOUTS_STATE;
 import static com.streamx.blueprints.composition.Channels.INCOMING_PAGE_COMPOSE_REQUESTS;
 import static com.streamx.blueprints.composition.Channels.OUTGOING_PAGES;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,6 +20,7 @@ import com.streamx.blueprints.data.Composition;
 import com.streamx.blueprints.data.Layout;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.Resource;
+import com.streamx.blueprints.test.unit.StatefulInMemorySource;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.CloudEventAttributes;
 import io.quarkus.test.junit.QuarkusTest;
@@ -41,8 +44,8 @@ class CompositionFunctionTest {
   private static final String ANY_CONTENT = "any-content";
   private static final String RESOURCE_TYPE = "any";
 
-  private InMemorySource<CloudEvent> layoutsSource;
-  private InMemorySource<CloudEvent> compositionsSource;
+  private StatefulInMemorySource layoutsSource;
+  private StatefulInMemorySource compositionsSource;
   private InMemorySource<CloudEvent> incomingPageComposeRequestsSource;
   private InMemorySink<CloudEvent> pagesSink;
 
@@ -60,8 +63,11 @@ class CompositionFunctionTest {
   }
 
   private void initInMemoryObjects() {
-    layoutsSource = connector.source(INCOMING_LAYOUTS);
-    compositionsSource = connector.source(INCOMING_COMPOSITIONS);
+    layoutsSource = new StatefulInMemorySource(connector,
+        INCOMING_LAYOUTS, INCOMING_LAYOUTS_STATE);
+    compositionsSource = new StatefulInMemorySource(connector,
+        INCOMING_COMPOSITIONS, INCOMING_COMPOSITIONS_STATE);
+
     incomingPageComposeRequestsSource = connector.source(INCOMING_PAGE_COMPOSE_REQUESTS);
 
     pagesSink = connector.sink(OUTGOING_PAGES);
@@ -416,22 +422,32 @@ class CompositionFunctionTest {
   }
 
   private void publishLayout(String key, String type, String content) {
-    layoutsSource.send(eventWithData(key, Layout.TYPE_PUBLISHED, new Layout(content, type)));
+    Layout layout = new Layout(content, type);
+    CloudEvent event = eventWithData(key, Layout.TYPE_PUBLISHED, layout);
+    layoutsSource.send(event);
   }
 
   private void unpublishLayout(String key) {
-    layoutsSource.send(eventWithoutData(key, Layout.TYPE_UNPUBLISHED));
+    CloudEvent event = eventWithoutData(key, Layout.TYPE_UNPUBLISHED);
+    layoutsSource.send(event);
   }
 
   private void publishComposition(String key, String content, String layoutKey) {
-    compositionsSource.send(
-        eventWithData(key, Composition.TYPE_PUBLISHED,
-            new Composition(content, RESOURCE_TYPE, layoutKey)));
+    Composition composition = new Composition(content, RESOURCE_TYPE, layoutKey);
+    CloudEvent event = eventWithData(key, Composition.TYPE_PUBLISHED, composition);
+    compositionsSource.send(event);
   }
 
   private void unpublishComposition(String key) {
-    compositionsSource.send(
-        eventWithoutData(key, Composition.TYPE_UNPUBLISHED));
+    CloudEvent event = eventWithoutData(key, Composition.TYPE_UNPUBLISHED);
+    compositionsSource.send(event);
+  }
+
+  @SafeVarargs
+  private void send(CloudEvent event, InMemorySource<CloudEvent>... sources) {
+    for (InMemorySource<CloudEvent> source : sources) {
+      source.send(event);
+    }
   }
 
   private void assertSinglePublishedPage(PublishedPage expectedPage) {

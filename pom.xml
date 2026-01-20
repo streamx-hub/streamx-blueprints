@@ -101,8 +101,18 @@
         <version>${streamx.version}</version>
       </dependency>
       <dependency>
+        <groupId>com.streamx</groupId>
+        <artifactId>cloudevents-serialization-json</artifactId>
+        <version>${streamx.version}</version>
+      </dependency>
+      <dependency>
         <groupId>com.streamx.blueprints</groupId>
         <artifactId>cloud-events-support</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.streamx.blueprints</groupId>
+        <artifactId>key-value-state-repository</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

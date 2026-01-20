@@ -13,6 +13,8 @@ public class BaseQuarkusIntegrationTestProfile implements QuarkusTestProfile {
   public Map<String, String> getConfigOverrides() {
     Map<String, String> properties = new HashMap<>();
     properties.put("quarkus.wiremock.devservices.enabled", "true");
+    properties.put("state.backend", "rocksdb");
+    properties.put("state.rocksdb.path", "/tmp/rocksdb");
     properties.putAll(propertiesForOutgoingChannels());
     properties.putAll(getServiceConfigProperties());
     return properties;

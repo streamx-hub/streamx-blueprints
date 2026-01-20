@@ -1,0 +1,104 @@
+package com.streamx.blueprints.state.repository.rocksdb;
+
+import com.streamx.blueprints.state.StateRepository;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import org.rocksdb.RocksDB;
+import org.rocksdb.RocksIterator;
+
+public class RocksDbRepository<T> implements StateRepository<T> {
+
+  public static final String BACKEND = "rocksdb";
+
+  private final RocksDB rocksDb;
+
+  public RocksDbRepository(RocksDB rocksDb) {
+    this.rocksDb = rocksDb;
+  }
+
+  @Override
+  public void put(@Nonnull String key, @Nonnull T value) {
+    try {
+      byte[] serialized = new ValueWrapper<>(value).toByteArray();
+      rocksDb.put(key.getBytes(), serialized);
+    } catch (Exception e) {
+      throw new RuntimeException("Error putting entry with key " + key + " to RocksDB", e);
+    }
+  }
+
+  @Nullable
+  @Override
+  public T get(@Nonnull String key) {
+    try {
+      byte[] keyBytes = key.getBytes();
+      if (!rocksDb.keyExists(keyBytes)) {
+        return null;
+      }
+      byte[] value = rocksDb.get(keyBytes);
+      return deserializeValue(key, value);
+    } catch (Exception e) {
+      throw new RuntimeException("Error getting value of key " + key + " from RocksDB", e);
+    }
+  }
+
+  private T deserializeValue(String key, byte[] value) {
+    try {
+      return ValueWrapper.<T>fromByteArray(value).getRawValue();
+    } catch (Exception e) {
+      throw new RuntimeException("Error deserializing value of key " + key + " from RocksDB", e);
+    }
+  }
+
+  @Override
+  public Stream<Entry<String, T>> entries() {
+    RocksIterator iterator = rocksDb.newIterator();
+    iterator.seekToFirst();
+
+    Spliterator<Map.Entry<String, T>> spliterator = Spliterators.spliteratorUnknownSize(
+        new RocksDbIteratorWrapper(iterator),
+        Spliterator.ORDERED
+    );
+    return StreamSupport
+        .stream(spliterator, false)
+        .onClose(iterator::close);
+  }
+
+  @Override
+  public void remove(@Nonnull String key) {
+    try {
+      rocksDb.delete(key.getBytes());
+    } catch (Exception e) {
+      throw new RuntimeException("Error removing entry with key " + key + " from RocksDB", e);
+    }
+  }
+
+  class RocksDbIteratorWrapper implements Iterator<Entry<String, T>> {
+
+    private final RocksIterator rocksIterator;
+
+    RocksDbIteratorWrapper(RocksIterator rocksIterator) {
+      this.rocksIterator = rocksIterator;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return rocksIterator.isValid();
+    }
+
+    @Override
+    public Map.Entry<String, T> next() {
+      String key = new String(rocksIterator.key());
+      byte[] value = rocksIterator.value();
+      rocksIterator.next();
+      return Map.entry(key, deserializeValue(key, value));
+    }
+  }
+}
+

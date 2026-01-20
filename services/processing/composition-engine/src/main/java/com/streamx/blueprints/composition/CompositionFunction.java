@@ -14,10 +14,7 @@ import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.stream.Stream;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
@@ -30,9 +27,8 @@ public class CompositionFunction {
   @Inject
   Logger log;
 
-  private static final Map<String, Layout> layoutsStore = new HashMap<>();
-
-  private static final Map<String, Composition> compositionsStore = new HashMap<>();
+  @Inject
+  State state;
 
   @Incoming(Channels.INCOMING_LAYOUTS)
   @Outgoing(Channels.OUTGOING_PAGE_COMPOSE_REQUESTS)
@@ -43,12 +39,6 @@ public class CompositionFunction {
     String eventType = layout.getType();
     String subject = layout.getSubject();
     log.tracef("Consuming layout with subject %s and type %s", subject, eventType);
-
-    if (Layout.TYPE_PUBLISHED.equals(eventType)) {
-      layoutsStore.put(subject, CloudEventUtils.getData(layout, Layout.class));
-    } else if (Layout.TYPE_UNPUBLISHED.equals(eventType)) {
-      layoutsStore.remove(subject);
-    }
 
     return Multi.createFrom().items(createPageComposeRequests(layout))
         .map(Message::of)
@@ -70,13 +60,11 @@ public class CompositionFunction {
         log.warnf("Skipping processing empty incoming composition %s", compositionKey);
         return null;
       }
-      compositionsStore.put(compositionKey, composition);
       return createPageComposeRequest(compositionKey, composition.getLayoutKey(),
           PageComposeRequest.TYPE_PUBLISHED, eventTime);
     }
 
-    if (CloudEventUtils.isUnpublishingType(eventType)) {
-      compositionsStore.remove(compositionKey);
+    if (Composition.TYPE_UNPUBLISHED.equals(eventType)) {
       return createPageComposeRequest(compositionKey, null,
           PageComposeRequest.TYPE_UNPUBLISHED, eventTime);
     }
@@ -95,8 +83,8 @@ public class CompositionFunction {
         compositionKey, layoutKey);
 
     if (PageComposeRequest.TYPE_PUBLISHED.equals(event.getType())) {
-      Composition composition = compositionsStore.get(compositionKey);
-      Layout layout = layoutsStore.get(layoutKey);
+      Composition composition = state.getComposition(compositionKey);
+      Layout layout = state.getLayout(layoutKey);
 
       if (ableToGeneratePage(layout, layoutKey, composition, compositionKey)) {
         Page page = composePage(composition, layout);
@@ -117,9 +105,8 @@ public class CompositionFunction {
         ? PageComposeRequest.TYPE_PUBLISHED
         : PageComposeRequest.TYPE_UNPUBLISHED;
 
-    return compositionsStore.entrySet().stream()
-        .filter(entry -> entry.getValue().getLayoutKey().equals(layoutKey))
-        .map(Entry::getKey)
+    return state
+        .getCompositionKeysByLayoutKey(layoutKey)
         .map(compositionKey ->
             createPageComposeRequest(compositionKey, layoutKey, type, layout.getTime()));
   }
