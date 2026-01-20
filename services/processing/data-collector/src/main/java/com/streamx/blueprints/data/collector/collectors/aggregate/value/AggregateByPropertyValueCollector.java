@@ -90,7 +90,8 @@ public class AggregateByPropertyValueCollector implements Collector {
     long startTime = System.currentTimeMillis();
 
     Map<String, List<JsonNode>> groupedData = new LinkedHashMap<>();
-    dataStore.getAll().stream()
+    dataStore.getEntriesStream()
+        .map(Map.Entry::getValue)
         .filter(value -> !Resource.isEmpty(value.data()))
         .filter(value -> isMatchingDataPatterns(value.key(), value.data()))
         .map(value -> value.data().getContentAsString())

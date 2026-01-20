@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
+import com.streamx.blueprints.data.collector.Channels.Incoming;
 import com.streamx.blueprints.data.collector.DataCollectorIT.IntegrationTestProfile;
 import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTest;
 import com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTestProfile;
@@ -83,7 +84,7 @@ public class DataCollectorIT extends BaseQuarkusIntegrationTest {
   private void sendDataEvent(String subject, String content) {
     Data data = new Data(content, INPUT_PRODUCT_TYPE);
     CloudEvent event = CloudEventUtils.eventWithData(subject, Data.TYPE_PUBLISHED, data);
-    sendEvent(event, Channels.Incoming.DATA);
+    sendStatefulEvent(event, Incoming.DATA_STATE, Incoming.DATA);
   }
 
   public static class IntegrationTestProfile extends BaseQuarkusIntegrationTestProfile {
