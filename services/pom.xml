@@ -38,10 +38,6 @@
       <artifactId>cloud-events-support</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.streamx.blueprints</groupId>
-      <artifactId>state-manager</artifactId>
-    </dependency>
-    <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-container-image-docker</artifactId>
       <scope>runtime</scope>
