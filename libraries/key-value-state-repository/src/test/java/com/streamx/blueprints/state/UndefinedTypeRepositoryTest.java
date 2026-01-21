@@ -10,7 +10,7 @@ class UndefinedTypeRepositoryTest extends BaseStateRepositoryTest {
 
   @BeforeEach
   void init() {
-    setConfigProperty(PropertyNames.STATE_BACKEND, null);
+    configureStateBackend(null);
   }
 
   @Test

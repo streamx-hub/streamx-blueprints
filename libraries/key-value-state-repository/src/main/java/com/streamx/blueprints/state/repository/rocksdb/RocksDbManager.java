@@ -49,7 +49,7 @@ public class RocksDbManager {
   }
 
   private static File getInstanceDbsDir(Config config, String instanceId) {
-    String rocksDbRootDir = config.getOptionalValue(PropertyNames.STATE_ROCKSDB_PATH, String.class)
+    String rocksDbRootDir = config.getOptionalValue(PropertyNames.ROCKSDB_PATH, String.class)
         .orElse(DEFAULT_ROCKSDB_PATH);
     return new File(rocksDbRootDir, instanceId);
   }

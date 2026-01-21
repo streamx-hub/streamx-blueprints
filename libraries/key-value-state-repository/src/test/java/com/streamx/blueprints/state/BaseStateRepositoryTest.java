@@ -16,7 +16,7 @@ public abstract class BaseStateRepositoryTest extends BaseConfigTest {
 
   @BeforeEach
   void initRepositoryFactory() {
-    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, getClass().getName());
+    configureServiceInstanceId(getClass().getName());
     repositoryFactory.rocksDbManager = new RocksDbManager();
   }
 

@@ -3,13 +3,10 @@ package com.streamx.blueprints.state.repository.rocksdb;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.streamx.blueprints.state.BaseStateRepositoryTest;
-import com.streamx.blueprints.state.PropertyNames;
-import com.streamx.blueprints.state.RepositoryFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import org.apache.commons.io.FileUtils;
-import org.eclipse.microprofile.config.Config;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -19,24 +16,22 @@ abstract class BaseRocksDbRepositoryTest extends BaseStateRepositoryTest {
 
   @BeforeEach
   void init() {
-    setConfigProperty(PropertyNames.STATE_BACKEND, "rocksdb");
-    setConfigProperty(PropertyNames.STATE_ROCKSDB_PATH, dbPath.getAbsolutePath());
+    configureStateBackend("rocksdb");
+    configureRocksDbPath(dbPath.getAbsolutePath());
   }
 
   @AfterEach
   void dropRocksDb() throws IOException {
     if (dbPath.exists()) {
-      closeInstanceDbs(config);
+      closeInstanceDbs();
 
-      String serviceInstanceId = getConfigProperty(PropertyNames.SERVICE_INSTANCE_ID);
+      String serviceInstanceId = readServiceInstanceId();
       FileUtils.deleteDirectory(new File(dbPath, serviceInstanceId));
     }
   }
 
-  protected static void closeInstanceDbs(Config config) {
-    String serviceInstanceId = config
-        .getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class)
-        .orElseThrow();
+  protected void closeInstanceDbs() {
+    String serviceInstanceId = readServiceInstanceId();
     for (String dbPath : RocksDbManager.rocksDbMap.keySet()) {
       String dbInstanceId = Path.of(dbPath).getParent().getFileName().toString();
       if (dbInstanceId.equals(serviceInstanceId)) {

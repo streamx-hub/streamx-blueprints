@@ -2,7 +2,6 @@ package com.streamx.blueprints.state.repository.inmemory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.streamx.blueprints.state.PropertyNames;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -56,10 +55,10 @@ class InMemoryStringRepositoryTest extends BaseInMemoryRepositoryTest {
   @Test
   void repositoriesWithSameIdentifierButFromDifferentServicesShouldBeIsolated() {
     // given
-    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, "service-1");
+    configureServiceInstanceId("service-1");
     InMemoryRepository<String> service1Numbers = createRepository();
 
-    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, "service-2");
+    configureServiceInstanceId("service-2");
     InMemoryRepository<String> service2Numbers = createRepository();
 
     // when
@@ -74,7 +73,7 @@ class InMemoryStringRepositoryTest extends BaseInMemoryRepositoryTest {
   @Test
   void repositoriesWithSameIdentifierAndSameServiceShouldBeSynchronized() {
     // given
-    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, "service");
+    configureServiceInstanceId("service");
     InMemoryRepository<String> repository1 = createRepository();
     InMemoryRepository<String> repository2 = createRepository();
 

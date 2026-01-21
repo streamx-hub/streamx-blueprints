@@ -23,7 +23,7 @@ public class RepositoryFactory {
 
   public <T> StateRepository<T> getOrCreate(String identifier) {
     Config config = ConfigProvider.getConfig();
-    String backend = config.getOptionalValue(PropertyNames.STATE_BACKEND, String.class)
+    String backend = config.getOptionalValue(PropertyNames.BACKEND, String.class)
         .orElse(InMemoryRepository.BACKEND);
     String instanceId = config.getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class)
         .orElse("unnamed");

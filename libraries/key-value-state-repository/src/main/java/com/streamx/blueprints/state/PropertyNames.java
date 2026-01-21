@@ -6,8 +6,9 @@ public final class PropertyNames {
     // no instance
   }
 
-  public static final String STATE_BACKEND = "state.backend";
-  public static final String STATE_ROCKSDB_PATH = "state.rocksdb.path";
+  private static final String PREFIX = "streamx.blueprints.key-value-state-repository";
+  public static final String BACKEND = PREFIX + ".backend";
+  public static final String ROCKSDB_PATH = PREFIX + ".rocksdb.path";
 
   // property from streamx-service-mesh
   public static final String SERVICE_INSTANCE_ID = "streamx.service.instance-id";

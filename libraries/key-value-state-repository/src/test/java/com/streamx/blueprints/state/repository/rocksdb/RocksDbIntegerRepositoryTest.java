@@ -3,7 +3,6 @@ package com.streamx.blueprints.state.repository.rocksdb;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.streamx.blueprints.state.PropertyNames;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -57,10 +56,10 @@ class RocksDbIntegerRepositoryTest extends BaseRocksDbRepositoryTest {
   @Test
   void repositoriesWithSameIdentifierButFromDifferentServicesShouldBeIsolated() {
     // given
-    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, "service-1");
+    configureServiceInstanceId("service-1");
     RocksDbRepository<Integer> service1Numbers = createRepository();
 
-    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, "service-2");
+    configureServiceInstanceId("service-2");
     RocksDbRepository<Integer> service2Numbers = createRepository();
 
     // when
@@ -75,7 +74,7 @@ class RocksDbIntegerRepositoryTest extends BaseRocksDbRepositoryTest {
   @Test
   void repositoriesWithSameIdentifierAndSameServiceShouldBeSynchronized() {
     // given
-    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, "service");
+    configureServiceInstanceId("service");
     RocksDbRepository<Integer> repository1 = createRepository();
     RocksDbRepository<Integer> repository2 = createRepository();
 

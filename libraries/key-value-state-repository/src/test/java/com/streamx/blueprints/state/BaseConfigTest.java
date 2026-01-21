@@ -26,13 +26,29 @@ public abstract class BaseConfigTest {
     configProvider.close();
   }
 
-  protected void setConfigProperty(String name, String value) {
+  protected void configureServiceInstanceId(String value) {
+    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, value);
+  }
+
+  protected void configureStateBackend(String value) {
+    setConfigProperty(PropertyNames.BACKEND, value);
+  }
+
+  protected void configureRocksDbPath(String value) {
+    setConfigProperty(PropertyNames.ROCKSDB_PATH, value);
+  }
+
+  private void setConfigProperty(String name, String value) {
     doReturn(Optional.ofNullable(value))
         .when(config)
         .getOptionalValue(name, String.class);
   }
 
-  protected String getConfigProperty(String name) {
+  protected String readServiceInstanceId() {
+    return getConfigProperty(PropertyNames.SERVICE_INSTANCE_ID);
+  }
+
+  private String getConfigProperty(String name) {
     return config.getOptionalValue(name, String.class).orElseThrow();
   }
 }

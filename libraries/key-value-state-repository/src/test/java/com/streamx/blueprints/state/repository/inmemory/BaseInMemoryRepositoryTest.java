@@ -3,8 +3,6 @@ package com.streamx.blueprints.state.repository.inmemory;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.streamx.blueprints.state.BaseStateRepositoryTest;
-import com.streamx.blueprints.state.PropertyNames;
-import com.streamx.blueprints.state.RepositoryFactory;
 import java.util.Map.Entry;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -14,12 +12,12 @@ abstract class BaseInMemoryRepositoryTest extends BaseStateRepositoryTest {
 
   @BeforeEach
   void init() {
-    setConfigProperty(PropertyNames.STATE_BACKEND, "in-memory");
+    configureStateBackend("in-memory");
   }
 
   @AfterEach
   void clearRepository() {
-    String serviceInstanceId = getConfigProperty(PropertyNames.SERVICE_INSTANCE_ID);
+    String serviceInstanceId = readServiceInstanceId();
     for (String fullIdentifier : InMemoryRepositoryManager.repositories.keySet()) {
       String repositoryInstanceId = StringUtils.substringBefore(fullIdentifier, "/");
       if (repositoryInstanceId.equals(serviceInstanceId)) {

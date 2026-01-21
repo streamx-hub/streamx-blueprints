@@ -4,7 +4,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.streamx.blueprints.state.BaseConfigTest;
-import com.streamx.blueprints.state.PropertyNames;
 import java.io.File;
 import java.io.IOException;
 import org.apache.commons.io.FileUtils;
@@ -17,8 +16,8 @@ class RocksDbManagerTest extends BaseConfigTest {
   @Test
   void shouldNotAllowCreatingRocksDbOnPathTakenByExistingFile() throws IOException {
     // given
-    setConfigProperty(PropertyNames.STATE_ROCKSDB_PATH, "target/foo");
-    setConfigProperty(PropertyNames.SERVICE_INSTANCE_ID, "service-1");
+    configureRocksDbPath("target/foo");
+    configureServiceInstanceId("service-1");
 
     String expectedRocksDbDir = "target/foo/service-1/db-1".replace("/", File.separator);
     FileUtils.writeStringToFile(new File(expectedRocksDbDir), "text file content", UTF_8);

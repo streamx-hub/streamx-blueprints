@@ -1,7 +1,7 @@
 default:
   environment:
-    STATE_BACKEND: rocksdb
-    STATE_ROCKSDB_PATH: /tmp/rocksdb
+    STREAMX_BLUEPRINTS_KEY_VALUE_STATE_REPOSITORY_BACKEND: rocksdb
+    STREAMX_BLUEPRINTS_KEY_VALUE_STATE_REPOSITORY_ROCKSDB_PATH: /tmp/rocksdb
 
 descriptors:
   relay:
