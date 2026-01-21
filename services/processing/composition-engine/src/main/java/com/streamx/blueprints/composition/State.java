@@ -33,8 +33,8 @@ public class State {
   }
 
   @Incoming(Channels.INCOMING_LAYOUTS_STATE)
-  public Uni<Void> registerLayout(CloudEvent layout) {
-    return registerResource(
+  public void registerLayout(CloudEvent layout) {
+    registerResource(
         layout,
         layouts,
         Layout.class,
@@ -44,8 +44,8 @@ public class State {
   }
 
   @Incoming(Channels.INCOMING_COMPOSITIONS_STATE)
-  public Uni<Void> registerComposition(CloudEvent composition) {
-    return registerResource(
+  public void registerComposition(CloudEvent composition) {
+    registerResource(
         composition,
         compositions,
         Composition.class,
@@ -54,7 +54,7 @@ public class State {
     );
   }
 
-  private <T extends Resource> Uni<Void> registerResource(CloudEvent event,
+  private <T extends Resource> void registerResource(CloudEvent event,
       StateRepository<T> repository, Class<T> resourceClass,
       String publishType, String unpublishType) {
     String subject = CloudEventUtils.getSubject(event);
@@ -65,7 +65,6 @@ public class State {
     } else if (unpublishType.equals(eventType)) {
       repository.remove(subject);
     }
-    return Uni.createFrom().voidItem();
   }
 
   public Layout getLayout(String key) {
