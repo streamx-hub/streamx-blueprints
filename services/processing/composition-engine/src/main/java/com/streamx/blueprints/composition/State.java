@@ -28,8 +28,8 @@ public class State {
 
   @PostConstruct
   void initRepositories() {
-    layouts = repositoryFactory.getOrCreate("layouts");
-    compositions = repositoryFactory.getOrCreate("compositions");
+    layouts = repositoryFactory.getOrCreate("layouts", Layout.class);
+    compositions = repositoryFactory.getOrCreate("compositions", Composition.class);
   }
 
   @Incoming(Channels.INCOMING_LAYOUTS_STATE)

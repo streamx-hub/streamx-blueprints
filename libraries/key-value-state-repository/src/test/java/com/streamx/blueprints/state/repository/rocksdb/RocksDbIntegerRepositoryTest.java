@@ -114,6 +114,6 @@ class RocksDbIntegerRepositoryTest extends BaseRocksDbRepositoryTest {
   }
 
   private RocksDbRepository<Integer> createRepository() {
-    return createRepository("integers");
+    return createRepository("integers", Integer.class);
   }
 }

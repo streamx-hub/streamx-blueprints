@@ -29,8 +29,8 @@ abstract class BaseInMemoryRepositoryTest extends BaseStateRepositoryTest {
     }
   }
 
-  protected <T> InMemoryRepository<T> createRepository(String identifier) {
-    var repository = repositoryFactory.getOrCreate(identifier);
+  protected <T> InMemoryRepository<T> createRepository(String identifier, Class<T> valueClass) {
+    var repository = repositoryFactory.getOrCreate(identifier, valueClass);
     assertThat(repository).isInstanceOf(InMemoryRepository.class);
     return (InMemoryRepository<T>) repository;
   }

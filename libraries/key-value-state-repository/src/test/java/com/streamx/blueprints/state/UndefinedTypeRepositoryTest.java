@@ -15,7 +15,7 @@ class UndefinedTypeRepositoryTest extends BaseStateRepositoryTest {
 
   @Test
   void shouldCreateInMemoryRepository() {
-    StateRepository<String> repository = repositoryFactory.getOrCreate("strings");
+    StateRepository<String> repository = repositoryFactory.getOrCreate("strings", String.class);
     assertThat(repository).isInstanceOf(InMemoryRepository.class);
   }
 

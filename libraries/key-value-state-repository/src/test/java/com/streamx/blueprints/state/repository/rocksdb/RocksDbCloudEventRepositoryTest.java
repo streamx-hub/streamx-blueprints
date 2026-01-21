@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 class RocksDbCloudEventRepositoryTest extends BaseRocksDbRepositoryTest {
 
-  private static final CloudEventSerializer eventsSerializer = new CloudEventJsonSerializer();
+  private static final CloudEventSerializer eventSerializer = new CloudEventJsonSerializer();
 
   @BeforeAll
   static void setupCloudEventUtils() {
@@ -67,12 +67,12 @@ class RocksDbCloudEventRepositoryTest extends BaseRocksDbRepositoryTest {
 
     assertThat(retrievedEvents.values())
         .usingElementComparator(
-            Comparator.comparing(e -> new String(eventsSerializer.serialize(e))))
+            Comparator.comparing(e -> new String(eventSerializer.serialize(e))))
         .containsExactlyElementsOf(inputEvents);
   }
 
   private RocksDbRepository<CloudEvent> createRepository() {
-    return createRepository("events");
+    return createRepository("events", CloudEvent.class);
   }
 
   private static CloudEvent createRandomEvent() {

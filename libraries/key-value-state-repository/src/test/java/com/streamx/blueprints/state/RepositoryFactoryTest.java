@@ -11,7 +11,7 @@ class RepositoryFactoryTest extends BaseConfigTest {
   @Test
   void shouldNotAllowInvalidServiceInstanceId() {
     configureServiceInstanceId("a/b/c");
-    assertThatThrownBy(() -> repositoryFactory.getOrCreate("pages"))
+    assertThatThrownBy(() -> repositoryFactory.getOrCreate("pages", String.class))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Invalid instanceId: a/b/c - only letters, digits, dashes and dots allowed");
   }
@@ -19,7 +19,7 @@ class RepositoryFactoryTest extends BaseConfigTest {
   @Test
   void shouldNotAllowInvalidIdentifier() {
     configureServiceInstanceId("service1");
-    assertThatThrownBy(() -> repositoryFactory.getOrCreate("d/e/f"))
+    assertThatThrownBy(() -> repositoryFactory.getOrCreate("d/e/f", String.class))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Invalid identifier: d/e/f - only letters, digits, dashes and dots allowed");
   }

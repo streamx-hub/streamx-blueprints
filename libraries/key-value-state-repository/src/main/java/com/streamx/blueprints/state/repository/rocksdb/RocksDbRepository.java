@@ -18,15 +18,17 @@ public class RocksDbRepository<T> implements StateRepository<T> {
   public static final String BACKEND = "rocksdb";
 
   private final RocksDB rocksDb;
+  private final Class<T> valueClass;
 
-  public RocksDbRepository(RocksDB rocksDb) {
+  public RocksDbRepository(RocksDB rocksDb, Class<T> valueClass) {
     this.rocksDb = rocksDb;
+    this.valueClass = valueClass;
   }
 
   @Override
   public void put(@Nonnull String key, @Nonnull T value) {
     try {
-      byte[] serialized = new ValueWrapper<>(value).toByteArray();
+      byte[] serialized = ValueSerializer.toByteArray(value);
       rocksDb.put(key.getBytes(), serialized);
     } catch (Exception e) {
       throw new RuntimeException("Error putting entry with key " + key + " to RocksDB", e);
@@ -50,7 +52,7 @@ public class RocksDbRepository<T> implements StateRepository<T> {
 
   private T deserializeValue(String key, byte[] value) {
     try {
-      return ValueWrapper.<T>fromByteArray(value).getRawValue();
+      return ValueDeserializer.fromByteArray(value, valueClass);
     } catch (Exception e) {
       throw new RuntimeException("Error deserializing value of key " + key + " from RocksDB", e);
     }

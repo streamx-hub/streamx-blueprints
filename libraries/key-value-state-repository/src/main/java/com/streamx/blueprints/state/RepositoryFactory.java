@@ -21,7 +21,7 @@ public class RepositoryFactory {
   @Inject
   RocksDbManager rocksDbManager;
 
-  public <T> StateRepository<T> getOrCreate(String identifier) {
+  public <T> StateRepository<T> getOrCreate(String identifier, Class<T> valueClass) {
     Config config = ConfigProvider.getConfig();
     String backend = config.getOptionalValue(PropertyNames.BACKEND, String.class)
         .orElse(InMemoryRepository.BACKEND);
@@ -33,7 +33,7 @@ public class RepositoryFactory {
 
     if (backend.equals(RocksDbRepository.BACKEND)) {
       RocksDB rocksDb = rocksDbManager.getOrCreateDb(config, instanceId, identifier);
-      return new RocksDbRepository<>(rocksDb);
+      return new RocksDbRepository<>(rocksDb, valueClass);
     }
     if (backend.equals(InMemoryRepository.BACKEND)) {
       return InMemoryRepositoryManager.getOrCreate(instanceId, identifier);

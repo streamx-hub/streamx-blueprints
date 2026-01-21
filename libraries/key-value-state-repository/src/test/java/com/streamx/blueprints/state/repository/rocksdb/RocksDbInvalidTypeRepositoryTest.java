@@ -38,6 +38,6 @@ class RocksDbInvalidTypeRepositoryTest extends BaseRocksDbRepositoryTest {
   }
 
   private RocksDbRepository<NonJsonSerializableClass> createRepository() {
-    return createRepository("data");
+    return createRepository("data", NonJsonSerializableClass.class);
   }
 }

@@ -91,6 +91,6 @@ class InMemoryStringRepositoryTest extends BaseInMemoryRepositoryTest {
   }
 
   private InMemoryRepository<String> createRepository() {
-    return createRepository("strings");
+    return createRepository("strings", String.class);
   }
 }
