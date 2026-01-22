@@ -7,11 +7,17 @@ import com.streamx.blueprints.state.BaseConfigTest;
 import java.io.File;
 import java.io.IOException;
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class RocksDbManagerTest extends BaseConfigTest {
 
   private final RocksDbManager rocksDbManager = new RocksDbManager();
+
+  @BeforeEach
+  void initManager() {
+    rocksDbManager.init();
+  }
 
   @Test
   void shouldNotAllowCreatingRocksDbOnPathTakenByExistingFile() throws IOException {

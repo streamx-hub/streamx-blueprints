@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.streamx.blueprints</groupId>
+    <artifactId>extensions</artifactId>
+    <version>3.0.8-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>rocksdb-native-support</artifactId>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>deployment</module>
+    <module>runtime</module>
+  </modules>
+
+</project>

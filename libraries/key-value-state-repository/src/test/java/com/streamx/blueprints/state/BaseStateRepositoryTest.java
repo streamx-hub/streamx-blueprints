@@ -18,6 +18,7 @@ public abstract class BaseStateRepositoryTest extends BaseConfigTest {
   void initRepositoryFactory() {
     configureServiceInstanceId(getClass().getName());
     repositoryFactory.rocksDbManager = new RocksDbManager();
+    repositoryFactory.rocksDbManager.init();
   }
 
   protected <T> void addData(StateRepository<T> repository, List<String> keys, List<T> values) {
