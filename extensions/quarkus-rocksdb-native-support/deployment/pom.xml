@@ -6,17 +6,17 @@
 
   <parent>
     <groupId>com.streamx.blueprints</groupId>
-    <artifactId>rocksdb-native-support</artifactId>
+    <artifactId>quarkus-rocksdb-native-support</artifactId>
     <version>3.0.8-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>rocksdb-native-support-deployment</artifactId>
+  <artifactId>quarkus-rocksdb-native-support-deployment</artifactId>
 
   <dependencies>
     <dependency>
       <groupId>com.streamx.blueprints</groupId>
-      <artifactId>rocksdb-native-support-runtime</artifactId>
+      <artifactId>quarkus-rocksdb-native-support-runtime</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -28,7 +28,6 @@
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>${compiler-plugin.version}</version>
         <configuration>
           <annotationProcessorPaths>
             <path>

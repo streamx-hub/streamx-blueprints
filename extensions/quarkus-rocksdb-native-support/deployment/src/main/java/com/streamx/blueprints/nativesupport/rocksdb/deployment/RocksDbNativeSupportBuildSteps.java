@@ -18,7 +18,7 @@ class RocksDbNativeSupportBuildSteps {
 
   @BuildStep
   FeatureBuildItem feature() {
-    return new FeatureBuildItem("rocksdb-native-support");
+    return new FeatureBuildItem("quarkus-rocksdb-native-support");
   }
 
   @BuildStep

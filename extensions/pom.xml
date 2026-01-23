@@ -14,7 +14,7 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>rocksdb-native-support</module>
+    <module>quarkus-rocksdb-native-support</module>
   </modules>
 
 </project>

@@ -126,12 +126,12 @@
       </dependency>
       <dependency>
         <groupId>com.streamx.blueprints</groupId>
-        <artifactId>rocksdb-native-support-deployment</artifactId>
+        <artifactId>quarkus-rocksdb-native-support-deployment</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.streamx.blueprints</groupId>
-        <artifactId>rocksdb-native-support-runtime</artifactId>
+        <artifactId>quarkus-rocksdb-native-support-runtime</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

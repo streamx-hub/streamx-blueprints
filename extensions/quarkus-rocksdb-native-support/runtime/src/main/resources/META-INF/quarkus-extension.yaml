@@ -1,7 +1,7 @@
-name: "RocksDB native support"
+name: "Quarkus RocksDB native support"
 metadata:
   keywords:
     - "RocksDB"
     - "Quarkus Native"
   categories:
-    - "State repository support"
+    - "data"
