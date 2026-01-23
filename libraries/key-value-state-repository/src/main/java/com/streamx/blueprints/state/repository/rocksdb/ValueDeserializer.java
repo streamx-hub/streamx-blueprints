@@ -15,6 +15,10 @@ final class ValueDeserializer {
   }
 
   public static <T> T fromByteArray(byte[] data, Class<T> valueClass) throws Exception {
+    if (valueClass == byte[].class) {
+      return (T) data;
+    }
+
     if (CloudEvent.class.isAssignableFrom(valueClass)) {
       return (T) eventDeserializer.deserialize(data);
     }

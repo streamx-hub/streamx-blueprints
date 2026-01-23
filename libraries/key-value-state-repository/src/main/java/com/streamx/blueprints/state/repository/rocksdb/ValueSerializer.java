@@ -15,6 +15,10 @@ final class ValueSerializer {
   }
 
   public static <T> byte[] toByteArray(T value) throws Exception {
+    if (value instanceof byte[] bytes) {
+      return bytes;
+    }
+
     if (value instanceof CloudEventV1 event) {
       return eventSerializer.serialize(event);
     }
