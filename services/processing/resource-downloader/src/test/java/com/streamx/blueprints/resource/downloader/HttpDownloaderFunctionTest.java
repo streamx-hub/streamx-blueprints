@@ -15,7 +15,7 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
   void shouldDownloadImageAndSupportLastModifiedHeaders() {
     // given
     String imagePath = "/image-1.png";
-    byte[] imageContent = new byte[]{0, 1, 2};
+    byte[] imageContent = {0, 1, 2};
     String imageUrl = TestWebServer.uploadImage(imagePath, imageContent);
 
     // when
@@ -78,7 +78,7 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
   void shouldAutomaticallyUngzipGzippedExternalResource() throws IOException {
     // given
     String imagePath = "/image-2.png";
-    byte[] imageContent = new byte[]{0, 1, 2};
+    byte[] imageContent = {0, 1, 2};
     String imageUrl = TestWebServer.uploadGzippedImage(imagePath, gzip(imageContent));
 
     // when

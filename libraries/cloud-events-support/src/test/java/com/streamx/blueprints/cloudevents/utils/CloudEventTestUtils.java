@@ -17,10 +17,10 @@ public class CloudEventTestUtils {
       EventFormatProvider.getInstance().resolveFormat(JsonFormat.CONTENT_TYPE)
   );
 
-  public static void assertSameEvents(CloudEvent expectedEvent, CloudEvent actualEvent) {
+  public static void assertSameEvents(CloudEvent actualEvent, CloudEvent expectedEvent) {
     String actualEventJson = new String(EVENT_FORMAT.serialize(actualEvent));
     String expectedEventJson = new String(EVENT_FORMAT.serialize(expectedEvent));
-    assertThat(expectedEventJson).isEqualTo(actualEventJson);
+    assertThat(actualEventJson).isEqualTo(expectedEventJson);
   }
 
   public static CloudEvent cloudEventWithExtensions(String subject, String eventType, Object data,

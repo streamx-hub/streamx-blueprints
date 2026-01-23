@@ -26,15 +26,6 @@
       <groupId>com.streamx</groupId>
       <artifactId>content-parser</artifactId>
     </dependency>
-    <!-- Test dependencies -->
-    <dependency>
-      <groupId>com.streamx.blueprints</groupId>
-      <artifactId>cloud-events-support</artifactId>
-      <version>${project.version}</version>
-      <classifier>tests</classifier>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
 </project>

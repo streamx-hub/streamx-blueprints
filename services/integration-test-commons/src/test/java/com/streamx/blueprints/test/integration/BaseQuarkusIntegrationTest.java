@@ -50,6 +50,12 @@ public abstract class BaseQuarkusIntegrationTest {
     }
   }
 
+  protected static void sendStatefulEvent(CloudEvent event, String stateChannel,
+      String mainChannel) {
+    sendEvent(event, stateChannel);
+    sendEvent(event, mainChannel);
+  }
+
   protected static void sendEvent(CloudEvent cloudEvent, String channel) {
     String serializedEvent = CloudEventsSerialization.serialize(cloudEvent);
     String url = toUrl(channel);

@@ -21,6 +21,7 @@
   <modules>
     <module>processing</module>
     <module>edge</module>
+    <module>unit-test-commons</module>
     <module>integration-test-commons</module>
   </modules>
 
@@ -36,6 +37,10 @@
     <dependency>
       <groupId>com.streamx.blueprints</groupId>
       <artifactId>cloud-events-support</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.streamx.blueprints</groupId>
+      <artifactId>key-value-state-repository</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -67,6 +72,22 @@
     <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.streamx.blueprints</groupId>
+      <artifactId>cloud-events-support</artifactId>
+      <version>${project.version}</version>
+      <classifier>tests</classifier>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.streamx.blueprints</groupId>
+      <artifactId>unit-test-commons</artifactId>
+      <version>${project.version}</version>
+      <classifier>tests</classifier>
+      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -107,6 +128,12 @@
         <quarkus.container-image.package.type>${streamx.container-image.package.type.native}</quarkus.container-image.package.type>
         <quarkus.native.container-build>true</quarkus.native.container-build>
       </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.streamx.blueprints</groupId>
+          <artifactId>quarkus-rocksdb-native-support</artifactId>
+        </dependency>
+      </dependencies>
     </profile>
     <profile>
       <id>container-image-multiplatform</id>

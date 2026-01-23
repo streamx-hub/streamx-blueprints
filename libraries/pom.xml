@@ -9,12 +9,13 @@
   </parent>
 
   <artifactId>libraries</artifactId>
-  <name>Blueprints Libraries</name>
+  <name>Blueprints : Libraries</name>
   <packaging>pom</packaging>
 
   <modules>
     <module>cloud-events-support</module>
     <module>data-model</module>
+    <module>key-value-state-repository</module>
   </modules>
 
 </project>

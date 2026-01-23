@@ -28,7 +28,7 @@ class ProcessJsonDataFunctionTest extends BaseProcessFunctionTest {
         ).distinct()
         .toList();
 
-    byte[] externalImageContent = new byte[]{0, 1, 2};
+    byte[] externalImageContent = {0, 1, 2};
 
     // and
     for (String externalImageUrl : externalImageUrls) {
@@ -66,8 +66,8 @@ class ProcessJsonDataFunctionTest extends BaseProcessFunctionTest {
           ]
         }
         """;
-    final byte[] image1Content = new byte[]{0, 1, 2};
-    final byte[] image2Content = new byte[]{2, 1, 0};
+    final byte[] image1Content = {0, 1, 2};
+    final byte[] image2Content = {2, 1, 0};
 
     // and
     mockDownloadResponses(

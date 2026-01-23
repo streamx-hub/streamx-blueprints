@@ -1,3 +1,8 @@
+default:
+  environment:
+    STREAMX_BLUEPRINTS_KEY_VALUE_STATE_REPOSITORY_BACKEND: rocksdb
+    STREAMX_BLUEPRINTS_KEY_VALUE_STATE_REPOSITORY_ROCKSDB_PATH: /tmp/rocksdb
+
 descriptors:
   relay:
     type: processing
@@ -93,6 +98,8 @@ descriptors:
 
   composition-engine:
     type: processing
+    volumes:
+      state: {}
     containers:
       processor:
         image: ghcr.io/streamx-com/streamx-blueprints/composition-engine:latest-jvm
@@ -105,6 +112,14 @@ descriptors:
           - from: outgoing-page-compose-requests
             to: incoming-page-compose-requests
             using: internal-relay
+          - from: layouts
+            to: layouts-state
+            using: sync-state
+          - from: compositions
+            to: compositions-state
+            using: sync-state
+        volumes:
+          - state:/tmp/rocksdb
 
   data-collector:
     type: processing
