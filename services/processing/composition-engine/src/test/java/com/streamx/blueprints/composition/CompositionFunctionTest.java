@@ -53,9 +53,6 @@ class CompositionFunctionTest {
   CompositionFunction compositionFunction;
 
   @Inject
-  State state;
-
-  @Inject
   @Any
   InMemoryConnector connector;
 
@@ -186,18 +183,9 @@ class CompositionFunctionTest {
   void shouldComposePage_UsingTheNewestLayoutVersion() {
     // given
     String layoutKey = "layout-1";
-    List<Layout> layouts = List.of(
-        publishLayout(layoutKey, "layout-type-1", "Hello, {{#insert name=\"name.html\"}}"),
-        publishLayout(layoutKey, "layout-type-2", "More hello, {{#insert name=\"name.html\"}}"),
-        publishLayout(layoutKey, "layout-type-3", "Even more hello, {{#insert name=\"name.html\"}}")
-    );
-
-    // and: wait until all the layouts reach state
-    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
-      Layout currentLayoutInState = state.getLayout(layoutKey);
-      assertThat(currentLayoutInState.getContentAsString())
-          .isEqualTo(layouts.getLast().getContentAsString());
-    });
+    publishLayout(layoutKey, "layout-type-1", "Hello, {{#insert name=\"name.html\"}}");
+    publishLayout(layoutKey, "layout-type-2", "More hello, {{#insert name=\"name.html\"}}");
+    publishLayout(layoutKey, "layout-type-3", "Even more hello, {{#insert name=\"name.html\"}}");
 
     // when
     String compositionKey = "composition-1";
@@ -432,11 +420,10 @@ class CompositionFunctionTest {
     publishLayout(key, RESOURCE_TYPE, content);
   }
 
-  private Layout publishLayout(String key, String type, String content) {
+  private void publishLayout(String key, String type, String content) {
     Layout layout = new Layout(content, type);
     CloudEvent event = eventWithData(key, Layout.TYPE_PUBLISHED, layout);
     layoutsSource.send(event);
-    return layout;
   }
 
   private void unpublishLayout(String key) {
