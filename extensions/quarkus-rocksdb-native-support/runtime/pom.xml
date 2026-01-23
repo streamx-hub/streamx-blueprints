@@ -6,12 +6,12 @@
 
   <parent>
     <groupId>com.streamx.blueprints</groupId>
-    <artifactId>quarkus-rocksdb-native-support</artifactId>
+    <artifactId>quarkus-rocksdb-native-support-parent</artifactId>
     <version>3.0.8-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>quarkus-rocksdb-native-support-runtime</artifactId>
+  <artifactId>quarkus-rocksdb-native-support</artifactId>
 
   <dependencies>
     <dependency>
@@ -42,7 +42,7 @@
               <goal>extension-descriptor</goal>
             </goals>
             <configuration>
-              <deployment>com.streamx.blueprints:quarkus-rocksdb-native-support-deployment:${project.version}</deployment>
+              <deployment>${project.groupId}:${project.artifactId}-deployment:${project.version}</deployment>
             </configuration>
           </execution>
         </executions>

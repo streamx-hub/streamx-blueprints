@@ -20,7 +20,7 @@ Add the following dependency to your Quarkus application's pom.xml:
 ```xml
 <dependency>
   <groupId>com.streamx.blueprints</groupId>
-  <artifactId>quarkus-rocksdb-native-support-runtime</artifactId>
+  <artifactId>quarkus-rocksdb-native-support</artifactId>
   <version>${project.version}</version>
 </dependency>
 ````

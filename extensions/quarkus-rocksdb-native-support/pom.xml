@@ -11,7 +11,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>quarkus-rocksdb-native-support</artifactId>
+  <artifactId>quarkus-rocksdb-native-support-parent</artifactId>
   <packaging>pom</packaging>
 
   <modules>

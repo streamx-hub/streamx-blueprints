@@ -131,7 +131,7 @@
       </dependency>
       <dependency>
         <groupId>com.streamx.blueprints</groupId>
-        <artifactId>quarkus-rocksdb-native-support-runtime</artifactId>
+        <artifactId>quarkus-rocksdb-native-support</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
