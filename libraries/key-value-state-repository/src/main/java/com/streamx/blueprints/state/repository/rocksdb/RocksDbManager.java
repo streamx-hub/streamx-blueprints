@@ -23,7 +23,6 @@ public class RocksDbManager {
 
   @PostConstruct
   public void init() {
-    RocksDB.loadLibrary();
     options = new Options().setCreateIfMissing(true);
   }
 

@@ -1,17 +1,15 @@
 package com.streamx.blueprints.nativesupport.rocksdb.deployment;
 
 import com.streamx.blueprints.nativesupport.rocksdb.runtime.RocksDbNativeSupportFeature;
-import com.streamx.blueprints.nativesupport.rocksdb.runtime.RocksDbRecorder;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.annotations.BuildSteps;
-import io.quarkus.deployment.annotations.ExecutionTime;
-import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.NativeImageFeatureBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.JniRuntimeAccessBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import io.quarkus.deployment.pkg.steps.NativeOrNativeSourcesBuild;
+import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.Status;
 
@@ -31,13 +29,7 @@ class RocksDbNativeSupportBuildSteps {
         new JniRuntimeAccessBuildItem(true, true, true, RocksDBException.class, Status.class));
 
     runtimeInitializedClasses.produce(
-        new RuntimeInitializedClassBuildItem("org.rocksdb.RocksDB"));
-  }
-
-  @BuildStep
-  @Record(ExecutionTime.RUNTIME_INIT)
-  void loadRocksDb(RocksDbRecorder recorder) {
-    recorder.loadRocksDb();
+        new RuntimeInitializedClassBuildItem(RocksDB.class.getName()));
   }
 
   @BuildStep
