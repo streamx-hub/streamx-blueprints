@@ -10,11 +10,9 @@ import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.RenderingContext;
 import com.streamx.blueprints.data.RenderingContext.OutputFormat;
 import com.streamx.blueprints.data.WebResource;
-import com.streamx.blueprints.rendering.engine.Channels.Incoming;
 import com.streamx.blueprints.rendering.engine.Channels.Outgoing;
 import io.cloudevents.CloudEvent;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
-import io.smallrye.reactive.messaging.memory.InMemorySource;
 import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,10 +23,6 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
   private static final String RENDERING_CONTEXT_EVENT_KEY =
       "rendering-request-test-resources-rendering-context";
 
-  private InMemorySource<CloudEvent> dataSource;
-  private InMemorySource<CloudEvent> renderers;
-  private InMemorySource<CloudEvent> renderingRequests;
-  private InMemorySource<CloudEvent> renderingContexts;
   private InMemorySink<CloudEvent> resourcesSink;
 
   private final OutputFormat outputFormat;
@@ -54,12 +48,7 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
   }
 
   @BeforeEach
-  void beforeEach() {
-    dataSource = connector.source(Incoming.DATA);
-    renderers = connector.source(Incoming.RENDERERS);
-    renderingRequests = connector.source(Incoming.RENDERING_REQUESTS);
-    renderingContexts = connector.source(Incoming.RENDERING_CONTEXTS);
-
+  void initResourcesSink() {
     resourcesSink = connector.sink(outgoingChannel);
     resourcesSink.clear();
   }
@@ -76,8 +65,8 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
         outputFormat);
 
     dataSource.send(dataPublishEvent(dataPublishKey));
-    renderingContexts.send(renderingContextPublishEvent(renderingContext));
-    renderers.send(rendererPublishEvent(TEMPLATE_KEY));
+    renderingContextsSource.send(renderingContextPublishEvent(renderingContext));
+    renderersSource.send(rendererPublishEvent(TEMPLATE_KEY));
     publishRenderingRequest(renderingContext, dataPublishKey);
 
     assertResourceIsProduced(
@@ -98,8 +87,8 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
         OutputFormat.PAGE);
     String dataUnpublishKey = "rendering-request-test-data-type2:1";
 
-    renderingContexts.send(renderingContextPublishEvent(renderingContext));
-    renderers.send(rendererPublishEvent(TEMPLATE_KEY));
+    renderingContextsSource.send(renderingContextPublishEvent(renderingContext));
+    renderersSource.send(rendererPublishEvent(TEMPLATE_KEY));
     dataSource.send(dataUnpublishEvent(dataUnpublishKey));
     await().atLeast(Duration.ofMillis(100)).untilAsserted(() ->
         assertThat(resourcesSink.received()).isEmpty()
@@ -127,8 +116,8 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
         outputFormat);
 
     dataSource.send(dataPublishEvent(dataPublishKey));
-    renderingContexts.send(renderingContextPublishEvent(renderingContext));
-    renderers.send(rendererPublishEvent(TEMPLATE_KEY));
+    renderingContextsSource.send(renderingContextPublishEvent(renderingContext));
+    renderersSource.send(rendererPublishEvent(TEMPLATE_KEY));
     publishRenderingRequest(renderingContext, dataPublishKey);
 
     assertResourceIsProduced(
@@ -170,7 +159,7 @@ abstract class AbstractRenderingRequestTest extends AbstractRenderEngineTest {
     String key = RENDERING_CONTEXT_EVENT_KEY + ":::" + dataKey;
     RenderingRequest request = new RenderingRequest(dataKey, TEMPLATE_KEY,
         outputKeyTemplate, outputTypeTemplate, outputFormat);
-    renderingRequests.send(renderingRequestEvent(key, eventType, request));
+    renderingRequestsSource.send(renderingRequestEvent(key, eventType, request));
   }
 
   private void assertResourceIsProduced(String expectedKey, String expectedEventType,

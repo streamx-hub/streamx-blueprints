@@ -2,11 +2,8 @@ package com.streamx.blueprints.rendering.engine;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
-import com.streamx.blueprints.data.Renderer;
 import com.streamx.blueprints.data.RenderingContext;
-import com.streamx.blueprints.rendering.engine.converter.PreservedDataStore;
 import com.streamx.blueprints.rendering.engine.converter.PreservedRenderingContextStore;
-import com.streamx.blueprints.rendering.engine.converter.RendererEventsStore;
 import com.streamx.blueprints.rendering.engine.generator.OutputGenerator;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
@@ -31,13 +28,7 @@ public class ProcessTriggersFunctions {
   OutputGenerator outputGenerator;
 
   @Inject
-  PreservedDataStore dataStore;
-
-  @Inject
   PreservedRenderingContextStore renderingContextStore;
-
-  @Inject
-  RendererEventsStore renderersStore;
 
   /**
    * Handles processing of data publication/un-publication to the system. Triggers rendering
@@ -52,13 +43,11 @@ public class ProcessTriggersFunctions {
   //  when https://github.com/smallrye/smallrye-reactive-messaging/issues/3232 is fixed
   public Multi<Message<CloudEvent>> processData(Message<CloudEvent> incoming) {
     CloudEvent dataEvent = incoming.getPayload();
-    String eventType = dataEvent.getType();
     String dataKey = CloudEventUtils.getSubject(dataEvent);
 
     Data data = CloudEventUtils.getData(dataEvent, Data.class);
     String dataType = data == null ? null : data.getType();
 
-    dataStore.register(data, eventType, dataKey);
     var entryStream = Stream.of(new KeyedValue<>(dataKey, data));
 
     return renderingRequests.getFrom(incoming,
@@ -80,8 +69,6 @@ public class ProcessTriggersFunctions {
     outputGenerator.invalidateCache();
     CloudEvent event = incoming.getPayload();
     String subject = CloudEventUtils.getSubject(event);
-    Renderer renderer = CloudEventUtils.getData(event, Renderer.class);
-    renderersStore.register(renderer, event.getType(), subject);
     return renderingRequests.getFromDataStore(incoming,
         renderingContexts.getByRendererKey(subject));
   }
@@ -100,7 +87,8 @@ public class ProcessTriggersFunctions {
   //  when https://github.com/smallrye/smallrye-reactive-messaging/issues/3232 is fixed
   public Multi<Message<CloudEvent>> processContext(Message<CloudEvent> incoming) {
     CloudEvent event = incoming.getPayload();
-    RenderingContext renderingContext = registerAndRetrieveFromStore(event);
+    String subject = CloudEventUtils.getSubject(event);
+    RenderingContext renderingContext = renderingContextStore.get(subject);
 
     if (renderingContexts.hasRenderer(renderingContext)) {
       return renderingRequests.getFromDataStore(incoming,
@@ -111,13 +99,6 @@ public class ProcessTriggersFunctions {
       incoming.ack();
       return Multi.createFrom().empty();
     }
-  }
-
-  private RenderingContext registerAndRetrieveFromStore(CloudEvent event) {
-    String subject = CloudEventUtils.getSubject(event);
-    RenderingContext renderingContext = CloudEventUtils.getData(event, RenderingContext.class);
-    renderingContextStore.register(renderingContext, event.getType(), subject);
-    return renderingContextStore.get(subject);
   }
 
 }

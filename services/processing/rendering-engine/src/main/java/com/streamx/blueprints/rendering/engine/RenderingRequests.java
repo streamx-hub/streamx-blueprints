@@ -98,7 +98,7 @@ public class RenderingRequests {
   }
 
   private Stream<KeyedValue<Data>> fetchStoredDataContextFromStore() {
-    return dataStore.getAll().stream()
+    return dataStore.getAll()
         .map(entry -> new KeyedValue<>(entry.getKey(), entry.getValue().data()));
   }
 

@@ -45,7 +45,7 @@ public class RenderingContexts {
   }
 
   private Stream<KeyedValue<RenderingContext>> getPublishedContexts() {
-    return renderingContextStore.getAll().stream()
+    return renderingContextStore.getAll()
         .filter(entry -> RenderingContext.TYPE_PUBLISHED.equals(entry.getValue().eventType()))
         .map(entry -> new KeyedValue<>(entry.getKey(), entry.getValue().renderingContext()));
   }

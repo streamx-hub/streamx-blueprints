@@ -1,19 +1,29 @@
 package com.streamx.blueprints.rendering.engine.converter;
 
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.RenderingContext;
+import com.streamx.blueprints.rendering.engine.Channels;
+import io.cloudevents.CloudEvent;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 @ApplicationScoped
-public class PreservedRenderingContextStore {
+public class PreservedRenderingContextStore extends BaseStore<PreservedRenderingContext> {
 
-  private static final Map<String, PreservedRenderingContext> store = new ConcurrentHashMap<>();
+  @PostConstruct
+  void initRepository() {
+    initRepository("preserved-rendering-contexts", PreservedRenderingContext.class);
+  }
 
-  public void register(RenderingContext renderingContext, String eventType, String subject) {
+  @Incoming(Channels.Incoming.RENDERING_CONTEXTS_STATE)
+  void register(CloudEvent event) {
+    String subject = CloudEventUtils.getSubject(event);
+    String eventType = event.getType();
+    RenderingContext renderingContext = CloudEventUtils.getData(event, RenderingContext.class);
     if (RenderingContext.TYPE_UNPUBLISHED.equals(eventType)) {
       PreservedRenderingContext preserved = store.get(subject);
       if (preserved == null) {
@@ -32,7 +42,7 @@ public class PreservedRenderingContextStore {
         .orElse(null);
   }
 
-  public Set<Entry<String, PreservedRenderingContext>> getAll() {
-    return store.entrySet();
+  public Stream<Entry<String, PreservedRenderingContext>> getAll() {
+    return store.entries();
   }
 }
