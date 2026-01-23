@@ -33,6 +33,7 @@
       <plugin>
         <groupId>io.quarkus</groupId>
         <artifactId>quarkus-extension-maven-plugin</artifactId>
+        <!-- TODO: when updating quarkus bom version in the project, see if ${quarkus.platform.version} can be used below: -->
         <version>3.30.4</version>
       </plugin>
       <plugin>
