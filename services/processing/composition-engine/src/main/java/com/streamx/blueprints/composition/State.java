@@ -9,7 +9,6 @@ import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.state.RepositoryFactory;
 import com.streamx.blueprints.state.StateRepository;
 import io.cloudevents.CloudEvent;
-import io.smallrye.mutiny.Uni;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

@@ -1,6 +1,7 @@
 package com.streamx.blueprints.state.repository.rocksdb;
 
 import com.streamx.blueprints.state.PropertyNames;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.io.File;
@@ -16,9 +17,15 @@ import org.rocksdb.RocksDBException;
 @ApplicationScoped
 public class RocksDbManager {
 
-  private static final Options options = new Options().setCreateIfMissing(true);
-  private static final String DEFAULT_ROCKSDB_PATH = "/tmp/rocksdb";
   static final Map<String, RocksDB> rocksDbMap = new ConcurrentHashMap<>();
+  private static final String DEFAULT_ROCKSDB_PATH = "/tmp/rocksdb";
+  private Options options;
+
+  @PostConstruct
+  public void init() {
+    RocksDB.loadLibrary();
+    options = new Options().setCreateIfMissing(true);
+  }
 
   public RocksDB getOrCreateDb(Config config, String instanceId, String identifier) {
     File rocksDbDir = initDbDir(config, instanceId, identifier);

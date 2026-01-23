@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <groupId>com.streamx.blueprints</groupId>
     <artifactId>blueprints-project</artifactId>
@@ -8,14 +9,12 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>libraries</artifactId>
-  <name>Blueprints : Libraries</name>
+  <artifactId>extensions</artifactId>
+  <name>Blueprints : Extensions</name>
   <packaging>pom</packaging>
 
   <modules>
-    <module>cloud-events-support</module>
-    <module>data-model</module>
-    <module>key-value-state-repository</module>
+    <module>quarkus-rocksdb-native-support</module>
   </modules>
 
 </project>

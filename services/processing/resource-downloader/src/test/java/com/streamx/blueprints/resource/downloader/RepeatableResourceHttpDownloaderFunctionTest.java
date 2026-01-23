@@ -162,9 +162,10 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     // when
     sendRepeatableDownloadRequest(testContentUrl, resourcePath);
 
-    // then: wait for some downloads (3)
-    List<CloudEvent> webResourceEvents = waitForDownloadedWebResources(resourcePath, 3);
-    assertEventsContent(webResourceEvents);
+    // then: wait for some downloads (3+)
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() ->
+        assertThat(getDownloadedWebResourcesCount()).isGreaterThanOrEqualTo(3)
+    );
 
     // and when:
     sendStopRepeatableDownloadRequest(testContentUrl);

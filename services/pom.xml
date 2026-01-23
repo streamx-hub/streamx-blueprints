@@ -128,6 +128,12 @@
         <quarkus.container-image.package.type>${streamx.container-image.package.type.native}</quarkus.container-image.package.type>
         <quarkus.native.container-build>true</quarkus.native.container-build>
       </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.streamx.blueprints</groupId>
+          <artifactId>quarkus-rocksdb-native-support</artifactId>
+        </dependency>
+      </dependencies>
     </profile>
     <profile>
       <id>container-image-multiplatform</id>

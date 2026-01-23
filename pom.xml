@@ -10,6 +10,7 @@
 
   <modules>
     <module>libraries</module>
+    <module>extensions</module>
     <module>services</module>
   </modules>
 
@@ -35,6 +36,9 @@
 
     <!-- CloudEvents -->
     <cloudevents-impl.version>4.0.1</cloudevents-impl.version>
+
+    <!-- RocksDB -->
+    <rocks-db.version>9.3.1</rocks-db.version>
 
     <!-- Quarkus -->
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
@@ -121,6 +125,16 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
+        <groupId>com.streamx.blueprints</groupId>
+        <artifactId>quarkus-rocksdb-native-support-deployment</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.streamx.blueprints</groupId>
+        <artifactId>quarkus-rocksdb-native-support</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
         <groupId>${quarkus.platform.group-id}</groupId>
         <artifactId>${quarkus.platform.artifact-id}</artifactId>
         <version>${quarkus.platform.version}</version>
@@ -141,6 +155,11 @@
         <groupId>io.quarkiverse.reactivemessaging.http</groupId>
         <artifactId>quarkus-reactive-messaging-http</artifactId>
         <version>${quarkus-reactive-messaging-http.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.rocksdb</groupId>
+        <artifactId>rocksdbjni</artifactId>
+        <version>${rocks-db.version}</version>
       </dependency>
 
       <!-- Test dependencies -->
