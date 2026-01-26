@@ -205,18 +205,25 @@ descriptors:
     type: edge
     volumes:
       repository-volume: {}
+      state: {}
     containers:
       sink:
         image: ghcr.io/streamx-com/streamx-blueprints/opensearch-sink:latest-jvm
         incoming:
           indexable-resources: {}
           indexable-resource-fragments: {}
+        autoRef:
+          - from: indexable-resource-fragments
+            to: indexable-resource-fragments-state
+            using: sync-state
         servicePorts:
           - 8083:8080
         volumes:
           - repository-volume:/usr/share/opensearch/data
         environment:
           QUARKUS_ELASTICSEARCH_HOSTS: ${STREAMX_OWNER_SERVICE_NAME}.opensearch:9200
+        volumes:
+          - state:/tmp/rocksdb
       opensearch:
         image: docker.io/opensearchproject/opensearch:2.16.0
         servicePorts:

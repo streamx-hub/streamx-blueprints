@@ -8,15 +8,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.data.IndexableResourceFragment;
+import com.streamx.blueprints.test.unit.StatefulInMemorySource;
 import io.cloudevents.CloudEvent;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
+import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import org.junit.jupiter.api.BeforeEach;
 
 abstract class SearchServiceTestBase extends BaseOpensearchTest {
 
@@ -45,6 +48,16 @@ abstract class SearchServiceTestBase extends BaseOpensearchTest {
 
   @Inject
   ObjectMapper objectMapper;
+
+  private InMemorySource<CloudEvent> indexableResourcesSource;
+  private StatefulInMemorySource indexableResourceFragmentsSource;
+
+  @BeforeEach
+  void initSources() {
+    indexableResourcesSource = connector.source(Channels.INDEXABLE_RESOURCES);
+    indexableResourceFragmentsSource = new StatefulInMemorySource(connector,
+        Channels.INDEXABLE_RESOURCE_FRAGMENTS, Channels.INDEXABLE_RESOURCE_FRAGMENTS_STATE);
+  }
 
   void validateNoSearchResultsForTestKey() {
     await().until(() -> getSearchResultByPath(TEST_KEY), VALIDATE_NO_RESULTS);
@@ -153,13 +166,13 @@ abstract class SearchServiceTestBase extends BaseOpensearchTest {
       var json = objectMapper.writeValueAsString(content);
       var indexableResource = new IndexableResource(json, type, fragmentKeys);
 
-      connector.source(Channels.INDEXABLE_RESOURCES)
-          .send(CloudEventUtils.eventWithData(
-              TEST_KEY,
-              eventType,
-              indexableResource,
-              CloudEventUtils.toOffsetDateTime(eventTimeGenerator.getAndIncrement())
-          ));
+      CloudEvent event = CloudEventUtils.eventWithData(
+          TEST_KEY,
+          eventType,
+          indexableResource,
+          CloudEventUtils.toOffsetDateTime(eventTimeGenerator.getAndIncrement())
+      );
+      indexableResourcesSource.send(event);
     } catch (JsonProcessingException e) {
       throw new RuntimeException(e);
     }
@@ -172,7 +185,7 @@ abstract class SearchServiceTestBase extends BaseOpensearchTest {
         fragment,
         CloudEventUtils.toOffsetDateTime(eventTimeGenerator.getAndIncrement())
     );
-    sendFragment(publishEvent);
+    indexableResourceFragmentsSource.send(publishEvent);
   }
 
   protected void unpublishFragment() {
@@ -181,12 +194,7 @@ abstract class SearchServiceTestBase extends BaseOpensearchTest {
         IndexableResourceFragment.TYPE_UNPUBLISHED,
         CloudEventUtils.toOffsetDateTime(eventTimeGenerator.getAndIncrement())
     );
-    sendFragment(unpublishEvent);
-  }
-
-  private void sendFragment(CloudEvent fragmentEvent) {
-    connector.source(Channels.INDEXABLE_RESOURCE_FRAGMENTS)
-        .send(fragmentEvent);
+    indexableResourceFragmentsSource.send(unpublishEvent);
   }
 
   ExtractableResponse<Response> getSearchResultByQuery(String query) {
