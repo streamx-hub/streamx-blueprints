@@ -5,7 +5,6 @@ import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.json.aggregator.configuration.AggregatorConfiguration;
 import com.streamx.blueprints.json.aggregator.configuration.Configuration;
-import com.streamx.blueprints.json.aggregator.stores.DataStore;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -23,14 +22,11 @@ import java.util.Set;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.jboss.logging.Logger;
 
-abstract class AbstractFunction {
+abstract class BaseProcessingFunction {
 
   protected static final ObjectMapper objectMapper = new ObjectMapper();
 
   Logger log;
-
-  @Inject
-  DataStore store;
 
   @Inject
   AggregatorConfiguration aggregatorConfig;
@@ -59,11 +55,9 @@ abstract class AbstractFunction {
   protected Multi<Message<CloudEvent>> processDataMessage(Message<CloudEvent> message) {
     CloudEvent event = message.getPayload();
     Data data = CloudEventUtils.getData(event, Data.class);
-    String eventType = event.getType();
     String key = CloudEventUtils.getSubject(event);
     OffsetDateTime eventTime = event.getTime();
 
-    store.register(data, eventType, key);
     log.tracef("Processing message [%s] with event time %s", key, eventTime);
 
     try {

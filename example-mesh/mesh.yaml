@@ -36,6 +36,8 @@ descriptors:
 
   json-aggregator:
     type: processing
+    volumes:
+      state: {}
     containers:
       processor:
         image: ghcr.io/streamx-com/streamx-blueprints/json-aggregator:latest-jvm
@@ -45,6 +47,15 @@ descriptors:
         outgoing:
           aggregated-data: {}
           aggregated-multivalued-data: {}
+        autoRef:
+          - from: data
+            to: data-state
+            using: sync-state
+          - from: multivalued-data
+            to: multivalued-data-state
+            using: sync-state
+        volumes:
+          - state:/tmp/rocksdb
 
   external-references-rewriter:
     type: processing

@@ -24,7 +24,7 @@ public class JsonAggregatorIT extends BaseQuarkusIntegrationTest {
   @Test
   void shouldAggregateData() {
     // when: publish product
-    sendDataEvent("pim:1", "{\"id\":\"1\"}", Channels.DATA);
+    sendDataEvent("pim:1", "{\"id\":\"1\"}");
 
     // then
     CloudEvent outgoingEvent1 = waitForResponseEvent(Channels.AGGREGATED_DATA);
@@ -35,7 +35,7 @@ public class JsonAggregatorIT extends BaseQuarkusIntegrationTest {
     );
 
     // when: publish price for that product
-    sendDataEvent("price:1", "{\"price\":\"200\"}", Channels.DATA);
+    sendDataEvent("price:1", "{\"price\":\"200\"}");
 
     // then
     CloudEvent outgoingEvent2 = waitForLastResponseEvent(Channels.AGGREGATED_DATA, 2);
@@ -49,8 +49,8 @@ public class JsonAggregatorIT extends BaseQuarkusIntegrationTest {
   @Test
   void shouldAggregateMultivaluedData() {
     // when
-    sendDataEvent("review:1:john", "{\"rating\":\"good\"}", Channels.MULTIVALUED_DATA);
-    sendDataEvent("review:1:alice", "{\"rating\":\"bad\"}", Channels.MULTIVALUED_DATA);
+    sendMultivaluedDataEvent("review:1:john", "{\"rating\":\"good\"}");
+    sendMultivaluedDataEvent("review:1:alice", "{\"rating\":\"bad\"}");
 
     // then
     CloudEvent outgoingEvent = waitForLastResponseEvent(Channels.AGGREGATED_MULTIVALUED_DATA, 2);
@@ -61,9 +61,16 @@ public class JsonAggregatorIT extends BaseQuarkusIntegrationTest {
     );
   }
 
-  private void sendDataEvent(String subject, String content, String channel) {
+  private void sendDataEvent(String subject, String content) {
     Data data = new Data(content, ANY);
-    sendEvent(subject, Data.TYPE_PUBLISHED, data, channel);
+    CloudEvent event = CloudEventUtils.eventWithData(subject, Data.TYPE_PUBLISHED, data);
+    sendStatefulEvent(event, Channels.DATA_STATE, Channels.DATA);
+  }
+
+  private void sendMultivaluedDataEvent(String subject, String content) {
+    Data data = new Data(content, ANY);
+    CloudEvent event = CloudEventUtils.eventWithData(subject, Data.TYPE_PUBLISHED, data);
+    sendStatefulEvent(event, Channels.MULTIVALUED_DATA_STATE, Channels.MULTIVALUED_DATA);
   }
 
   private static void assertOutgoingEvent(CloudEvent outgoingEvent,

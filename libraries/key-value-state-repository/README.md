@@ -76,6 +76,10 @@ You can verify compatibility with this simple test:
   T deserializedValue = objectMapper.readValue(serializedValue, valueClass);
 ```
 
+Note: To ensure your objects are correctly serialized in Quarkus Native mode,
+you must annotate the class with `@io.quarkus.runtime.annotations.RegisterForReflection`.
+This allows Jackson to access the class fields via reflection within the native environment.
+
 ### Specialized Support: CloudEvents
 
 The repository includes a built-in handler for `io.cloudevents.CloudEvent objects`.
