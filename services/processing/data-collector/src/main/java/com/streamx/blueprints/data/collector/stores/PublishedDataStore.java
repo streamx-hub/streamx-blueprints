@@ -6,7 +6,6 @@ import com.streamx.blueprints.data.collector.Channels;
 import com.streamx.blueprints.state.RepositoryFactory;
 import com.streamx.blueprints.state.StateRepository;
 import io.cloudevents.CloudEvent;
-import io.smallrye.mutiny.Uni;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -20,27 +19,26 @@ public class PublishedDataStore {
   @Inject
   RepositoryFactory repositoryFactory;
 
-  private StateRepository<PreservedData> store;
+  private StateRepository<PublishedData> store;
 
   @PostConstruct
   void initRepository() {
-    store = repositoryFactory.getOrCreate("preserved-data", PreservedData.class);
+    store = repositoryFactory.getOrCreate("published-data", PublishedData.class);
   }
 
   @Incoming(Channels.Incoming.DATA_STATE)
-  Uni<Void> registerData(CloudEvent dataEvent) {
+  void registerData(CloudEvent dataEvent) {
     String key = CloudEventUtils.getSubject(dataEvent);
     String eventType = dataEvent.getType();
     if (Data.TYPE_PUBLISHED.equals(eventType)) {
       Data data = CloudEventUtils.getData(dataEvent, Data.class);
-      store.put(key, new PreservedData(key, data, eventType));
+      store.put(key, new PublishedData(key, data, eventType));
     } else {
       store.remove(key);
     }
-    return Uni.createFrom().voidItem();
   }
 
-  public Stream<Entry<String, PreservedData>> getEntriesStream() {
+  public Stream<Entry<String, PublishedData>> getEntriesStream() {
     return store.entries();
   }
 }
