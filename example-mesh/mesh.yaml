@@ -32,13 +32,12 @@ descriptors:
         image: ghcr.io/streamx-com/streamx-blueprints/local-references-rewriter:latest-jvm
         incoming:
           incoming-pages: {}
-          optimized-assets: {}
+          optimized-assets:
+            shared: false
+            initState: replay
+            enforceMonotonicEventTime: true
         outgoing:
           adjusted-pages: {}
-        autoRef:
-          - from: optimized-assets
-            to: optimized-assets-state
-            using: sync-state
         volumes:
           - state:/tmp/rocksdb
 

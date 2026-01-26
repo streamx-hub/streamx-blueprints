@@ -86,7 +86,7 @@ public class LocalReferencesRewriterIT extends BaseQuarkusIntegrationTest {
   }
 
   private static void sendOptimizedImageEvent(CloudEvent event) {
-    sendStatefulEvent(event, Channels.OPTIMIZED_ASSETS, Channels.OPTIMIZED_ASSETS_STATE);
+    sendEvent(event, Channels.OPTIMIZED_ASSETS);
   }
 
   private static void assertPageEventWithOptimizedImage(CloudEvent outgoingEvent,

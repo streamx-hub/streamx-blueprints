@@ -45,7 +45,7 @@ class AdjustImgSrcFunctionTest {
   private static final Set<String> PAGE_EVENTS = Set.of(Page.TYPE_PUBLISHED, Page.TYPE_UNPUBLISHED);
 
   private InMemorySource<CloudEvent> pagesChannel;
-  private StatefulInMemorySource assetsChannel;
+  private InMemorySource<CloudEvent> assetsChannel;
   private InMemorySink<CloudEvent> adjustedPagesSink;
 
   @InjectSpy
@@ -61,8 +61,7 @@ class AdjustImgSrcFunctionTest {
   @BeforeEach
   void init() {
     pagesChannel = connector.source(Channels.INCOMING_PAGES);
-    assetsChannel = new StatefulInMemorySource(connector,
-        Channels.OPTIMIZED_ASSETS, Channels.OPTIMIZED_ASSETS_STATE);
+    assetsChannel = connector.source(Channels.OPTIMIZED_ASSETS);
     adjustedPagesSink = connector.sink(Channels.ADJUSTED_PAGES);
     adjustedPagesSink.clear();
     optimizedAssetsStore.clear();

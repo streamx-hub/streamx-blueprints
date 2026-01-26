@@ -32,11 +32,6 @@ public class OptimizedAssetsStore {
   Logger log;
 
   @Incoming(Channels.OPTIMIZED_ASSETS)
-  public void consumeAsset(CloudEvent optimizedAssetEvent) {
-    // no need to process the asset
-  }
-
-  @Incoming(Channels.OPTIMIZED_ASSETS_STATE)
   public void registerAsset(CloudEvent optimizedAssetEvent) {
     String key = CloudEventUtils.getSubject(optimizedAssetEvent);
     String eventType = optimizedAssetEvent.getType();
