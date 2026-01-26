@@ -22,8 +22,8 @@ public class DataCollectorIT extends BaseQuarkusIntegrationTest {
   private static final String INPUT_PRODUCT_TYPE = "product/simple";
   private static final String OUTPUT_DATA_TYPE = "collected-data";
 
-  private static final String PRODUCT_1_ID = "Table";
-  private static final String PRODUCT_1_JSON = """
+  private static final String TABLE_ID = "Table";
+  private static final String TABLE_JSON = """
       {
         "id": "Table",
         "name": "Ravenna Home Open Storage Table",
@@ -32,18 +32,18 @@ public class DataCollectorIT extends BaseQuarkusIntegrationTest {
       }
       """;
 
-  private static final String PRODUCT_2_ID = "Recliner";
-  private static final String PRODUCT_2_JSON = """
+  private static final String COUCH_ID = "Couch";
+  private static final String COUCH_JSON = """
       {
-        "id": "Recliner",
-        "name": "LeatherSoft Recliner with Armrest Storage",
+        "id": "Couch",
+        "name": "LeatherSoft Couch with Armrest Storage",
         "categories": [ { "name": "Furniture" } ],
         "price": { "value": 680 }
       }
       """;
 
-  private static final String PRODUCT_3_ID = "Chair";
-  private static final String PRODUCT_3_JSON = """
+  private static final String CHAIR_ID = "Chair";
+  private static final String CHAIR_JSON = """
       {
         "id": "Chair",
         "name": "Rivet Bristol Natural Chair",
@@ -60,9 +60,9 @@ public class DataCollectorIT extends BaseQuarkusIntegrationTest {
   @Test
   void shouldAggregateData() {
     // when: publish products
-    sendDataEvent("product:" + PRODUCT_1_ID, PRODUCT_1_JSON);
-    sendDataEvent("product:" + PRODUCT_2_ID, PRODUCT_2_JSON);
-    sendDataEvent("product:" + PRODUCT_3_ID, PRODUCT_3_JSON);
+    sendDataEvent("product:" + TABLE_ID, TABLE_JSON);
+    sendDataEvent("product:" + COUCH_ID, COUCH_JSON);
+    sendDataEvent("product:" + CHAIR_ID, CHAIR_JSON);
 
     // then
     CloudEvent outgoingEvent = waitForResponseEvent(Channels.Outgoing.COLLECTED_DATA);
@@ -77,7 +77,7 @@ public class DataCollectorIT extends BaseQuarkusIntegrationTest {
     assertSameJsons(outgoingData.getContentAsString(),
         "{"
         + "  \"key\": \"cheapest-by-category_Furniture\","
-        + "  \"values\": [" + PRODUCT_3_JSON + "," + PRODUCT_2_JSON + "," + PRODUCT_1_JSON + "]"
+        + "  \"values\": [" + CHAIR_JSON + "," + COUCH_JSON + "," + TABLE_JSON + "]"
         + "}");
   }
 
