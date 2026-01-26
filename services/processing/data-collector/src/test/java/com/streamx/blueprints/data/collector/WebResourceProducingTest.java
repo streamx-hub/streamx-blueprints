@@ -7,11 +7,13 @@ import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.WebResource;
+import com.streamx.blueprints.data.collector.Channels.Incoming;
+import com.streamx.blueprints.data.collector.Channels.Outgoing;
+import com.streamx.blueprints.test.unit.StatefulInMemorySource;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
-import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.time.Duration;
@@ -29,13 +31,13 @@ public class WebResourceProducingTest {
   @Any
   InMemoryConnector connector;
 
-  InMemorySource<CloudEvent> dataSource;
+  StatefulInMemorySource dataSource;
   InMemorySink<CloudEvent> webResourceSink;
 
   @BeforeEach
   void beforeEach() {
-    dataSource = connector.source(Channels.Incoming.DATA);
-    webResourceSink = connector.sink(Channels.Outgoing.WEB_RESOURCES);
+    dataSource = new StatefulInMemorySource(connector, Incoming.DATA, Incoming.DATA_STATE);
+    webResourceSink = connector.sink(Outgoing.WEB_RESOURCES);
     webResourceSink.clear();
   }
 

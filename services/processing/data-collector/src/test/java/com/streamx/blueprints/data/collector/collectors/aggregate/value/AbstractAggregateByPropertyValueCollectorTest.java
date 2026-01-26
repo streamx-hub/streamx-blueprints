@@ -12,12 +12,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.jayway.jsonpath.JsonPath;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
-import com.streamx.blueprints.data.collector.Channels;
+import com.streamx.blueprints.data.collector.Channels.Incoming;
 import com.streamx.blueprints.data.collector.Channels.Outgoing;
+import com.streamx.blueprints.test.unit.StatefulInMemorySource;
 import io.cloudevents.CloudEvent;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
-import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.io.File;
@@ -43,12 +43,12 @@ abstract class AbstractAggregateByPropertyValueCollectorTest {
   @Any
   InMemoryConnector connector;
 
-  private InMemorySource<CloudEvent> dataSource;
+  private StatefulInMemorySource dataSource;
   private InMemorySink<CloudEvent> dataSink;
 
   @BeforeEach
   void beforeEach() {
-    dataSource = connector.source(Channels.Incoming.DATA);
+    dataSource = new StatefulInMemorySource(connector, Incoming.DATA, Incoming.DATA_STATE);
     dataSink = connector.sink(Outgoing.COLLECTED_DATA);
   }
 

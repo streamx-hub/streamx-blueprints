@@ -2,29 +2,43 @@ package com.streamx.blueprints.data.collector.stores;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
+import com.streamx.blueprints.data.collector.Channels;
+import com.streamx.blueprints.state.RepositoryFactory;
+import com.streamx.blueprints.state.StateRepository;
 import io.cloudevents.CloudEvent;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.Dependent;
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import jakarta.inject.Inject;
+import java.util.Map.Entry;
+import java.util.stream.Stream;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 @Dependent
 public class PublishedDataStore {
 
-  private static final Map<String, PreservedData> store = new ConcurrentHashMap<>();
+  @Inject
+  RepositoryFactory repositoryFactory;
 
-  public void register(CloudEvent dataEvent) {
+  private StateRepository<PublishedData> store;
+
+  @PostConstruct
+  void initRepository() {
+    store = repositoryFactory.getOrCreate("published-data", PublishedData.class);
+  }
+
+  @Incoming(Channels.Incoming.DATA_STATE)
+  void registerData(CloudEvent dataEvent) {
     String key = CloudEventUtils.getSubject(dataEvent);
-    Data data = CloudEventUtils.getData(dataEvent, Data.class);
     String eventType = dataEvent.getType();
     if (Data.TYPE_PUBLISHED.equals(eventType)) {
-      store.put(key, new PreservedData(key, data, eventType));
+      Data data = CloudEventUtils.getData(dataEvent, Data.class);
+      store.put(key, new PublishedData(key, data, eventType));
     } else {
       store.remove(key);
     }
   }
 
-  public Collection<PreservedData> getAll() {
-    return store.values();
+  public Stream<Entry<String, PublishedData>> getEntriesStream() {
+    return store.entries();
   }
 }

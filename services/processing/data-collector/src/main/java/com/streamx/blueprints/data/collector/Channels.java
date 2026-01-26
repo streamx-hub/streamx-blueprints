@@ -5,6 +5,7 @@ public final class Channels {
   public static class Incoming {
 
     public static final String DATA = "data";
+    public static final String DATA_STATE = "data-state";
 
     private Incoming() {
       // no instances
