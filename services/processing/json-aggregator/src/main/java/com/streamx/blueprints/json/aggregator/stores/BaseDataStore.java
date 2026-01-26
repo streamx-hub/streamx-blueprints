@@ -5,7 +5,6 @@ import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.state.RepositoryFactory;
 import com.streamx.blueprints.state.StateRepository;
 import io.cloudevents.CloudEvent;
-import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
@@ -21,12 +20,11 @@ abstract class BaseDataStore {
     repository = repositoryFactory.getOrCreate(identifier, PreservedData.class);
   }
 
-  protected Uni<Void> register(CloudEvent event) {
+  protected void register(CloudEvent event) {
     Data data = CloudEventUtils.getData(event, Data.class);
     String eventType = event.getType();
     String subject = CloudEventUtils.getSubject(event);
     repository.put(subject, new PreservedData(data, eventType));
-    return Uni.createFrom().voidItem();
   }
 
   public PreservedData get(String key) {
