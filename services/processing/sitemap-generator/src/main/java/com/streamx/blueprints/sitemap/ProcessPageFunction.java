@@ -16,9 +16,6 @@ import org.eclipse.microprofile.reactive.messaging.Incoming;
 class ProcessPageFunction {
 
   @Inject
-  PublishedPagesStore publishedPagesStore;
-
-  @Inject
   @Channel(Channels.OUTGOING_SITEMAPS)
   Emitter<CloudEvent> emitter;
 
@@ -37,7 +34,6 @@ class ProcessPageFunction {
   @Incoming(Channels.INCOMING_PAGES)
   void processPage(CloudEvent event) {
     String pageKey = CloudEventUtils.getSubject(event);
-    publishedPagesStore.register(pageKey, event.getTime(), event.getType());
     if (pageKeyService.isSupportedKey(pageKey)) {
       dirtySequenceStateManager.newDirtyResource();
     }

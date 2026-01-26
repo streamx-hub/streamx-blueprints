@@ -29,7 +29,7 @@ public class SitemapGeneratorIT extends BaseQuarkusIntegrationTest {
     CloudEvent sourceEvent = CloudEventUtils.eventWithData(pageKey, Page.TYPE_PUBLISHED, page);
 
     // when
-    sendEvent(sourceEvent, Channels.INCOMING_PAGES);
+    sendStatefulEvent(sourceEvent, Channels.INCOMING_PAGES_STATE, Channels.INCOMING_PAGES);
 
     // then
     CloudEvent outgoingEvent = waitForResponseEvent(Channels.OUTGOING_SITEMAPS);

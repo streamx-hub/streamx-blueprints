@@ -5,7 +5,6 @@ import com.streamx.blueprints.sitemap.SitemapGenerator.SitemapEntryData;
 import com.streamx.blueprints.sitemap.configuration.Configuration;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.util.Optional;
 
 @ApplicationScoped
 public class SitemapService {
@@ -23,7 +22,7 @@ public class SitemapService {
   Configuration configuration;
 
   public WebResource createSitemapResource() {
-    var entries = publishedPagesStore.getEntries().stream()
+    var entries = publishedPagesStore.getEntries()
         .filter(this::isValidForSitemapGeneration)
         .map(this::generateSitemapEntryData)
         .toList();
@@ -34,11 +33,7 @@ public class SitemapService {
   }
 
   private SitemapEntryData generateSitemapEntryData(PublishedPage entry) {
-    Long timestamp = Optional.ofNullable(entry.time())
-        .map(time -> time.toInstant().toEpochMilli())
-        .orElse(null);
-    var pageName = entry.pageName();
-    return new SitemapEntryData(pageName, timestamp);
+    return new SitemapEntryData(entry.pageName(), entry.timestamp());
   }
 
   private boolean isValidForSitemapGeneration(PublishedPage entry) {

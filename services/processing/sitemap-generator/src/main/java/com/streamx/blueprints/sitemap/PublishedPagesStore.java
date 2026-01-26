@@ -1,32 +1,56 @@
 package com.streamx.blueprints.sitemap;
 
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Page;
-import jakarta.annotation.Nullable;
+import com.streamx.blueprints.state.RepositoryFactory;
+import com.streamx.blueprints.state.StateRepository;
+import io.cloudevents.CloudEvent;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
-import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
+import java.util.stream.Stream;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 @ApplicationScoped
 public class PublishedPagesStore {
 
-  private static final Map<String, PublishedPage> publishedPages = new ConcurrentHashMap<>();
+  @Inject
+  RepositoryFactory repositoryFactory;
 
-  public void register(String pageKey, @Nullable OffsetDateTime time, String eventType) {
+  private StateRepository<PublishedPage> publishedPages;
+
+  @PostConstruct
+  void initRepository() {
+    publishedPages = repositoryFactory.getOrCreate("published-pages", PublishedPage.class);
+  }
+
+  @Incoming(Channels.INCOMING_PAGES_STATE)
+  void register(CloudEvent pageEvent) {
+    String pageKey = CloudEventUtils.getSubject(pageEvent);
+    String eventType = pageEvent.getType();
     if (Page.TYPE_PUBLISHED.equals(eventType)) {
-      PublishedPage page = new PublishedPage(pageKey, time);
+      PublishedPage page = new PublishedPage(pageKey, toTimestamp(pageEvent.getTime()));
       publishedPages.put(pageKey, page);
     } else {
       publishedPages.remove(pageKey);
     }
   }
 
-  public Collection<PublishedPage> getEntries() {
-    return publishedPages.values();
+  private static Long toTimestamp(OffsetDateTime eventTime) {
+    return Optional.ofNullable(eventTime)
+        .map(time -> time.toInstant().toEpochMilli())
+        .orElse(null);
+  }
+
+  public Stream<PublishedPage> getEntries() {
+    return publishedPages.entries().map(Map.Entry::getValue);
   }
 
   void clear() {
-    publishedPages.clear();
+    publishedPages.entries().map(Map.Entry::getKey)
+        .forEach(publishedPages::remove);
   }
 }

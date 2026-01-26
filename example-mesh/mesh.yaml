@@ -173,6 +173,8 @@ descriptors:
 
   sitemap-generator:
     type: processing
+    volumes:
+      state: {}
     containers:
       processor:
         image: ghcr.io/streamx-com/streamx-blueprints/sitemap-generator:latest-jvm
@@ -180,6 +182,12 @@ descriptors:
           incoming-pages: {}
         outgoing:
           outgoing-sitemaps: {}
+        autoRef:
+          - from: incoming-pages
+            to: incoming-pages-state
+            using: sync-state
+        volumes:
+          - state:/tmp/rocksdb
 
   indexable-resources-producer:
     type: processing
