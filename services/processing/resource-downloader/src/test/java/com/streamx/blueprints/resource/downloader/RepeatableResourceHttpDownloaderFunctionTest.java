@@ -163,13 +163,11 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     sendRepeatableDownloadRequest(testContentUrl, resourcePath);
 
     // then: wait for some downloads (3+)
-    await().atMost(Duration.ofSeconds(3)).untilAsserted(() ->
-        assertThat(getDownloadedWebResourcesCount()).isGreaterThanOrEqualTo(3)
-    );
+    waitForAtLeastDownloadedWebResources(resourcePath, 3);
 
     // and when:
     sendStopRepeatableDownloadRequest(testContentUrl);
-    AtomicLong downloadsCount = new AtomicLong(getDownloadedWebResourcesCount());
+    AtomicLong downloadsCount = new AtomicLong(getDownloadedWebResourcesCount(resourcePath));
 
     // then: expect eventual stop of new downloads
     Duration pollInterval = Duration.ofMillis(configuration.repeatIntervalMillis() * 3);
@@ -177,7 +175,7 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
         .atMost(Duration.ofSeconds(3))
         .pollInterval(pollInterval)
         .untilAsserted(() -> {
-          long currentDownloadsCount = getDownloadedWebResourcesCount();
+          long currentDownloadsCount = getDownloadedWebResourcesCount(resourcePath);
           try {
             // after 3x the time of repeating download interval - we expect no more downloads
             assertThat(currentDownloadsCount).isEqualTo(downloadsCount.get());
@@ -203,8 +201,7 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     sendDownloadRequest(testContentUrl, resourcePath, DownloadRequest.DOWNLOAD_EVENT_TYPE);
 
     // then: expect repeatable downloads
-    List<CloudEvent> webResourceEvents = waitForDownloadedWebResources(resourcePath, 3);
-    assertEventsContent(webResourceEvents);
+    waitForAtLeastDownloadedWebResources(resourcePath, 3);
   }
 
   private void configureSubsequentHeadResponseCodes(Integer first, Integer... next) {

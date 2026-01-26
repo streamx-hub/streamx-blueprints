@@ -17,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPOutputStream;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.AfterAll;
@@ -96,35 +97,38 @@ abstract class AbstractDownloaderFunctionTest {
     return waitForDownloadedResources(key, sink, payloadType, 1).getFirst();
   }
 
-  protected List<CloudEvent> waitForDownloadedWebResources(String key, int expectedSize) {
+  protected List<CloudEvent> waitForDownloadedWebResources(String key, int exactCount) {
     return waitForDownloadedResources(key, downloadedWebResourcesSink, EMITTED_WEB_RESOURCE_TYPE,
-        expectedSize);
+        exactCount);
+  }
+
+  protected void waitForAtLeastDownloadedWebResources(String key, int atLeastCount) {
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+      List<CloudEvent> matchingEvents = getDownloadedWebResources(key);
+      assertThat(matchingEvents).hasSizeGreaterThanOrEqualTo(atLeastCount);
+    });
+  }
+
+  protected List<CloudEvent> getDownloadedWebResources(String key) {
+    return getMatchingEvents(key, downloadedWebResourcesSink, EMITTED_WEB_RESOURCE_TYPE);
+  }
+
+  protected long getDownloadedWebResourcesCount(String key) {
+    return getDownloadedWebResources(key).size();
   }
 
   private static List<CloudEvent> waitForDownloadedResources(String key,
       InMemorySink<CloudEvent> sink, String payloadType, int expectedSize) {
-    await().atMost(Duration.ofSeconds(3)).untilAsserted(() ->
-        assertThat(sink.received()).hasSize(expectedSize)
-    );
-
-    List<CloudEvent> matchingEvents = sink.received().stream()
-        .map(Message::getPayload)
-        .filter(event -> {
-          Resource resource = CloudEventUtils.getData(event, Resource.class);
-          return resource != null && payloadType.equals(resource.getType());
-        })
-        .filter(event -> key.equals(event.getSubject()))
-        .toList();
-
-    assertThat(matchingEvents).hasSize(expectedSize);
-    return matchingEvents;
+    AtomicReference<List<CloudEvent>> result = new AtomicReference<>();
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+      List<CloudEvent> matchingEvents = getMatchingEvents(key, sink, payloadType);
+      assertThat(matchingEvents).hasSize(expectedSize);
+      result.set(matchingEvents);
+    });
+    return result.get();
   }
 
-  protected long getDownloadedWebResourcesCount() {
-    return getDownloadedResourcesCount(downloadedWebResourcesSink, EMITTED_WEB_RESOURCE_TYPE);
-  }
-
-  private static long getDownloadedResourcesCount(InMemorySink<CloudEvent> sink,
+  private static List<CloudEvent> getMatchingEvents(String key, InMemorySink<CloudEvent> sink,
       String payloadType) {
     return sink.received().stream()
         .map(Message::getPayload)
@@ -132,7 +136,8 @@ abstract class AbstractDownloaderFunctionTest {
           Resource resource = CloudEventUtils.getData(event, Resource.class);
           return resource != null && payloadType.equals(resource.getType());
         })
-        .count();
+        .filter(event -> key.equals(event.getSubject()))
+        .toList();
   }
 
   protected void assertNoDownloadedResources() {
