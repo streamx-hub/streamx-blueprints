@@ -3,7 +3,6 @@ package com.streamx.blueprints.opensearch.sink;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.IndexableResourceFragment;
 import com.streamx.blueprints.opensearch.sink.index.DefaultIndexUpdater;
-import com.streamx.blueprints.opensearch.sink.store.PublishedIndexableResourceFragmentsStore;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -21,13 +20,8 @@ public class FragmentSearchServiceSink {
   @Inject
   DefaultIndexUpdater defaultIndexUpdater;
 
-  @Inject
-  PublishedIndexableResourceFragmentsStore indexableResourceFragmentsStore;
-
   @Incoming(Channels.INDEXABLE_RESOURCE_FRAGMENTS)
   public Uni<Void> consume(CloudEvent event) {
-    indexableResourceFragmentsStore.register(event);
-
     String key = CloudEventUtils.getSubject(event);
     String eventType = event.getType();
     OffsetDateTime eventTime = event.getTime();

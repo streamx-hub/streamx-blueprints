@@ -8,8 +8,8 @@ import io.vertx.core.buffer.Buffer;
 public final class CloudEventsSerialization {
 
   private static final CloudEventJsonSerializer eventsSerializer = new CloudEventJsonSerializer();
-  private static final CloudEventJsonDeserializer eventsDeserializer
-      = new CloudEventJsonDeserializer();
+  private static final CloudEventJsonDeserializer eventsDeserializer =
+      new CloudEventJsonDeserializer();
 
   private CloudEventsSerialization() {
     // no instances
