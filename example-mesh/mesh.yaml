@@ -25,14 +25,21 @@ descriptors:
 
   local-references-rewriter:
     type: processing
+    volumes:
+      state: {}
     containers:
       processor:
         image: ghcr.io/streamx-com/streamx-blueprints/local-references-rewriter:latest-jvm
         incoming:
           incoming-pages: {}
-          optimized-assets: {}
+          optimized-assets:
+            shared: false
+            initState: replay
+            enforceMonotonicEventTime: true
         outgoing:
           adjusted-pages: {}
+        volumes:
+          - state:/tmp/rocksdb
 
   json-aggregator:
     type: processing

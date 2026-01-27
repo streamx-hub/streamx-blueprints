@@ -53,6 +53,25 @@ class InMemoryStringRepositoryTest extends BaseInMemoryRepositoryTest {
   }
 
   @Test
+  void shouldRemoveByValue() {
+    // given
+    InMemoryRepository<String> repository = createRepository();
+    repository.put("key-1", "A");
+    repository.put("key-2", "B");
+    repository.put("key-3", "B");
+    repository.put("key-4", "D");
+
+    // when
+    repository.removeByValue("B");
+
+    // then
+    assertThat(getRepositoryEntries(repository))
+        .hasSize(2)
+        .containsEntry("key-1", "A")
+        .containsEntry("key-4", "D");
+  }
+
+  @Test
   void repositoriesWithSameIdentifierButFromDifferentServicesShouldBeIsolated() {
     // given
     configureServiceInstanceId("service-1");

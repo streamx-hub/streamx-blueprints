@@ -25,59 +25,95 @@ public class LocalReferencesRewriterIT extends BaseQuarkusIntegrationTest {
   private static final String ORIGINAL_ASSET_KEY = "/images/logo.gif";
   private static final String OPTIMIZED_ASSET_KEY = "/images/logo-optimized.webp";
 
+  private static final String PAGE_CONTENT_TEMPLATE = """
+      <html>
+       <head></head>
+       <body>
+        <img src="%s">
+       </body>
+      </html>""";
+
+  private static final String PAGE_WITH_ORIGINAL_CONTENT = PAGE_CONTENT_TEMPLATE
+      .formatted(ORIGINAL_ASSET_KEY);
+
+  private static final String PAGE_WITH_OPTIMIZED_IMAGE = PAGE_CONTENT_TEMPLATE
+      .formatted(OPTIMIZED_ASSET_KEY);
+
+  private static final String PAGE_KEY = "/pages/index.html";
+  private static final String PAGE_TYPE = "test-page";
+  private static final Page PAGE = new Page(PAGE_WITH_ORIGINAL_CONTENT, PAGE_TYPE);
+
   @Test
   void shouldRewriteLocalReferences() throws IOException {
-    // given: prepare page referencing the unoptimized image
-    String pageContent = """
-        <html>
-          <body>
-            <img src='%s' />
-          </body>
-        </html>""".formatted(ORIGINAL_ASSET_KEY);
-    String pageKey = "/pages/index.html";
+    // given: publish page referencing the unoptimized image
+    CloudEvent sourceEvent = CloudEventUtils.eventWithData(PAGE_KEY, Page.TYPE_PUBLISHED, PAGE);
 
-    Page page = new Page(pageContent, "test-page");
-    CloudEvent sourceEvent = CloudEventUtils.eventWithData(pageKey, Page.TYPE_PUBLISHED, page);
-
-    // when
+    // when: publish the page while the optimized version of its image is available
     publishOptimizedImage();
     sendEvent(sourceEvent, Channels.INCOMING_PAGES);
 
     // then: assert page has a rewritten link
-    CloudEvent outgoingEvent = waitForResponseEvent(Channels.ADJUSTED_PAGES);
-    assertOutgoingEvent(outgoingEvent, sourceEvent, page, """
-        <html>
-         <head></head>
-         <body>
-          <img src="%s">
-         </body>
-        </html>""".formatted(OPTIMIZED_ASSET_KEY)
-    );
+    CloudEvent outgoingEvent1 = waitForResponseEvent(Channels.ADJUSTED_PAGES);
+    assertPageEventWithOptimizedImage(outgoingEvent1, sourceEvent);
+
+    // when: publish the page while the optimized version of its image is not available
+    unpublishOptimizedImage();
+    sendEvent(sourceEvent, Channels.INCOMING_PAGES);
+
+    // then: assert page has the original link
+    CloudEvent outgoingEvent2 = waitForLastResponseEvent(Channels.ADJUSTED_PAGES, 2);
+    assertPageEventWithOriginalContent(outgoingEvent2, sourceEvent);
   }
 
   private static void publishOptimizedImage() throws IOException {
     byte[] testFileContent = FileUtils.readFileToByteArray(TEST_IMAGE_FILE);
+    var optimizedAsset = new OptimizedAsset(testFileContent, "test-image", ORIGINAL_ASSET_KEY);
 
-    CloudEvent sourceAssetEvent = CloudEventUtils.eventWithData(
+    CloudEvent event = CloudEventUtils.eventWithData(
         OPTIMIZED_ASSET_KEY,
         OptimizedAsset.TYPE_PUBLISHED,
-        new OptimizedAsset(testFileContent, "test-image", ORIGINAL_ASSET_KEY)
+        optimizedAsset
     );
-    sendEvent(sourceAssetEvent, Channels.OPTIMIZED_ASSETS);
+    sendOptimizedImageEvent(event);
   }
 
-  private static void assertOutgoingEvent(CloudEvent outgoingEvent, CloudEvent sourceEvent,
-      Page sourceData, String expectedOutgoingPageContent) {
+  private static void unpublishOptimizedImage() {
+    CloudEvent event = CloudEventUtils.eventWithoutData(
+        OPTIMIZED_ASSET_KEY,
+        OptimizedAsset.TYPE_UNPUBLISHED
+    );
+    sendOptimizedImageEvent(event);
+  }
+
+  private static void sendOptimizedImageEvent(CloudEvent event) {
+    sendEvent(event, Channels.OPTIMIZED_ASSETS);
+  }
+
+  private static void assertPageEventWithOptimizedImage(CloudEvent outgoingEvent,
+      CloudEvent sourceEvent) {
     assertThat(outgoingEvent.getId()).isNotEqualTo(sourceEvent.getId());
     assertThat(outgoingEvent.getSource()).hasPath("local-references-rewriter");
     assertThat(outgoingEvent.getSubject()).isEqualTo(sourceEvent.getSubject());
-    assertThat(outgoingEvent.getType()).isEqualTo(Page.TYPE_PUBLISHED);
     assertThat(outgoingEvent.getTime()).isEqualTo(sourceEvent.getTime());
+    assertPagePayload(outgoingEvent, PAGE_WITH_OPTIMIZED_IMAGE);
+  }
 
-    var outgoingResource = CloudEventUtils.getData(outgoingEvent, Page.class);
-    assertThat(outgoingResource).isNotNull();
-    assertThat(outgoingResource.getType()).isEqualTo(sourceData.getType());
-    assertThat(outgoingResource.getContentAsString()).isEqualTo(expectedOutgoingPageContent);
+  private static void assertPageEventWithOriginalContent(CloudEvent outgoingEvent,
+      CloudEvent sourceEvent) {
+    assertThat(outgoingEvent.getId()).isEqualTo(sourceEvent.getId());
+    assertThat(outgoingEvent.getSource()).hasPath(sourceEvent.getSource().getPath());
+    assertThat(outgoingEvent.getSubject()).isEqualTo(sourceEvent.getSubject());
+    assertThat(outgoingEvent.getTime()).isEqualTo(sourceEvent.getTime());
+    assertPagePayload(outgoingEvent, PAGE_WITH_ORIGINAL_CONTENT);
+  }
+
+  private static void assertPagePayload(CloudEvent event, String expectedPageContent) {
+    assertThat(event.getType()).isEqualTo(Page.TYPE_PUBLISHED);
+
+    Page page = CloudEventUtils.getData(event, Page.class);
+    assertThat(page).isNotNull();
+    assertThat(page.getType()).isEqualTo(PAGE_TYPE);
+    assertThat(page.getContentAsString()).isEqualTo(expectedPageContent);
   }
 
   public static class IntegrationTestProfile extends BaseQuarkusIntegrationTestProfile {
