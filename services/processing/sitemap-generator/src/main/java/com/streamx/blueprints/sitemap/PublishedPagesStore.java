@@ -48,9 +48,4 @@ public class PublishedPagesStore {
   public Stream<PublishedPage> getEntries() {
     return publishedPages.entries().map(Map.Entry::getValue);
   }
-
-  void clear() {
-    publishedPages.entries().map(Map.Entry::getKey)
-        .forEach(publishedPages::remove);
-  }
 }

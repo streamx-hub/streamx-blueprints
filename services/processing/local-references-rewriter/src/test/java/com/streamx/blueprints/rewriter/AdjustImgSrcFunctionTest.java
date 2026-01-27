@@ -10,7 +10,8 @@ import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.OptimizedAsset;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.Resource;
-import com.streamx.blueprints.test.unit.StatefulInMemorySource;
+import com.streamx.blueprints.state.RepositoryFactory;
+import com.streamx.blueprints.test.unit.StateRepositoryClearer;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
@@ -55,6 +56,9 @@ class AdjustImgSrcFunctionTest {
   OptimizedAssetsStore optimizedAssetsStore;
 
   @Inject
+  RepositoryFactory repositoryFactory;
+
+  @Inject
   @Any
   InMemoryConnector connector;
 
@@ -64,7 +68,7 @@ class AdjustImgSrcFunctionTest {
     assetsChannel = connector.source(Channels.OPTIMIZED_ASSETS);
     adjustedPagesSink = connector.sink(Channels.ADJUSTED_PAGES);
     adjustedPagesSink.clear();
-    optimizedAssetsStore.clear();
+    StateRepositoryClearer.clear(repositoryFactory, "optimized-assets", String.class);
   }
 
   @Test

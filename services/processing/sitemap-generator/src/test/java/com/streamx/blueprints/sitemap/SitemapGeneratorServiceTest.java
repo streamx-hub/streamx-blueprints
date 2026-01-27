@@ -9,6 +9,8 @@ import static org.mockito.Mockito.verify;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.WebResource;
+import com.streamx.blueprints.state.RepositoryFactory;
+import com.streamx.blueprints.test.unit.StateRepositoryClearer;
 import com.streamx.blueprints.test.unit.StatefulInMemorySource;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
@@ -43,6 +45,9 @@ class SitemapGeneratorServiceTest {
   @InjectSpy
   PublishedPagesStore publishedPagesStore;
 
+  @Inject
+  RepositoryFactory repositoryFactory;
+
   private StatefulInMemorySource pages;
   private InMemorySink<CloudEvent> sitemapSink;
 
@@ -60,7 +65,8 @@ class SitemapGeneratorServiceTest {
 
   @AfterEach
   void clearStore() {
-    publishedPagesStore.clear();
+    StateRepositoryClearer.clear(repositoryFactory, "published-pages",
+        PublishedPage.class);
   }
 
   @Test

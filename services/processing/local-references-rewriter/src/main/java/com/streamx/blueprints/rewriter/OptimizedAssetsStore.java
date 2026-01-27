@@ -11,7 +11,6 @@ import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.util.Map;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
 
@@ -63,10 +62,5 @@ public class OptimizedAssetsStore {
   @Nullable
   public String getOptimizedAssetPath(String originalImagePath) {
     return originalPathToOptimizedPath.get(originalImagePath);
-  }
-
-  void clear() {
-    originalPathToOptimizedPath.entries().map(Map.Entry::getKey)
-        .forEach(originalPathToOptimizedPath::remove);
   }
 }
