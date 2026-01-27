@@ -1,6 +1,7 @@
 package com.streamx.blueprints.rendering.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
@@ -9,28 +10,12 @@ import com.streamx.blueprints.data.RenderingContext;
 import com.streamx.blueprints.data.RenderingContext.OutputFormat;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
-import io.smallrye.reactive.messaging.memory.InMemorySink;
-import io.smallrye.reactive.messaging.memory.InMemorySource;
+import java.time.Duration;
 import org.eclipse.microprofile.reactive.messaging.Message;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
-
-  private InMemorySource<CloudEvent> dataSource;
-  private InMemorySource<CloudEvent> renderersSource;
-  private InMemorySource<CloudEvent> renderingContextsSource;
-  private InMemorySink<CloudEvent> renderingRequestSink;
-
-  @BeforeEach
-  void beforeEach() {
-    dataSource = connector.source(Channels.Incoming.DATA);
-    renderersSource = connector.source(Channels.Incoming.RENDERERS);
-    renderingContextsSource = connector.source(Channels.Incoming.RENDERING_CONTEXTS);
-    renderingRequestSink = connector.sink(Channels.Outgoing.RENDERING_REQUESTS);
-    renderingRequestSink.clear();
-  }
 
   @Test
   void testDataProcessing() {
@@ -63,22 +48,22 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
     // DXP-1206 resolution verification
     String dataKeyWillNotBeProcessed = "data-type2:dataKeyWillNotBeProcessed";
     dataSource.send(dataPublishEvent(dataKeyWillNotBeProcessed));
-    renderingRequestSink.clear();
+    renderingRequestsSink.clear();
 
     // test
     String dataKey = "data-type2:1";
     long dataEventTime = System.currentTimeMillis();
     dataSource.send(dataEvent(dataKey, Data.TYPE_UNPUBLISHED, dataEventTime));
-    assertThat(renderingRequestSink.received()).isEmpty();
+    waitForRenderingRequestsInSink(0);
 
     dataSource.send(dataEvent(dataKey, Data.TYPE_PUBLISHED, dataEventTime));
-    assertThat(renderingRequestSink.received()).hasSize(2);
+    waitForRenderingRequestsInSink(2);
     assertPublishRequest(context1, dataKey, dataEventTime, Data.TYPE_PUBLISHED);
     assertPublishRequest(context2, dataKey, dataEventTime, Data.TYPE_PUBLISHED);
-    renderingRequestSink.clear();
+    renderingRequestsSink.clear();
 
     dataSource.send(dataEvent(dataKey, Data.TYPE_UNPUBLISHED, dataEventTime));
-    assertThat(renderingRequestSink.received()).hasSize(2);
+    waitForRenderingRequestsInSink(2);
     assertUnpublishRequest(context1, dataKey, dataEventTime, Data.TYPE_UNPUBLISHED);
     assertUnpublishRequest(context2, dataKey, dataEventTime, Data.TYPE_UNPUBLISHED);
   }
@@ -117,23 +102,23 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
     String rendererKey = "renderer1-1";
     long rendererEventTime = System.currentTimeMillis();
     renderersSource.send(rendererEvent(rendererKey, Renderer.TYPE_UNPUBLISHED, rendererEventTime));
-    assertThat(renderingRequestSink.received()).hasSize(4);
+    waitForRenderingRequestsInSink(4);
     assertUnpublishRequest(context1, data1, rendererEventTime, Renderer.TYPE_UNPUBLISHED);
     assertUnpublishRequest(context1, data2, rendererEventTime, Renderer.TYPE_UNPUBLISHED);
     assertUnpublishRequest(context2, data1, rendererEventTime, Renderer.TYPE_UNPUBLISHED);
     assertUnpublishRequest(context2, data2, rendererEventTime, Renderer.TYPE_UNPUBLISHED);
-    renderingRequestSink.clear();
+    renderingRequestsSink.clear();
 
     renderersSource.send(rendererEvent(rendererKey, Renderer.TYPE_PUBLISHED, rendererEventTime));
-    assertThat(renderingRequestSink.received()).hasSize(4);
+    waitForRenderingRequestsInSink(4);
     assertPublishRequest(context1, data1, rendererEventTime, Renderer.TYPE_PUBLISHED);
     assertPublishRequest(context1, data2, rendererEventTime, Renderer.TYPE_PUBLISHED);
     assertPublishRequest(context2, data1, rendererEventTime, Renderer.TYPE_PUBLISHED);
     assertPublishRequest(context2, data2, rendererEventTime, Renderer.TYPE_PUBLISHED);
-    renderingRequestSink.clear();
+    renderingRequestsSink.clear();
 
     renderersSource.send(rendererEvent(rendererKey, Renderer.TYPE_UNPUBLISHED, rendererEventTime));
-    assertThat(renderingRequestSink.received()).hasSize(4);
+    waitForRenderingRequestsInSink(4);
     assertUnpublishRequest(context1, data1, rendererEventTime, Renderer.TYPE_UNPUBLISHED);
     assertUnpublishRequest(context1, data2, rendererEventTime, Renderer.TYPE_UNPUBLISHED);
     assertUnpublishRequest(context2, data1, rendererEventTime, Renderer.TYPE_UNPUBLISHED);
@@ -163,18 +148,18 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
     CloudEvent contextUnpublish = renderingContextEvent(
         contextKey, RenderingContext.TYPE_UNPUBLISHED, eventTime, null);
     renderingContextsSource.send(contextUnpublish);
-    assertThat(renderingRequestSink.received()).isEmpty();
+    waitForRenderingRequestsInSink(0);
 
     CloudEvent contextPublish = renderingContextEvent(
         contextKey, RenderingContext.TYPE_PUBLISHED, eventTime, context);
     renderingContextsSource.send(contextPublish);
-    assertThat(renderingRequestSink.received()).hasSize(2);
+    waitForRenderingRequestsInSink(2);
     assertPublishRequest(contextPublish, data1, eventTime, RenderingContext.TYPE_PUBLISHED);
     assertPublishRequest(contextPublish, data2, eventTime, RenderingContext.TYPE_PUBLISHED);
-    renderingRequestSink.clear();
+    renderingRequestsSink.clear();
 
     renderingContextsSource.send(contextUnpublish);
-    assertThat(renderingRequestSink.received()).hasSize(2);
+    waitForRenderingRequestsInSink(2);
     assertUnpublishRequest(contextPublish, data1, eventTime, RenderingContext.TYPE_UNPUBLISHED);
     assertUnpublishRequest(contextPublish, data2, eventTime, RenderingContext.TYPE_UNPUBLISHED);
   }
@@ -219,7 +204,7 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
     dataSource.send(dataEvent(dataKey, Data.TYPE_PUBLISHED, dataEventTime,
         "test-type/4"));
 
-    assertThat(renderingRequestSink.received()).hasSize(1);
+    waitForRenderingRequestsInSink(1);
     assertPublishRequest(context1, dataKey, dataEventTime, Data.TYPE_PUBLISHED);
   }
 
@@ -289,8 +274,14 @@ class RenderingRequestTriggersTest extends AbstractRenderEngineTest {
     assertThat(actualRequest.outputFormat()).isSameAs(expectedRequest.outputFormat());
   }
 
+  private void waitForRenderingRequestsInSink(int expectedCount) {
+    await().atMost(Duration.ofSeconds(3)).untilAsserted(() ->
+        assertThat(renderingRequestsSink.received()).hasSize(expectedCount)
+    );
+  }
+
   private CloudEvent findRenderingRequestByKey(String key) {
-    return renderingRequestSink.received().stream()
+    return renderingRequestsSink.received().stream()
         .map(Message::getPayload)
         .filter(event -> key.equals(event.getSubject()))
         .findFirst()

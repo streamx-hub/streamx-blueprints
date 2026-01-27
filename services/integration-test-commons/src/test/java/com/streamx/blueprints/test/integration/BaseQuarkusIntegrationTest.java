@@ -12,7 +12,6 @@ import static org.awaitility.Awaitility.await;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
-import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import io.cloudevents.CloudEvent;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
 import java.time.Duration;
@@ -60,11 +59,6 @@ public abstract class BaseQuarkusIntegrationTest {
     String serializedEvent = CloudEventsSerialization.serialize(cloudEvent);
     String url = toUrl(channel);
     HttpRequestor.post(url, serializedEvent);
-  }
-
-  protected static <T> void sendEvent(String key, String eventType, T data, String channel) {
-    CloudEvent event = CloudEventUtils.eventWithData(key, eventType, data);
-    sendEvent(event, channel);
   }
 
   /**

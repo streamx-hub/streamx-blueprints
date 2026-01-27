@@ -99,6 +99,8 @@ descriptors:
 
   rendering-engine:
     type: processing
+    volumes:
+      state: {}
     containers:
       processor:
         image: ghcr.io/streamx-com/streamx-blueprints/rendering-engine:latest-jvm
@@ -113,6 +115,17 @@ descriptors:
           - from: outgoing-rendering-requests
             to: incoming-rendering-requests
             using: internal-relay
+          - from: data
+            to: data-state
+            using: sync-state
+          - from: renderers
+            to: renderers-state
+            using: sync-state
+          - from: rendering-contexts
+            to: rendering-contexts-state
+            using: sync-state
+        volumes:
+          - state:/tmp/rocksdb
 
   composition-engine:
     type: processing

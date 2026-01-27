@@ -13,8 +13,14 @@ public class Channels {
     }
 
     public static final String DATA = "data";
+    public static final String DATA_STATE = "data-state";
+
     public static final String RENDERERS = "renderers";
+    public static final String RENDERERS_STATE = "renderers-state";
+
     public static final String RENDERING_CONTEXTS = "rendering-contexts";
+    public static final String RENDERING_CONTEXTS_STATE = "rendering-contexts-state";
+
     public static final String RENDERING_REQUESTS = "incoming-rendering-requests";
   }
 

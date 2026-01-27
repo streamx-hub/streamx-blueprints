@@ -8,15 +8,8 @@ import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.Renderer;
 import com.streamx.blueprints.data.RenderingContext;
 import io.cloudevents.CloudEvent;
-import io.smallrye.reactive.messaging.memory.InMemoryConnector;
-import jakarta.enterprise.inject.Any;
-import jakarta.inject.Inject;
 
-abstract class AbstractRenderEngineTest {
-
-  @Inject
-  @Any
-  InMemoryConnector connector;
+abstract class AbstractRenderEngineTest extends BaseInMemoryTest {
 
   protected CloudEvent dataPublishEvent(String key) {
     return dataEvent(key, Data.TYPE_PUBLISHED, 1L);
