@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
 @ApplicationScoped
@@ -32,10 +32,9 @@ public class ProcessDataFunction extends BaseProcessingFunction {
 
   @Incoming(Channels.DATA)
   @Outgoing(Channels.AGGREGATED_DATA)
-  // TODO migrate from Message<CloudEvent> to CloudEvent
-  //  when https://github.com/smallrye/smallrye-reactive-messaging/issues/3232 is fixed
-  Multi<Message<CloudEvent>> process(Message<CloudEvent> message) {
-    return processDataMessage(message);
+  @Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
+  Multi<CloudEvent> process(CloudEvent event) {
+    return processDataEvent(event);
   }
 
   @Override

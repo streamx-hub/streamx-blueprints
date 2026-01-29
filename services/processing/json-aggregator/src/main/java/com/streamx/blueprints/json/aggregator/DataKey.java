@@ -15,11 +15,6 @@ public record DataKey(String namespace, String id, @Nullable String hash, String
     return StringUtils.isNotEmpty(hash);
   }
 
-  @Override
-  public String toString() {
-    return originalKey;
-  }
-
   static DataKey fromKey(String key) {
     String[] parts = key.split(KEY_SEPARATOR);
     String namespace = parts[0];

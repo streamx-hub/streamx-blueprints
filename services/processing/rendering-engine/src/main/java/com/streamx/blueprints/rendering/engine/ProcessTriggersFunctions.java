@@ -11,8 +11,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.List;
 import java.util.stream.Stream;
+import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
 @ApplicationScoped
@@ -34,15 +34,13 @@ public class ProcessTriggersFunctions {
    * Handles processing of data publication/un-publication to the system. Triggers rendering
    * requests related to the incoming data. See {@link ProcessRenderingRequestFunction}.
    *
-   * @param incoming represents data related event
+   * @param dataEvent represents data related event
    * @return stream of rendering request events
    */
   @Incoming(Channels.Incoming.DATA)
   @Outgoing(Channels.Outgoing.RENDERING_REQUESTS)
-  // TODO migrate from Message<CloudEvent> to CloudEvent
-  //  when https://github.com/smallrye/smallrye-reactive-messaging/issues/3232 is fixed
-  public Multi<Message<CloudEvent>> processData(Message<CloudEvent> incoming) {
-    CloudEvent dataEvent = incoming.getPayload();
+  @Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
+  public Multi<CloudEvent> processData(CloudEvent dataEvent) {
     String dataKey = CloudEventUtils.getSubject(dataEvent);
 
     Data data = CloudEventUtils.getData(dataEvent, Data.class);
@@ -50,7 +48,7 @@ public class ProcessTriggersFunctions {
 
     var entryStream = Stream.of(new KeyedValue<>(dataKey, data));
 
-    return renderingRequests.getFrom(incoming,
+    return renderingRequests.getFrom(dataEvent,
         renderingContexts.getByData(dataKey, dataType), entryStream);
   }
 
@@ -58,18 +56,16 @@ public class ProcessTriggersFunctions {
    * Handles processing of renderer publication/un-publication to the system. Triggers rendering
    * requests related to the incoming renderer. See {@link ProcessRenderingRequestFunction}.
    *
-   * @param incoming represents renderer related event
+   * @param event represents renderer related event
    * @return stream of rendering request events
    */
   @Incoming(Channels.Incoming.RENDERERS)
   @Outgoing(Channels.Outgoing.RENDERING_REQUESTS)
-  // TODO migrate from Message<CloudEvent> to CloudEvent
-  //  when https://github.com/smallrye/smallrye-reactive-messaging/issues/3232 is fixed
-  public Multi<Message<CloudEvent>> processRenderer(Message<CloudEvent> incoming) {
+  @Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
+  public Multi<CloudEvent> processRenderer(CloudEvent event) {
     outputGenerator.invalidateCache();
-    CloudEvent event = incoming.getPayload();
     String subject = CloudEventUtils.getSubject(event);
-    return renderingRequests.getFromDataStore(incoming,
+    return renderingRequests.getFromDataStore(event,
         renderingContexts.getByRendererKey(subject));
   }
 
@@ -78,25 +74,21 @@ public class ProcessTriggersFunctions {
    * rendering requests related to the incoming context. See
    * {@link ProcessRenderingRequestFunction}.
    *
-   * @param incoming represents rendering context related event
+   * @param event represents rendering context related event
    * @return stream of rendering request events
    */
   @Incoming(Channels.Incoming.RENDERING_CONTEXTS)
   @Outgoing(Channels.Outgoing.RENDERING_REQUESTS)
-  // TODO migrate from Message<CloudEvent> to CloudEvent
-  //  when https://github.com/smallrye/smallrye-reactive-messaging/issues/3232 is fixed
-  public Multi<Message<CloudEvent>> processContext(Message<CloudEvent> incoming) {
-    CloudEvent event = incoming.getPayload();
+  @Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
+  public Multi<CloudEvent> processContext(CloudEvent event) {
     String subject = CloudEventUtils.getSubject(event);
     RenderingContext renderingContext = renderingContextStore.get(subject);
-
     if (renderingContexts.hasRenderer(renderingContext)) {
-      return renderingRequests.getFromDataStore(incoming,
+      return renderingRequests.getFromDataStore(event,
           List.of(new KeyedValue<>(event.getSubject(), renderingContext)));
     } else {
       // If no corresponding renderer no reason to retrigger data processing because output cannot
       // be rendered anyway.
-      incoming.ack();
       return Multi.createFrom().empty();
     }
   }

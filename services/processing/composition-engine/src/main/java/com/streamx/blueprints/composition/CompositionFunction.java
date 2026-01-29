@@ -10,14 +10,13 @@ import com.streamx.content.parser.datainsert.Segment;
 import com.streamx.content.parser.datainsert.SegmentDefineHandler;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Stream;
+import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.jboss.logging.Logger;
 
@@ -32,18 +31,12 @@ public class CompositionFunction {
 
   @Incoming(Channels.INCOMING_LAYOUTS)
   @Outgoing(Channels.OUTGOING_PAGE_COMPOSE_REQUESTS)
-  // TODO migrate from Message<CloudEvent> to CloudEvent
-  //  when https://github.com/smallrye/smallrye-reactive-messaging/issues/3232 is fixed
-  public Multi<Message<CloudEvent>> consumeLayout(Message<CloudEvent> layoutMessage) {
-    CloudEvent layout = layoutMessage.getPayload();
+  @Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
+  public Multi<CloudEvent> consumeLayout(CloudEvent layout) {
     String eventType = layout.getType();
     String subject = layout.getSubject();
     log.tracef("Consuming layout with subject %s and type %s", subject, eventType);
-
-    return Multi.createFrom().items(createPageComposeRequests(layout))
-        .map(Message::of)
-        .onCompletion()
-        .call(() -> Uni.createFrom().completionStage(layoutMessage.ack()));
+    return Multi.createFrom().items(createPageComposeRequests(layout));
   }
 
   @Incoming(Channels.INCOMING_COMPOSITIONS)

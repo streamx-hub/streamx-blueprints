@@ -80,9 +80,8 @@ class CompositionFunctionTest {
     // it's not able to perform that. Simulate this manually here:
     doAnswer(invocationOnMock -> {
       @SuppressWarnings("unchecked")
-      var messages = (Multi<Message<CloudEvent>>) invocationOnMock.callRealMethod();
-      messages.subscribe().asStream()
-          .forEach(message -> incomingPageComposeRequestsSource.send(message.getPayload()));
+      var events = (Multi<CloudEvent>) invocationOnMock.callRealMethod();
+      events.subscribe().asStream().forEach(incomingPageComposeRequestsSource::send);
       return Multi.createFrom().empty(); // original stream is now already consumed
     }).when(compositionFunction).consumeLayout(any());
 

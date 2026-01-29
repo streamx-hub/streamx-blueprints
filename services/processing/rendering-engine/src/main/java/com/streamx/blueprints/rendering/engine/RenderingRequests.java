@@ -14,9 +14,7 @@ import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -28,48 +26,38 @@ public class RenderingRequests {
   @Inject
   PreservedDataStore dataStore;
 
-  Multi<Message<CloudEvent>> getFromDataStore(Message<CloudEvent> incoming,
+  Multi<CloudEvent> getFromDataStore(CloudEvent incomingEvent,
       List<KeyedValue<RenderingContext>> renderingContexts) {
     Stream<KeyedValue<Data>> dataStream = fetchStoredDataContextFromStore();
 
-    return getFrom(incoming, renderingContexts, dataStream);
+    return getFrom(incomingEvent, renderingContexts, dataStream);
   }
 
-  Multi<Message<CloudEvent>> getFrom(Message<CloudEvent> incoming,
+  Multi<CloudEvent> getFrom(CloudEvent incomingEvent,
       List<KeyedValue<RenderingContext>> renderingContexts,
       Stream<KeyedValue<Data>> dataStream) {
-    Multi<Message<CloudEvent>> outgoings;
-    AckHandler ackHandler = new AckHandler(incoming);
     if (renderingContexts.isEmpty()) {
-      outgoings = Multi.createFrom().empty();
-    } else {
-      CloudEvent event = incoming.getPayload();
-      log.tracef("Sending outgoing messages after %s of message with key %s",
-          event.getType(), CloudEventUtils.getSubject(event));
-      Stream<Message<CloudEvent>> renderingRequests = calculateRenderingRequestForDataStore(
-          event.getTime(),
-          event.getType(),
-          ackHandler,
-          renderingContexts,
-          dataStream);
-      outgoings = Multi.createFrom().items(renderingRequests);
+      return Multi.createFrom().empty();
     }
-    return outgoings.onCompletion().call(ackHandler::handleIncomingMessageAck);
+    log.tracef("Sending outgoing messages after %s of message with key %s",
+        incomingEvent.getType(), incomingEvent.getSubject());
+    Stream<CloudEvent> renderingRequests = calculateRenderingRequestForDataStore(
+        incomingEvent.getTime(),
+        incomingEvent.getType(),
+        renderingContexts,
+        dataStream);
+    return Multi.createFrom().items(renderingRequests);
   }
 
-  private Stream<Message<CloudEvent>> calculateRenderingRequestForDataStore(
+  private Stream<CloudEvent> calculateRenderingRequestForDataStore(
       OffsetDateTime eventTime, String eventType,
-      AckHandler ackHandler,
       List<KeyedValue<RenderingContext>> renderingContexts,
       Stream<KeyedValue<Data>> dataStream) {
     return dataStream
-        .filter(this::skipDataWithNoValue)
-        .flatMap(
-            data -> findMatchingContextsByDataKeyPattern(data.key(), getDataType(data.key()),
-                renderingContexts))
+        .filter(this::hasValue)
+        .flatMap(data -> findMatchingContextsByDataKeyPattern(data.key(), renderingContexts))
         .filter(dataContext -> dataContext.context() != null)
         .map(dataContext -> {
-          var ackCf = ackHandler.registerAckCompletableFeature();
           var value = dataContext.context().value();
           var dataKey = dataContext.dataKey();
 
@@ -80,19 +68,8 @@ public class RenderingRequests {
               value.outputTypeTemplate(),
               value.outputFormat()
           );
-          CloudEvent event = CloudEventUtils.eventWithData(
+          return CloudEventUtils.eventWithData(
               dataContext.buildKey(), eventType, renderingRequest, eventTime
-          );
-
-          return Message.of(event,
-              () -> {
-                ackCf.complete(null);
-                return CompletableFuture.completedFuture(null);
-              },
-              throwable -> {
-                ackCf.completeExceptionally(throwable);
-                return CompletableFuture.completedFuture(null);
-              }
           );
         });
   }
@@ -102,7 +79,7 @@ public class RenderingRequests {
         .map(entry -> new KeyedValue<>(entry.getKey(), entry.getValue().data()));
   }
 
-  private boolean skipDataWithNoValue(KeyedValue<?> entry) {
+  private boolean hasValue(KeyedValue<Data> entry) {
     return entry.value() != null
         || dataStore.hasData(entry.key());
   }
@@ -115,7 +92,8 @@ public class RenderingRequests {
   }
 
   private Stream<DataContext> findMatchingContextsByDataKeyPattern(
-      String dataKey, String dataType, List<KeyedValue<RenderingContext>> renderingContexts) {
+      String dataKey, List<KeyedValue<RenderingContext>> renderingContexts) {
+    String dataType = getDataType(dataKey);
     return renderingContexts.stream()
         .filter(context -> context.value() != null)
         .filter(context -> isMatchingData(context.value(), dataKey, dataType))
@@ -126,7 +104,7 @@ public class RenderingRequests {
   private record DataContext(String dataKey, KeyedValue<RenderingContext> context) {
 
     String buildKey() {
-      return context.key() + ":::" + dataKey();
+      return context.key() + ":::" + dataKey;
     }
   }
 

@@ -7,7 +7,6 @@ import com.streamx.blueprints.json.aggregator.configuration.AggregatorConfigurat
 import com.streamx.blueprints.json.aggregator.configuration.Configuration;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
-import io.smallrye.mutiny.Uni;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
@@ -19,7 +18,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import org.eclipse.microprofile.reactive.messaging.Message;
 import org.jboss.logging.Logger;
 
 abstract class BaseProcessingFunction {
@@ -52,35 +50,25 @@ abstract class BaseProcessingFunction {
     }
   }
 
-  protected Multi<Message<CloudEvent>> processDataMessage(Message<CloudEvent> message) {
-    CloudEvent event = message.getPayload();
+  protected Multi<CloudEvent> processDataEvent(CloudEvent event) {
     Data data = CloudEventUtils.getData(event, Data.class);
     String key = CloudEventUtils.getSubject(event);
     OffsetDateTime eventTime = event.getTime();
 
     log.tracef("Processing message [%s] with event time %s", key, eventTime);
 
-    try {
-      if (!accept(key)) {
-        log.tracef("Skipping invalid incoming message key=%s", key);
-        message.ack();
-        return Multi.createFrom().empty();
-      }
-
-      List<CloudEvent> resultEvents = new LinkedList<>();
-      DataKey dataKey = DataKey.fromKey(key);
-      List<Configuration> matchingConfigurations = getConfigurations(dataKey.namespace());
-      for (Configuration config : matchingConfigurations) {
-        createEventForConfig(config, event, data, dataKey).ifPresent(resultEvents::add);
-      }
-      return Multi.createFrom().items(resultEvents.stream().map(Message::of))
-          .onCompletion()
-          .call(() -> Uni.createFrom().completionStage(message.ack()));
-    } catch (Exception e) {
-      log.warnf(e, "Error processing data message %s", key);
-      message.nack(e);
+    if (!accept(key)) {
+      log.tracef("Skipping invalid incoming message key=%s", key);
       return Multi.createFrom().empty();
     }
+
+    List<CloudEvent> resultEvents = new LinkedList<>();
+    DataKey dataKey = DataKey.fromKey(key);
+    List<Configuration> matchingConfigurations = getConfigurations(dataKey.namespace());
+    for (Configuration config : matchingConfigurations) {
+      createEventForConfig(config, event, data, dataKey).ifPresent(resultEvents::add);
+    }
+    return Multi.createFrom().iterable(resultEvents);
   }
 
   protected CloudEvent createPublishEvent(CloudEvent inputEvent, String id, String outputNamespace,
