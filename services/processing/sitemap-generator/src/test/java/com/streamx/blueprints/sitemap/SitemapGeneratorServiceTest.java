@@ -2,18 +2,21 @@ package com.streamx.blueprints.sitemap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.WebResource;
+import com.streamx.blueprints.state.RepositoryFactory;
+import com.streamx.blueprints.test.unit.StateRepositoryClearer;
+import com.streamx.blueprints.test.unit.StatefulInMemorySource;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
-import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.time.Duration;
@@ -42,7 +45,10 @@ class SitemapGeneratorServiceTest {
   @InjectSpy
   PublishedPagesStore publishedPagesStore;
 
-  private InMemorySource<CloudEvent> pages;
+  @Inject
+  RepositoryFactory repositoryFactory;
+
+  private StatefulInMemorySource pages;
   private InMemorySink<CloudEvent> sitemapSink;
 
   @BeforeAll
@@ -52,13 +58,15 @@ class SitemapGeneratorServiceTest {
 
   @BeforeEach
   void setup() {
-    pages = connector.source(Channels.INCOMING_PAGES);
+    pages = new StatefulInMemorySource(connector,
+        Channels.INCOMING_PAGES, Channels.INCOMING_PAGES_STATE);
     sitemapSink = connector.sink(Channels.OUTGOING_SITEMAPS);
   }
 
   @AfterEach
   void clearStore() {
-    publishedPagesStore.clear();
+    StateRepositoryClearer.clear(repositoryFactory, "published-pages",
+        PublishedPage.class);
   }
 
   @Test
@@ -162,7 +170,12 @@ class SitemapGeneratorServiceTest {
 
   private void waitForEventProcessed(String key, String eventType, OffsetDateTime eventTime) {
     await().atMost(Duration.ofSeconds(1)).untilAsserted(() ->
-        verify(publishedPagesStore).register(key, eventTime, eventType)
+        verify(publishedPagesStore).register(argThat(event -> {
+          assertThat(event.getSubject()).isEqualTo(key);
+          assertThat(event.getType()).isEqualTo(eventType);
+          assertThat(event.getTime()).isEqualTo(eventTime);
+          return true;
+        }))
     );
     reset(publishedPagesStore);
   }

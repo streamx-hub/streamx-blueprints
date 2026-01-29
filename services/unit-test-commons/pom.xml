@@ -23,6 +23,11 @@
       <artifactId>smallrye-reactive-messaging-in-memory</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.streamx.blueprints</groupId>
+      <artifactId>key-value-state-repository</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
