@@ -11,7 +11,6 @@ import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -41,37 +40,34 @@ public class RenderingRequests {
     }
     log.tracef("Sending outgoing messages after %s of message with key %s",
         incomingEvent.getType(), incomingEvent.getSubject());
-    Stream<CloudEvent> renderingRequests = calculateRenderingRequestForDataStore(
-        incomingEvent.getTime(),
-        incomingEvent.getType(),
-        renderingContexts,
-        dataStream);
-    return Multi.createFrom().items(renderingRequests);
-  }
 
-  private Stream<CloudEvent> calculateRenderingRequestForDataStore(
-      OffsetDateTime eventTime, String eventType,
-      List<KeyedValue<RenderingContext>> renderingContexts,
-      Stream<KeyedValue<Data>> dataStream) {
-    return dataStream
+    Stream<CloudEvent> renderingRequests = dataStream
         .filter(this::hasValue)
         .flatMap(data -> findMatchingContextsByDataKeyPattern(data.key(), renderingContexts))
         .filter(dataContext -> dataContext.context() != null)
-        .map(dataContext -> {
-          var value = dataContext.context().value();
-          var dataKey = dataContext.dataKey();
+        .map(dataContext -> renderingRequestEvent(incomingEvent, dataContext));
 
-          RenderingRequest renderingRequest = new RenderingRequest(
-              dataKey,
-              value.rendererKey(),
-              value.outputKeyTemplate(),
-              value.outputTypeTemplate(),
-              value.outputFormat()
-          );
-          return CloudEventUtils.eventWithData(
-              dataContext.buildKey(), eventType, renderingRequest, eventTime
-          );
-        });
+    return Multi.createFrom().items(renderingRequests);
+  }
+
+  private CloudEvent renderingRequestEvent(CloudEvent incomingEvent, DataContext dataContext) {
+    RenderingContext renderingContext = dataContext.context().value();
+    String dataKey = dataContext.dataKey();
+
+    RenderingRequest renderingRequest = new RenderingRequest(
+        dataKey,
+        renderingContext.rendererKey(),
+        renderingContext.outputKeyTemplate(),
+        renderingContext.outputTypeTemplate(),
+        renderingContext.outputFormat()
+    );
+
+    return CloudEventUtils.eventWithData(
+        dataContext.buildKey(),
+        incomingEvent.getType(),
+        renderingRequest,
+        incomingEvent.getTime()
+    );
   }
 
   private Stream<KeyedValue<Data>> fetchStoredDataContextFromStore() {
