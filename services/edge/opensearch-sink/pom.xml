@@ -13,6 +13,7 @@
   <name>StreamX Blueprints : Opensearch Sink</name>
 
   <properties>
+    <elasticsearch.version>1.21.4</elasticsearch.version>
     <elasticsearch-evolution-core.version>0.6.0</elasticsearch-evolution-core.version>
   </properties>
 
@@ -47,6 +48,7 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>elasticsearch</artifactId>
+      <version>${elasticsearch.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
