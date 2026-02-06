@@ -1,15 +1,10 @@
 package com.streamx.blueprints.json.aggregator.configuration;
 
-import java.util.List;
-import java.util.Optional;
+import io.smallrye.config.ConfigMapping;
+import java.util.Map;
 
+@ConfigMapping(prefix = "streamx.blueprints.json-aggregator")
 public interface Configuration {
 
-  String masterNamespace();
-
-  Optional<List<String>> optionalNamespaces();
-
-  Optional<String> outputType();
-
-  String outputNamespace();
+  Map<String, AggregationConfiguration> configurations();
 }

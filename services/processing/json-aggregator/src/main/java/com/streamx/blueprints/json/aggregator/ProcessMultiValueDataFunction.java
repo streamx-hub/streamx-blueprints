@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
-import com.streamx.blueprints.json.aggregator.configuration.Configuration;
+import com.streamx.blueprints.json.aggregator.configuration.AggregationConfiguration;
 import com.streamx.blueprints.json.aggregator.stores.MultivaluedDataStore;
 import com.streamx.blueprints.json.aggregator.stores.PreservedData;
 import io.cloudevents.CloudEvent;
@@ -38,13 +38,13 @@ public class ProcessMultiValueDataFunction extends BaseProcessingFunction {
   }
 
   @Override
-  protected Optional<CloudEvent> createEventForConfig(Configuration config, CloudEvent inputEvent,
-      Data data, DataKey key) {
+  protected Optional<CloudEvent> createEventForConfig(AggregationConfiguration config,
+      CloudEvent inputEvent, Data data, DataKey key) {
     return Optional.of(mergeMultivaluedResources(inputEvent, key.id(), key.namespace(), config));
   }
 
   private CloudEvent mergeMultivaluedResources(CloudEvent inputEvent, String id, String namespace,
-      Configuration config) {
+      AggregationConfiguration config) {
     String baseJson = "{\"" + config.outputNamespace() + "\": []}";
     try {
       JsonNode jsonNode = objectMapper.readTree(baseJson);
@@ -68,7 +68,7 @@ public class ProcessMultiValueDataFunction extends BaseProcessingFunction {
     }
   }
 
-  private String getOutputType(Configuration config, CloudEvent inputEvent) {
+  private String getOutputType(AggregationConfiguration config, CloudEvent inputEvent) {
     return config.outputType().orElse(
         Optional
             .ofNullable(CloudEventUtils.getData(inputEvent, Data.class))
