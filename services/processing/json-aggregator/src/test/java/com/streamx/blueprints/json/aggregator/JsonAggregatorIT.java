@@ -91,13 +91,16 @@ public class JsonAggregatorIT extends BaseQuarkusIntegrationTest {
     protected Map<String, String> getServiceConfigProperties() {
       String basePath = "streamx.blueprints.json-aggregator.";
       return Map.of(
-          basePath + "configurations[0].master-namespace", "pim",
-          basePath + "configurations[0].optional-namespaces", "price",
-          basePath + "configurations[0].output-namespace", "product",
-          basePath + "configurations[0].output-type", PRODUCT_OUTPUT_TYPE,
-          basePath + "configurations[1].master-namespace", "review",
-          basePath + "configurations[1].output-namespace", "reviews",
-          basePath + "configurations[1].output-type", REVIEW_OUTPUT_TYPE
+          basePath + "configurations.pim.master-namespace", "pim",
+          basePath + "configurations.pim.optional-namespaces", "price",
+          basePath + "configurations.pim.output-namespace", "product",
+          basePath + "configurations.pim.output-type", PRODUCT_OUTPUT_TYPE,
+          basePath + "configurations.\"other-pim\".master-namespace", "pim2",
+          basePath + "configurations.\"other-pim\".output-namespace", "product",
+          basePath + "configurations.\"other-pim\".output-type", PRODUCT_OUTPUT_TYPE,
+          basePath + "configurations.reviews.master-namespace", "review",
+          basePath + "configurations.reviews.output-namespace", "reviews",
+          basePath + "configurations.reviews.output-type", REVIEW_OUTPUT_TYPE
       );
     }
   }

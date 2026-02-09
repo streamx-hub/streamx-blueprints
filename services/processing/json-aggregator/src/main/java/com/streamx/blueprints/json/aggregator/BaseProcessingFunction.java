@@ -3,7 +3,7 @@ package com.streamx.blueprints.json.aggregator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
-import com.streamx.blueprints.json.aggregator.configuration.AggregatorConfiguration;
+import com.streamx.blueprints.json.aggregator.configuration.AggregationConfiguration;
 import com.streamx.blueprints.json.aggregator.configuration.Configuration;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Multi;
@@ -27,19 +27,20 @@ abstract class BaseProcessingFunction {
   Logger log;
 
   @Inject
-  AggregatorConfiguration aggregatorConfig;
+  Configuration configuration;
 
-  private final Map<Configuration, Set<String>> supportedNamespacesByConfig = new LinkedHashMap<>();
+  private final Map<AggregationConfiguration, Set<String>> supportedNamespacesByConfig =
+      new LinkedHashMap<>();
 
   protected abstract boolean requiresHashInKey();
 
-  protected abstract Optional<CloudEvent> createEventForConfig(Configuration config,
+  protected abstract Optional<CloudEvent> createEventForConfig(AggregationConfiguration config,
       CloudEvent inputEvent, Data data, DataKey dataKey);
 
   @PostConstruct
   void init() {
     log = Logger.getLogger(getClass());
-    for (Configuration config : aggregatorConfig.configurations()) {
+    for (AggregationConfiguration config : configuration.configurations().values()) {
       Set<String> supportedNamespaces = new LinkedHashSet<>();
       supportedNamespaces.add(config.masterNamespace());
       supportedNamespaces.addAll(config.optionalNamespaces().orElseGet(List::of));
@@ -64,8 +65,8 @@ abstract class BaseProcessingFunction {
 
     List<CloudEvent> resultEvents = new LinkedList<>();
     DataKey dataKey = DataKey.fromKey(key);
-    List<Configuration> matchingConfigurations = getConfigurations(dataKey.namespace());
-    for (Configuration config : matchingConfigurations) {
+    List<AggregationConfiguration> matchingConfigurations = getConfigurations(dataKey.namespace());
+    for (AggregationConfiguration config : matchingConfigurations) {
       createEventForConfig(config, event, data, dataKey).ifPresent(resultEvents::add);
     }
     return Multi.createFrom().iterable(resultEvents);
@@ -114,13 +115,13 @@ abstract class BaseProcessingFunction {
     return true;
   }
 
-  private List<Configuration> getConfigurations(String namespace) {
+  private List<AggregationConfiguration> getConfigurations(String namespace) {
     return supportedNamespacesByConfig.entrySet().stream()
         .filter(entry -> entry.getValue().contains(namespace))
         .map(Entry::getKey).toList();
   }
 
-  protected Set<String> getNamespacesByConfig(Configuration config) {
+  protected Set<String> getNamespacesByConfig(AggregationConfiguration config) {
     return supportedNamespacesByConfig.get(config);
   }
 }
