@@ -97,7 +97,7 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
 
     // when
     var event = CloudEventUtils.eventWithoutData(pageRelativeUrl,
-        DownloadRequest.DOWNLOAD_EVENT_TYPE);
+        DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE);
     sendDownloadRequest(event);
 
     // then

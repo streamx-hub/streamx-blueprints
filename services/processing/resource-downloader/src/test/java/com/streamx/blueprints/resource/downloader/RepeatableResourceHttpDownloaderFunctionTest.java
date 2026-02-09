@@ -184,7 +184,7 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
 
     // when: send standard download request but when the URL matches repeatable-url-pattern
     assertThat(resourcePath).matches(configuration.repeatableUrlPattern().get().pattern());
-    sendDownloadRequest(testContentUrl, resourcePath, DownloadRequest.DOWNLOAD_EVENT_TYPE);
+    sendDownloadRequest(testContentUrl, resourcePath, DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE);
 
     // then: expect repeatable downloads
     waitForAtLeastDownloadedWebResources(resourcePath, 3);
@@ -195,13 +195,13 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
   }
 
   private void sendRepeatableDownloadRequest(String url, String emitKey) {
-    sendDownloadRequest(url, emitKey, DownloadRequest.REPEATABLE_DOWNLOAD_EVENT_TYPE);
+    sendDownloadRequest(url, emitKey, DownloadRequest.REPEATABLE_DOWNLOAD_SCHEDULE_EVENT_TYPE);
   }
 
   private void sendStopRepeatableDownloadRequest(String url) {
     DownloadRequest downloadRequest = new DownloadRequest(url, null, null, null, null);
     sendDownloadRequest(downloadRequest, "any-emit-key",
-        DownloadRequest.STOP_REPEATABLE_DOWNLOAD_EVENT_TYPE);
+        DownloadRequest.REPEATABLE_DOWNLOAD_UNSCHEDULE_EVENT_TYPE);
   }
 
 }

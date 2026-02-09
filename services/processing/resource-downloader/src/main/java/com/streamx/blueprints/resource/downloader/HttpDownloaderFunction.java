@@ -1,8 +1,8 @@
 package com.streamx.blueprints.resource.downloader;
 
-import static com.streamx.blueprints.data.DownloadRequest.DOWNLOAD_EVENT_TYPE;
-import static com.streamx.blueprints.data.DownloadRequest.REPEATABLE_DOWNLOAD_EVENT_TYPE;
-import static com.streamx.blueprints.data.DownloadRequest.STOP_REPEATABLE_DOWNLOAD_EVENT_TYPE;
+import static com.streamx.blueprints.data.DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE;
+import static com.streamx.blueprints.data.DownloadRequest.REPEATABLE_DOWNLOAD_SCHEDULE_EVENT_TYPE;
+import static com.streamx.blueprints.data.DownloadRequest.REPEATABLE_DOWNLOAD_UNSCHEDULE_EVENT_TYPE;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.DownloadRequest;
@@ -84,25 +84,27 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
       downloadAndEmit(request);
     }
 
-    if (shouldAddToStore(eventType, url)) {
+    if (shouldScheduleRepeatableDownload(eventType, url)) {
       repeatableDownloadsStore.put(url, request);
     }
 
-    if (shouldRemoveFromStore(eventType)) {
+    if (shouldUnscheduleRepeatableDownload(eventType)) {
       repeatableDownloadsStore.remove(url);
     }
   }
 
   private static boolean shouldDownloadAndEmit(String eventType) {
-    return Strings.CS.equalsAny(eventType, DOWNLOAD_EVENT_TYPE, REPEATABLE_DOWNLOAD_EVENT_TYPE);
+    return Strings.CS.equalsAny(eventType, DOWNLOAD_REQUEST_EVENT_TYPE,
+        REPEATABLE_DOWNLOAD_SCHEDULE_EVENT_TYPE);
   }
 
-  private boolean shouldAddToStore(String eventType, String url) {
-    return eventType.equals(REPEATABLE_DOWNLOAD_EVENT_TYPE) || matchesRepeatableUrlPattern(url);
+  private boolean shouldScheduleRepeatableDownload(String eventType, String url) {
+    return eventType.equals(REPEATABLE_DOWNLOAD_SCHEDULE_EVENT_TYPE)
+           || matchesRepeatableUrlPattern(url);
   }
 
-  private static boolean shouldRemoveFromStore(String eventType) {
-    return eventType.equals(STOP_REPEATABLE_DOWNLOAD_EVENT_TYPE);
+  private static boolean shouldUnscheduleRepeatableDownload(String eventType) {
+    return eventType.equals(REPEATABLE_DOWNLOAD_UNSCHEDULE_EVENT_TYPE);
   }
 
   private boolean matchesRepeatableUrlPattern(String url) {

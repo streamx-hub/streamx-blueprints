@@ -64,7 +64,7 @@ abstract class AbstractDownloaderFunctionTest {
   }
 
   protected void sendDownloadRequest(String url, String emitKey) {
-    sendDownloadRequest(url, emitKey, DownloadRequest.DOWNLOAD_EVENT_TYPE);
+    sendDownloadRequest(url, emitKey, DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE);
   }
 
   protected void sendDownloadRequest(String url, String emitKey, String eventType) {
