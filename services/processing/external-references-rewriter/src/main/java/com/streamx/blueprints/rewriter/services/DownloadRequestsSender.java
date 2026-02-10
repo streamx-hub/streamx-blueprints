@@ -42,7 +42,7 @@ public class DownloadRequestsSender {
 
     CloudEvent cloudEvent = CloudEventUtils.eventWithData(
         streamxKey,
-        DownloadRequest.DOWNLOAD_EVENT_TYPE,
+        DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE,
         downloadRequest
     );
 
