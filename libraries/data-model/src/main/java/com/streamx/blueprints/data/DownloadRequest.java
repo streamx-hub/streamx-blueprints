@@ -12,8 +12,8 @@ public record DownloadRequest(
 
   public static final String DOWNLOAD_REQUEST_EVENT_TYPE =
       "com.streamx.blueprints.download.request.v1";
-  public static final String REPEATABLE_DOWNLOAD_SCHEDULE_EVENT_TYPE =
-      "com.streamx.blueprints.repeatable-download.schedule.v1";
-  public static final String REPEATABLE_DOWNLOAD_UNSCHEDULE_EVENT_TYPE =
-      "com.streamx.blueprints.repeatable-download.unschedule.v1";
+  public static final String DOWNLOAD_SCHEDULE_EVENT_TYPE =
+      "com.streamx.blueprints.download.schedule.v1";
+  public static final String DOWNLOAD_UNSCHEDULE_EVENT_TYPE =
+      "com.streamx.blueprints.download.unschedule.v1";
 }

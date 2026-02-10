@@ -195,13 +195,13 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
   }
 
   private void sendRepeatableDownloadRequest(String url, String emitKey) {
-    sendDownloadRequest(url, emitKey, DownloadRequest.REPEATABLE_DOWNLOAD_SCHEDULE_EVENT_TYPE);
+    sendDownloadRequest(url, emitKey, DownloadRequest.DOWNLOAD_SCHEDULE_EVENT_TYPE);
   }
 
   private void sendStopRepeatableDownloadRequest(String url) {
     DownloadRequest downloadRequest = new DownloadRequest(url, null, null, null, null);
     sendDownloadRequest(downloadRequest, "any-emit-key",
-        DownloadRequest.REPEATABLE_DOWNLOAD_UNSCHEDULE_EVENT_TYPE);
+        DownloadRequest.DOWNLOAD_UNSCHEDULE_EVENT_TYPE);
   }
 
 }

@@ -1,8 +1,8 @@
 package com.streamx.blueprints.resource.downloader;
 
 import static com.streamx.blueprints.data.DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE;
-import static com.streamx.blueprints.data.DownloadRequest.REPEATABLE_DOWNLOAD_SCHEDULE_EVENT_TYPE;
-import static com.streamx.blueprints.data.DownloadRequest.REPEATABLE_DOWNLOAD_UNSCHEDULE_EVENT_TYPE;
+import static com.streamx.blueprints.data.DownloadRequest.DOWNLOAD_SCHEDULE_EVENT_TYPE;
+import static com.streamx.blueprints.data.DownloadRequest.DOWNLOAD_UNSCHEDULE_EVENT_TYPE;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.DownloadRequest;
@@ -95,16 +95,15 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
 
   private static boolean shouldDownloadAndEmit(String eventType) {
     return Strings.CS.equalsAny(eventType, DOWNLOAD_REQUEST_EVENT_TYPE,
-        REPEATABLE_DOWNLOAD_SCHEDULE_EVENT_TYPE);
+        DOWNLOAD_SCHEDULE_EVENT_TYPE);
   }
 
   private boolean shouldScheduleRepeatableDownload(String eventType, String url) {
-    return eventType.equals(REPEATABLE_DOWNLOAD_SCHEDULE_EVENT_TYPE)
-           || matchesRepeatableUrlPattern(url);
+    return eventType.equals(DOWNLOAD_SCHEDULE_EVENT_TYPE) || matchesRepeatableUrlPattern(url);
   }
 
   private static boolean shouldUnscheduleRepeatableDownload(String eventType) {
-    return eventType.equals(REPEATABLE_DOWNLOAD_UNSCHEDULE_EVENT_TYPE);
+    return eventType.equals(DOWNLOAD_UNSCHEDULE_EVENT_TYPE);
   }
 
   private boolean matchesRepeatableUrlPattern(String url) {
