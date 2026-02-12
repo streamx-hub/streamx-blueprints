@@ -34,21 +34,21 @@ public class ProcessTriggersFunctions {
    * Handles processing of data publication/un-publication to the system. Triggers rendering
    * requests related to the incoming data. See {@link ProcessRenderingRequestFunction}.
    *
-   * @param dataEvent represents data related event
+   * @param event represents data related event
    * @return stream of rendering request events
    */
   @Incoming(Channels.Incoming.DATA)
   @Outgoing(Channels.Outgoing.RENDERING_REQUESTS)
   @Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
-  public Multi<CloudEvent> processData(CloudEvent dataEvent) {
-    String dataKey = CloudEventUtils.getSubject(dataEvent);
+  public Multi<CloudEvent> processData(CloudEvent event) {
+    String dataKey = CloudEventUtils.getSubject(event);
 
-    Data data = CloudEventUtils.getData(dataEvent, Data.class);
+    Data data = CloudEventUtils.getData(event, Data.class);
     String dataType = data == null ? null : data.getType();
 
     var entryStream = Stream.of(new KeyedValue<>(dataKey, data));
 
-    return renderingRequests.getFrom(dataEvent,
+    return renderingRequests.getFrom(event,
         renderingContexts.getByData(dataKey, dataType), entryStream);
   }
 
