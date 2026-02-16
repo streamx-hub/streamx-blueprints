@@ -77,10 +77,6 @@ public class DataModelClassesTest {
         assertThat(resource.getContentAsBytes()).isNull();
         assertThat(resource.getContentAsString()).isNull();
       }
-      if (dataClassInstance instanceof Renderer renderer) {
-        assertThat(renderer.template()).isNull();
-        assertThat(renderer.getTemplateAsString()).isNull();
-      }
       if (dataClassInstance instanceof Typed typed) {
         assertThat(typed.getType()).isNull();
       }

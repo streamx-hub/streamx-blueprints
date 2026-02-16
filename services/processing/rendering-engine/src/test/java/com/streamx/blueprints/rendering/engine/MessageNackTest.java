@@ -86,7 +86,7 @@ class MessageNackTest extends BaseInMemoryTest {
           .of(CloudEventUtils.eventWithData(
               "renderer-key",
               Renderer.TYPE_PUBLISHED,
-              new Renderer("id = {{id}}"),
+              new Renderer("id = {{id}}", "renderers/simple"),
               EVENT_TIME
           ))
           .withNack(throwable -> {

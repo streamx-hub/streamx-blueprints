@@ -163,7 +163,7 @@ public class ProcessRenderingRequestFunction {
   private String generateOutputContent(Renderer renderer, Map<String, Object> data) {
     if (renderer != null) {
       try {
-        return outputGenerator.generate(renderer.getTemplateAsString(), data);
+        return outputGenerator.generate(renderer.getContentAsString(), data);
       } catch (GeneratorException e) {
         throw new RuntimeException("Error while generating content", e);
       }

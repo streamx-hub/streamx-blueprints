@@ -39,7 +39,7 @@ abstract class AbstractRenderEngineTest extends BaseInMemoryTest {
 
   protected CloudEvent rendererEvent(String key, String eventType, long eventTime) {
     if (Renderer.TYPE_PUBLISHED.equals(eventType)) {
-      Renderer renderer = new Renderer("id = {{id}}");
+      Renderer renderer = new Renderer("id = {{id}}", "renderers/basic");
       return CloudEventUtils.eventWithData(key, eventType, renderer, toOffsetDateTime(eventTime));
     } else if (Renderer.TYPE_UNPUBLISHED.equals(eventType)) {
       return CloudEventUtils.eventWithoutData(key, eventType, toOffsetDateTime(eventTime));

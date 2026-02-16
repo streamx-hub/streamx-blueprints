@@ -48,7 +48,8 @@ public class RenderingEngineIT extends BaseQuarkusIntegrationTest {
     publishRenderingContext(renderingContextKey, renderingContext);
 
     // and: publish Renderer
-    Renderer renderer = new Renderer("<html>Product with ID {{id}} and name {{name}}</html>");
+    Renderer renderer = new Renderer("<html>Product with ID {{id}} and name {{name}}</html>",
+        "renderers/page");
     publishRenderer(rendererKey, renderer);
 
     // then: expect a rendering request to be produced by the service and relayed to input channel

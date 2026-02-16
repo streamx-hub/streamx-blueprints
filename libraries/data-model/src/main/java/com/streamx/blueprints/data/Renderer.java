@@ -1,26 +1,27 @@
 package com.streamx.blueprints.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.nio.ByteBuffer;
 
 /**
- * Represents object containing information how to render {@link Data}. See
- * {@link RenderingContext}.
+ * Represents object containing information how to render {@link Data}. The content field contains
+ * the rendering template. See * {@link RenderingContext}.
  */
 @RegisterForReflection
-public record Renderer(ByteBuffer template) {
+public class Renderer extends Resource {
 
   public static final String TYPE_PUBLISHED = "com.streamx.blueprints.renderer.published.v1";
   public static final String TYPE_UNPUBLISHED = "com.streamx.blueprints.renderer.unpublished.v1";
 
-  public Renderer(String template) {
-    this(template == null ? null : ByteBuffer.wrap(template.getBytes()));
+  @JsonCreator
+  public Renderer(@JsonProperty("content") ByteBuffer content, @JsonProperty("type") String type) {
+    super(content, type);
   }
 
-  @JsonIgnore
-  public String getTemplateAsString() {
-    return template == null ? null : new String(template.array());
+  public Renderer(String content, String type) {
+    super(content, type);
   }
 
 }
