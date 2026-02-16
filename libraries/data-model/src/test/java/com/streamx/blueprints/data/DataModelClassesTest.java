@@ -81,6 +81,15 @@ public class DataModelClassesTest {
         assertThat(renderer.template()).isNull();
         assertThat(renderer.getTemplateAsString()).isNull();
       }
+      if (dataClassInstance instanceof Composition composition) {
+        assertThat(composition.getLayoutKey()).isNull();
+      }
+      if (dataClassInstance instanceof OptimizedAsset optimizedAsset) {
+        assertThat(optimizedAsset.getOriginalPath()).isNull();
+      }
+      if (dataClassInstance instanceof IndexableResource indexableResource) {
+        assertThat(indexableResource.getFragmentKeys()).isNull();
+      }
       if (dataClassInstance instanceof Typed typed) {
         assertThat(typed.getType()).isNull();
       }

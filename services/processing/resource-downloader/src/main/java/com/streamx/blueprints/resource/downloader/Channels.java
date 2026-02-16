@@ -7,6 +7,7 @@ public final class Channels {
   }
 
   public static final String DOWNLOAD_REQUESTS = "download-requests";
+  public static final String DOWNLOAD_REQUESTS_STATE = "download-requests-state";
 
   public static final String DOWNLOADED_PAGES = "downloaded-pages";
   public static final String DOWNLOADED_ASSETS = "downloaded-assets";

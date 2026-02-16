@@ -6,6 +6,8 @@ import static com.streamx.blueprints.data.DownloadRequest.DOWNLOAD_UNSCHEDULE_EV
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.DownloadRequest;
+import com.streamx.blueprints.state.RepositoryFactory;
+import com.streamx.blueprints.state.StateRepository;
 import io.cloudevents.CloudEvent;
 import io.quarkus.runtime.StartupEvent;
 import io.smallrye.mutiny.Multi;
@@ -13,8 +15,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.IntegerRange;
 import org.apache.commons.lang3.Strings;
 import org.apache.http.HttpStatus;
@@ -27,7 +27,6 @@ import org.jboss.logging.Logger;
 @ApplicationScoped
 public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
 
-  private static final int NOT_MODIFIED_STATUS = HttpStatus.SC_NOT_MODIFIED;
   private static final IntegerRange SUCCESS_STATUSES = IntegerRange.of(200, 299);
 
   @Inject
@@ -42,8 +41,10 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
   @Inject
   LastModifiedTimestampRegistry lastModifiedTimestampRegistry;
 
-  private static final Map<String, DownloadRequest> repeatableDownloadsStore =
-      new ConcurrentHashMap<>();
+  @Inject
+  RepositoryFactory repositoryFactory;
+
+  private StateRepository<DownloadRequest> repeatableDownloadsStore;
 
   private int downloadTimeoutMillis;
   private Duration repeatInterval;
@@ -51,13 +52,15 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
   void onStart(@Observes StartupEvent ev) {
     downloadTimeoutMillis = configuration.downloadTimeoutMillis();
     repeatInterval = Duration.ofMillis(configuration.repeatIntervalMillis());
+    repeatableDownloadsStore = repositoryFactory.getOrCreate(
+        "repeatable-downloads", DownloadRequest.class);
     initRepeatableDownloadAndEmit();
   }
 
   private void initRepeatableDownloadAndEmit() {
     Multi.createFrom().ticks()
         .every(repeatInterval)
-        .flatMap(l -> Multi.createFrom().iterable(repeatableDownloadsStore.values()))
+        .flatMap(l -> Multi.createFrom().items(repeatableDownloadsStore.values()))
         .subscribe()
         .with(request -> {
           try {
@@ -68,21 +71,29 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
         });
   }
 
+  @Incoming(Channels.DOWNLOAD_REQUESTS_STATE)
+  public void processState(CloudEvent event) {
+    scheduleIfScheduledRequest(event);
+  }
+
   @Incoming(Channels.DOWNLOAD_REQUESTS)
   public void process(CloudEvent event) throws Exception {
+    DownloadRequest request = scheduleIfScheduledRequest(event);
+    if (request != null && shouldDownloadAndEmit(event.getType())) {
+      downloadAndEmit(request);
+    }
+  }
+
+  private DownloadRequest scheduleIfScheduledRequest(CloudEvent event) {
     DownloadRequest request = CloudEventUtils.getData(event, DownloadRequest.class);
     if (request == null) {
       log.warnf("Received an empty DownloadRequest with key %s", event.getSubject());
-      return;
+      return null;
     }
 
     String url = request.url();
     String eventType = event.getType();
     log.tracef("Processing %s download request: %s", eventType, request);
-
-    if (shouldDownloadAndEmit(eventType)) {
-      downloadAndEmit(request);
-    }
 
     if (shouldScheduleRepeatableDownload(eventType, url)) {
       repeatableDownloadsStore.put(url, request);
@@ -91,6 +102,8 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
     if (shouldUnscheduleRepeatableDownload(eventType)) {
       repeatableDownloadsStore.remove(url);
     }
+
+    return request;
   }
 
   private static boolean shouldDownloadAndEmit(String eventType) {
@@ -123,13 +136,13 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
 
   void downloadAndEmit(DownloadRequest request) throws DownloadException {
     String url = request.url();
-    log.tracef("Processing download request with source URL %s and destination Streamx Key %s",
+    log.tracef("Processing download request with source URL %s and destination StreamX Key %s",
         url, request.emitKey());
 
     lastModifiedTimestampRegistry.store(url);
 
     int httpHeadStatus = lastModifiedTimestampRegistry.getLastHttpHeadStatus(url);
-    if (httpHeadStatus == NOT_MODIFIED_STATUS) {
+    if (httpHeadStatus == HttpStatus.SC_NOT_MODIFIED) {
       log.tracef("Skipping downloading unchanged resource %s", url);
       return;
     }
@@ -158,10 +171,6 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
       lastModifiedTimestampRegistry.reset(url);
       throw new DownloadException("Exception at GET request for " + url, ex);
     }
-  }
-
-  void resetStore() {
-    repeatableDownloadsStore.clear();
   }
 
 }

@@ -123,4 +123,6 @@ Incoming channels:
 
 Outgoing channels:
 
-- `downloaded-resources`
+- `downloaded-pages`
+- `downloaded-assets`
+- `downloaded-web-resources`

@@ -9,7 +9,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.OffsetDateTime;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -45,7 +44,7 @@ public class PublishedPagesStore {
         .orElse(null);
   }
 
-  public Stream<PublishedPage> getEntries() {
-    return publishedPages.entries().map(Map.Entry::getValue);
+  public Stream<PublishedPage> getPages() {
+    return publishedPages.values();
   }
 }

@@ -22,7 +22,7 @@ public class SitemapService {
   Configuration configuration;
 
   public WebResource createSitemapResource() {
-    var entries = publishedPagesStore.getEntries()
+    var entries = publishedPagesStore.getPages()
         .filter(this::isValidForSitemapGeneration)
         .map(this::generateSitemapEntryData)
         .toList();
