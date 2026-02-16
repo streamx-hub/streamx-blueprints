@@ -298,7 +298,7 @@
                     <limit>
                       <counter>INSTRUCTION</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>89%</minimum>
+                      <minimum>90%</minimum>
                     </limit>
                   </limits>
                 </rule>

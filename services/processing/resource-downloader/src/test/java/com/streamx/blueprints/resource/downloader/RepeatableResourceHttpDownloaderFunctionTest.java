@@ -13,6 +13,8 @@ import static org.mockito.Mockito.when;
 
 import com.streamx.blueprints.data.DownloadRequest;
 import com.streamx.blueprints.resource.downloader.testutils.TestWebServer;
+import com.streamx.blueprints.state.RepositoryFactory;
+import com.streamx.blueprints.test.unit.StateRepositoryClearer;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import jakarta.inject.Inject;
@@ -44,6 +46,9 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
 
   @Inject
   Configuration configuration;
+
+  @Inject
+  RepositoryFactory repositoryFactory;
 
   private final CloseableHttpResponse headHttpResponse = mock();
   private final StatusLine headStatusLine = mock();
@@ -77,7 +82,7 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
 
   @AfterEach
   void resetStore() {
-    httpDownloaderFunction.resetStore();
+    StateRepositoryClearer.clear(repositoryFactory, "repeatable-downloads", DownloadRequest.class);
   }
 
   @Test

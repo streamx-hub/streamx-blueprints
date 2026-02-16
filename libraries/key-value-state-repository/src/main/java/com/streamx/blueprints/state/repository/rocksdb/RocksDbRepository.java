@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.rocksdb.RocksDB;
@@ -60,11 +61,38 @@ public class RocksDbRepository<T> implements StateRepository<T> {
 
   @Override
   public Stream<Entry<String, T>> entries() {
+    return rocksDbStream((key, value) -> Map.entry(key, deserializeValue(key, value)));
+  }
+
+  @Override
+  public Stream<String> keys() {
+    return rocksDbStream((key, value) -> key);
+  }
+
+  @Override
+  public Stream<T> values() {
+    return rocksDbStream(this::deserializeValue);
+  }
+
+  private <U> Stream<U> rocksDbStream(BiFunction<String, byte[], U> valueMapper) {
     RocksIterator iterator = rocksDb.newIterator();
     iterator.seekToFirst();
 
-    Spliterator<Map.Entry<String, T>> spliterator = Spliterators.spliteratorUnknownSize(
-        new RocksDbIteratorWrapper(iterator),
+    Spliterator<U> spliterator = Spliterators.spliteratorUnknownSize(
+        new Iterator<>() {
+          @Override
+          public boolean hasNext() {
+            return iterator.isValid();
+          }
+
+          @Override
+          public U next() {
+            String key = new String(iterator.key());
+            byte[] value = iterator.value();
+            iterator.next();
+            return valueMapper.apply(key, value);
+          }
+        },
         Spliterator.ORDERED
     );
     return StreamSupport
@@ -78,28 +106,6 @@ public class RocksDbRepository<T> implements StateRepository<T> {
       rocksDb.delete(key.getBytes());
     } catch (Exception e) {
       throw new RuntimeException("Error removing entry with key " + key + " from RocksDB", e);
-    }
-  }
-
-  class RocksDbIteratorWrapper implements Iterator<Entry<String, T>> {
-
-    private final RocksIterator rocksIterator;
-
-    RocksDbIteratorWrapper(RocksIterator rocksIterator) {
-      this.rocksIterator = rocksIterator;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return rocksIterator.isValid();
-    }
-
-    @Override
-    public Map.Entry<String, T> next() {
-      String key = new String(rocksIterator.key());
-      byte[] value = rocksIterator.value();
-      rocksIterator.next();
-      return Map.entry(key, deserializeValue(key, value));
     }
   }
 

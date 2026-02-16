@@ -39,9 +39,6 @@ public class LastModifiedTimestampRegistry extends BaseHttpRequestExecutor {
       IntStream.of(NOT_MODIFIED_STATUS).boxed()
   ).collect(Collectors.toSet());
 
-  private static final String LAST_MODIFIED_HEADER = HttpHeaders.LAST_MODIFIED;
-  private static final String IF_MODIFIED_SINCE_HEADER = HttpHeaders.IF_MODIFIED_SINCE;
-
   @Inject
   Logger log;
 
@@ -76,7 +73,7 @@ public class LastModifiedTimestampRegistry extends BaseHttpRequestExecutor {
 
     LastModifiedTimestamp lastModifiedTimestamp = timestampsStore.get(url);
     if (lastModifiedTimestamp != null) {
-      request.addHeader(IF_MODIFIED_SINCE_HEADER, lastModifiedTimestamp.lastModifiedGmt());
+      request.addHeader(HttpHeaders.IF_MODIFIED_SINCE, lastModifiedTimestamp.lastModifiedGmt());
     }
     return request;
   }
@@ -85,7 +82,7 @@ public class LastModifiedTimestampRegistry extends BaseHttpRequestExecutor {
       CloseableHttpResponse response) {
     int status = response.getStatusLine().getStatusCode();
     if (SUCCESS_STATUSES.contains(status)) {
-      Header lastModifiedHeader = response.getFirstHeader(LAST_MODIFIED_HEADER);
+      Header lastModifiedHeader = response.getFirstHeader(HttpHeaders.LAST_MODIFIED);
       if (lastModifiedHeader != null) {
         String lastModifiedGmt = lastModifiedHeader.getValue();
         return new LastModifiedTimestamp(lastModifiedGmt, status);

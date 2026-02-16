@@ -38,6 +38,20 @@ public interface StateRepository<T> {
   Stream<Entry<String, T>> entries();
 
   /**
+   * Returns a sequential Stream of all keys
+   *
+   * @return The stream of keys
+   */
+  Stream<String> keys();
+
+  /**
+   * Returns a sequential Stream of all values
+   *
+   * @return The stream of values
+   */
+  Stream<T> values();
+
+  /**
    * Removes entry associated with the given key
    *
    * @param key the key

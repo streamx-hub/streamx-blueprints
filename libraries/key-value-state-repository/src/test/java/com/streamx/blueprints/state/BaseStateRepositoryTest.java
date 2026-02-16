@@ -29,7 +29,7 @@ public abstract class BaseStateRepositoryTest extends BaseConfigTest {
   }
 
   protected <T> Map<String, T> getRepositoryEntries(StateRepository<T> repository) {
-    return repository
+    LinkedHashMap<String, T> entries = repository
         .entries()
         .collect(Collectors.toMap(
             Entry::getKey,
@@ -38,5 +38,10 @@ public abstract class BaseStateRepositoryTest extends BaseConfigTest {
               throw new IllegalStateException("Duplicate keys not expected: " + u);
             },
             LinkedHashMap::new));
+
+    assertThat(entries.keySet()).containsExactlyElementsOf(repository.keys().toList());
+    assertThat(entries.values()).containsExactlyElementsOf(repository.values().toList());
+
+    return entries;
   }
 }

@@ -77,6 +77,8 @@ descriptors:
 
   resource-downloader:
     type: processing
+    volumes:
+      state: {}
     containers:
       processor:
         image: ghcr.io/streamx-com/streamx-blueprints/resource-downloader:latest-jvm
@@ -86,6 +88,8 @@ descriptors:
           downloaded-pages: {}
           downloaded-assets: {}
           downloaded-web-resources: {}
+        volumes:
+          - state:/tmp/rocksdb
 
   event-converter:
     type: processing

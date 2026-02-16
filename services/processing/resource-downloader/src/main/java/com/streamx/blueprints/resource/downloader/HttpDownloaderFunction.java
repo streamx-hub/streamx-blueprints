@@ -6,6 +6,8 @@ import static com.streamx.blueprints.data.DownloadRequest.DOWNLOAD_UNSCHEDULE_EV
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.DownloadRequest;
+import com.streamx.blueprints.state.RepositoryFactory;
+import com.streamx.blueprints.state.StateRepository;
 import io.cloudevents.CloudEvent;
 import io.quarkus.runtime.StartupEvent;
 import io.smallrye.mutiny.Multi;
@@ -13,8 +15,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.IntegerRange;
 import org.apache.commons.lang3.Strings;
 import org.apache.http.HttpStatus;
@@ -42,8 +42,10 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
   @Inject
   LastModifiedTimestampRegistry lastModifiedTimestampRegistry;
 
-  private static final Map<String, DownloadRequest> repeatableDownloadsStore =
-      new ConcurrentHashMap<>();
+  @Inject
+  RepositoryFactory repositoryFactory;
+
+  private StateRepository<DownloadRequest> repeatableDownloadsStore;
 
   private int downloadTimeoutMillis;
   private Duration repeatInterval;
@@ -51,13 +53,15 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
   void onStart(@Observes StartupEvent ev) {
     downloadTimeoutMillis = configuration.downloadTimeoutMillis();
     repeatInterval = Duration.ofMillis(configuration.repeatIntervalMillis());
+    repeatableDownloadsStore = repositoryFactory.getOrCreate(
+        "repeatable-downloads", DownloadRequest.class);
     initRepeatableDownloadAndEmit();
   }
 
   private void initRepeatableDownloadAndEmit() {
     Multi.createFrom().ticks()
         .every(repeatInterval)
-        .flatMap(l -> Multi.createFrom().iterable(repeatableDownloadsStore.values()))
+        .flatMap(l -> Multi.createFrom().items(repeatableDownloadsStore.values()))
         .subscribe()
         .with(request -> {
           try {
@@ -158,10 +162,6 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
       lastModifiedTimestampRegistry.reset(url);
       throw new DownloadException("Exception at GET request for " + url, ex);
     }
-  }
-
-  void resetStore() {
-    repeatableDownloadsStore.clear();
   }
 
 }
