@@ -8,9 +8,6 @@ import java.util.regex.Pattern;
 @ConfigMapping(prefix = "streamx.blueprints.resource-downloader")
 public interface Configuration {
 
-  @WithDefault("1500")
-  int headTimeoutMillis();
-
   @WithDefault("5000")
   int downloadTimeoutMillis();
 

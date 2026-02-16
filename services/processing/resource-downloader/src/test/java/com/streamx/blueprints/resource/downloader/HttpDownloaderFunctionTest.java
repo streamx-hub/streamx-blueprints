@@ -5,6 +5,7 @@ import com.streamx.blueprints.data.DownloadRequest;
 import com.streamx.blueprints.resource.downloader.testutils.TestWebServer;
 import io.quarkus.test.junit.QuarkusTest;
 import java.io.IOException;
+import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -16,6 +17,7 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
     String imagePath = "/image-1.png";
     byte[] imageContent = {0, 1, 2};
     String imageUrl = TestWebServer.uploadImage(imagePath, imageContent);
+    configureResourceUnchangedAtSecondDownload(imagePath);
 
     // when
     sendDownloadRequest(imageUrl, imagePath);
@@ -36,6 +38,7 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
     String filePath = "/configuration.xml";
     String fileContent = "<root />";
     String fileUrl = TestWebServer.uploadXmlFile(filePath, fileContent);
+    configureResourceUnchangedAtSecondDownload(filePath);
 
     // when
     sendDownloadRequest(fileUrl, filePath);
@@ -56,6 +59,7 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
     String relativeUrl = "/index.html";
     String pageContent = "<html />";
     String fileUrl = TestWebServer.uploadPage(relativeUrl, pageContent);
+    configureResourceUnchangedAtSecondDownload(relativeUrl);
 
     // when
     sendDownloadRequest(fileUrl, relativeUrl);
@@ -76,6 +80,7 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
     String imagePath = "/image-2.png";
     byte[] imageContent = {0, 1, 2};
     String imageUrl = TestWebServer.uploadGzippedImage(imagePath, gzip(imageContent));
+    configureResourceUnchangedAtSecondDownload(imagePath);
 
     // when
     sendDownloadRequest(imageUrl, imagePath);
@@ -107,8 +112,11 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
   @Test
   void shouldFailDownloadingPageWhenStatusIsNotSuccess() {
     // given
-    String pageRelativeUrl = "/pages/test-page-" + TestWebServer.HTTP_500_PAGE_TOKEN + ".html";
+    String pageRelativeUrl = "/pages/failing-page.html";
     String pageUrl = TestWebServer.uploadPage(pageRelativeUrl, "Something went wrong");
+
+    // and
+    TestWebServer.configureResponseStatus(pageRelativeUrl, HttpStatus.SC_INTERNAL_SERVER_ERROR);
 
     // when
     sendDownloadRequest(pageUrl, pageRelativeUrl);
@@ -143,4 +151,8 @@ class HttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
     assertNoDownloadedResources();
   }
 
+  private void configureResourceUnchangedAtSecondDownload(String relativeUrl) {
+    TestWebServer.configureResponseStatuses(relativeUrl,
+        HttpStatus.SC_OK, HttpStatus.SC_NOT_MODIFIED);
+  }
 }
