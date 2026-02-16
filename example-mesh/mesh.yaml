@@ -88,6 +88,10 @@ descriptors:
           downloaded-pages: {}
           downloaded-assets: {}
           downloaded-web-resources: {}
+        autoRef:
+          - from: download-requests
+            to: download-requests-state
+            using: sync-state
         volumes:
           - state:/tmp/rocksdb
 
@@ -224,7 +228,6 @@ descriptors:
           - 8082:80
         volumes:
           - repository-volume:/usr/share/nginx/html
-        healthCheck: null
 
   opensearch-sink:
     type: edge
@@ -255,7 +258,6 @@ descriptors:
           - 9301:9300
         volumes:
           - repository-volume:/usr/share/opensearch/data
-        healthCheck: /_cluster/health
 
 sources:
   resources-source:

@@ -27,7 +27,6 @@ import org.jboss.logging.Logger;
 @ApplicationScoped
 public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
 
-  private static final int NOT_MODIFIED_STATUS = HttpStatus.SC_NOT_MODIFIED;
   private static final IntegerRange SUCCESS_STATUSES = IntegerRange.of(200, 299);
 
   @Inject
@@ -72,21 +71,29 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
         });
   }
 
+  @Incoming(Channels.DOWNLOAD_REQUESTS_STATE)
+  public void processState(CloudEvent event) {
+    scheduleIfScheduledRequest(event);
+  }
+
   @Incoming(Channels.DOWNLOAD_REQUESTS)
   public void process(CloudEvent event) throws Exception {
+    DownloadRequest request = scheduleIfScheduledRequest(event);
+    if (request != null && shouldDownloadAndEmit(event.getType())) {
+      downloadAndEmit(request);
+    }
+  }
+
+  private DownloadRequest scheduleIfScheduledRequest(CloudEvent event) {
     DownloadRequest request = CloudEventUtils.getData(event, DownloadRequest.class);
     if (request == null) {
       log.warnf("Received an empty DownloadRequest with key %s", event.getSubject());
-      return;
+      return null;
     }
 
     String url = request.url();
     String eventType = event.getType();
     log.tracef("Processing %s download request: %s", eventType, request);
-
-    if (shouldDownloadAndEmit(eventType)) {
-      downloadAndEmit(request);
-    }
 
     if (shouldScheduleRepeatableDownload(eventType, url)) {
       repeatableDownloadsStore.put(url, request);
@@ -95,6 +102,8 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
     if (shouldUnscheduleRepeatableDownload(eventType)) {
       repeatableDownloadsStore.remove(url);
     }
+
+    return request;
   }
 
   private static boolean shouldDownloadAndEmit(String eventType) {
@@ -127,13 +136,13 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
 
   void downloadAndEmit(DownloadRequest request) throws DownloadException {
     String url = request.url();
-    log.tracef("Processing download request with source URL %s and destination Streamx Key %s",
+    log.tracef("Processing download request with source URL %s and destination StreamX Key %s",
         url, request.emitKey());
 
     lastModifiedTimestampRegistry.store(url);
 
     int httpHeadStatus = lastModifiedTimestampRegistry.getLastHttpHeadStatus(url);
-    if (httpHeadStatus == NOT_MODIFIED_STATUS) {
+    if (httpHeadStatus == HttpStatus.SC_NOT_MODIFIED) {
       log.tracef("Skipping downloading unchanged resource %s", url);
       return;
     }

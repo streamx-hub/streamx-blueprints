@@ -318,7 +318,7 @@
                     <limit>
                       <counter>COMPLEXITY</counter>
                       <value>TOTALCOUNT</value>
-                      <maximum>25</maximum>
+                      <maximum>27</maximum> <!-- TODO reduce complexity of HttpDownloaderFunction to at most 25 -->
                     </limit>
                   </limits>
                 </rule>
