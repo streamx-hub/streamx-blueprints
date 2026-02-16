@@ -60,7 +60,7 @@ public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
   private void initRepeatableDownloadAndEmit() {
     Multi.createFrom().ticks()
         .every(repeatInterval)
-        .flatMap(l -> Multi.createFrom().items(repeatableDownloadsStore.values()))
+        .flatMap(l -> Multi.createFrom().iterable(repeatableDownloadsStore.values()))
         .subscribe()
         .with(request -> {
           try {
