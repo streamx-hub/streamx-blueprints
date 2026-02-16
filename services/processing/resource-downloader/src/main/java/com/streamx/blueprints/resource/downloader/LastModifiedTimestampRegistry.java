@@ -10,8 +10,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.apache.commons.lang3.IntegerRange;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -21,13 +24,16 @@ import org.jboss.logging.Logger;
 @ApplicationScoped
 public class LastModifiedTimestampRegistry {
 
-  private static final IntegerRange SUCCESS_STATUSES = IntegerRange.of(200, 299);
-
   private static final ZoneId GMT_ZONE = ZoneId.of("GMT");
   private static final DateTimeFormatter formatter = DateTimeFormatter
       .ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH);
   private static final String MIN_GMT_TIMESTAMP = ZonedDateTime.ofInstant(Instant.EPOCH, GMT_ZONE)
       .format(formatter);
+
+  private static final Set<Integer> SUCCESS_STATUSES = Stream.concat(
+      IntStream.rangeClosed(200, 299).boxed(),
+      IntStream.of(HttpStatus.SC_NOT_MODIFIED).boxed()
+  ).collect(Collectors.toSet());
 
   private final Map<String, LastModifiedTimestamp> timestampsStore = new ConcurrentHashMap<>();
 
@@ -40,7 +46,7 @@ public class LastModifiedTimestampRegistry {
 
   LastModifiedTimestamp readLastModifiedTimestamp(String url, CloseableHttpResponse response) {
     int status = response.getStatusLine().getStatusCode();
-    if (SUCCESS_STATUSES.contains(status) || status == HttpStatus.SC_NOT_MODIFIED) {
+    if (SUCCESS_STATUSES.contains(status)) {
       Header lastModifiedHeader = response.getFirstHeader(HttpHeaders.LAST_MODIFIED);
       if (lastModifiedHeader != null) {
         String lastModifiedGmt = lastModifiedHeader.getValue();

@@ -69,7 +69,7 @@ public class HttpDownloaderFunction {
           try {
             downloadAndEmit(request);
           } catch (Exception ex) {
-            log.warnf(ex, "Error downloading repeatable resource " + request.url());
+            log.warnf("Error downloading repeatable resource " + request.url());
           }
         });
   }
