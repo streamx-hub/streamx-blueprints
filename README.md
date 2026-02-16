@@ -92,5 +92,31 @@ cd services/processing/rendering-engine
 quarkus dev -Dquarkus.profile=streamx-mesh-debug
 ```
 
+## Ingestion Keys
+
+Blueprint services utilize `@Incoming` functions to process Cloud Events.
+For these events, the `subject` field must be **non-null**, as it is directly mapped to an **Ingestion Key**.
+
+### Namespacing logic
+
+Ingestion Keys support optional namespacing using the colon (`:`) character:
+
+* **Format:** `namespace:actual-key`
+* **Parsing:** Everything before the first colon is treated as the **namespace**; the remainder is the **actual key**.
+* **Usage:** While services may use namespaces for internal logic, providing one is optional.
+
+### Handling unparsed keys (the colon prefix)
+
+If you need to use the entire subject as the Ingestion Key without any splitting, **prefix the subject with a colon (`:`)**.
+This forces the Blueprints to treat the namespace as empty and the rest of the string as the full key.
+
+#### Examples:
+| Subject Input        | Namespace | Resolved Ingestion Key |
+|----------------------|-----------|------------------------|
+| `orders:12345`       | `orders`  | `12345`                |
+| `finance:invoice:99` | `finance` | `invoice:99`           |
+| `:id-123`            | *(empty)* | `id-123`               |
+
+
 ## Code coverage tips
  - Don't use `io.quarkus.logging.Log` in main code, since it causes the whole class using that logger to have 0% jacoco coverage
