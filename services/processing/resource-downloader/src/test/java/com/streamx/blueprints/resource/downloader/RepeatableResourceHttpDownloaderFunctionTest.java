@@ -4,12 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.streamx.blueprints.data.DownloadRequest;
 import com.streamx.blueprints.resource.downloader.testutils.TestWebServer;
@@ -18,67 +14,29 @@ import com.streamx.blueprints.test.unit.StateRepositoryClearer;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import jakarta.inject.Inject;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.message.BasicHeader;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFunctionTest {
 
   private static final String RESOURCE_CONTENT = "{\"foo\": \"bar\"}";
-  private static final String TEST_LAST_MODIFIED_HEADER_VALUE = "Tue, 05 Aug 2025 11:13:45 GMT";
 
   @InjectSpy
   HttpDownloaderFunction httpDownloaderFunction;
 
   @InjectSpy
-  LastModifiedTimestampRegistry lastModifiedTimestampRegistry;
+  ResourceEmitter resourceEmitter;
 
   @Inject
   Configuration configuration;
 
   @Inject
   RepositoryFactory repositoryFactory;
-
-  private final CloseableHttpResponse headHttpResponse = mock();
-  private final StatusLine headStatusLine = mock();
-  private final CloseableHttpResponse getHttpResponse = mock();
-  private final StatusLine getStatusLine = mock();
-  private final HttpEntity httpEntity = mock();
-
-  @BeforeEach
-  void doInit() throws IOException {
-    configureHttpHeadResponse();
-    configureHttpGetResponse();
-  }
-
-  private void configureHttpHeadResponse() throws IOException {
-    doReturn(headHttpResponse).when(lastModifiedTimestampRegistry).executeHead(any());
-    when(headHttpResponse.getStatusLine()).thenReturn(headStatusLine);
-    when(headHttpResponse.getFirstHeader(HttpHeaders.LAST_MODIFIED))
-        .thenReturn(new BasicHeader(HttpHeaders.LAST_MODIFIED, TEST_LAST_MODIFIED_HEADER_VALUE));
-  }
-
-  private void configureHttpGetResponse() throws IOException {
-    doReturn(getHttpResponse).when(httpDownloaderFunction).executeGet(any());
-    when(getHttpResponse.getStatusLine()).thenReturn(getStatusLine);
-    when(getStatusLine.getStatusCode()).thenReturn(HttpStatus.SC_OK);
-    when(getHttpResponse.getEntity()).thenReturn(httpEntity);
-    when(getHttpResponse.getFirstHeader(HttpHeaders.CONTENT_TYPE))
-        .thenReturn(new BasicHeader(HttpHeaders.CONTENT_TYPE, "application/json"));
-    doAnswer(invocationOnMock -> new ByteArrayInputStream(RESOURCE_CONTENT.getBytes()))
-        .when(httpEntity).getContent();
-  }
 
   @AfterEach
   void resetStore() {
@@ -91,9 +49,9 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     String resourcePath = "/resource-1.json";
     String testContentUrl = TestWebServer.uploadJsonFile(resourcePath, RESOURCE_CONTENT);
 
-    configureSubsequentHeadResponseCodes(
+    TestWebServer.configureResponseStatuses(resourcePath,
         HttpStatus.SC_OK,
-        HttpStatus.SC_NOT_MODIFIED // the resource is not modified when 2nd download
+        HttpStatus.SC_NOT_MODIFIED // the resource is not modified when 2nd and next downloads
     );
 
     // when
@@ -107,9 +65,8 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
 
     // then: expect no re-download
     waitForSingleDownloadedWebResource(resourcePath, RESOURCE_CONTENT);
-    verify(lastModifiedTimestampRegistry, atLeast(3)).executeHead(any());
-    verify(httpDownloaderFunction, atLeast(1)).executeGet(any());
-    verify(httpEntity, times(1)).getContent();
+    verify(httpDownloaderFunction, atLeast(2)).executeGet(any());
+    verify(resourceEmitter, times(1)).emit(any(), any(), any(), any());
   }
 
   @Test
@@ -118,7 +75,7 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     String resourcePath = "/resource-2.json";
     String testContentUrl = TestWebServer.uploadJsonFile(resourcePath, RESOURCE_CONTENT);
 
-    configureSubsequentHeadResponseCodes(
+    TestWebServer.configureResponseStatuses(resourcePath,
         HttpStatus.SC_OK,
         HttpStatus.SC_OK,
         HttpStatus.SC_NOT_MODIFIED // the resource is not modified when 3rd download
@@ -135,9 +92,8 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     waitForDownloadedWebResources(resourcePath, 2, RESOURCE_CONTENT);
 
     // then: expect no re-download
-    verify(lastModifiedTimestampRegistry, atLeast(3)).executeHead(any());
-    verify(httpDownloaderFunction, times(2)).executeGet(any());
-    verify(httpEntity, times(2)).getContent();
+    verify(httpDownloaderFunction, atLeast(3)).executeGet(any());
+    verify(resourceEmitter, times(2)).emit(any(), any(), any(), any());
   }
 
   @Test
@@ -146,7 +102,7 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     String resourcePath = "/resource-3.json";
     String testContentUrl = TestWebServer.uploadJsonFile(resourcePath, RESOURCE_CONTENT);
 
-    configureSubsequentHeadResponseCodes(
+    TestWebServer.configureResponseStatus(resourcePath,
         HttpStatus.SC_OK // the resource is changed when every download
     );
 
@@ -183,7 +139,7 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     String resourcePath = "/repeatable-resource.json";
     String testContentUrl = TestWebServer.uploadJsonFile(resourcePath, RESOURCE_CONTENT);
 
-    configureSubsequentHeadResponseCodes(
+    TestWebServer.configureResponseStatus(resourcePath,
         HttpStatus.SC_OK // the resource is changed when every download
     );
 
@@ -193,10 +149,6 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
 
     // then: expect repeatable downloads
     waitForAtLeastDownloadedWebResources(resourcePath, 3);
-  }
-
-  private void configureSubsequentHeadResponseCodes(Integer first, Integer... next) {
-    when(headStatusLine.getStatusCode()).thenReturn(first, next);
   }
 
   private void sendRepeatableDownloadRequest(String url, String emitKey) {

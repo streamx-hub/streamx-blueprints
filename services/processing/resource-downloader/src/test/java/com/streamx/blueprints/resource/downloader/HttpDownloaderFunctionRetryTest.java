@@ -3,12 +3,8 @@ package com.streamx.blueprints.resource.downloader;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -24,34 +20,23 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 class HttpDownloaderFunctionRetryTest extends AbstractDownloaderFunctionTest {
 
+  private static final String DEFAULT_CONTENT = "<html />";
+
   @InjectSpy
   HttpDownloaderFunction httpDownloaderFunction;
 
-  @InjectSpy
-  LastModifiedTimestampRegistry lastModifiedTimestampRegistry;
-
-  @Test
-  void shouldRetryDownloadingPageOnHttpHeadException() throws Exception {
-    // when: make the HEAD request fail in the first attempt, and succeed in the next attempts
-    doThrow(new IOException("HEAD error!"))
-        .doCallRealMethod()
-        .when(lastModifiedTimestampRegistry)
-        .executeHead(any());
-
-    // then
-    shouldDownloadPageInSecondTry();
-  }
-
   @Test
   void shouldRetryDownloadingPageOnHttpGetException() throws Exception {
+    // given
+    String relativeUrl = "/problematic-page-" + randomString() + ".html";
+    String pageUrl = TestWebServer.uploadPage(relativeUrl, DEFAULT_CONTENT);
+
     // when: make the GET request fail in the first attempt, and succeed in the next attempts
     doThrow(new IOException("GET error!"))
         .doCallRealMethod()
@@ -59,46 +44,26 @@ class HttpDownloaderFunctionRetryTest extends AbstractDownloaderFunctionTest {
         .executeGet(any());
 
     // then
-    shouldDownloadPageInSecondTry();
+    shouldDownloadPageInSecondTry(pageUrl, relativeUrl);
   }
 
   @Test
-  void shouldRetryDownloadingPageOnHttpHeadUnexpectedStatus() throws Exception {
-    // when: make the HEAD request return not success, and succeed in the next attempts
-    doReturn(unsuccessfulResponse())
-        .doCallRealMethod()
-        .when(lastModifiedTimestampRegistry)
-        .executeHead(any());
-
-    // and: prevent caching unmodified resource (override how underlying TestWebServer works)
-    doCallRealMethod()
-        .doReturn(HttpStatus.SC_OK)
-        .when(lastModifiedTimestampRegistry)
-        .getLastHttpHeadStatus(anyString());
-
-    // then
-    shouldDownloadPageInSecondTry();
-  }
-
-  @Test
-  void shouldRetryDownloadingPageOnHttpGetUnexpectedStatus() throws Exception {
-    // when: make the GET request return not success, and succeed in the next attempts
-    doReturn(unsuccessfulResponse())
-        .doCallRealMethod()
-        .when(httpDownloaderFunction)
-        .executeGet(any());
-
-    // then
-    shouldDownloadPageInSecondTry();
-  }
-
-  private void shouldDownloadPageInSecondTry() {
+  void shouldRetryDownloadingPageOnHttpGetUnexpectedStatus() {
     // given
     String relativeUrl = "/problematic-page-" + randomString() + ".html";
-    String pageContent = "<html />";
-    String fileUrl = TestWebServer.uploadPage(relativeUrl, pageContent);
+    String pageUrl = TestWebServer.uploadPage(relativeUrl, DEFAULT_CONTENT);
 
-    DownloadRequestSender downloadRequestSender = new DownloadRequestSender(fileUrl, relativeUrl);
+    // when: make the GET request return not success, and succeed in the next attempts
+    TestWebServer.configureResponseStatuses(relativeUrl,
+        HttpStatus.SC_TOO_MANY_REQUESTS, HttpStatus.SC_OK);
+
+    // then
+    shouldDownloadPageInSecondTry(pageUrl, relativeUrl);
+  }
+
+  private void shouldDownloadPageInSecondTry(String pageUrl, String relativeUrl) {
+    // given
+    DownloadRequestSender downloadRequestSender = new DownloadRequestSender(pageUrl, relativeUrl);
 
     // when: publish download request message and expect it be NACKed
     downloadRequestSender.sendAndExpectNack();
@@ -112,7 +77,7 @@ class HttpDownloaderFunctionRetryTest extends AbstractDownloaderFunctionTest {
 
     // then: the page should be eventually downloaded
     assertDownloadAttemptsCount(relativeUrl, 2);
-    waitForSingleDownloadedPage(relativeUrl, pageContent);
+    waitForSingleDownloadedPage(relativeUrl, DEFAULT_CONTENT);
   }
 
   private void assertDownloadAttemptsCount(String relativeUrl, int wantedNumberOfInvocations) {
@@ -120,15 +85,6 @@ class HttpDownloaderFunctionRetryTest extends AbstractDownloaderFunctionTest {
         verify(httpDownloaderFunction, times(wantedNumberOfInvocations))
             .downloadAndEmit(argThat(request -> request.url().endsWith(relativeUrl)))
     );
-  }
-
-  private static CloseableHttpResponse unsuccessfulResponse() {
-    StatusLine statusLine = mock();
-    doReturn(HttpStatus.SC_TOO_MANY_REQUESTS).when(statusLine).getStatusCode();
-
-    CloseableHttpResponse response = mock();
-    doReturn(statusLine).when(response).getStatusLine();
-    return response;
   }
 
   private static String randomString() {

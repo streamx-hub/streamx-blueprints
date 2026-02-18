@@ -91,14 +91,9 @@ In this scenario, one final download may occur before the cancellation takes eff
 
 ## Configuration
 
-- `streamx.blueprints.resource-downloader.head-timeout-millis`  
-  Defines the timeout (in milliseconds) for the HTTP `HEAD` request used to inspect the headers of a
-  resource at the given URL.
-  **Default**: 1500 milliseconds
-
-
 - `streamx.blueprints.resource-downloader.download-timeout-millis`  
-  Defines the timeout (in milliseconds) for the HTTP GET request used to download the resource.  
+  Defines the timeout (in milliseconds) for the HTTP GET request used to inspect the headers of a
+  resource at the given URL and download the resource if it has changed.  
   **Default**: 5000 milliseconds
 
 
