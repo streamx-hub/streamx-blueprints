@@ -27,6 +27,10 @@
 
   <dependencies>
     <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-opentelemetry</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.streamx</groupId>
       <artifactId>reactive-messaging-http-cloudevents</artifactId>
     </dependency>
