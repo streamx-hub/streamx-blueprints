@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   linux-test-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-l
     steps:
       - name: Checkout
         uses: actions/checkout@v4

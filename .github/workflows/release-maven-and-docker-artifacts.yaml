@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   release-amd64-native:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-l
     outputs:
       release_tag: ${{ steps.set-tag.outputs.tag }}
     steps:
@@ -180,7 +180,7 @@ jobs:
           echo "All manifests created and pushed successfully!"
 
   release-jvm:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-l
     needs: release-amd64-native
     steps:
       - name: Checkout release tag
