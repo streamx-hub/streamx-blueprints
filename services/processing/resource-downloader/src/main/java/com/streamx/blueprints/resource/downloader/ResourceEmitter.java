@@ -80,7 +80,7 @@ public class ResourceEmitter {
     }
   }
 
-  private <T extends Resource> void emit(Emitter<CloudEvent> emitter, String key, T payload,
+  <T extends Resource> void emit(Emitter<CloudEvent> emitter, String key, T payload,
       String eventType) {
     String payloadClass = payload.getClass().getSimpleName();
     String payloadType = payload.getType();

@@ -9,7 +9,6 @@ import io.cloudevents.CloudEvent;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import java.util.Map.Entry;
 import java.util.stream.Stream;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
@@ -38,7 +37,7 @@ public class PublishedDataStore {
     }
   }
 
-  public Stream<Entry<String, PublishedData>> getEntriesStream() {
-    return store.entries();
+  public Stream<PublishedData> getValues() {
+    return store.values();
   }
 }

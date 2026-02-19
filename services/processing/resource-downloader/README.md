@@ -51,7 +51,7 @@ the service automatically decompresses the response body before emitting it.
 
   CloudEvent event = CloudEventUtils.builderWithJsonData(downloadRequest)
     .withSubject(emitKey)
-    .withType(DownloadRequest.DOWNLOAD_EVENT_TYPE)
+    .withType(DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE)
     .build();
 
   downloadRequestEmitter.send(event);
@@ -69,7 +69,7 @@ resource has changed, and download it again to the storage if so.
 ### Scheduling a Repeatable Download
 To schedule a recurring download, send a `DownloadRequest` `CloudEvent` with the following type:
 
-`DownloadRequest.REPEATABLE_DOWNLOAD_EVENT_TYPE`
+`DownloadRequest.DOWNLOAD_SCHEDULE_EVENT_TYPE`
 
 #### Behavior:  
  - **Immediate Action**: The resource is downloaded immediately upon registration.
@@ -78,7 +78,7 @@ To schedule a recurring download, send a `DownloadRequest` `CloudEvent` with the
 ### Cancelling a Repeatable Download
 To stop a recurring download, send a `DownloadRequest` `CloudEvent` with the following type:
 
-`DownloadRequest.STOP_REPEATABLE_DOWNLOAD_EVENT_TYPE`
+`DownloadRequest.DOWNLOAD_UNSCHEDULE_EVENT_TYPE`
 
 #### Behavior:  
  - **Unregistration**: The URL is removed from the periodic download collection.
@@ -89,23 +89,34 @@ Because repeatable downloads are executed in a separate background thread,
 a cancellation request might arrive while a download is already in progress.
 In this scenario, one final download may occur before the cancellation takes effect.
 
+### Known Issues & Future Improvements
+
+ - **Redundant Processing in Scaled Environments**  
+  When the service is scaled horizontally to multiple instances, repeatable download requests for the same resource
+  may be processed by more than one replica. This occurs because all instances share the same state repository
+  and lack a global coordination mechanism to synchronize these periodic tasks.
+
+ - **Proposed Solution**:
+   - **Dedicated instance for repeatable downloads**:  
+     Set up a separate, non-scaling instance dedicated to repeatable requests.
+     This instance would connect its input channel to the scheduled `DownloadRequest` event types to ensure that recurring downloads are managed by a single consumer.
+   - **Stateless instances for standard downloads**:  
+     The service operates in a stateless mode when configured to subscribe exclusively to standard `DOWNLOAD_REQUEST_EVENT_TYPE` events.
+     Although the state channel remains active, the internal store stays empty because it only accepts data from scheduling events (`SCHEDULE` and `UNSCHEDULE`).
+     This allows these instances to be scaled horizontally to any number of replicas to handle varying traffic loads without the overhead of state management.
+
 ## Configuration
 
-- `streamx.blueprints.resource-downloader.head-timeout-millis`  
-  Defines the timeout (in milliseconds) for the HTTP `HEAD` request used to inspect the headers of a
-  resource at the given URL.
-  **Default**: 1500 milliseconds
-
-
 - `streamx.blueprints.resource-downloader.download-timeout-millis`  
-  Defines the timeout (in milliseconds) for the HTTP GET request used to download the resource.  
+  Defines the timeout (in milliseconds) for the HTTP GET request used to inspect the headers of a
+  resource at the given URL and download the resource if it has changed.  
   **Default**: 5000 milliseconds
 
 
 - `streamx.blueprints.resource-downloader.repeatable-url-pattern`  
   An optional Regular Expression used to automatically promote standard download requests to "repeatable" status based on their URL.
   If an incoming `DownloadRequest` has a URL that matches this pattern, the service will treat it as a repeatable request
-  even if the event type is the standard `DownloadRequest.DOWNLOAD_EVENT_TYPE`.
+  even if the event type is the standard `DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE`.
   This allows you to enforce global policies for specific domains or file types without requiring the event sender to change the `CloudEvent` type.
 
 
@@ -123,4 +134,6 @@ Incoming channels:
 
 Outgoing channels:
 
-- `downloaded-resources`
+- `downloaded-pages`
+- `downloaded-assets`
+- `downloaded-web-resources`

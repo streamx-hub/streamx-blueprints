@@ -7,10 +7,10 @@ import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.DownloadRequest;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.resource.downloader.testutils.TestWebServer;
+import com.streamx.blueprints.test.unit.StatefulInMemorySource;
 import io.cloudevents.CloudEvent;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
-import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.io.ByteArrayOutputStream;
@@ -33,7 +33,7 @@ abstract class AbstractDownloaderFunctionTest {
   protected static final String EMITTED_WEB_RESOURCE_TYPE = "web-resource/external";
   protected static final String EMITTED_ASSET_TYPE = "asset/external";
 
-  private InMemorySource<CloudEvent> downloadRequestsChannel;
+  private StatefulInMemorySource downloadRequestsSource;
   private InMemorySink<CloudEvent> downloadedPagesSink;
   private InMemorySink<CloudEvent> downloadedAssetsSink;
   private InMemorySink<CloudEvent> downloadedWebResourcesSink;
@@ -54,7 +54,8 @@ abstract class AbstractDownloaderFunctionTest {
 
   @BeforeEach
   void init() {
-    downloadRequestsChannel = connector.source(Channels.DOWNLOAD_REQUESTS);
+    downloadRequestsSource = new StatefulInMemorySource(connector,
+        Channels.DOWNLOAD_REQUESTS, Channels.DOWNLOAD_REQUESTS_STATE);
     downloadedPagesSink = connector.sink(Channels.DOWNLOADED_PAGES);
     downloadedAssetsSink = connector.sink(Channels.DOWNLOADED_ASSETS);
     downloadedWebResourcesSink = connector.sink(Channels.DOWNLOADED_WEB_RESOURCES);
@@ -79,7 +80,7 @@ abstract class AbstractDownloaderFunctionTest {
   }
 
   protected void sendDownloadRequest(CloudEvent downloadRequestEvent) {
-    downloadRequestsChannel.send(downloadRequestEvent);
+    downloadRequestsSource.send(downloadRequestEvent);
   }
 
   protected void waitForSingleDownloadedPage(String key, String expectedContent) {

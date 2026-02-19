@@ -1,5 +1,6 @@
 package com.streamx.blueprints.resource.downloader.testutils;
 
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.net.MediaType;
 import com.sun.net.httpserver.Headers;
@@ -10,8 +11,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.ThreadUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -19,8 +23,11 @@ import org.apache.http.HttpStatus;
 public class TestWebServer {
 
   public static final String SLOW_PAGE_TOKEN = "SLOW_PAGE";
-  public static final String HTTP_500_PAGE_TOKEN = "HTTP_500_PAGE_TOKEN";
-  private static final Set<String> uploadedResources = new HashSet<>();
+
+  private static final int DEFAULT_RESPONSE_STATUS = HttpStatus.SC_OK;
+
+  // resource paths and their overridden response statuses (if any)
+  private static final Map<String, List<Integer>> uploadedResources = new HashMap<>();
 
   private static HttpServer httpServer;
   private static int httpPort;
@@ -74,12 +81,33 @@ public class TestWebServer {
   }
 
   private static void uploadResource(String relativeUrl, HttpHandler handler) {
-    if (uploadedResources.contains(relativeUrl)) {
+    if (uploadedResources.containsKey(relativeUrl)) {
       httpServer.removeContext(relativeUrl);
       uploadedResources.remove(relativeUrl);
     }
     httpServer.createContext(relativeUrl, handler);
-    uploadedResources.add(relativeUrl);
+    uploadedResources.put(relativeUrl, Collections.emptyList());
+  }
+
+  public static void configureResponseStatus(String relativeUrl, int status) {
+    configureResponseStatuses(relativeUrl, status);
+  }
+
+  /**
+   * Last status from the httpStatuses list will be returned for remaining calls
+   */
+  public static void configureResponseStatuses(String relativeUrl, int first, int... next) {
+    assertThat(uploadedResources).containsKey(relativeUrl);
+    List<Integer> statusesList = new ArrayList<>();
+    statusesList.add(first);
+    for (int httpStatus : next) {
+      statusesList.add(httpStatus);
+    }
+    int lastStatus = statusesList.getLast();
+    for (int i = 0; i < 1000; i++) {
+      statusesList.add(lastStatus);
+    }
+    uploadedResources.put(relativeUrl, statusesList);
   }
 
   private static void handleStringBodyRequest(HttpExchange request, String responseBody,
@@ -91,7 +119,7 @@ public class TestWebServer {
       MediaType contentType) throws IOException {
     String requestUrl = request.getRequestURI().toString();
     if (requestUrl.contains(SLOW_PAGE_TOKEN)) {
-      simulateSlowProcessing();
+      ThreadUtils.sleepQuietly(Duration.ofMillis(500));
     }
 
     Headers responseHeaders = request.getResponseHeaders();
@@ -101,36 +129,26 @@ public class TestWebServer {
       responseHeaders.add(HttpHeaders.CONTENT_ENCODING, "gzip");
     }
 
-    Headers requestHeaders = request.getRequestHeaders();
-    if (requestHeaders.containsKey(HttpHeaders.IF_MODIFIED_SINCE)) {
-      // assuming the caller passes "now" as value of this header and that the page was not edited
-      request.sendResponseHeaders(HttpStatus.SC_NOT_MODIFIED, -1);
-      return;
-    }
-
     responseHeaders.add(HttpHeaders.LAST_MODIFIED, "Thu, 04 Sep 2025 12:25:10 GMT");
 
-    int status = requestUrl.contains(HTTP_500_PAGE_TOKEN) ? 500 : 200;
-    if (request.getRequestMethod().equals("HEAD")) {
-      request.sendResponseHeaders(status, -1);
+    List<Integer> statusCodes = uploadedResources.get(requestUrl);
+    int statusCode = statusCodes.isEmpty()
+        ? DEFAULT_RESPONSE_STATUS
+        : statusCodes.removeFirst();
+
+    if (statusCode == HttpStatus.SC_NOT_MODIFIED) {
+      request.sendResponseHeaders(statusCode, -1);
       return;
     }
 
-    request.sendResponseHeaders(status, responseBytes.length);
+    request.sendResponseHeaders(statusCode, responseBytes.length);
     try (OutputStream responseBody = request.getResponseBody()) {
       responseBody.write(responseBytes);
     }
   }
 
   public static String computeAbsoluteUrl(String relativeUrl) {
-    return String.format("http://localhost:%d%s", getHttpPort(), relativeUrl);
+    return String.format("http://localhost:%d%s", httpPort, relativeUrl);
   }
 
-  public static int getHttpPort() {
-    return httpPort;
-  }
-
-  private static void simulateSlowProcessing() {
-    ThreadUtils.sleepQuietly(Duration.ofMillis(500));
-  }
 }

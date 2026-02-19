@@ -34,6 +34,16 @@ public class InMemoryRepository<T> implements StateRepository<T> {
   }
 
   @Override
+  public Stream<String> keys() {
+    return data.keySet().stream();
+  }
+
+  @Override
+  public Stream<T> values() {
+    return data.values().stream();
+  }
+
+  @Override
   public void remove(@Nonnull String key) {
     data.remove(key);
   }

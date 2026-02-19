@@ -3,7 +3,8 @@ package com.streamx.blueprints.state.repository.inmemory;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.streamx.blueprints.state.BaseStateRepositoryTest;
-import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,9 +23,8 @@ abstract class BaseInMemoryRepositoryTest extends BaseStateRepositoryTest {
       String repositoryInstanceId = StringUtils.substringBefore(fullIdentifier, "/");
       if (repositoryInstanceId.equals(serviceInstanceId)) {
         var repository = InMemoryRepositoryManager.repositories.get(fullIdentifier);
-        repository.entries()
-            .map(Entry::getKey)
-            .forEach(repository::remove);
+        Set<String> keys = repository.keys().collect(Collectors.toSet());
+        keys.forEach(repository::remove);
       }
     }
   }

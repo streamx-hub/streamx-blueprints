@@ -48,7 +48,7 @@ public class ResourceDownloaderIT extends BaseQuarkusIntegrationTest {
         DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE, downloadRequest);
 
     // when
-    sendEvent(sourceEvent, Channels.DOWNLOAD_REQUESTS);
+    sendStatefulEvent(sourceEvent, Channels.DOWNLOAD_REQUESTS_STATE, Channels.DOWNLOAD_REQUESTS);
 
     // then
     CloudEvent outgoingEvent = waitForResponseEvent(Channels.DOWNLOADED_PAGES);
