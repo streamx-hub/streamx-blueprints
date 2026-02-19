@@ -92,30 +92,35 @@ cd services/processing/rendering-engine
 quarkus dev -Dquarkus.profile=streamx-mesh-debug
 ```
 
-## Ingestion Keys
+## Ingestion Event Subjects
 
 Blueprint services utilize `@Incoming` functions to process Cloud Events.
-For these events, the `subject` field must be **non-null**, as it is directly mapped to an **Ingestion Key**.
+For these events, the `subject` field must be **non-null**, as it is directly mapped to an **Ingestion Subjects**.
 
 ### Namespacing logic
 
-Ingestion Keys support optional namespacing using the colon (`:`) character:
+Ingestion Subjects support optional namespacing using the colon (`:`) character:
 
-* **Format:** `namespace:actual-key`
-* **Parsing:** Everything before the first colon is treated as the **namespace**; the remainder is the **actual key**.
-* **Usage:** While services may use namespaces for internal logic, providing one is optional.
+* **Format:** `namespace:actual-subject`
+* **Parsing:** Everything before the first colon is treated as the **namespace**; the remainder is the **actual subject**.
+* **Usage:** While services may use namespaces for internal logic, providing one is optional.  
+  However, consistency in using the same approach for a single subject is required.
+  Sending events with subjects `subject` and `:subject` may cause issues in StreamX Service Mesh monotonic event-time filtering
+  and other core functionalities that rely on identifying events by subject.
+  The namespace prefix is used only in Blueprint Services.
 
-### Handling unparsed keys (the colon prefix)
+### Handling unparsed subject (the colon prefix)
 
-If you need to use the entire subject as the Ingestion Key without any splitting, **prefix the subject with a colon (`:`)**.
-This forces the Blueprints to treat the namespace as empty and the rest of the string as the full key.
+If you need to use the entire subject as the Ingestion Subject without any splitting, **prefix the subject with a colon (`:`)**.
+This forces the Blueprints to treat the namespace as empty and the rest of the string as the full subject.
 
 #### Examples:
-| Subject Input        | Namespace | Resolved Ingestion Key |
-|----------------------|-----------|------------------------|
-| `orders:12345`       | `orders`  | `12345`                |
-| `finance:invoice:99` | `finance` | `invoice:99`           |
-| `:id-123`            | *(empty)* | `id-123`               |
+| Subject Input        | Namespace | Resolved Ingestion Subject |
+|----------------------|-----------|----------------------------|
+| `orders:12345`       | `orders`  | `12345`                    |
+| `finance:invoice:99` | `finance` | `invoice:99`               |
+| `:id-123`            | *(empty)* | `id-123`                   |
+| `id-123`             | *(empty)* | `id-123`                   |
 
 
 ## Code coverage tips
