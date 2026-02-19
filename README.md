@@ -92,14 +92,14 @@ cd services/processing/rendering-engine
 quarkus dev -Dquarkus.profile=streamx-mesh-debug
 ```
 
-## Ingestion Event Subjects
+## Cloud Event subjects
 
 Blueprint services utilize `@Incoming` functions to process Cloud Events.
-For these events, the `subject` field must be **non-null**, as it is directly mapped to an **Ingestion Subjects**.
+For these events, the `subject` field must be **non-null**.
 
 ### Namespacing logic
 
-Ingestion Subjects support optional namespacing using the colon (`:`) character:
+Cloud Event subjects support optional namespacing using the colon (`:`) character:
 
 * **Format:** `namespace:actual-subject`
 * **Parsing:** Everything before the first colon is treated as the **namespace**; the remainder is the **actual subject**.
@@ -111,16 +111,16 @@ Ingestion Subjects support optional namespacing using the colon (`:`) character:
 
 ### Handling unparsed subject (the colon prefix)
 
-If you need to use the entire subject as the Ingestion Subject without any splitting, **prefix the subject with a colon (`:`)**.
+If you need to use the entire subject without any splitting, **prefix the subject with a colon (`:`)**.
 This forces the Blueprints to treat the namespace as empty and the rest of the string as the full subject.
 
 #### Examples:
-| Subject Input        | Namespace | Resolved Ingestion Subject |
-|----------------------|-----------|----------------------------|
-| `orders:12345`       | `orders`  | `12345`                    |
-| `finance:invoice:99` | `finance` | `invoice:99`               |
-| `:id-123`            | *(empty)* | `id-123`                   |
-| `id-123`             | *(empty)* | `id-123`                   |
+| Subject Input        | Namespace | Resolved Subject |
+|----------------------|-----------|------------------|
+| `orders:12345`       | `orders`  | `12345`          |
+| `finance:invoice:99` | `finance` | `invoice:99`     |
+| `:id-123`            | *(empty)* | `id-123`         |
+| `id-123`             | *(empty)* | `id-123`         |
 
 
 ## Code coverage tips
