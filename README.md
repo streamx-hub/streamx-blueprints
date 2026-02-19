@@ -92,17 +92,17 @@ cd services/processing/rendering-engine
 quarkus dev -Dquarkus.profile=streamx-mesh-debug
 ```
 
-## Cloud Event subjects
+## Cloud Event subject
 
-Blueprint services utilize `@Incoming` functions to process Cloud Events.
+Blueprint services process Cloud Events.
 For these events, the `subject` field must be **non-null**.
+The CloudEvent `subject` identifies the subject of the event in the context of the event producer ([specification link](https://github.com/cloudevents/spec/blob/main/cloudevents/spec.md#subject)).
 
-### Namespacing logic
+### Namespacing in StreamX Bleuprints
 
-Cloud Event subjects support optional namespacing using the colon (`:`) character:
+StreamX Blueprints services assume the Cloud Event subject may contain an optional namespace prefix separated by the colon (`:`) character:
 
-* **Format:** `namespace:actual-subject`
-* **Parsing:** Everything before the first colon is treated as the **namespace**; the remainder is the **actual subject**.
+* **Parsing:** Everything before the first colon is treated as the **namespace**; the remainder is the identifier inside of the **namespace**.
 * **Usage:** While services may use namespaces for internal logic, providing one is optional.  
   However, consistency in using the same approach for a single subject is required.
   Sending events with subjects `subject` and `:subject` may cause issues in StreamX Service Mesh monotonic event-time filtering
