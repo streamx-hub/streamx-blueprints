@@ -101,8 +101,9 @@ In this scenario, one final download may occur before the cancellation takes eff
      Set up a separate, non-scaling instance dedicated to repeatable requests.
      This instance would connect its input channel to the scheduled `DownloadRequest` event types to ensure that recurring downloads are managed by a single consumer.
    - **Stateless instances for standard downloads**:  
-     When connected to the standard `DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE` events,
-     the service would remain stateless and could be freely scaled to any number of replicas to handle varying traffic loads.
+     The service operates in a stateless mode when configured to subscribe exclusively to standard `DOWNLOAD_REQUEST_EVENT_TYPE` events.
+     Although the state channel remains active, the internal store stays empty because it only accepts data from scheduling events (`SCHEDULE` and `UNSCHEDULE`).
+     This allows these instances to be scaled horizontally to any number of replicas to handle varying traffic loads without the overhead of state management.
 
 ## Configuration
 
