@@ -92,5 +92,36 @@ cd services/processing/rendering-engine
 quarkus dev -Dquarkus.profile=streamx-mesh-debug
 ```
 
+## Cloud Event subject
+
+Blueprint services process Cloud Events.
+For these events, the `subject` field must be **non-null**.
+The CloudEvent `subject` identifies the subject of the event in the context of the event producer ([specification link](https://github.com/cloudevents/spec/blob/main/cloudevents/spec.md#subject)).
+
+### Namespacing in StreamX Bleuprints
+
+StreamX Blueprints services assume the Cloud Event subject may contain an optional namespace prefix separated by the colon (`:`) character:
+
+* **Parsing:** Everything before the first colon is treated as the **namespace**; the remainder is the identifier inside of the **namespace**.
+* **Usage:** While services may use namespaces for internal logic, providing one is optional.  
+  However, consistency in using the same approach for a single subject is required.
+  Sending events with subjects `subject` and `:subject` may cause issues in StreamX Service Mesh monotonic event-time filtering
+  and other core functionalities that rely on identifying events by subject.
+  The namespace prefix is used only in Blueprint Services.
+
+### Handling unparsed subject (the colon prefix)
+
+If you need to use the entire subject without any splitting, **prefix the subject with a colon (`:`)**.
+This forces the Blueprints to treat the namespace as empty and the rest of the string as the full subject.
+
+#### Examples:
+| Subject Input        | Namespace | Resolved Subject |
+|----------------------|-----------|------------------|
+| `orders:12345`       | `orders`  | `12345`          |
+| `finance:invoice:99` | `finance` | `invoice:99`     |
+| `:id-123`            | *(empty)* | `id-123`         |
+| `id-123`             | *(empty)* | `id-123`         |
+
+
 ## Code coverage tips
  - Don't use `io.quarkus.logging.Log` in main code, since it causes the whole class using that logger to have 0% jacoco coverage
