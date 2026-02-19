@@ -14,7 +14,7 @@ import org.mockito.MockedStatic;
 public abstract class BaseConfigTest {
 
   private final MockedStatic<ConfigProvider> configProvider = mockStatic(ConfigProvider.class);
-  protected final Config config = mock(Config.class);
+  protected final Config config = mock();
 
   @BeforeEach
   void setupConfigProviderMock() {

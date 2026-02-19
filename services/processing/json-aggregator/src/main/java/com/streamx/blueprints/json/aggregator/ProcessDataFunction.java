@@ -2,7 +2,7 @@ package com.streamx.blueprints.json.aggregator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.streamx.blueprints.data.Data;
-import com.streamx.blueprints.json.aggregator.configuration.Configuration;
+import com.streamx.blueprints.json.aggregator.configuration.AggregationConfiguration;
 import com.streamx.blueprints.json.aggregator.stores.DataStore;
 import com.streamx.blueprints.json.aggregator.stores.PreservedData;
 import io.cloudevents.CloudEvent;
@@ -38,8 +38,8 @@ public class ProcessDataFunction extends BaseProcessingFunction {
   }
 
   @Override
-  protected Optional<CloudEvent> createEventForConfig(Configuration config, CloudEvent inputEvent,
-      Data data, DataKey key) {
+  protected Optional<CloudEvent> createEventForConfig(AggregationConfiguration config,
+      CloudEvent inputEvent, Data data, DataKey key) {
     String masterNamespace = config.masterNamespace();
     String eventType = inputEvent.getType();
     PreservedData masterResource = determineMasterResource(masterNamespace, data, key, eventType);
@@ -59,7 +59,7 @@ public class ProcessDataFunction extends BaseProcessingFunction {
   }
 
   private Optional<CloudEvent> handleResourceMerging(CloudEvent inputEvent, DataKey key,
-      PreservedData masterResource, Configuration config) {
+      PreservedData masterResource, AggregationConfiguration config) {
     if (Data.TYPE_UNPUBLISHED.equals(inputEvent.getType())) {
       return unmergeResources(inputEvent, key, masterResource, config);
     }
@@ -68,7 +68,7 @@ public class ProcessDataFunction extends BaseProcessingFunction {
   }
 
   private Optional<CloudEvent> unmergeResources(CloudEvent inputEvent, DataKey key,
-      PreservedData masterResource, Configuration config) {
+      PreservedData masterResource, AggregationConfiguration config) {
     if (masterResource == null || masterResource.data() == null) {
       if (!key.namespace().equals(config.masterNamespace())) {
         log.tracef("Not updating master resource since it's not available at [%s]", key);
@@ -108,7 +108,7 @@ public class ProcessDataFunction extends BaseProcessingFunction {
     }
   }
 
-  private String getOutputType(Configuration config, PreservedData masterResource) {
+  private String getOutputType(AggregationConfiguration config, PreservedData masterResource) {
     return config.outputType().orElse(
         Optional.ofNullable(masterResource)
             .map(PreservedData::data)

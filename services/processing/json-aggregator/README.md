@@ -32,7 +32,7 @@ Example:
 
 ## Configuration
 
-`streamx.blueprints.json-aggregator.configurations` - indexed configurations with
+`streamx.blueprints.json-aggregator.configurations` - named configurations with
 fields:
 
 - `master-namespace` - namespace that is mandatory to produce aggregated data. If no master namespace is present no output is generated
@@ -43,12 +43,12 @@ fields:
 Example:
 
 ``` properties
-streamx.blueprints.json-aggregator.configurations[0].master-namespace=pim
-streamx.blueprints.json-aggregator.configurations[0].optional-namespaces=price,reviews
-streamx.blueprints.json-aggregator.configurations[0].output-type=product/variant
-streamx.blueprints.json-aggregator.configurations[0].output-namespace=product
-streamx.blueprints.json-aggregator.configurations[1].master-namespace=review
-streamx.blueprints.json-aggregator.configurations[1].output-namespace=reviews
+streamx.blueprints.json-aggregator.configurations.pim.master-namespace=pim
+streamx.blueprints.json-aggregator.configurations.pim.optional-namespaces=price,reviews
+streamx.blueprints.json-aggregator.configurations.pim.output-type=product/variant
+streamx.blueprints.json-aggregator.configurations.pim.output-namespace=product
+streamx.blueprints.json-aggregator.configurations.reviews.master-namespace=review
+streamx.blueprints.json-aggregator.configurations.reviews.output-namespace=reviews
 ```
 
 ### Channels
@@ -70,10 +70,10 @@ MP_MESSAGING_INCOMING_DATA_REF: "persistent://streamx/inbox.data"
 MP_MESSAGING_INCOMING_MULTIVALUED-DATA_REF: "persistent://streamx/inbox.data"
 MP_MESSAGING_OUTGOING_AGGREGATED-DATA_REF: "persistent://streamx/relay.aggregated-data"
 MP_MESSAGING_OUTGOING_AGGREGATED-MULTIVALUED-DATA_REF: "persistent://streamx/inbox.data"
-STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_0__MASTER_NAMESPACE: "pim"
-STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_0__OPTIONAL_NAMESPACES: "price,reviews"
-STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_0__OUTPUT_TYPE: "product/variant"
-STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_0__OUTPUT_NAMESPACE: "product"
-STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_1__MASTER_NAMESPACE: "review"
-STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_1__OUTPUT_NAMESPACE: "reviews"
+STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_PIM_MASTER_NAMESPACE: "pim"
+STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_PIM_OPTIONAL_NAMESPACES: "price,reviews"
+STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_PIM_OUTPUT_TYPE: "product/variant"
+STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_PIM_OUTPUT_NAMESPACE: "product"
+STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_REVIEWS_MASTER_NAMESPACE: "review"
+STREAMX_BLUEPRINTS_JSON_AGGREGATOR_CONFIGURATIONS_REVIEWS_OUTPUT_NAMESPACE: "reviews"
 ```

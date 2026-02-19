@@ -1,8 +1,8 @@
 package com.streamx.blueprints.resource.downloader;
 
-import static com.streamx.blueprints.data.DownloadRequest.DOWNLOAD_EVENT_TYPE;
-import static com.streamx.blueprints.data.DownloadRequest.REPEATABLE_DOWNLOAD_EVENT_TYPE;
-import static com.streamx.blueprints.data.DownloadRequest.STOP_REPEATABLE_DOWNLOAD_EVENT_TYPE;
+import static com.streamx.blueprints.data.DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE;
+import static com.streamx.blueprints.data.DownloadRequest.DOWNLOAD_SCHEDULE_EVENT_TYPE;
+import static com.streamx.blueprints.data.DownloadRequest.DOWNLOAD_UNSCHEDULE_EVENT_TYPE;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.DownloadRequest;
@@ -13,7 +13,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import java.time.Duration;
-import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.IntegerRange;
@@ -22,12 +21,11 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
-public class HttpDownloaderFunction {
+public class HttpDownloaderFunction extends BaseHttpRequestExecutor {
 
   private static final int NOT_MODIFIED_STATUS = HttpStatus.SC_NOT_MODIFIED;
   private static final IntegerRange SUCCESS_STATUSES = IntegerRange.of(200, 299);
@@ -44,37 +42,34 @@ public class HttpDownloaderFunction {
   @Inject
   LastModifiedTimestampRegistry lastModifiedTimestampRegistry;
 
-  @Inject
-  CloseableHttpClient httpClient;
-
   private static final Map<String, DownloadRequest> repeatableDownloadsStore =
       new ConcurrentHashMap<>();
 
   private int downloadTimeoutMillis;
-  private long repeatIntervalMillis;
+  private Duration repeatInterval;
 
   void onStart(@Observes StartupEvent ev) {
     downloadTimeoutMillis = configuration.downloadTimeoutMillis();
-    repeatIntervalMillis = configuration.repeatIntervalMillis();
+    repeatInterval = Duration.ofMillis(configuration.repeatIntervalMillis());
     initRepeatableDownloadAndEmit();
   }
 
   private void initRepeatableDownloadAndEmit() {
     Multi.createFrom().ticks()
-        .every(Duration.ofMillis(repeatIntervalMillis))
-        .flatMap(l -> {
-          Collection<DownloadRequest> items = repeatableDownloadsStore.values();
-          return Multi.createFrom().iterable(items);
-        })
-        .onFailure().invoke(err ->
-            log.errorf(err, "Stream processing of scheduled resource has failed: %s",
-                err.getMessage()))
+        .every(repeatInterval)
+        .flatMap(l -> Multi.createFrom().iterable(repeatableDownloadsStore.values()))
         .subscribe()
-        .with(this::downloadAndEmit);
+        .with(request -> {
+          try {
+            downloadAndEmit(request);
+          } catch (Exception ex) {
+            log.warnf("Error downloading repeatable resource " + request.url());
+          }
+        });
   }
 
   @Incoming(Channels.DOWNLOAD_REQUESTS)
-  public void process(CloudEvent event) {
+  public void process(CloudEvent event) throws Exception {
     DownloadRequest request = CloudEventUtils.getData(event, DownloadRequest.class);
     if (request == null) {
       log.warnf("Received an empty DownloadRequest with key %s", event.getSubject());
@@ -89,25 +84,26 @@ public class HttpDownloaderFunction {
       downloadAndEmit(request);
     }
 
-    if (shouldAddToStore(eventType, url)) {
+    if (shouldScheduleRepeatableDownload(eventType, url)) {
       repeatableDownloadsStore.put(url, request);
     }
 
-    if (shouldRemoveFromStore(eventType)) {
+    if (shouldUnscheduleRepeatableDownload(eventType)) {
       repeatableDownloadsStore.remove(url);
     }
   }
 
   private static boolean shouldDownloadAndEmit(String eventType) {
-    return Strings.CS.equalsAny(eventType, DOWNLOAD_EVENT_TYPE, REPEATABLE_DOWNLOAD_EVENT_TYPE);
+    return Strings.CS.equalsAny(eventType, DOWNLOAD_REQUEST_EVENT_TYPE,
+        DOWNLOAD_SCHEDULE_EVENT_TYPE);
   }
 
-  private boolean shouldAddToStore(String eventType, String url) {
-    return eventType.equals(REPEATABLE_DOWNLOAD_EVENT_TYPE) || matchesRepeatableUrlPattern(url);
+  private boolean shouldScheduleRepeatableDownload(String eventType, String url) {
+    return eventType.equals(DOWNLOAD_SCHEDULE_EVENT_TYPE) || matchesRepeatableUrlPattern(url);
   }
 
-  private static boolean shouldRemoveFromStore(String eventType) {
-    return eventType.equals(STOP_REPEATABLE_DOWNLOAD_EVENT_TYPE);
+  private static boolean shouldUnscheduleRepeatableDownload(String eventType) {
+    return eventType.equals(DOWNLOAD_UNSCHEDULE_EVENT_TYPE);
   }
 
   private boolean matchesRepeatableUrlPattern(String url) {
@@ -125,12 +121,12 @@ public class HttpDownloaderFunction {
     return request;
   }
 
-  private void downloadAndEmit(DownloadRequest request) {
-    lastModifiedTimestampRegistry.store(request);
-
+  void downloadAndEmit(DownloadRequest request) throws DownloadException {
     String url = request.url();
     log.tracef("Processing download request with source URL %s and destination Streamx Key %s",
         url, request.emitKey());
+
+    lastModifiedTimestampRegistry.store(url);
 
     int httpHeadStatus = lastModifiedTimestampRegistry.getLastHttpHeadStatus(url);
     if (httpHeadStatus == NOT_MODIFIED_STATUS) {
@@ -139,20 +135,28 @@ public class HttpDownloaderFunction {
     }
 
     if (!SUCCESS_STATUSES.contains(httpHeadStatus)) {
-      log.warnf("Skipping downloading resource %s with HEAD status %s", url, httpHeadStatus);
-      return;
+      throw new DownloadException("Error downloading resource " + url
+                                  + ", unexpected HTTP HEAD status: " + httpHeadStatus);
     }
 
+    performDownloadAndEmit(request);
+  }
+
+  private void performDownloadAndEmit(DownloadRequest request) throws DownloadException {
+    String url = request.url();
     HttpGet httpGetRequest = prepareHttpGetRequest(url);
-    try (CloseableHttpResponse httpGetResponse = httpClient.execute(httpGetRequest)) {
+    try (CloseableHttpResponse httpGetResponse = executeGet(httpGetRequest)) {
       int httpGetStatus = httpGetResponse.getStatusLine().getStatusCode();
       if (SUCCESS_STATUSES.contains(httpGetStatus)) {
         resourceEmitter.emitResource(httpGetResponse, request);
       } else {
-        log.errorf("Error downloading resource %s, unexpected HTTP status: %s", url, httpGetStatus);
+        lastModifiedTimestampRegistry.reset(url);
+        throw new DownloadException("Error downloading resource " + url
+                                    + ", unexpected HTTP GET status: " + httpGetStatus);
       }
     } catch (Exception ex) {
-      log.errorf(ex, "Failure downloading resource %s", url);
+      lastModifiedTimestampRegistry.reset(url);
+      throw new DownloadException("Exception at GET request for " + url, ex);
     }
   }
 
