@@ -19,12 +19,15 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPOutputStream;
+import org.awaitility.core.ThrowingRunnable;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
 abstract class AbstractDownloaderFunctionTest {
+
+  protected static final Duration AWAIT_DURATION = Duration.ofSeconds(3);
 
   protected static final String EMITTED_PAGE_TYPE = "page/external";
   protected static final String EMITTED_WEB_RESOURCE_TYPE = "web-resource/external";
@@ -61,7 +64,7 @@ abstract class AbstractDownloaderFunctionTest {
   }
 
   protected void sendDownloadRequest(String url, String emitKey) {
-    sendDownloadRequest(url, emitKey, DownloadRequest.DOWNLOAD_EVENT_TYPE);
+    sendDownloadRequest(url, emitKey, DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE);
   }
 
   protected void sendDownloadRequest(String url, String emitKey, String eventType) {
@@ -79,17 +82,21 @@ abstract class AbstractDownloaderFunctionTest {
     downloadRequestsChannel.send(downloadRequestEvent);
   }
 
-  protected CloudEvent waitForSingleDownloadedPage(String key) {
-    return waitForSingleDownloadedResource(key, downloadedPagesSink, EMITTED_PAGE_TYPE);
+  protected void waitForSingleDownloadedPage(String key, String expectedContent) {
+    CloudEvent event = waitForSingleDownloadedResource(key, downloadedPagesSink, EMITTED_PAGE_TYPE);
+    assertEventContent(event, expectedContent);
   }
 
-  protected CloudEvent waitForSingleDownloadedAsset(String key) {
-    return waitForSingleDownloadedResource(key, downloadedAssetsSink, EMITTED_ASSET_TYPE);
+  protected void waitForSingleDownloadedAsset(String key, byte[] expectedContent) {
+    CloudEvent event = waitForSingleDownloadedResource(key, downloadedAssetsSink,
+        EMITTED_ASSET_TYPE);
+    assertEventContent(event, expectedContent);
   }
 
-  protected CloudEvent waitForSingleDownloadedWebResource(String key) {
-    return waitForSingleDownloadedResource(key, downloadedWebResourcesSink,
+  protected void waitForSingleDownloadedWebResource(String key, String expectedContent) {
+    CloudEvent event = waitForSingleDownloadedResource(key, downloadedWebResourcesSink,
         EMITTED_WEB_RESOURCE_TYPE);
+    assertEventContent(event, expectedContent);
   }
 
   private CloudEvent waitForSingleDownloadedResource(String key, InMemorySink<CloudEvent> sink,
@@ -97,13 +104,16 @@ abstract class AbstractDownloaderFunctionTest {
     return waitForDownloadedResources(key, sink, payloadType, 1).getFirst();
   }
 
-  protected List<CloudEvent> waitForDownloadedWebResources(String key, int exactCount) {
-    return waitForDownloadedResources(key, downloadedWebResourcesSink, EMITTED_WEB_RESOURCE_TYPE,
-        exactCount);
+  protected void waitForDownloadedWebResources(String key, int exactCount, String expectedContent) {
+    List<CloudEvent> events = waitForDownloadedResources(key, downloadedWebResourcesSink,
+        EMITTED_WEB_RESOURCE_TYPE, exactCount);
+    for (CloudEvent event : events) {
+      assertEventContent(event, expectedContent);
+    }
   }
 
   protected void waitForAtLeastDownloadedWebResources(String key, int atLeastCount) {
-    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+    awaitUntilAsserted(() -> {
       List<CloudEvent> matchingEvents = getDownloadedWebResources(key);
       assertThat(matchingEvents).hasSizeGreaterThanOrEqualTo(atLeastCount);
     });
@@ -120,7 +130,7 @@ abstract class AbstractDownloaderFunctionTest {
   private static List<CloudEvent> waitForDownloadedResources(String key,
       InMemorySink<CloudEvent> sink, String payloadType, int expectedSize) {
     AtomicReference<List<CloudEvent>> result = new AtomicReference<>();
-    await().atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+    awaitUntilAsserted(() -> {
       List<CloudEvent> matchingEvents = getMatchingEvents(key, sink, payloadType);
       assertThat(matchingEvents).hasSize(expectedSize);
       result.set(matchingEvents);
@@ -148,11 +158,11 @@ abstract class AbstractDownloaderFunctionTest {
     });
   }
 
-  protected void assertEventContent(CloudEvent actualEvent, String expectedContent) {
+  private void assertEventContent(CloudEvent actualEvent, String expectedContent) {
     assertEventContent(actualEvent, expectedContent.getBytes());
   }
 
-  protected void assertEventContent(CloudEvent actualEvent, byte[] expectedContent) {
+  private void assertEventContent(CloudEvent actualEvent, byte[] expectedContent) {
     Resource resource = CloudEventUtils.getData(actualEvent, Resource.class);
     assertThat(resource).isNotNull();
     byte[] resourceContent = resource.getContentAsBytes();
@@ -166,6 +176,10 @@ abstract class AbstractDownloaderFunctionTest {
       gzipOutputStream.finish();
       return outputStream.toByteArray();
     }
+  }
+
+  protected static void awaitUntilAsserted(ThrowingRunnable assertion) {
+    await().atMost(AWAIT_DURATION).untilAsserted(assertion);
   }
 
 }

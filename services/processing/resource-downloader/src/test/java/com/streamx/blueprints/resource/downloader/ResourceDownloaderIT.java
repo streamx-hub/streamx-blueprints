@@ -45,7 +45,7 @@ public class ResourceDownloaderIT extends BaseQuarkusIntegrationTest {
     );
     CloudEvent sourceEvent = CloudEventUtils.eventWithData(
         "any", // note: subject is not relevant for DownloadRequests
-        DownloadRequest.DOWNLOAD_EVENT_TYPE, downloadRequest);
+        DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE, downloadRequest);
 
     // when
     sendEvent(sourceEvent, Channels.DOWNLOAD_REQUESTS);

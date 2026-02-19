@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.streamx.blueprints</groupId>
     <artifactId>processing</artifactId>
-    <version>3.0.9-SNAPSHOT</version>
+    <version>3.0.10-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -14,6 +14,10 @@
 
   <properties>
     <pebble.version>4.0.0</pebble.version>
+    <!-- The below versions must match versions used by pebble pom.xml -->
+    <caffeine.version>2.6.2</caffeine.version>
+    <jakarata.servlet-api.version>5.0.0</jakarata.servlet-api.version>
+    <servlet-api.version>2.5</servlet-api.version>
   </properties>
 
   <dependencies>
@@ -22,6 +26,24 @@
       <artifactId>pebble</artifactId>
       <version>${pebble.version}</version>
     </dependency>
+
+    <!-- <optional> dependencies of pebble that are still needed while generating native image -->
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+      <version>${caffeine.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>${servlet-api.version}</version>
+    </dependency>
+    <dependency>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <groupId>jakarta.servlet</groupId>
+      <version>${jakarata.servlet-api.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>

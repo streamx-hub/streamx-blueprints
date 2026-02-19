@@ -72,10 +72,14 @@ public class DataModelClassesTest {
     for (Constructor<?> constructor : dataModelClass.getConstructors()) {
       Object dataClassInstance = instantiateWithNullParameters(constructor);
       if (dataClassInstance instanceof Resource resource) {
-        assertThat(Resource.isEmpty(resource));
+        assertThat(Resource.isEmpty(resource)).isTrue();
         assertThat(resource.getContent()).isNull();
         assertThat(resource.getContentAsBytes()).isNull();
         assertThat(resource.getContentAsString()).isNull();
+      }
+      if (dataClassInstance instanceof Renderer renderer) {
+        assertThat(renderer.template()).isNull();
+        assertThat(renderer.getTemplateAsString()).isNull();
       }
       if (dataClassInstance instanceof Typed typed) {
         assertThat(typed.getType()).isNull();
