@@ -25,9 +25,9 @@ public class OptimizedImagesGeneratorIT extends BaseQuarkusIntegrationTest {
   void shouldGenerateOptimizedImage() throws IOException {
     // given
     File testImageFile = new File("src/test/resources/ds.png");
-    String key = testImageFile.getName();
+    String subject = CloudEventUtils.createNamespacedSubject("logos", testImageFile.getName());
     Asset asset = new Asset(FileUtils.readFileToByteArray(testImageFile), "test-image");
-    CloudEvent sourceEvent = CloudEventUtils.eventWithData(key, Asset.TYPE_PUBLISHED, asset);
+    CloudEvent sourceEvent = CloudEventUtils.eventWithData(subject, Asset.TYPE_PUBLISHED, asset);
 
     // when
     sendEvent(sourceEvent, Channels.INCOMING_ASSETS);

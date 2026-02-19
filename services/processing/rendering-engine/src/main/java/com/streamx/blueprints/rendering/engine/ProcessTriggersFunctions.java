@@ -85,7 +85,7 @@ public class ProcessTriggersFunctions {
     RenderingContext renderingContext = renderingContextStore.get(subject);
     if (renderingContexts.hasRenderer(renderingContext)) {
       return renderingRequests.getFromDataStore(event,
-          List.of(new KeyedValue<>(event.getSubject(), renderingContext)));
+          List.of(new KeyedValue<>(subject, renderingContext)));
     } else {
       // If no corresponding renderer no reason to retrigger data processing because output cannot
       // be rendered anyway.

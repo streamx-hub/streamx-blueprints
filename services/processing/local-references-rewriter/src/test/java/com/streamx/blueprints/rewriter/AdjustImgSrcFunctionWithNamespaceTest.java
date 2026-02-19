@@ -6,23 +6,29 @@ import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
-class AdjustImgSrcFunctionTest extends BaseAdjustImgSrcFunctionTest {
+class AdjustImgSrcFunctionWithNamespaceTest extends BaseAdjustImgSrcFunctionTest {
+
+  private static final String NAMESPACE = "test-images";
 
   @Override
   protected CloudEvent createOptimizedAssetPublishEvent(Image image) {
     return CloudEventUtils.eventWithData(
-        image.optimizedPath,
+        namespacedSubject(image.optimizedPath),
         OptimizedAsset.TYPE_PUBLISHED,
-        new OptimizedAsset(new byte[]{0, 1, 2}, "any", image.originalPath)
+        new OptimizedAsset(new byte[]{0, 1, 2}, "any", namespacedSubject(image.originalPath))
     );
   }
 
   @Override
   protected CloudEvent createOptimizedAssetUnpublishEvent(Image image) {
     return CloudEventUtils.eventWithoutData(
-        image.optimizedPath,
+        namespacedSubject(image.optimizedPath),
         OptimizedAsset.TYPE_UNPUBLISHED
     );
+  }
+
+  private static String namespacedSubject(String rawSubject) {
+    return CloudEventUtils.createNamespacedSubject(NAMESPACE, rawSubject);
   }
 
 }

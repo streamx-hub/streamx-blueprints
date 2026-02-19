@@ -32,7 +32,7 @@ public class OptimizedAssetsStore {
 
   @Incoming(Channels.OPTIMIZED_ASSETS)
   public void registerAsset(CloudEvent optimizedAssetEvent) {
-    String key = CloudEventUtils.getSubject(optimizedAssetEvent);
+    String key = CloudEventUtils.getSubjectWithoutNamespace(optimizedAssetEvent);
     String eventType = optimizedAssetEvent.getType();
     if (OptimizedAsset.TYPE_PUBLISHED.equals(eventType)) {
       log.tracef("Registering optimized asset %s", key);
@@ -48,7 +48,8 @@ public class OptimizedAssetsStore {
   private void addOptimizedAsset(CloudEvent optimizedAssetEvent, String optimizedAssetPath) {
     try {
       var optimizedAsset = CloudEventUtils.getData(optimizedAssetEvent, OptimizedAsset.class);
-      String originalAssetPath = requireNonNull(optimizedAsset).getOriginalPath();
+      String originalAssetPath = CloudEventUtils.getSubjectWithoutNamespace(
+          requireNonNull(optimizedAsset).getOriginalPath());
       originalPathToOptimizedPath.put(originalAssetPath, optimizedAssetPath);
     } catch (RuntimeException ex) {
       log.warnf(ex, "Error extracting OptimizedAsset from event %s", optimizedAssetPath);

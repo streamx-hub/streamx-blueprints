@@ -86,7 +86,7 @@ public class ProcessRenderingRequestFunction {
   @Incoming(Channels.Incoming.RENDERING_REQUESTS)
   public void process(CloudEvent event) {
     RenderingRequest request = CloudEventUtils.getData(event, RenderingRequest.class);
-    String subject = event.getSubject();
+    String subject = CloudEventUtils.getSubject(event);
     if (request == null) {
       log.warnf("Skipping processing event [%s] - no content", subject);
       return;
