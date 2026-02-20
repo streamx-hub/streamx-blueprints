@@ -11,7 +11,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.regex.Pattern;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -68,7 +67,7 @@ public class OptimizeImageFunction {
   }
 
   static boolean isValidFileName(String filePath) {
-    String nameWithExtension = FilenameUtils.getName(filePath);
+    String nameWithExtension = getNameAndExtension(filePath);
     return nameWithExtension.matches(".+\\..+"); // non empty name + dot + non empty extension
   }
 
@@ -116,9 +115,16 @@ public class OptimizeImageFunction {
   }
 
   String computePathForOptimizedImage(String filePath) {
-    String fileNameAndExtension = FilenameUtils.getName(filePath);
-    String fileName = FilenameUtils.getBaseName(filePath);
+    String fileNameAndExtension = getNameAndExtension(filePath);
     String basePath = StringUtils.removeEnd(filePath, fileNameAndExtension);
+    String fileName = StringUtils.substringBefore(fileNameAndExtension, '.');
     return basePath + fileName + optimizedImageFileNameSuffixAndExtension;
+  }
+
+  private static String getNameAndExtension(String filePath) {
+    return filePath.contains("/")
+        ? StringUtils.substringAfterLast(filePath, "/")
+        : filePath.contains("\\") ? StringUtils.substringAfterLast(filePath, "\\")
+            : filePath;
   }
 }

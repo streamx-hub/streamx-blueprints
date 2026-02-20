@@ -34,7 +34,7 @@ public class CompositionFunction {
   @Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
   public Multi<CloudEvent> consumeLayout(CloudEvent layout) {
     String eventType = layout.getType();
-    String subject = layout.getSubject();
+    String subject = CloudEventUtils.getSubject(layout);
     log.tracef("Consuming layout with subject %s and type %s", subject, eventType);
     return Multi.createFrom().items(createPageComposeRequests(layout));
   }
@@ -42,7 +42,7 @@ public class CompositionFunction {
   @Incoming(Channels.INCOMING_COMPOSITIONS)
   @Outgoing(Channels.OUTGOING_PAGE_COMPOSE_REQUESTS)
   public CloudEvent consumeComposition(CloudEvent compositionEvent) {
-    String compositionKey = compositionEvent.getSubject();
+    String compositionKey = CloudEventUtils.getSubject(compositionEvent);
     String eventType = compositionEvent.getType();
     OffsetDateTime eventTime = compositionEvent.getTime();
     log.tracef("Consuming composition with key %s and type %s", compositionKey, eventType);
@@ -92,7 +92,7 @@ public class CompositionFunction {
   }
 
   private Stream<CloudEvent> createPageComposeRequests(CloudEvent layout) {
-    String layoutKey = layout.getSubject();
+    String layoutKey = CloudEventUtils.getSubject(layout);
 
     String type = Layout.TYPE_PUBLISHED.equals(layout.getType())
         ? PageComposeRequest.TYPE_PUBLISHED

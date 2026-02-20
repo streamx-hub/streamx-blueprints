@@ -95,7 +95,12 @@ quarkus dev -Dquarkus.profile=streamx-mesh-debug
 ## Cloud Event subject
 
 Blueprint services process Cloud Events.
-For these events, the `subject` field must be **non-null**.
+For these events, the `subject` field must be **non-null** and not empty.
+
+Prefer `CloudEventUtils.getSubject(event)` over `event.getSubject()`.
+Always use the utility method for business logic, as it provides built-in validation for null and empty subjects.
+Direct access via `event.getSubject()` should be reserved exclusively for logging purposes where strict validation is not required.
+
 The CloudEvent `subject` identifies the subject of the event in the context of the event producer ([specification link](https://github.com/cloudevents/spec/blob/main/cloudevents/spec.md#subject)).
 
 ### Namespacing in StreamX Bleuprints

@@ -53,14 +53,15 @@ public class WebServerSink {
 
   @Incoming(Channels.RESOURCES)
   public Uni<Void> consume(CloudEvent event) {
+    String subject = CloudEventUtils.getSubject(event);
     Resource resource;
     try {
       resource = CloudEventUtils.getDataSkippingUnknownProperties(event, Resource.class);
     } catch (IllegalStateException e) {
-      log.warnf(e, "Unsupported event: subject %s, type %s", event.getSubject(), event.getType());
+      log.warnf(e, "Unsupported event: subject %s, type %s", subject, event.getType());
       return Uni.createFrom().voidItem();
     }
-    return process(resource, event.getSubject(), event.getType(),
+    return process(resource, subject, event.getType(),
         Objects.requireNonNull(event.getTime()).toInstant().toEpochMilli());
   }
 

@@ -1,7 +1,5 @@
 package com.streamx.blueprints.cloudevents.utils;
 
-import static java.util.Objects.requireNonNull;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,7 +13,6 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.eclipse.microprofile.config.Config;
@@ -93,29 +90,36 @@ public class CloudEventUtils {
   }
 
   public static String getSubject(CloudEvent cloudEvent) {
-    return Objects.requireNonNull(cloudEvent.getSubject());
+    return Optional.ofNullable(cloudEvent.getSubject())
+        .filter(subject -> !subject.isEmpty())
+        .orElseThrow(NullPointerException::new);
   }
 
   public static Optional<String> getSubjectNamespace(String subject) {
-    String value = requireNonNull(subject);
-
-    var indexOfSeparator = value.indexOf(NAMESPACE_SEPARATOR);
+    var indexOfSeparator = subject.indexOf(NAMESPACE_SEPARATOR);
     if (indexOfSeparator > 0) {
-      return Optional.of(value.substring(0, indexOfSeparator));
+      return Optional.of(subject.substring(0, indexOfSeparator));
     }
     return Optional.empty();
   }
 
-  public static String getSubjectWithoutNamespace(String subject) {
-    String value = requireNonNull(subject);
+  public static String getSubjectWithoutNamespace(CloudEvent cloudEvent) {
+    String subject = getSubject(cloudEvent);
+    return getSubjectWithoutNamespace(subject);
+  }
 
-    var indexOfSeparator = value.indexOf(NAMESPACE_SEPARATOR);
+  public static String getSubjectWithoutNamespace(String subject) {
+    var indexOfSeparator = subject.indexOf(NAMESPACE_SEPARATOR);
     if (indexOfSeparator == 0) {
-      return value.substring(NAMESPACE_SEPARATOR.length());
+      return subject.substring(NAMESPACE_SEPARATOR.length());
     } else if (indexOfSeparator > 0) {
-      return value.substring(indexOfSeparator + NAMESPACE_SEPARATOR.length());
+      return subject.substring(indexOfSeparator + NAMESPACE_SEPARATOR.length());
     }
     return subject;
+  }
+
+  public static String createNamespacedSubject(String namespace, String rawSubject) {
+    return namespace + NAMESPACE_SEPARATOR + rawSubject;
   }
 
   public static CloudEvent eventWithData(String subject, String type, Object data) {
