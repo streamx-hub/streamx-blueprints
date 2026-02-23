@@ -80,7 +80,7 @@ public class HttpDownloaderFunction {
   }
 
   @Incoming(Channels.DOWNLOAD_REQUESTS)
-  public void process(CloudEvent event) throws Exception {
+  public void process(CloudEvent event) throws DownloadException {
     DownloadRequest request = scheduleIfScheduledRequest(event);
     if (request != null && DownloadRequestClassifier.shouldDownloadAndEmit(event.getType())) {
       downloadAndEmit(request);

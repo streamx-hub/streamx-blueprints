@@ -2,7 +2,6 @@ package com.streamx.blueprints.resource.downloader;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.head;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -56,11 +55,6 @@ public class ResourceDownloaderIT extends BaseQuarkusIntegrationTest {
   }
 
   private void configureServiceToDownloadTestPageFromWiremock() {
-    wiremock.register(head(urlEqualTo(TEST_PAGE_PATH))
-        .willReturn(aResponse()
-            .withStatus(200)
-        ));
-
     wiremock.register(get(urlEqualTo(TEST_PAGE_PATH))
         .willReturn(aResponse()
             .withStatus(200)
