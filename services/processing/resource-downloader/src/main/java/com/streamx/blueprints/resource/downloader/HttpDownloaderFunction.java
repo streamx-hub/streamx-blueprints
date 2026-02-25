@@ -71,7 +71,8 @@ public class HttpDownloaderFunction {
           try {
             downloadAndEmit(request);
           } catch (Exception ex) {
-            log.errorf("Error downloading scheduled resource %s", request.url());
+            String errorMessage = "Error downloading scheduled resource " + request.url();
+            logDownloadError(ex, errorMessage);
           }
         });
   }
@@ -93,7 +94,7 @@ public class HttpDownloaderFunction {
       return message.ack();
     } catch (Exception ex) {
       String errorMessage = "Error downloading resource " + request.url();
-      log.debug(errorMessage, ex);
+      logDownloadError(ex, errorMessage);
       return message.nack(new StackTracelessException(errorMessage, ex));
     }
   }
@@ -159,6 +160,14 @@ public class HttpDownloaderFunction {
 
   CloseableHttpResponse executeGet(HttpGet request) throws IOException {
     return httpClient.execute(request);
+  }
+
+  private void logDownloadError(Exception ex, String errorMessage) {
+    if (log.isDebugEnabled()) {
+      log.debug(errorMessage, ex);
+    } else {
+      log.error(errorMessage);
+    }
   }
 
 }
