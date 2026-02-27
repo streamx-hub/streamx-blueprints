@@ -95,6 +95,7 @@ public class HttpDownloaderFunction {
     } catch (Exception ex) {
       String errorMessage = "Error downloading resource " + request.url();
       logDownloadError(ex, errorMessage);
+      // suppress stack trace to minimize log volume for failures downloading external urls
       return message.nack(new StackTracelessException(errorMessage, ex));
     }
   }
@@ -166,7 +167,7 @@ public class HttpDownloaderFunction {
     if (log.isDebugEnabled()) {
       log.debug(errorMessage, ex);
     } else {
-      log.error(errorMessage);
+      log.warn(errorMessage);
     }
   }
 
