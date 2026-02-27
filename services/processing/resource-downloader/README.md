@@ -126,6 +126,14 @@ In this scenario, one final download may occur before the cancellation takes eff
   **Default**: 30000 milliseconds
 
 
+- `streamx.blueprints.resource-downloader.disable-certificate-validation`  
+  Disables SSL/TLS certificate and hostname verification when fetching remote assets.
+   - Trusts all certificates: Accepts expired, self-signed, or untrusted local certificates.
+   - Skips hostname check: Allows connections even if the URL (e.g., *.nip.io) doesn't match the certificate's domain.
+
+  **Default**: `false`
+
+
 ### Channels
 
 Incoming channels:

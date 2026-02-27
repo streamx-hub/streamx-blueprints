@@ -14,6 +14,9 @@ public interface Configuration {
   @WithDefault("30000")
   long repeatIntervalMillis();
 
+  @WithDefault("false")
+  boolean disableCertificateValidation();
+
   Optional<Pattern> repeatableUrlPattern();
 
 }
