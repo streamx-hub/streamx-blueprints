@@ -19,10 +19,10 @@ public final class HttpRequestor {
   }
 
   public static void post(String url, String body) {
-    try (CloseableHttpClient http = HttpClients.createDefault()) {
+    try (CloseableHttpClient client = HttpClients.createDefault()) {
       HttpPost post = new HttpPost(url);
       post.setEntity(new StringEntity(body));
-      CloseableHttpResponse response = http.execute(post);
+      CloseableHttpResponse response = client.execute(post);
       assertThat(response.getStatusLine().getStatusCode()).isEqualTo(HttpStatus.SC_ACCEPTED);
     } catch (IOException | AssertionError ex) {
       DockerLogsRetriever.printDockerContainerLogs();

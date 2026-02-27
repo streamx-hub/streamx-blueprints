@@ -12,6 +12,7 @@ import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.concurrent.CompletionStage;
 import org.apache.commons.lang3.IntegerRange;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -20,6 +21,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Message;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -69,7 +71,8 @@ public class HttpDownloaderFunction {
           try {
             downloadAndEmit(request);
           } catch (Exception ex) {
-            log.warnf("Error downloading repeatable resource " + request.url());
+            String errorMessage = "Error downloading scheduled resource " + request.url();
+            logDownloadError(ex, errorMessage);
           }
         });
   }
@@ -80,10 +83,20 @@ public class HttpDownloaderFunction {
   }
 
   @Incoming(Channels.DOWNLOAD_REQUESTS)
-  public void process(CloudEvent event) throws Exception {
+  public CompletionStage<Void> process(Message<CloudEvent> message) {
+    CloudEvent event = message.getPayload();
     DownloadRequest request = scheduleIfScheduledRequest(event);
-    if (request != null && DownloadRequestClassifier.shouldDownloadAndEmit(event.getType())) {
+    if (request == null || !DownloadRequestClassifier.shouldDownloadAndEmit(event.getType())) {
+      return message.ack();
+    }
+    try {
       downloadAndEmit(request);
+      return message.ack();
+    } catch (Exception ex) {
+      String errorMessage = "Error downloading resource " + request.url();
+      logDownloadError(ex, errorMessage);
+      // suppress stack trace to minimize log volume for failures downloading external urls
+      return message.nack(new StackTracelessException(errorMessage, ex));
     }
   }
 
@@ -148,6 +161,14 @@ public class HttpDownloaderFunction {
 
   CloseableHttpResponse executeGet(HttpGet request) throws IOException {
     return httpClient.execute(request);
+  }
+
+  private void logDownloadError(Exception ex, String errorMessage) {
+    if (log.isDebugEnabled()) {
+      log.debug(errorMessage, ex);
+    } else {
+      log.warn(errorMessage);
+    }
   }
 
 }
