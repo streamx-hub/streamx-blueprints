@@ -26,8 +26,9 @@ import org.junit.jupiter.api.Test;
 public class DisableCertificateValidationTest {
 
   private static final String PASSWORD = "password";
+  private static final String HOSTNAME = "127.0.0.1.nip.io";
   private static final int PORT = 8443;
-  private static final String NIP_IO_URL = "https://127.0.0.1.nip.io:" + PORT + "/test";
+  private static final String NIP_IO_URL = "https://" + HOSTNAME + ":" + PORT + "/test";
   private HttpsServer server;
 
   private final WebClientsFactory webClientsFactory = new WebClientsFactory();
@@ -112,7 +113,7 @@ public class DisableCertificateValidationTest {
         "-validity", "36500",
         "-storepass", PASSWORD,
         "-keypass", PASSWORD,
-        "-dname", "CN=" + "127.0.0.1.nip.io",
+        "-dname", "CN=" + HOSTNAME,
         "-noprompt"
     ).inheritIO();
 
