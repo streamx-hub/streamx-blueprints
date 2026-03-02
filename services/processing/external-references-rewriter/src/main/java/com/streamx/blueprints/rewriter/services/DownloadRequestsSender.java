@@ -8,8 +8,10 @@ import com.streamx.blueprints.rewriter.data.ExternalResource;
 import io.cloudevents.CloudEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
+import org.eclipse.microprofile.reactive.messaging.OnOverflow;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -22,6 +24,8 @@ public class DownloadRequestsSender {
   Configuration configuration;
 
   @Channel(Channels.DOWNLOAD_REQUESTS)
+  @OnOverflow(value = OnOverflow.Strategy.BUFFER, bufferSize = 1024)
+  @Acknowledgment(Acknowledgment.Strategy.PRE_PROCESSING)
   Emitter<CloudEvent> downloadRequestEmitter;
 
   /**
