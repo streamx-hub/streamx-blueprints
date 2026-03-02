@@ -24,7 +24,7 @@ public class DownloadRequestsSender {
   Configuration configuration;
 
   @Channel(Channels.DOWNLOAD_REQUESTS)
-  @OnOverflow(value = OnOverflow.Strategy.BUFFER, bufferSize = 1024)
+  @OnOverflow(value = OnOverflow.Strategy.BUFFER, bufferSize = 5000)
   @Acknowledgment(Acknowledgment.Strategy.PRE_PROCESSING)
   Emitter<CloudEvent> downloadRequestEmitter;
 
