@@ -12,7 +12,7 @@ import com.streamx.blueprints.rewriter.services.DownloadRequestsSender;
 import com.streamx.blueprints.rewriter.services.UrlComputationService;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.v1.CloudEventBuilder;
-import io.smallrye.mutiny.Uni;
+import io.smallrye.reactive.messaging.annotations.Blocking;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -42,10 +42,11 @@ public class ProcessResourceFunction {
 
   @Incoming(Channels.INCOMING_RESOURCES)
   @Outgoing(Channels.OUTGOING_RESOURCES)
-  public Uni<CloudEvent> processIncomingEvent(CloudEvent event) {
+  @Blocking
+  public CloudEvent processIncomingEvent(CloudEvent event) {
     Resource payload = extractResource(event);
     if (payload == null) {
-      return asRelayedEvent(event);
+      return event;
     }
 
     String resourcePath = CloudEventUtils.getSubject(event);
@@ -53,7 +54,7 @@ public class ProcessResourceFunction {
     if (!configuration.processablePayloadTypes().contains(payloadType)) {
       log.tracef("Skipping processing %s - the service is not configured to handle payload type %s",
           resourcePath, payloadType);
-      return asRelayedEvent(event);
+      return event;
     }
 
     String eventType = event.getType();
@@ -63,19 +64,19 @@ public class ProcessResourceFunction {
         .findFirst();
     if (settingsOpt.isEmpty()) {
       log.tracef("No handler for resource event %s of type %s", resourcePath, eventType);
-      return asRelayedEvent(event);
+      return event;
     }
 
     BaseProcessingSettings<?> settings = settingsOpt.get();
     if (!settings.getExternalResourcesCollector().hasResourceSelectors()) {
       log.tracef("Skipping processing %s - no resource selectors are specified", resourcePath);
-      return asRelayedEvent(event);
+      return event;
     }
 
     return processIncomingResource(payload, payloadType, resourcePath, event, settings);
   }
 
-  private Uni<CloudEvent> processIncomingResource(Resource payload, String payloadType,
+  private CloudEvent processIncomingResource(Resource payload, String payloadType,
       String resourcePath, CloudEvent event, BaseProcessingSettings<?> settings) {
     String resourceContent = payload.getContentAsString();
     ResourceData resource = collectResourceData(resourcePath, resourceContent,
@@ -103,10 +104,9 @@ public class ProcessResourceFunction {
         resource.streamxKey(),
         externalResources.stream().map(ExternalResource::getPaths).collect(Collectors.toList())
     );
-    CloudEvent cloudEvent = downloadExternalResourcesAndReturnAdjustedResource(
+    return downloadExternalResourcesAndReturnAdjustedResource(
         event, resource, externalResources, settings
     );
-    return Uni.createFrom().item(cloudEvent);
   }
 
   private Resource extractResource(CloudEvent event) {
@@ -123,15 +123,10 @@ public class ProcessResourceFunction {
     }
   }
 
-  private Uni<CloudEvent> asRelayedEvent(CloudEvent event) {
-    return Uni.createFrom().item(event);
-  }
-
-  private Uni<CloudEvent> asProcessedEvent(CloudEvent event, String key) {
-    CloudEvent adjustedEvent = new CloudEventBuilder(event)
+  private CloudEvent asProcessedEvent(CloudEvent event, String key) {
+    return new CloudEventBuilder(event)
         .withSubject(key)
         .build();
-    return Uni.createFrom().item(adjustedEvent);
   }
 
   private ResourceData collectResourceData(String path, String content,

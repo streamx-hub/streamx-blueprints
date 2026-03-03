@@ -115,11 +115,17 @@ abstract class BaseMockedDownloaderTest {
     assertThat(resource.content()).isEqualTo(expectedContent);
   }
 
+  protected void assertDownloadedAssets(DownloadedResource... expectedAssets) {
+    assertDownloadedAssets(List.of(expectedAssets));
+  }
+
   protected void assertDownloadedAssets(List<DownloadedResource> expectedAssets) {
+    waitForDownloadedAssets(expectedAssets.size());
+
     List<DownloadedResource> sortedActualAssets = downloadedAssets.stream()
         .sorted(Comparator.comparing(DownloadedResource::streamxKey))
         .toList();
-    assertThat(sortedActualAssets).hasSize(expectedAssets.size());
+    assertThat(sortedActualAssets).hasSameSizeAs(expectedAssets);
 
     List<DownloadedResource> sortedExpectedAssets = expectedAssets.stream()
         .sorted(Comparator.comparing(DownloadedResource::streamxKey))

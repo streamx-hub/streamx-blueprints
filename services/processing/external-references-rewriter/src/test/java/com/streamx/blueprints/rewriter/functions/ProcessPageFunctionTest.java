@@ -216,7 +216,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
     // and: assert content of published events
-    assertDownloadedAssets(List.of(
+    assertDownloadedAssets(
         new DownloadedResource("/eds/pages/blogs/adventures.jpg",
             blogImageContent),
         new DownloadedResource("/eds/eds-index.jpg",
@@ -229,7 +229,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
             cloudImageContent),
         new DownloadedResource("/stylesheets/styles.css",
             stylesheetContent)
-    ));
+    );
 
     assertPublishedPage(pageEvents.getFirst(),
         "/eds/pages/page.html",
@@ -460,7 +460,8 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     publishPage(pagePath, pageContent);
 
     // then
-    assertDownloadedAssets(List.of(
+    waitForDownloadedAssets(5);
+    assertDownloadedAssets(
         new DownloadedResource(
             "/pages/image_20with_20spaces_20and_20invalid_20chars_20like_20_5E.jpg",
             externalImageContent),
@@ -468,7 +469,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
         new DownloadedResource("/assets/Cube_20Images/cube1.webp", externalImageContent),
         new DownloadedResource("/assets/Cube-Images/cube2.webp", externalImageContent),
         new DownloadedResource("/assets/Cube_20Images/cube3.webp", externalImageContent)
-    ));
+    );
 
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
     assertPublishedPage(pageEvents.getFirst(),

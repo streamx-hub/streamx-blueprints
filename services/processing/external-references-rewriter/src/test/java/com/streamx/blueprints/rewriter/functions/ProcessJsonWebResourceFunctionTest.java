@@ -53,14 +53,14 @@ class ProcessJsonWebResourceFunctionTest extends BaseProcessFunctionTest {
 
     // then
     waitForDownloadedAssets(3);
-    assertDownloadedAssets(List.of(
+    assertDownloadedAssets(
         new DownloadedResource("/nav-image.png_width_1200_format_pjpg_optimize_medium.png",
             navImageContent),
         new DownloadedResource("/article-1-image.png_width_1200_format_pjpg_optimize_medium.png",
             article1ImageContent),
         new DownloadedResource("/article-2-image.png_width_1200_format_pjpg_optimize_medium.png",
             article2ImageContent)
-    ));
+    );
 
     List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 1);
     assertPublishedWebResource(webResourceEvents.getFirst(),
