@@ -21,7 +21,6 @@ public class DownloadRequestsSender {
   @Inject
   Configuration configuration;
 
-  @Inject
   @Channel(Channels.DOWNLOAD_REQUESTS)
   MutinyEmitter<CloudEvent> downloadRequestEmitter;
 
