@@ -6,10 +6,10 @@ import com.streamx.blueprints.rewriter.Channels;
 import com.streamx.blueprints.rewriter.configuration.Configuration;
 import com.streamx.blueprints.rewriter.data.ExternalResource;
 import io.cloudevents.CloudEvent;
+import io.smallrye.reactive.messaging.MutinyEmitter;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.reactive.messaging.Channel;
-import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -22,7 +22,7 @@ public class DownloadRequestsSender {
   Configuration configuration;
 
   @Channel(Channels.DOWNLOAD_REQUESTS)
-  Emitter<CloudEvent> downloadRequestEmitter;
+  MutinyEmitter<CloudEvent> downloadRequestEmitter;
 
   /**
    * Sends a standard, non-repeatable download request
@@ -40,12 +40,12 @@ public class DownloadRequestsSender {
 
     log.tracef("Sending download request for %s", absoluteUrl);
 
-    CloudEvent cloudEvent = CloudEventUtils.eventWithData(
+    CloudEvent event = CloudEventUtils.eventWithData(
         streamxKey,
         DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE,
         downloadRequest
     );
 
-    downloadRequestEmitter.send(cloudEvent);
+    downloadRequestEmitter.sendAndAwait(event);
   }
 }

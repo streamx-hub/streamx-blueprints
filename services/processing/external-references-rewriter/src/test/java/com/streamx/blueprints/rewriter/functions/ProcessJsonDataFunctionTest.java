@@ -80,10 +80,10 @@ class ProcessJsonDataFunctionTest extends BaseProcessFunctionTest {
 
     // then: verify published images
     waitForDownloadedAssets(2);
-    assertDownloadedAssets(List.of(
+    assertDownloadedAssets(
         new DownloadedResource("/https_magento.test/url/to/image1.jpg", image1Content),
         new DownloadedResource("/relative/url/to/image2.jpg", image2Content)
-    ));
+    );
 
     // and: verify published processed json
     List<CloudEvent> dataSink = waitForEventsInSink(DATA, 1);

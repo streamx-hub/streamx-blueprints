@@ -38,23 +38,24 @@ the service automatically decompresses the response body before emitting it.
 
 ## Sample usage (relevant code snippets only):
 ```java
-  @Channel(Channels.DOWNLOAD_REQUESTS)
-  Emitter<DownloadRequest> downloadRequestEmitter;
+  @Channel("download-requests")
+  MutinyEmitter<DownloadRequest> downloadRequestEmitter;
 
   DownloadRequest downloadRequest = new DownloadRequest(
-    url, 
-    emitKey,
-    "page.payload.type",
-    "web-resource.payload.type",
-    "asset.payload.type"
+    absoluteUrl,
+    streamxKey,
+    "emmited.page-type",
+    "emmited.web-resource.type",
+    "emmited.asset.type"
   );
 
-  CloudEvent event = CloudEventUtils.builderWithJsonData(downloadRequest)
-    .withSubject(emitKey)
-    .withType(DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE)
-    .build();
+  CloudEvent event = CloudEventUtils.eventWithData(
+    streamxKey,
+    DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE,
+    downloadRequest
+  );
 
-  downloadRequestEmitter.send(event);
+  downloadRequestEmitter.sendAndAwait(event);
 ```
 
 ## Repeatable Downloads  
