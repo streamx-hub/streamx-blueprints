@@ -4,7 +4,7 @@ Generates new data using collectors. Optionally publish data object to web resou
 channel (see configuration).
 
 Scaling of this service is not supported.
-See [ProcessDataFunction](src/main/java/dev/streamx/blueprints/data/collector/ProcessDataFunction.java).
+See [ProcessDataFunction](src/main/java/com/streamx/blueprints/data/collector/ProcessDataFunction.java).
 
 The group by value added to the published key is stripped from non-alphanumeric characters and
 spaces are replaced with underscores.

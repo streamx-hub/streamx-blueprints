@@ -355,6 +355,17 @@ processing:
           relayed-events:
             ref: outbox.fragments
 
+  collected-data-relay:
+    descriptor: relay
+    containers:
+      service:
+        incoming:
+          events:
+            ref: relay.collected-data
+        outgoing:
+          relayed-events:
+            ref: relay.reprocessable-collected-data
+
   blueprint-optimized-images-generator:
     descriptor: optimized-images-generator
     containers:
@@ -532,7 +543,7 @@ processing:
       processor:
         incoming:
           data:
-            ref: relay.aggregated-data,relay.collected-data
+            ref: relay.aggregated-data,relay.reprocessable-collected-data
         outgoing:
           collected-data:
             ref: relay.collected-data
@@ -541,7 +552,7 @@ processing:
         environment:
           STREAMX_BLUEPRINTS_DATA_COLLECTOR_WEB-RESOURCES_FILTERS: collected_.*
           STREAMX_BLUEPRINTS_DATA-COLLECTOR_DIRTY-CHECK_MAX-DIRTY-SEQUENCE-COUNT: "0"
-          STREAMX_BLUEPRINTS_DATA-COLLECTOR_DIRTY-CHECK_DELAY: 1s
+          STREAMX_BLUEPRINTS_DATA-COLLECTOR_DIRTY-CHECK_DELAY: 3s
           STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_DATA_KEY_MATCH_PATTERN: product:.*
           STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_COLLECTOR: aggregate-by-property-value
           STREAMX_BLUEPRINTS_DATA_COLLECTOR_CONFIGURATIONS_CHEAPEST-PRODUCTS-BY-CATEGORY_PROPERTIES_OUTPUTKEYPREFIX: collected_products_cheapest-by-category_
