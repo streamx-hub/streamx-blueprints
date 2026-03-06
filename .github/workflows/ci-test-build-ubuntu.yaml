@@ -33,4 +33,4 @@ jobs:
 
       - name: Run tests
         run: |
-          ./mvn surefire:test failsafe:integration-test failsafe:verify
+          ./mvnw surefire:test failsafe:integration-test failsafe:verify
