@@ -65,7 +65,7 @@ public class LocalReferencesRewriterIT extends BaseQuarkusIntegrationTest {
     assertPageEventWithOriginalContent(outgoingEvent2, sourceEvent);
   }
 
-  private static void publishOptimizedImage() throws IOException {
+  private void publishOptimizedImage() throws IOException {
     byte[] testFileContent = FileUtils.readFileToByteArray(TEST_IMAGE_FILE);
     var optimizedAsset = new OptimizedAsset(testFileContent, "test-image", ORIGINAL_ASSET_KEY);
 
@@ -77,7 +77,7 @@ public class LocalReferencesRewriterIT extends BaseQuarkusIntegrationTest {
     sendOptimizedImageEvent(event);
   }
 
-  private static void unpublishOptimizedImage() {
+  private void unpublishOptimizedImage() {
     CloudEvent event = CloudEventUtils.eventWithoutData(
         OPTIMIZED_ASSET_KEY,
         OptimizedAsset.TYPE_UNPUBLISHED
@@ -85,7 +85,7 @@ public class LocalReferencesRewriterIT extends BaseQuarkusIntegrationTest {
     sendOptimizedImageEvent(event);
   }
 
-  private static void sendOptimizedImageEvent(CloudEvent event) {
+  private void sendOptimizedImageEvent(CloudEvent event) {
     sendEvent(event, Channels.OPTIMIZED_ASSETS);
   }
 

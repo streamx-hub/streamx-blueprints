@@ -14,6 +14,8 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import io.cloudevents.CloudEvent;
 import io.quarkiverse.wiremock.devservice.ConnectWireMock;
+import io.quarkus.test.common.http.TestHTTPResource;
+import java.net.URL;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -29,15 +31,15 @@ import org.junit.jupiter.api.BeforeEach;
 @ConnectWireMock
 public abstract class BaseQuarkusIntegrationTest {
 
-  private static final String INTEGRATION_TEST = "integration-test";
-  protected static final String SERVICE_BASE_URL = "http://localhost:8081";
+  @TestHTTPResource
+  protected URL deploymentUrl;
 
   // will be injected automatically when the test class is annotated with @ConnectWireMock
   protected WireMock wiremock;
 
   @BeforeAll
   static void setServiceInstanceId() {
-    System.setProperty("streamx.service.instance-id", INTEGRATION_TEST);
+    System.setProperty("streamx.service.instance-id", "integration-test");
   }
 
   @BeforeEach
@@ -49,13 +51,12 @@ public abstract class BaseQuarkusIntegrationTest {
     }
   }
 
-  protected static void sendStatefulEvent(CloudEvent event, String stateChannel,
-      String mainChannel) {
+  protected void sendStatefulEvent(CloudEvent event, String stateChannel, String mainChannel) {
     sendEvent(event, stateChannel);
     sendEvent(event, mainChannel);
   }
 
-  protected static void sendEvent(CloudEvent cloudEvent, String channel) {
+  protected void sendEvent(CloudEvent cloudEvent, String channel) {
     String serializedEvent = CloudEventsSerialization.serialize(cloudEvent);
     String url = toUrl(channel);
     HttpRequestor.post(url, serializedEvent);
@@ -149,8 +150,8 @@ public abstract class BaseQuarkusIntegrationTest {
     return properties;
   }
 
-  private static String toUrl(String channel) {
-    return SERVICE_BASE_URL + toEndpoint(channel);
+  private String toUrl(String channel) {
+    return deploymentUrl.toString() + toEndpoint(channel);
   }
 
   private static String toEndpoint(String channel) {

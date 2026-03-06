@@ -35,7 +35,7 @@ public class WebServerSinkIT extends BaseQuarkusIntegrationTest {
     sendEvent(pageEvent, Channels.RESOURCES);
 
     // then
-    assertUrlContent(SERVICE_BASE_URL + pagePath, """
+    assertUrlContent(deploymentUrl.toString() + pagePath, """
         <html>
           <body>
             Welcome at the products page.<br />
