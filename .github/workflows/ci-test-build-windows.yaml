@@ -27,10 +27,6 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Build project
-        run: |
-          ./mvnw clean compile test-compile -DskipTests -T 5
-
       - name: Run tests
         run: |
-          ./mvnw surefire:test
+          ./mvnw clean test
