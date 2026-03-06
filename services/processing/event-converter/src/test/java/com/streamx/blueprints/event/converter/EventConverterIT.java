@@ -31,7 +31,7 @@ public class EventConverterIT extends BaseQuarkusIntegrationTest {
   }
 
   private static void assertOutgoingEvent(CloudEvent outgoingEvent, CloudEvent sourceEvent,
-      Data sourceData) {
+      Data sourceData) { 
     assertThat(outgoingEvent.getId()).isNotEqualTo(sourceEvent.getId());
     assertThat(outgoingEvent.getSource()).asString().isEqualTo("event-converter");
     assertThat(outgoingEvent.getSubject()).isEqualTo(sourceEvent.getSubject());
