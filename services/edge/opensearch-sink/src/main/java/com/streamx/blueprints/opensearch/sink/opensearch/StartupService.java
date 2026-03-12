@@ -18,9 +18,16 @@ public class StartupService {
   private static final int PRIORITY = Interceptor.Priority.LIBRARY_BEFORE - 10;
 
   @Inject
+  OpenSearchHealthCheckService healthCheckService;
+
+  @Inject
   ElasticsearchEvolution elasticsearchEvolution;
 
   void setup(@Observes @Priority(PRIORITY) StartupEvent event) {
-    elasticsearchEvolution.migrate();
+    if (healthCheckService.waitForClusterHealth()) {
+      elasticsearchEvolution.migrate();
+    } else {
+      throw new IllegalStateException("Cannot perform migrations, cluster is not healthy");
+    }
   }
 }
