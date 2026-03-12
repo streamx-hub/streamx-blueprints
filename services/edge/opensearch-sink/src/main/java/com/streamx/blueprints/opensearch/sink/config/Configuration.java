@@ -16,6 +16,6 @@ public interface Configuration {
   List<String> allowedJsonPaths();
 
   @WithDefault("60")
-  int clusterHealthWaitTimeoutSeconds();
+  int opensearchHealthCheckWaitTimeoutSeconds();
 
 }

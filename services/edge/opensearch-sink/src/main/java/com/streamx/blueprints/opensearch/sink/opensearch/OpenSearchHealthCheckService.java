@@ -19,7 +19,7 @@ import org.elasticsearch.client.RestClient;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
-public class ClusterHealthService {
+public class OpenSearchHealthCheckService {
 
   private static final String ENDPOINT = "/_cluster/health";
   private static final Set<String> HEALTHY_STATUSES = Set.of("green", "yellow");
@@ -39,17 +39,18 @@ public class ClusterHealthService {
   boolean waitForClusterHealth() {
     log.info("Start waiting for Cluster Health");
     Request request = createRequest();
-    int timeoutSeconds = configuration.clusterHealthWaitTimeoutSeconds();
+    int timeoutSeconds = configuration.opensearchHealthCheckWaitTimeoutSeconds();
 
     for (int i = 0; i < timeoutSeconds; i++) {
       if (verifyClusterHealth(request)) {
         log.infof("Cluster is healthy");
         return true;
       }
+      log.infof("Waiting for Cluster Health to be in %s", HEALTHY_STATUSES);
       ThreadUtils.sleepQuietly(Duration.ofSeconds(1));
     }
 
-    log.warnf("Cluster Health was not %s within %d seconds", HEALTHY_STATUSES, timeoutSeconds);
+    log.warnf("Cluster Health was not in %s within %d seconds", HEALTHY_STATUSES, timeoutSeconds);
     return false;
   }
 
@@ -74,11 +75,11 @@ public class ClusterHealthService {
   }
 
   private boolean validateResponseHttpStatus(Response response) {
-    int statusCode = response.getStatusLine().getStatusCode();
-    if (statusCode == HttpStatus.SC_OK) {
+    int httpStatus = response.getStatusLine().getStatusCode();
+    if (httpStatus == HttpStatus.SC_OK) {
       return true;
     }
-    log.warnf("Error retrieving Cluster Health. Status code: %s", statusCode);
+    log.debugf("Error retrieving Cluster Health. HTTP status: %s", httpStatus);
     return false;
   }
 
@@ -93,7 +94,7 @@ public class ClusterHealthService {
       if (HEALTHY_STATUSES.contains(status)) {
         return true;
       }
-      log.infof("Unexpected Cluster Health status: %s, expected one of: %s", status,
+      log.debugf("Unexpected Cluster Health status: %s, expected one of: %s", status,
           HEALTHY_STATUSES);
     } catch (IOException ex) {
       log.warnf(ex, "Error retrieving Cluster Health");

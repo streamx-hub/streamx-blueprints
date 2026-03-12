@@ -22,10 +22,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 @QuarkusTest
-class ClusterHealthServiceTest {
+class OpenSearchHealthCheckServiceTest {
 
   @InjectSpy
-  ClusterHealthService service;
+  OpenSearchHealthCheckService service;
 
   private final RestClient restClient = mock();
   private final Configuration configuration = mock();
@@ -38,7 +38,7 @@ class ClusterHealthServiceTest {
     service.restClient = restClient;
     service.configuration = configuration;
 
-    doReturn(1).when(configuration).clusterHealthWaitTimeoutSeconds();
+    doReturn(1).when(configuration).opensearchHealthCheckWaitTimeoutSeconds();
     doReturn(statusLine).when(response).getStatusLine();
     doReturn(response).when(restClient).performRequest(any(Request.class));
   }

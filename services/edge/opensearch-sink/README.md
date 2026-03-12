@@ -42,7 +42,7 @@ At least `file:/deployments/opensearch/service-init/default/index-definition` is
 
 Default: `file:/deployments/opensearch/service-init`
 
-`streamx.blueprints.opensearch-sink.cluster-health-wait-timeout-seconds` -
+`streamx.blueprints.opensearch-sink.opensearch-health-check-wait-timeout-seconds` -
 Specifies the maximum duration (in seconds) the service will wait for the OpenSearch cluster
 to reach a healthy status before proceeding with migrations.
 This prevents the application from starting against an unhealthy or initializing cluster.
