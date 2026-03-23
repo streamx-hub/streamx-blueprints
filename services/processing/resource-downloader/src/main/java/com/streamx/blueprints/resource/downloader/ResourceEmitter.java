@@ -7,6 +7,7 @@ import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.data.WebResource;
 import io.cloudevents.CloudEvent;
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.io.IOException;
@@ -52,26 +53,27 @@ public class ResourceEmitter {
   @Channel(Channels.DOWNLOADED_WEB_RESOURCES)
   Emitter<CloudEvent> webResourcesEmitter;
 
-  void emitResource(CloseableHttpResponse response, DownloadRequest request) throws IOException {
+  Uni<Void> emitResource(CloseableHttpResponse response, DownloadRequest request)
+      throws IOException {
     byte[] resourceBytes = getResponseBytes(response);
     ByteBuffer content = ByteBuffer.wrap(resourceBytes);
     String streamxKey = request.emitKey();
     if (isHtmlPage(response)) {
-      emit(
+      return emit(
           pagesEmitter,
           streamxKey,
           new Page(content, request.emittedPageType()),
           Page.TYPE_PUBLISHED
       );
     } else if (isWebResource(response)) {
-      emit(
+      return emit(
           webResourcesEmitter,
           streamxKey,
           new WebResource(content, request.emittedWebResourceType()),
           WebResource.TYPE_PUBLISHED
       );
     } else {
-      emit(
+      return emit(
           assetsEmitter,
           streamxKey,
           new Asset(content, request.emittedAssetType()),
@@ -80,7 +82,7 @@ public class ResourceEmitter {
     }
   }
 
-  <T extends Resource> void emit(Emitter<CloudEvent> emitter, String key, T payload,
+  <T extends Resource> Uni<Void> emit(Emitter<CloudEvent> emitter, String key, T payload,
       String eventType) {
     String payloadClass = payload.getClass().getSimpleName();
     String payloadType = payload.getType();
@@ -88,7 +90,7 @@ public class ResourceEmitter {
         eventType, payloadType);
 
     CloudEvent cloudEvent = CloudEventUtils.eventWithData(key, eventType, payload);
-    emitter.send(cloudEvent);
+    return Uni.createFrom().completionStage(emitter.send(cloudEvent));
   }
 
   private static byte[] getResponseBytes(CloseableHttpResponse response) throws IOException {

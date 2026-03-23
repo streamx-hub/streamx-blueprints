@@ -54,5 +54,4 @@ abstract class AbstractValuesFinderTest {
     assertThat(thrownException).isNull();
     assertThat(foundValues).isEmpty();
   }
-
 }

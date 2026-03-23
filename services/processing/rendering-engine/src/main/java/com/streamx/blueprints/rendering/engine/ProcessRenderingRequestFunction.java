@@ -16,6 +16,7 @@ import com.streamx.blueprints.rendering.engine.converter.RendererEventsStore;
 import com.streamx.blueprints.rendering.engine.generator.GeneratorException;
 import com.streamx.blueprints.rendering.engine.generator.OutputGenerator;
 import io.cloudevents.CloudEvent;
+import io.smallrye.mutiny.Uni;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -84,12 +85,12 @@ public class ProcessRenderingRequestFunction {
   }
 
   @Incoming(Channels.Incoming.RENDERING_REQUESTS)
-  public void process(CloudEvent event) {
+  public Uni<Void> process(CloudEvent event) {
     RenderingRequest request = CloudEventUtils.getData(event, RenderingRequest.class);
     String subject = CloudEventUtils.getSubject(event);
     if (request == null) {
       log.warnf("Skipping processing event [%s] - no content", subject);
-      return;
+      return Uni.createFrom().voidItem();
     }
 
     PreservedData preservedData = dataStore.get(request.dataKey());
@@ -98,7 +99,7 @@ public class ProcessRenderingRequestFunction {
 
     if (ObjectUtils.anyNull(preservedRenderer, data)) {
       log.tracef("Cannot proceed with processing %s, renderer or data is missing", subject);
-      return;
+      return Uni.createFrom().voidItem();
     }
 
     Renderer renderer = preservedRenderer.renderer();
@@ -108,11 +109,13 @@ public class ProcessRenderingRequestFunction {
         preservedRenderer.eventType()
     );
     if (renderer != null || isUnpublish) {
-      generateAndEmitOutputEvent(isUnpublish, request, data, renderer);
+      return generateAndEmitOutputEvent(isUnpublish, request, data, renderer);
     }
+    return Uni.createFrom().voidItem();
   }
 
-  private void generateAndEmitOutputEvent(boolean isUnpublish, RenderingRequest request, Data data,
+  private Uni<Void> generateAndEmitOutputEvent(boolean isUnpublish, RenderingRequest request,
+      Data data,
       Renderer renderer) {
     Map<String, Object> dataValue = readValue(data);
     String outputContent = isUnpublish ? null : generateOutputContent(renderer, dataValue);
@@ -123,7 +126,7 @@ public class ProcessRenderingRequestFunction {
     String eventType = getEventType(processingSettings, isUnpublish);
     WebResource resource = createResource(processingSettings, outputType, outputContent);
     CloudEvent resourceEvent = CloudEventUtils.eventWithData(key, eventType, resource);
-    emit(processingSettings, resourceEvent);
+    return emit(processingSettings, resourceEvent);
   }
 
   private String getEventType(ProcessingSettings settings, boolean isUnpublish) {
@@ -135,8 +138,8 @@ public class ProcessRenderingRequestFunction {
     return settings.resourceConstructor.apply(outputContent, outputType);
   }
 
-  private void emit(ProcessingSettings settings, CloudEvent resourceEvent) {
-    settings.emitter.send(resourceEvent);
+  private Uni<Void> emit(ProcessingSettings settings, CloudEvent resourceEvent) {
+    return Uni.createFrom().completionStage(settings.emitter.send(resourceEvent));
   }
 
   private boolean isAnyUnpublishEvent(String... relatedEventTypes) {

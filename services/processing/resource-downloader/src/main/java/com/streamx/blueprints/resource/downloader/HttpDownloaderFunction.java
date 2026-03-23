@@ -7,6 +7,7 @@ import com.streamx.blueprints.state.StateRepository;
 import io.cloudevents.CloudEvent;
 import io.quarkus.runtime.StartupEvent;
 import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
@@ -59,21 +60,13 @@ public class HttpDownloaderFunction {
     repeatInterval = Duration.ofMillis(configuration.repeatIntervalMillis());
     repeatableDownloadsStore = repositoryFactory.getOrCreate(
         "repeatable-downloads", DownloadRequest.class);
-    initRepeatableDownloadAndEmit();
-  }
-
-  private void initRepeatableDownloadAndEmit() {
     Multi.createFrom().ticks()
         .every(repeatInterval)
         .flatMap(l -> Multi.createFrom().items(repeatableDownloadsStore.values()))
+        .onItem().transformToUniAndMerge(this::downloadAndEmit)
         .subscribe()
-        .with(request -> {
-          try {
-            downloadAndEmit(request);
-          } catch (Exception ex) {
-            String errorMessage = "Error downloading scheduled resource " + request.url();
-            logDownloadError(ex, errorMessage);
-          }
+        .with(item -> {}, failure -> {
+          logDownloadError(failure, failure.getMessage());
         });
   }
 
@@ -86,18 +79,21 @@ public class HttpDownloaderFunction {
   public CompletionStage<Void> process(Message<CloudEvent> message) {
     CloudEvent event = message.getPayload();
     DownloadRequest request = scheduleIfScheduledRequest(event);
+
     if (request == null || !DownloadRequestClassifier.shouldDownloadAndEmit(event.getType())) {
       return message.ack();
     }
-    try {
-      downloadAndEmit(request);
-      return message.ack();
-    } catch (Exception ex) {
-      String errorMessage = "Error downloading resource " + request.url();
-      logDownloadError(ex, errorMessage);
-      // suppress stack trace to minimize log volume for failures downloading external urls
-      return message.nack(new StackTracelessException(errorMessage, ex));
-    }
+
+    return downloadAndEmit(request)
+        .onItem().transformToUni(v -> Uni.createFrom().completionStage(message.ack()))
+        .onFailure().recoverWithUni(ex -> {
+          String errorMessage = "Error downloading resource " + request.url();
+          logDownloadError(ex, errorMessage);
+          return Uni.createFrom().completionStage(
+              message.nack(new StackTracelessException(errorMessage, new RuntimeException(ex)))
+          );
+        })
+        .subscribeAsCompletionStage();
   }
 
   private DownloadRequest scheduleIfScheduledRequest(CloudEvent event) {
@@ -122,7 +118,7 @@ public class HttpDownloaderFunction {
     return request;
   }
 
-  void downloadAndEmit(DownloadRequest request) throws DownloadException {
+  Uni<Void> downloadAndEmit(DownloadRequest request) {
     String url = request.url();
     log.tracef("Processing download request with source URL %s and destination StreamX Key %s",
         url, request.emitKey());
@@ -132,16 +128,18 @@ public class HttpDownloaderFunction {
       lastModifiedTimestampRegistry.storeLastModifiedTimestamp(url, response);
       int status = response.getStatusLine().getStatusCode();
       if (SUCCESS_STATUSES.contains(status)) {
-        resourceEmitter.emitResource(response, request);
+        return resourceEmitter.emitResource(response, request);
       } else if (status != HttpStatus.SC_NOT_MODIFIED) {
         lastModifiedTimestampRegistry.remove(url);
         throw new DownloadException("Error downloading resource " + url
-                                    + ", unexpected HTTP status: " + status);
+                + ", unexpected HTTP status: " + status);
       }
     } catch (Exception ex) {
       lastModifiedTimestampRegistry.remove(url);
-      throw new DownloadException("Exception at GET request for " + url, ex);
+      return Uni.createFrom()
+          .failure(new DownloadException("Exception at GET request for " + url, ex));
     }
+    return Uni.createFrom().voidItem();
   }
 
   private HttpGet prepareHttpGetRequest(String url) {
@@ -163,9 +161,9 @@ public class HttpDownloaderFunction {
     return httpClient.execute(request);
   }
 
-  private void logDownloadError(Exception ex, String errorMessage) {
+  private void logDownloadError(Throwable throwable, String errorMessage) {
     if (log.isDebugEnabled()) {
-      log.debug(errorMessage, ex);
+      log.debug(errorMessage, throwable);
     } else {
       log.warn(errorMessage);
     }
