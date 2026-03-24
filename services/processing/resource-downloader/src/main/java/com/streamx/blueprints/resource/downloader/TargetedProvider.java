@@ -7,22 +7,18 @@ import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.data.WebResource;
 import io.cloudevents.CloudEvent;
-import io.smallrye.mutiny.Uni;
+import io.smallrye.reactive.messaging.Targeted;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.core.http.HttpHeaders;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpHeaders;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.eclipse.microprofile.reactive.messaging.Channel;
-import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
-public class ResourceEmitter {
+public class TargetedProvider {
 
   private static final String[] PAGE_CONTENT_TYPES = {
       "application/xhtml+xml",
@@ -39,79 +35,68 @@ public class ResourceEmitter {
       "text/css"
   };
 
-  private static final String CONTENT_TYPE_HEADER = HttpHeaders.CONTENT_TYPE;
+  private static final String CONTENT_TYPE_HEADER = HttpHeaders.CONTENT_TYPE.toString();
 
   @Inject
   Logger log;
 
-  @Channel(Channels.DOWNLOADED_PAGES)
-  Emitter<CloudEvent> pagesEmitter;
-
-  @Channel(Channels.DOWNLOADED_ASSETS)
-  Emitter<CloudEvent> assetsEmitter;
-
-  @Channel(Channels.DOWNLOADED_WEB_RESOURCES)
-  Emitter<CloudEvent> webResourcesEmitter;
-
-  Uni<Void> emitResource(CloseableHttpResponse response, DownloadRequest request)
-      throws IOException {
+  Targeted getTargeted(HttpResponse<Buffer> response, DownloadRequest request) {
     byte[] resourceBytes = getResponseBytes(response);
     ByteBuffer content = ByteBuffer.wrap(resourceBytes);
     String streamxKey = request.emitKey();
     if (isHtmlPage(response)) {
-      return emit(
-          pagesEmitter,
+      CloudEvent event = createCloudEvent(
           streamxKey,
           new Page(content, request.emittedPageType()),
           Page.TYPE_PUBLISHED
       );
+      return Targeted.of(Channels.DOWNLOADED_PAGES, event);
+
     } else if (isWebResource(response)) {
-      return emit(
-          webResourcesEmitter,
+      CloudEvent event = createCloudEvent(
           streamxKey,
           new WebResource(content, request.emittedWebResourceType()),
           WebResource.TYPE_PUBLISHED
       );
+      return Targeted.of(Channels.DOWNLOADED_WEB_RESOURCES, event);
     } else {
-      return emit(
-          assetsEmitter,
+      CloudEvent event = createCloudEvent(
           streamxKey,
           new Asset(content, request.emittedAssetType()),
           Asset.TYPE_PUBLISHED
       );
+      return Targeted.of(Channels.DOWNLOADED_ASSETS, event);
     }
   }
 
-  <T extends Resource> Uni<Void> emit(Emitter<CloudEvent> emitter, String key, T payload,
-      String eventType) {
+  <T extends Resource> CloudEvent createCloudEvent(String key, T payload, String eventType) {
     String payloadClass = payload.getClass().getSimpleName();
     String payloadType = payload.getType();
     log.tracef("Emitting %s at key %s with event type %s and payload type %s", payloadClass, key,
         eventType, payloadType);
 
-    CloudEvent cloudEvent = CloudEventUtils.eventWithData(key, eventType, payload);
-    return Uni.createFrom().completionStage(emitter.send(cloudEvent));
+    return CloudEventUtils.eventWithData(key, eventType, payload);
   }
 
-  private static byte[] getResponseBytes(CloseableHttpResponse response) throws IOException {
-    return IOUtils.toByteArray(response.getEntity().getContent());
+  private static byte[] getResponseBytes(HttpResponse<Buffer> response) {
+    return response.bodyAsBuffer().getBytes();
   }
 
-  private static boolean isHtmlPage(CloseableHttpResponse response) {
+  private static boolean isHtmlPage(HttpResponse<Buffer> response) {
     return contentTypeStartsWithAny(response, PAGE_CONTENT_TYPES);
   }
 
-  private static boolean isWebResource(CloseableHttpResponse response) {
+  private static boolean isWebResource(HttpResponse<Buffer> response) {
     return contentTypeStartsWithAny(response, WEB_RESOURCE_CONTENT_TYPES);
   }
 
-  private static boolean contentTypeStartsWithAny(CloseableHttpResponse response,
+  private static boolean contentTypeStartsWithAny(HttpResponse<Buffer> response,
       String... prefixes) {
-    Header contentTypeHeader = response.getFirstHeader(CONTENT_TYPE_HEADER);
+    String contentTypeHeader = response.getHeader(CONTENT_TYPE_HEADER);
     if (contentTypeHeader == null) {
       return false;
     }
-    return StringUtils.startsWithAny(contentTypeHeader.getValue(), prefixes);
+    return StringUtils.startsWithAny(contentTypeHeader, prefixes);
   }
 
 }

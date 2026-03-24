@@ -2,9 +2,8 @@ package com.streamx.blueprints.resource.downloader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -14,6 +13,7 @@ import com.streamx.blueprints.resource.downloader.testutils.TestWebServer;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
+import io.smallrye.mutiny.Uni;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
@@ -38,10 +38,14 @@ class HttpDownloaderFunctionRetryTest extends AbstractDownloaderFunctionTest {
     String pageUrl = TestWebServer.uploadPage(relativeUrl, DEFAULT_CONTENT);
 
     // when: make the GET request fail in the first attempt, and succeed in the next attempts
-    doThrow(new IOException("GET error!"))
-        .doCallRealMethod()
-        .when(httpDownloaderFunction)
-        .executeGet(any());
+    AtomicInteger counter = new AtomicInteger();
+
+    doAnswer(invocation -> {
+      if (counter.getAndIncrement() == 0) {
+        return Uni.createFrom().failure(new IOException("GET error!"));
+      }
+      return invocation.callRealMethod();
+    }).when(httpDownloaderFunction).get(pageUrl);
 
     // then
     shouldDownloadPageInSecondTry(pageUrl, relativeUrl);
@@ -83,7 +87,7 @@ class HttpDownloaderFunctionRetryTest extends AbstractDownloaderFunctionTest {
   private void assertDownloadAttemptsCount(String relativeUrl, int wantedNumberOfInvocations) {
     awaitUntilAsserted(() ->
         verify(httpDownloaderFunction, times(wantedNumberOfInvocations))
-            .downloadAndEmit(argThat(request -> request.url().endsWith(relativeUrl)))
+            .downloadAndChooseTarget(argThat(request -> request.url().endsWith(relativeUrl)))
     );
   }
 

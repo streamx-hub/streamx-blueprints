@@ -5,24 +5,24 @@ import com.streamx.blueprints.data.DownloadRequest;
 import com.streamx.blueprints.state.RepositoryFactory;
 import com.streamx.blueprints.state.StateRepository;
 import io.cloudevents.CloudEvent;
-import io.quarkus.runtime.StartupEvent;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.reactive.messaging.Targeted;
+import io.smallrye.reactive.messaging.annotations.Outgoings;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.core.http.HttpHeaders;
+import io.vertx.mutiny.ext.web.client.HttpRequest;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
+import io.vertx.mutiny.ext.web.client.WebClient;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import java.io.IOException;
 import java.time.Duration;
-import java.util.concurrent.CompletionStage;
+import java.util.Map;
 import org.apache.commons.lang3.IntegerRange;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -37,10 +37,7 @@ public class HttpDownloaderFunction {
   Configuration configuration;
 
   @Inject
-  CloseableHttpClient httpClient;
-
-  @Inject
-  ResourceEmitter resourceEmitter;
+  TargetedProvider targetedProvider;
 
   @Inject
   LastModifiedTimestampRegistry lastModifiedTimestampRegistry;
@@ -51,23 +48,18 @@ public class HttpDownloaderFunction {
   @Inject
   RepositoryFactory repositoryFactory;
 
+  @Inject
+  WebClient webClient;
   private int downloadTimeoutMillis;
   private Duration repeatInterval;
   private StateRepository<DownloadRequest> repeatableDownloadsStore;
 
-  void onStart(@Observes StartupEvent ev) {
+  @PostConstruct
+  void setup() {
     downloadTimeoutMillis = configuration.downloadTimeoutMillis();
     repeatInterval = Duration.ofMillis(configuration.repeatIntervalMillis());
     repeatableDownloadsStore = repositoryFactory.getOrCreate(
         "repeatable-downloads", DownloadRequest.class);
-    Multi.createFrom().ticks()
-        .every(repeatInterval)
-        .flatMap(l -> Multi.createFrom().items(repeatableDownloadsStore.values()))
-        .onItem().transformToUniAndMerge(this::downloadAndEmit)
-        .subscribe()
-        .with(item -> {}, failure -> {
-          logDownloadError(failure, failure.getMessage());
-        });
   }
 
   @Incoming(Channels.DOWNLOAD_REQUESTS_STATE)
@@ -75,25 +67,36 @@ public class HttpDownloaderFunction {
     scheduleIfScheduledRequest(event);
   }
 
+  @Outgoings({
+      @Outgoing(Channels.DOWNLOADED_PAGES),
+      @Outgoing(Channels.DOWNLOADED_ASSETS),
+      @Outgoing(Channels.DOWNLOADED_WEB_RESOURCES)})
+  public Multi<Targeted> processScheduled() {
+    return Multi.createFrom().ticks()
+        .every(repeatInterval)
+        .flatMap(l -> Multi.createFrom().items(repeatableDownloadsStore.values()))
+        .onItem().transformToUniAndMerge(this::downloadAndChooseTarget);
+  }
+
   @Incoming(Channels.DOWNLOAD_REQUESTS)
-  public CompletionStage<Void> process(Message<CloudEvent> message) {
+  @Outgoings({
+      @Outgoing(Channels.DOWNLOADED_PAGES),
+      @Outgoing(Channels.DOWNLOADED_ASSETS),
+      @Outgoing(Channels.DOWNLOADED_WEB_RESOURCES)})
+  public Uni<Targeted> process(Message<CloudEvent> message) {
     CloudEvent event = message.getPayload();
     DownloadRequest request = scheduleIfScheduledRequest(event);
 
     if (request == null || !DownloadRequestClassifier.shouldDownloadAndEmit(event.getType())) {
-      return message.ack();
+      message.ack();
+      return Uni.createFrom().item(Targeted.from(Map.of()));
     }
 
-    return downloadAndEmit(request)
-        .onItem().transformToUni(v -> Uni.createFrom().completionStage(message.ack()))
-        .onFailure().recoverWithUni(ex -> {
-          String errorMessage = "Error downloading resource " + request.url();
-          logDownloadError(ex, errorMessage);
-          return Uni.createFrom().completionStage(
-              message.nack(new StackTracelessException(errorMessage, new RuntimeException(ex)))
-          );
-        })
-        .subscribeAsCompletionStage();
+    return downloadAndChooseTarget(request).onItem().invoke(() -> message.ack())
+        .onFailure().recoverWithUni(err -> {
+          message.nack(err);
+          return Uni.createFrom().item(Targeted.from(Map.of()));
+        });
   }
 
   private DownloadRequest scheduleIfScheduledRequest(CloudEvent event) {
@@ -118,47 +121,42 @@ public class HttpDownloaderFunction {
     return request;
   }
 
-  Uni<Void> downloadAndEmit(DownloadRequest request) {
+  Uni<Targeted> downloadAndChooseTarget(DownloadRequest request) {
     String url = request.url();
     log.tracef("Processing download request with source URL %s and destination StreamX Key %s",
         url, request.emitKey());
 
-    HttpGet httpGetRequest = prepareHttpGetRequest(url);
-    try (CloseableHttpResponse response = executeGet(httpGetRequest)) {
+    return get(url).onItem().transform(response -> {
       lastModifiedTimestampRegistry.storeLastModifiedTimestamp(url, response);
-      int status = response.getStatusLine().getStatusCode();
+      int status = response.statusCode();
       if (SUCCESS_STATUSES.contains(status)) {
-        return resourceEmitter.emitResource(response, request);
-      } else if (status != HttpStatus.SC_NOT_MODIFIED) {
+        return targetedProvider.getTargeted(response, request);
+      } else if (status != 304) {
         lastModifiedTimestampRegistry.remove(url);
-        throw new DownloadException("Error downloading resource " + url
-                + ", unexpected HTTP status: " + status);
+        DownloadException exception = new DownloadException("Error downloading resource " + url
+            + ", unexpected HTTP status: " + status);
+        logDownloadError(exception, exception.getMessage());
+        throw new RuntimeException(exception);
       }
-    } catch (Exception ex) {
-      lastModifiedTimestampRegistry.remove(url);
-      return Uni.createFrom()
-          .failure(new DownloadException("Exception at GET request for " + url, ex));
-    }
-    return Uni.createFrom().voidItem();
+      return Targeted.from(Map.of());
+    });
   }
 
-  private HttpGet prepareHttpGetRequest(String url) {
-    HttpGet request = new HttpGet(url);
-    request.setConfig(RequestConfig.copy(RequestConfig.DEFAULT)
-        .setConnectTimeout(downloadTimeoutMillis)
-        .setSocketTimeout(downloadTimeoutMillis)
-        .build());
+
+  public Uni<HttpResponse<Buffer>> get(String url) {
+
+    HttpRequest<Buffer> request = webClient
+        .getAbs(url)
+        .timeout(downloadTimeoutMillis);
 
     LastModifiedTimestamp lastModifiedTimestamp = lastModifiedTimestampRegistry.get(url);
+
     if (lastModifiedTimestamp != null) {
-      request.addHeader(HttpHeaders.IF_MODIFIED_SINCE, lastModifiedTimestamp.lastModifiedGmt());
+      request.putHeader(HttpHeaders.IF_MODIFIED_SINCE.toString(),
+          lastModifiedTimestamp.lastModifiedGmt()
+      );
     }
-
-    return request;
-  }
-
-  CloseableHttpResponse executeGet(HttpGet request) throws IOException {
-    return httpClient.execute(request);
+    return request.send();
   }
 
   private void logDownloadError(Throwable throwable, String errorMessage) {

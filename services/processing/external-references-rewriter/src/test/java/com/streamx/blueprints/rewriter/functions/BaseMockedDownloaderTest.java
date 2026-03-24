@@ -6,7 +6,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -24,6 +24,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -70,7 +71,9 @@ abstract class BaseMockedDownloaderTest {
 
   protected void mockDownloadResourceFails(String... urls) {
     for (String url : urls) {
-      doNothing().when(downloadRequestsSender).sendRequest(urlEquals(url));
+      doReturn(CompletableFuture.failedFuture(new RuntimeException("failed to download"))).when(
+              downloadRequestsSender)
+          .sendRequest(urlEquals(url));
     }
   }
 

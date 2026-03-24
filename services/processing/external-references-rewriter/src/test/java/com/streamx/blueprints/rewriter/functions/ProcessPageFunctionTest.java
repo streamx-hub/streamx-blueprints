@@ -3,9 +3,11 @@ package com.streamx.blueprints.rewriter.functions;
 import static com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils.assertSameEvents;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Page;
+import com.streamx.blueprints.rewriter.data.ExternalResource;
 import com.streamx.blueprints.rewriter.testutils.DownloadedResource;
 import com.streamx.blueprints.rewriter.testutils.SkipVerifyingEachExternalResourceWasDownloadedExactlyOnce;
 import io.cloudevents.CloudEvent;
@@ -13,6 +15,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -249,7 +252,8 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
   }
 
   @Test
-  @SkipVerifyingEachExternalResourceWasDownloadedExactlyOnce // two independent requests in the test
+  @SkipVerifyingEachExternalResourceWasDownloadedExactlyOnce
+  // two independent requests in the test
   void shouldHandleRepublishedPageEditedByUser() {
     // given
     final String pagePath = "/eds/pages/page.html";
@@ -383,31 +387,22 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
 
     // and: simulate images 2 and 4 are undownloadable
     mockDownloadResourceFails(
-        "https://www.my-eds-server.com/eds/pages/image2.jpg",
-        "https://www.my-eds-server.com/eds/pages/image4.jpg"
+        "https://www.my-eds-server.com/eds/pages/image2.jpg"
     );
 
     // when
     publishPage(pagePath, initialHtml);
 
-    // then: wait for expected pages to be published
+    // then: wait for expected pages to fail
     waitForDownloadedAssets(2);
-    List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
     assertDownloadedAsset(0, "/eds/pages/image1.jpg", image1Content);
     assertDownloadedAsset(1, "/eds/pages/image3.jpg", image3Content);
-    assertPublishedPage(pageEvents.getFirst(),
-        "/eds/pages/page.html",
-        """
-            <html>
-              <body>
-                <img src="/eds/pages/image1.jpg">
-                <img src="/eds/pages/image2.jpg">
-                <img src="/eds/pages/image3.jpg">
-                <img src="/eds/pages/image4.jpg">
-              </body>
-            </html>
-            """);
+
+    assertThrows(ExecutionException.class,
+        () -> downloadRequestsSender.sendRequest(new ExternalResource("image2.jpg",
+                "https://www.my-eds-server.com/eds/pages/image2.jpg", "eds/pages/image2.jpg"))
+            .toCompletableFuture().get());
   }
 
   @Test

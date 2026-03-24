@@ -6,10 +6,11 @@ import com.streamx.blueprints.rewriter.Channels;
 import com.streamx.blueprints.rewriter.configuration.Configuration;
 import com.streamx.blueprints.rewriter.data.ExternalResource;
 import io.cloudevents.CloudEvent;
-import io.smallrye.reactive.messaging.MutinyEmitter;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.util.concurrent.CompletionStage;
 import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -22,12 +23,13 @@ public class DownloadRequestsSender {
   Configuration configuration;
 
   @Channel(Channels.DOWNLOAD_REQUESTS)
-  MutinyEmitter<CloudEvent> downloadRequestEmitter;
+  Emitter<CloudEvent> downloadRequestEmitter;
 
   /**
    * Sends a standard, non-repeatable download request
+   *
    */
-  public void sendRequest(ExternalResource resource) {
+  public CompletionStage<Void> sendRequest(ExternalResource resource) {
     String absoluteUrl = resource.getAbsoluteUrl();
     String streamxKey = resource.getStreamxKey();
     DownloadRequest downloadRequest = new DownloadRequest(
@@ -46,6 +48,6 @@ public class DownloadRequestsSender {
         downloadRequest
     );
 
-    downloadRequestEmitter.sendAndAwait(event);
+    return downloadRequestEmitter.send(event);
   }
 }
