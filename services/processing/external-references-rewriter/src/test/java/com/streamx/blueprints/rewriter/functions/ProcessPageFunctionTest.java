@@ -393,7 +393,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     // when
     publishPage(pagePath, initialHtml);
 
-    // then: wait for expected pages to fail
+    // then: wait for expected pages to be published
     waitForDownloadedAssets(2);
 
     assertDownloadedAsset(0, "/eds/pages/image1.jpg", image1Content);
