@@ -10,20 +10,15 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.lang3.ThreadUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 
 public class TestWebServer {
-
-  public static final String SLOW_PAGE_TOKEN = "SLOW_PAGE";
-
   private static final int DEFAULT_RESPONSE_STATUS = HttpStatus.SC_OK;
 
   // resource paths and their overridden response statuses (if any)
@@ -118,9 +113,6 @@ public class TestWebServer {
   private static void handleRequest(HttpExchange request, byte[] responseBytes, boolean isGzipped,
       MediaType contentType) throws IOException {
     String requestUrl = request.getRequestURI().toString();
-    if (requestUrl.contains(SLOW_PAGE_TOKEN)) {
-      ThreadUtils.sleepQuietly(Duration.ofMillis(500));
-    }
 
     Headers responseHeaders = request.getResponseHeaders();
     responseHeaders.add(HttpHeaders.CONTENT_TYPE, contentType.toString());

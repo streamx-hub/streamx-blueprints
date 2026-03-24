@@ -14,6 +14,8 @@ import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import io.smallrye.mutiny.Uni;
+import io.vertx.mutiny.ext.web.client.WebClient;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
@@ -21,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpStatus;
 import org.eclipse.microprofile.reactive.messaging.Message;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -30,6 +33,18 @@ class HttpDownloaderFunctionRetryTest extends AbstractDownloaderFunctionTest {
 
   @InjectSpy
   HttpDownloaderFunction httpDownloaderFunction;
+
+  @Inject
+  WebClient webClient;
+
+  @BeforeEach
+  void setup() {
+    TestWebServer.uploadPage("/warmup", "ok");
+
+    webClient.getAbs(TestWebServer.computeAbsoluteUrl("/warmup"))
+        .send()
+        .await().atMost(Duration.ofSeconds(5));
+  }
 
   @Test
   void shouldRetryDownloadingPageOnHttpGetException() throws Exception {
