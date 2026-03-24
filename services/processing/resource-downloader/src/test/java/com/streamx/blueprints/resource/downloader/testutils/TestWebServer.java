@@ -112,7 +112,6 @@ public class TestWebServer {
 
   private static void handleRequest(HttpExchange request, byte[] responseBytes, boolean isGzipped,
       MediaType contentType) throws IOException {
-    String requestUrl = request.getRequestURI().toString();
 
     Headers responseHeaders = request.getResponseHeaders();
     responseHeaders.add(HttpHeaders.CONTENT_TYPE, contentType.toString());
@@ -123,6 +122,7 @@ public class TestWebServer {
 
     responseHeaders.add(HttpHeaders.LAST_MODIFIED, "Thu, 04 Sep 2025 12:25:10 GMT");
 
+    String requestUrl = request.getRequestURI().toString();
     List<Integer> statusCodes = uploadedResources.get(requestUrl);
     int statusCode = statusCodes.isEmpty()
         ? DEFAULT_RESPONSE_STATUS
