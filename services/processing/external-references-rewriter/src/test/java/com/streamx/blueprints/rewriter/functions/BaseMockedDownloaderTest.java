@@ -20,6 +20,7 @@ import com.streamx.blueprints.rewriter.services.DownloadRequestsSender;
 import com.streamx.blueprints.rewriter.testutils.DownloadedResource;
 import com.streamx.blueprints.rewriter.testutils.SkipVerifyingEachExternalResourceWasDownloadedExactlyOnce;
 import io.quarkus.test.junit.mockito.InjectSpy;
+import io.smallrye.mutiny.Uni;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -71,7 +72,7 @@ abstract class BaseMockedDownloaderTest {
 
   protected void mockDownloadResourceFails(String... urls) {
     for (String url : urls) {
-      doReturn(CompletableFuture.failedFuture(new RuntimeException("failed to download"))).when(
+      doReturn(Uni.createFrom().failure(new RuntimeException("failed to download"))).when(
               downloadRequestsSender)
           .sendRequest(urlEquals(url));
     }

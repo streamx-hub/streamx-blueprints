@@ -158,7 +158,6 @@ public class ProcessResourceFunction {
         .all()
         .unis(externalResources.stream()
             .map(downloadRequestsSender::sendRequest)
-            .map(cs -> Uni.createFrom().completionStage(cs))
             .toList())
         .with(list -> true).onItem().transform(done -> {
           String content = resource.content();

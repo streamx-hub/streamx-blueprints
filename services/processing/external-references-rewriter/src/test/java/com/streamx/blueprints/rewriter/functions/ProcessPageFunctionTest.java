@@ -399,10 +399,11 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     assertDownloadedAsset(0, "/eds/pages/image1.jpg", image1Content);
     assertDownloadedAsset(1, "/eds/pages/image3.jpg", image3Content);
 
-    assertThrows(ExecutionException.class,
+    assertThrows(RuntimeException.class,
         () -> downloadRequestsSender.sendRequest(new ExternalResource("image2.jpg",
                 "https://www.my-eds-server.com/eds/pages/image2.jpg", "eds/pages/image2.jpg"))
-            .toCompletableFuture().get());
+            .await().indefinitely()
+    );
   }
 
   @Test
