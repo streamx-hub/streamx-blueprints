@@ -363,7 +363,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
   }
 
   @Test
-  void shouldPublishPageWithChangedLinksAlsoForUndownloadableResources() {
+  void shouldNotPublishPageWithChangedLinksWhenUndownloadableResourcesPresent() {
     // given
     final String pagePath = "/eds/pages/page.html";
     final String initialHtml = """
@@ -387,21 +387,29 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
 
     // and: simulate images 2 and 4 are undownloadable
     mockDownloadResourceFails(
-        "https://www.my-eds-server.com/eds/pages/image2.jpg"
+        "https://www.my-eds-server.com/eds/pages/image2.jpg",
+        "https://www.my-eds-server.com/eds/pages/image4.jpg"
     );
 
     // when
     publishPage(pagePath, initialHtml);
 
-    // then: wait for expected pages to be published
+    // then: wait for expected assets to be published
     waitForDownloadedAssets(2);
 
     assertDownloadedAsset(0, "/eds/pages/image1.jpg", image1Content);
     assertDownloadedAsset(1, "/eds/pages/image3.jpg", image3Content);
 
+    waitForEventsInSink(PAGE, 0);
+
     assertThrows(RuntimeException.class,
         () -> downloadRequestsSender.sendRequest(new ExternalResource("image2.jpg",
                 "https://www.my-eds-server.com/eds/pages/image2.jpg", "eds/pages/image2.jpg"))
+            .await().indefinitely()
+    );
+    assertThrows(RuntimeException.class,
+        () -> downloadRequestsSender.sendRequest(new ExternalResource("image4.jpg",
+                "https://www.my-eds-server.com/eds/pages/image2.jpg", "eds/pages/image4.jpg"))
             .await().indefinitely()
     );
   }
