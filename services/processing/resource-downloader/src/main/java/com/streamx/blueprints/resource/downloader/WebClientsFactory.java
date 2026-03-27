@@ -1,15 +1,12 @@
 package com.streamx.blueprints.resource.downloader;
 
 import io.quarkus.arc.DefaultBean;
+import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.mutiny.core.Vertx;
+import io.vertx.mutiny.ext.web.client.WebClient;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
-import javax.net.ssl.SSLContext;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContexts;
 
 @Dependent
 public class WebClientsFactory {
@@ -17,26 +14,23 @@ public class WebClientsFactory {
   @Inject
   Configuration configuration;
 
+  @Inject
+  Vertx vertx;
+
   @Produces
   @DefaultBean
-  public CloseableHttpClient httpClient() throws Exception {
+  public WebClient webClient() {
+
+    WebClientOptions options = new WebClientOptions();
+
     if (configuration.disableCertificateValidation()) {
-      return createTrustAllClient();
+      options
+          .setTrustAll(true)
+          .setVerifyHost(false);
     }
-    return HttpClients.createDefault();
-  }
 
-  private static CloseableHttpClient createTrustAllClient() throws Exception {
-    SSLContext sslContext = SSLContexts.custom()
-        .loadTrustMaterial(null, (chain, authType) -> true)
-        .build();
+    options.setDecompressionSupported(true);
 
-    SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(
-        sslContext,
-        NoopHostnameVerifier.INSTANCE);
-
-    return HttpClients.custom()
-        .setSSLSocketFactory(socketFactory)
-        .build();
+    return WebClient.create(vertx, options);
   }
 }

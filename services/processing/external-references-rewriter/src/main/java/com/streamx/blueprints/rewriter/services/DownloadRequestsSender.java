@@ -6,6 +6,7 @@ import com.streamx.blueprints.rewriter.Channels;
 import com.streamx.blueprints.rewriter.configuration.Configuration;
 import com.streamx.blueprints.rewriter.data.ExternalResource;
 import io.cloudevents.CloudEvent;
+import io.smallrye.mutiny.Uni;
 import io.smallrye.reactive.messaging.MutinyEmitter;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -26,8 +27,9 @@ public class DownloadRequestsSender {
 
   /**
    * Sends a standard, non-repeatable download request
+   *
    */
-  public void sendRequest(ExternalResource resource) {
+  public Uni<Void> sendRequest(ExternalResource resource) {
     String absoluteUrl = resource.getAbsoluteUrl();
     String streamxKey = resource.getStreamxKey();
     DownloadRequest downloadRequest = new DownloadRequest(
@@ -46,6 +48,6 @@ public class DownloadRequestsSender {
         downloadRequest
     );
 
-    downloadRequestEmitter.sendAndAwait(event);
+    return downloadRequestEmitter.send(event);
   }
 }

@@ -1,5 +1,8 @@
 package com.streamx.blueprints.resource.downloader;
 
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.core.http.HttpHeaders;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -15,10 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.apache.http.Header;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -32,7 +31,7 @@ public class LastModifiedTimestampRegistry {
 
   private static final Set<Integer> SUCCESS_STATUSES = Stream.concat(
       IntStream.rangeClosed(200, 299).boxed(),
-      IntStream.of(HttpStatus.SC_NOT_MODIFIED).boxed()
+      IntStream.of(304).boxed()
   ).collect(Collectors.toSet());
 
   private final Map<String, LastModifiedTimestamp> timestampsStore = new ConcurrentHashMap<>();
@@ -40,17 +39,16 @@ public class LastModifiedTimestampRegistry {
   @Inject
   Logger log;
 
-  void storeLastModifiedTimestamp(String url, CloseableHttpResponse response) {
+  void storeLastModifiedTimestamp(String url, HttpResponse<Buffer> response) {
     timestampsStore.put(url, readLastModifiedTimestamp(url, response));
   }
 
-  LastModifiedTimestamp readLastModifiedTimestamp(String url, CloseableHttpResponse response) {
-    int status = response.getStatusLine().getStatusCode();
+  LastModifiedTimestamp readLastModifiedTimestamp(String url, HttpResponse<Buffer> response) {
+    int status = response.statusCode();
     if (SUCCESS_STATUSES.contains(status)) {
-      Header lastModifiedHeader = response.getFirstHeader(HttpHeaders.LAST_MODIFIED);
-      if (lastModifiedHeader != null) {
-        String lastModifiedGmt = lastModifiedHeader.getValue();
-        return new LastModifiedTimestamp(lastModifiedGmt, status);
+      String lastModified = response.getHeader(HttpHeaders.LAST_MODIFIED);
+      if (lastModified != null) {
+        return new LastModifiedTimestamp(lastModified, status);
       }
     } else {
       log.debugf("Unexpected HTTP status %d for %s", status, url);

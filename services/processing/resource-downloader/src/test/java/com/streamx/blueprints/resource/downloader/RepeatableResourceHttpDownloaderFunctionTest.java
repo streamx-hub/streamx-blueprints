@@ -30,7 +30,7 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
   HttpDownloaderFunction httpDownloaderFunction;
 
   @InjectSpy
-  ResourceEmitter resourceEmitter;
+  TargetedProvider targetedProvider;
 
   @Inject
   Configuration configuration;
@@ -65,8 +65,8 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
 
     // then: expect no re-download
     waitForSingleDownloadedWebResource(resourcePath, RESOURCE_CONTENT);
-    verify(httpDownloaderFunction, atLeast(2)).executeGet(any());
-    verify(resourceEmitter, times(1)).emit(any(), any(), any(), any());
+    verify(httpDownloaderFunction, atLeast(2)).get(any());
+    verify(targetedProvider, times(1)).createCloudEvent(any(), any(), any());
   }
 
   @Test
@@ -92,8 +92,8 @@ class RepeatableResourceHttpDownloaderFunctionTest extends AbstractDownloaderFun
     waitForDownloadedWebResources(resourcePath, 2, RESOURCE_CONTENT);
 
     // then: expect no re-download
-    verify(httpDownloaderFunction, atLeast(3)).executeGet(any());
-    verify(resourceEmitter, times(2)).emit(any(), any(), any(), any());
+    verify(httpDownloaderFunction, atLeast(3)).get(any());
+    verify(targetedProvider, times(2)).createCloudEvent(any(), any(), any());
   }
 
   @Test

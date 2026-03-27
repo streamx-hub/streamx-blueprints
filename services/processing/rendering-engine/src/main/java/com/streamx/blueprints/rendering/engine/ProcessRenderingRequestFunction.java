@@ -16,6 +16,8 @@ import com.streamx.blueprints.rendering.engine.converter.RendererEventsStore;
 import com.streamx.blueprints.rendering.engine.generator.GeneratorException;
 import com.streamx.blueprints.rendering.engine.generator.OutputGenerator;
 import io.cloudevents.CloudEvent;
+import io.smallrye.reactive.messaging.Targeted;
+import io.smallrye.reactive.messaging.annotations.Outgoings;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -24,9 +26,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import org.apache.commons.lang3.ObjectUtils;
-import org.eclipse.microprofile.reactive.messaging.Channel;
-import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.jboss.logging.Logger;
 
 @ApplicationScoped
@@ -46,17 +47,11 @@ public class ProcessRenderingRequestFunction {
   @Inject
   OutputGenerator outputGenerator;
 
-  @Channel(Channels.Outgoing.PAGES)
-  Emitter<CloudEvent> pagesEmitter;
-
-  @Channel(Channels.Outgoing.FRAGMENTS)
-  Emitter<CloudEvent> fragmentsEmitter;
-
   private record ProcessingSettings(
+      String outgoingChannel,
       String publishEventType,
       String unpublishEventType,
-      BiFunction<String, String, WebResource> resourceConstructor,
-      Emitter<CloudEvent> emitter) {
+      BiFunction<String, String, WebResource> resourceConstructor) {
 
   }
 
@@ -67,29 +62,33 @@ public class ProcessRenderingRequestFunction {
     processingSettingsMap = Map.of(
         OutputFormat.PAGE,
         new ProcessingSettings(
+            Channels.Outgoing.PAGES,
             Page.TYPE_PUBLISHED,
             Page.TYPE_UNPUBLISHED,
-            Page::new,
-            pagesEmitter
+            Page::new
         ),
 
         OutputFormat.FRAGMENT,
         new ProcessingSettings(
+            Channels.Outgoing.FRAGMENTS,
             Fragment.TYPE_PUBLISHED,
             Fragment.TYPE_UNPUBLISHED,
-            Fragment::new,
-            fragmentsEmitter
+            Fragment::new
         )
     );
   }
 
   @Incoming(Channels.Incoming.RENDERING_REQUESTS)
-  public void process(CloudEvent event) {
+  @Outgoings({
+      @Outgoing(Channels.Outgoing.PAGES),
+      @Outgoing(Channels.Outgoing.FRAGMENTS)
+  })
+  public Targeted process(CloudEvent event) {
     RenderingRequest request = CloudEventUtils.getData(event, RenderingRequest.class);
     String subject = CloudEventUtils.getSubject(event);
     if (request == null) {
       log.warnf("Skipping processing event [%s] - no content", subject);
-      return;
+      return Targeted.from(Map.of());
     }
 
     PreservedData preservedData = dataStore.get(request.dataKey());
@@ -98,7 +97,7 @@ public class ProcessRenderingRequestFunction {
 
     if (ObjectUtils.anyNull(preservedRenderer, data)) {
       log.tracef("Cannot proceed with processing %s, renderer or data is missing", subject);
-      return;
+      return Targeted.from(Map.of());
     }
 
     Renderer renderer = preservedRenderer.renderer();
@@ -108,11 +107,13 @@ public class ProcessRenderingRequestFunction {
         preservedRenderer.eventType()
     );
     if (renderer != null || isUnpublish) {
-      generateAndEmitOutputEvent(isUnpublish, request, data, renderer);
+      return generateAndEmitOutputEvent(isUnpublish, request, data, renderer);
     }
+    return Targeted.from(Map.of());
   }
 
-  private void generateAndEmitOutputEvent(boolean isUnpublish, RenderingRequest request, Data data,
+  private Targeted generateAndEmitOutputEvent(boolean isUnpublish, RenderingRequest request,
+      Data data,
       Renderer renderer) {
     Map<String, Object> dataValue = readValue(data);
     String outputContent = isUnpublish ? null : generateOutputContent(renderer, dataValue);
@@ -123,7 +124,7 @@ public class ProcessRenderingRequestFunction {
     String eventType = getEventType(processingSettings, isUnpublish);
     WebResource resource = createResource(processingSettings, outputType, outputContent);
     CloudEvent resourceEvent = CloudEventUtils.eventWithData(key, eventType, resource);
-    emit(processingSettings, resourceEvent);
+    return Targeted.of(processingSettings.outgoingChannel, resourceEvent);
   }
 
   private String getEventType(ProcessingSettings settings, boolean isUnpublish) {
@@ -133,10 +134,6 @@ public class ProcessRenderingRequestFunction {
   private WebResource createResource(ProcessingSettings settings, String outputType,
       String outputContent) {
     return settings.resourceConstructor.apply(outputContent, outputType);
-  }
-
-  private void emit(ProcessingSettings settings, CloudEvent resourceEvent) {
-    settings.emitter.send(resourceEvent);
   }
 
   private boolean isAnyUnpublishEvent(String... relatedEventTypes) {

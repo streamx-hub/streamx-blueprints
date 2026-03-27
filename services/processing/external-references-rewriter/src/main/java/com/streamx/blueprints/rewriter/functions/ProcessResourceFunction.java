@@ -12,7 +12,7 @@ import com.streamx.blueprints.rewriter.services.DownloadRequestsSender;
 import com.streamx.blueprints.rewriter.services.UrlComputationService;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.v1.CloudEventBuilder;
-import io.smallrye.reactive.messaging.annotations.Blocking;
+import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -42,11 +42,11 @@ public class ProcessResourceFunction {
 
   @Incoming(Channels.INCOMING_RESOURCES)
   @Outgoing(Channels.OUTGOING_RESOURCES)
-  @Blocking
-  public CloudEvent processIncomingEvent(CloudEvent event) {
+  public Uni<CloudEvent> processIncomingEvent(CloudEvent event) {
+    Uni<CloudEvent> sameEvent = Uni.createFrom().item(event);
     Resource payload = extractResource(event);
     if (payload == null) {
-      return event;
+      return sameEvent;
     }
 
     String resourcePath = CloudEventUtils.getSubject(event);
@@ -54,7 +54,7 @@ public class ProcessResourceFunction {
     if (!configuration.processablePayloadTypes().contains(payloadType)) {
       log.tracef("Skipping processing %s - the service is not configured to handle payload type %s",
           resourcePath, payloadType);
-      return event;
+      return sameEvent;
     }
 
     String eventType = event.getType();
@@ -64,19 +64,19 @@ public class ProcessResourceFunction {
         .findFirst();
     if (settingsOpt.isEmpty()) {
       log.tracef("No handler for resource event %s of type %s", resourcePath, eventType);
-      return event;
+      return sameEvent;
     }
 
     BaseProcessingSettings<?> settings = settingsOpt.get();
     if (!settings.getExternalResourcesCollector().hasResourceSelectors()) {
       log.tracef("Skipping processing %s - no resource selectors are specified", resourcePath);
-      return event;
+      return sameEvent;
     }
 
     return processIncomingResource(payload, payloadType, resourcePath, event, settings);
   }
 
-  private CloudEvent processIncomingResource(Resource payload, String payloadType,
+  private Uni<CloudEvent> processIncomingResource(Resource payload, String payloadType,
       String resourcePath, CloudEvent event, BaseProcessingSettings<?> settings) {
     String resourceContent = payload.getContentAsString();
     ResourceData resource = collectResourceData(resourcePath, resourceContent,
@@ -123,10 +123,10 @@ public class ProcessResourceFunction {
     }
   }
 
-  private CloudEvent asProcessedEvent(CloudEvent event, String key) {
-    return new CloudEventBuilder(event)
+  private Uni<CloudEvent> asProcessedEvent(CloudEvent event, String key) {
+    return Uni.createFrom().item(new CloudEventBuilder(event)
         .withSubject(key)
-        .build();
+        .build());
   }
 
   private ResourceData collectResourceData(String path, String content,
@@ -146,25 +146,32 @@ public class ProcessResourceFunction {
     }
   }
 
-  private CloudEvent downloadExternalResourcesAndReturnAdjustedResource(
+  private Uni<CloudEvent> downloadExternalResourcesAndReturnAdjustedResource(
       CloudEvent event, ResourceData resource,
       Set<ExternalResource> externalResources, BaseProcessingSettings<?> settings) {
 
     String resourceStreamxKey = resource.streamxKey();
     log.tracef("Sending download and publish requests for %d external resources of %s",
         externalResources.size(), resourceStreamxKey);
-    externalResources.forEach(downloadRequestsSender::sendRequest);
 
-    String content = resource.content();
-    log.tracef("Replacing external links in content of %s", resourceStreamxKey);
-    String adjustedContent = settings.getContentAdjuster().adjustLinks(content, externalResources);
-    Resource adjustedResource = settings.newResource(adjustedContent, resource.payloadType());
+    return Uni.combine()
+        .all()
+        .unis(externalResources.stream()
+            .map(downloadRequestsSender::sendRequest)
+            .toList())
+        .with(list -> true).onItem().transform(done -> {
+          String content = resource.content();
+          log.tracef("Replacing external links in content of %s", resourceStreamxKey);
+          String adjustedContent = settings.getContentAdjuster()
+              .adjustLinks(content, externalResources);
+          Resource adjustedResource = settings.newResource(adjustedContent, resource.payloadType());
 
-    log.tracef("Publishing resource %s with all external links adjusted to local paths",
-        resourceStreamxKey);
+          log.tracef("Publishing resource %s with all external links adjusted to local paths",
+              resourceStreamxKey);
 
-    return CloudEventUtils.eventCopyWithData(event, adjustedResource)
-        .withSubject(resource.streamxKey())
-        .build();
+          return CloudEventUtils.eventCopyWithData(event, adjustedResource)
+              .withSubject(resource.streamxKey())
+              .build();
+        });
   }
 }

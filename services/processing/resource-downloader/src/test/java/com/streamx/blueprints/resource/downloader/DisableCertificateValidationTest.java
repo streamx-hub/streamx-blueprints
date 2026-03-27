@@ -7,18 +7,19 @@ import static org.mockito.Mockito.mock;
 
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsServer;
+import io.vertx.mutiny.core.Vertx;
+import io.vertx.mutiny.ext.web.client.WebClient;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import org.apache.commons.io.FileUtils;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,7 @@ public class DisableCertificateValidationTest {
   @BeforeEach
   void setupMocks() {
     webClientsFactory.configuration = configuration;
+    webClientsFactory.vertx = Vertx.vertx();
   }
 
   @Test
@@ -65,10 +67,10 @@ public class DisableCertificateValidationTest {
     doReturn(false).when(configuration).disableCertificateValidation();
 
     // when & then
-    try (CloseableHttpClient client = webClientsFactory.httpClient()) {
-      assertThatThrownBy(() -> client.execute(new HttpGet(NIP_IO_URL)))
-          .isInstanceOf(SSLHandshakeException.class);
-    }
+    WebClient client = webClientsFactory.webClient();
+    assertThatThrownBy(() -> client.getAbs(NIP_IO_URL).sendAndAwait())
+        .isInstanceOf(CompletionException.class)
+        .hasCauseInstanceOf(SSLHandshakeException.class);
   }
 
   @Test
@@ -76,13 +78,13 @@ public class DisableCertificateValidationTest {
     // given
     doReturn(true).when(configuration).disableCertificateValidation();
 
-    try (CloseableHttpClient client = webClientsFactory.httpClient()) {
-      // when
-      var response = client.execute(new HttpGet(NIP_IO_URL));
+    WebClient client = webClientsFactory.webClient();
+    // when
+    var response = client.getAbs(NIP_IO_URL).sendAndAwait();
 
-      // then
-      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
-    }
+    // then
+    assertThat(response.statusCode()).isEqualTo(200);
+
   }
 
   private SSLContext createTestSslContext() throws Exception {
