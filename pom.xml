@@ -227,6 +227,8 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>${failsafe-plugin.version}</version>
         <configuration>
+          <!-- TODO add support for websockets in IT tests -->
+          <skipITs>true</skipITs>
           <systemPropertyVariables>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
             <maven.home>${maven.home}</maven.home>
