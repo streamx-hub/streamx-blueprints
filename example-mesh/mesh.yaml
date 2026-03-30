@@ -250,7 +250,7 @@ descriptors:
           - repository-volume:/usr/share/opensearch/data
           - state:/tmp/rocksdb
         environment:
-          QUARKUS_ELASTICSEARCH_HOSTS: ${STREAMX_OWNER_SERVICE_NAME}.opensearch:9200
+          QUARKUS_ELASTICSEARCH_HOSTS: ${STREAMX_SERVICE_ID}.opensearch:9200
       opensearch:
         image: docker.io/opensearchproject/opensearch:2.16.0
         servicePorts:
