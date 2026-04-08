@@ -12,7 +12,7 @@ public class XmlWebResourceProcessingSettings extends BaseWebResourceProcessingS
   @PostConstruct
   void init() {
     loadSettings(
-        new XmlContentProcessingSettings(configuration),
+        new XmlContentProcessingSettings(),
         ".xml"
     );
   }

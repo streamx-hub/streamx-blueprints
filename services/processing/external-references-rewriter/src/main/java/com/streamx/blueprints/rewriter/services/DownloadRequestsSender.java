@@ -1,9 +1,12 @@
 package com.streamx.blueprints.rewriter.services;
 
+import static com.streamx.blueprints.rewriter.configuration.Configuration.emittedAssetType;
+import static com.streamx.blueprints.rewriter.configuration.Configuration.emittedPageType;
+import static com.streamx.blueprints.rewriter.configuration.Configuration.emittedWebResourceType;
+
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.DownloadRequest;
 import com.streamx.blueprints.rewriter.Channels;
-import com.streamx.blueprints.rewriter.configuration.Configuration;
 import com.streamx.blueprints.rewriter.data.ExternalResource;
 import io.cloudevents.CloudEvent;
 import io.smallrye.mutiny.Uni;
@@ -19,9 +22,6 @@ public class DownloadRequestsSender {
   @Inject
   Logger log;
 
-  @Inject
-  Configuration configuration;
-
   @Channel(Channels.DOWNLOAD_REQUESTS)
   MutinyEmitter<CloudEvent> downloadRequestEmitter;
 
@@ -35,9 +35,9 @@ public class DownloadRequestsSender {
     DownloadRequest downloadRequest = new DownloadRequest(
         absoluteUrl,
         streamxKey,
-        configuration.emittedPageType(),
-        configuration.emittedWebResourceType(),
-        configuration.emittedAssetType()
+        emittedPageType(),
+        emittedWebResourceType(),
+        emittedAssetType()
     );
 
     log.tracef("Sending download request for %s", absoluteUrl);

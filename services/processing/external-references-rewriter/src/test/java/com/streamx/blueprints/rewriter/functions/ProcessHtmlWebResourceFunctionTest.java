@@ -5,6 +5,7 @@ import static com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils.asser
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -35,6 +36,38 @@ class ProcessHtmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     assertPublishedWebResource(webResourceEvents.getFirst(),
         pagePath,
         "<img src='/logo.png'>");
+  }
+
+  @Test
+  void shouldProcessPageWithUpdatedBaseUrlInRuntime() {
+    // given
+    String pagePath = "/page2.html";
+    String pageContent = "<img src='./logo2.png'>";
+
+    publishConfig("baseUrlUpdate",
+        Map.of("streamx.blueprints.external-references-rewriter.base-url-for-relative-paths",
+            "https://www.my-another-eds-server.com/"));
+
+    mockDownloadResponse("https://www.my-another-eds-server.com/logo2.png", new byte[]{0, 1, 2});
+
+    // when
+    publishWebResource(pagePath, pageContent);
+
+    // then
+    waitForDownloadedAssets(1);
+    assertDownloadedAsset(0,
+        "/logo2.png",
+        new byte[]{0, 1, 2});
+
+    List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 1);
+    assertPublishedWebResource(webResourceEvents.getFirst(),
+        pagePath,
+        "<img src='/logo2.png'>");
+
+    //cleanup
+    publishConfig("baseUrlUpdate",
+        Map.of("streamx.blueprints.external-references-rewriter.base-url-for-relative-paths",
+            "https://www.my-eds-server.com/"));
   }
 
   @ParameterizedTest

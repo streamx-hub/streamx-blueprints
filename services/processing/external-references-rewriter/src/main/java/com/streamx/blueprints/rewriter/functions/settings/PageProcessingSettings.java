@@ -14,7 +14,7 @@ public class PageProcessingSettings extends BaseProcessingSettings<Page> {
   @PostConstruct
   void init() {
     loadSettings(
-        new HtmlContentProcessingSettings(configuration),
+        new HtmlContentProcessingSettings(),
         new PageMetadata()
     );
   }

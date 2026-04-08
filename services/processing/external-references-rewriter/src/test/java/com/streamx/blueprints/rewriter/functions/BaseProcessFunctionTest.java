@@ -5,11 +5,13 @@ import static org.awaitility.Awaitility.await;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.Config;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.data.WebResource;
 import com.streamx.blueprints.rewriter.Channels;
+import com.streamx.blueprints.test.unit.StatefulInMemorySource;
 import io.cloudevents.CloudEvent;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
@@ -36,6 +38,7 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
   protected InMemorySource<CloudEvent> resourcesChannel;
   protected InMemorySink<CloudEvent> resourcesSink;
   protected InMemorySink<CloudEvent> downloadRequestsSink;
+  protected StatefulInMemorySource configsChannel;
 
   @Inject
   @Any
@@ -44,6 +47,8 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
   @BeforeEach
   void initSourcesAndSinks() {
     resourcesChannel = getSource(Channels.INCOMING_RESOURCES);
+    configsChannel = new StatefulInMemorySource(connector, Channels.INCOMING_CONFIGS,
+        Channels.INCOMING_CONFIGS_STATE);
     resourcesSink = getSink(Channels.OUTGOING_RESOURCES);
     downloadRequestsSink = getSink(Channels.DOWNLOAD_REQUESTS);
   }
@@ -77,6 +82,14 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
 
   protected CloudEvent publishWebResource(String path, String content, String payloadType) {
     return sendToChannel(path, new WebResource(content, payloadType), WebResource.TYPE_PUBLISHED);
+  }
+
+  protected CloudEvent publishConfig(String subject, Map<String, String> configMap) {
+    CloudEvent event = CloudEventTestUtils
+        .cloudEventWithExtensions(subject, Config.CONFIG_APPLY_TYPE, new Config(configMap),
+            Collections.emptyMap());
+    configsChannel.send(event);
+    return event;
   }
 
   protected CloudEvent publishData(String path, String content) {

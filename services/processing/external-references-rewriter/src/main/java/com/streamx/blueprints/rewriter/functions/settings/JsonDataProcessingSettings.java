@@ -14,7 +14,7 @@ public class JsonDataProcessingSettings extends BaseProcessingSettings<Data> {
   @PostConstruct
   void init() {
     loadSettings(
-        new JsonContentProcessingSettings(configuration),
+        new JsonContentProcessingSettings(),
         new DataMetadata()
     );
   }

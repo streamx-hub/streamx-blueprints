@@ -1,8 +1,8 @@
 package com.streamx.blueprints.rewriter.services;
 
-import com.streamx.blueprints.rewriter.configuration.Configuration;
+import static com.streamx.blueprints.rewriter.configuration.Configuration.baseUrlForRelativePaths;
+
 import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.net.URI;
@@ -17,21 +17,11 @@ public class UrlComputationService {
   private static final String NON_STANDARD_CHARS_REGEX = "[^a-zA-Z0-9/.-]";
   private static final String NON_STANDARD_CHARS_REPLACEMENT = "_";
 
-  private URI baseUriForRelativePaths;
-
   @Inject
   Logger log;
 
-  @Inject
-  Configuration configuration;
-
-  @PostConstruct
-  void init() {
-    baseUriForRelativePaths = URI.create(configuration.baseUrlForRelativePaths());
-  }
-
   public String computeAbsoluteUrlRelativeToConfiguredBaseUrl(String relativeUrl) {
-    return computeAbsoluteUrl(baseUriForRelativePaths, relativeUrl);
+    return computeAbsoluteUrl(URI.create(baseUrlForRelativePaths()), relativeUrl);
   }
 
   public String computeAbsoluteUrl(String parentAbsoluteUrl, String relativeOrAbsoluteUrl) {
@@ -86,6 +76,7 @@ public class UrlComputationService {
   }
 
   public String asStreamxKeyRelativeToConfiguredBaseUrl(String absoluteUrl) {
+    URI baseUriForRelativePaths = URI.create(baseUrlForRelativePaths());
     URI uri = URI.create(absoluteUrl);
     if (uri.equals(baseUriForRelativePaths)) {
       return asStreamxKey("/");

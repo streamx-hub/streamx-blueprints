@@ -12,7 +12,7 @@ public class JsonWebResourceProcessingSettings extends BaseWebResourceProcessing
   @PostConstruct
   void init() {
     loadSettings(
-        new JsonContentProcessingSettings(configuration),
+        new JsonContentProcessingSettings(),
         ".json"
     );
   }

@@ -12,7 +12,7 @@ public class YamlWebResourceProcessingSettings extends BaseWebResourceProcessing
   @PostConstruct
   void init() {
     loadSettings(
-        new YamlContentProcessingSettings(configuration),
+        new YamlContentProcessingSettings(),
         ".yaml"
     );
   }

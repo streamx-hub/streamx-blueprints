@@ -1,5 +1,7 @@
 package com.streamx.blueprints.rewriter.functions;
 
+import static com.streamx.blueprints.rewriter.configuration.Configuration.baseUrlForRelativePaths;
+
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.data.WebResource;
@@ -29,9 +31,6 @@ public class ProcessResourceFunction {
   Logger log;
 
   @Inject
-  Configuration configuration;
-
-  @Inject
   UrlComputationService urlComputationService;
 
   @Inject
@@ -51,7 +50,7 @@ public class ProcessResourceFunction {
 
     String resourcePath = CloudEventUtils.getSubject(event);
     String payloadType = payload.getType();
-    if (!configuration.processablePayloadTypes().contains(payloadType)) {
+    if (!Configuration.processablePayloadTypes().contains(payloadType)) {
       log.tracef("Skipping processing %s - the service is not configured to handle payload type %s",
           resourcePath, payloadType);
       return sameEvent;
@@ -142,7 +141,7 @@ public class ProcessResourceFunction {
           resourceAbsoluteUrl, resourceStreamxKey, content, payloadType);
     } else {
       return new ResourceData(
-          configuration.baseUrlForRelativePaths(), path, content, payloadType);
+          baseUrlForRelativePaths(), path, content, payloadType);
     }
   }
 

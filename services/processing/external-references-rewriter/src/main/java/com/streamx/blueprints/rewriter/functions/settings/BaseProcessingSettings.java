@@ -1,7 +1,6 @@
 package com.streamx.blueprints.rewriter.functions.settings;
 
 import com.streamx.blueprints.data.Resource;
-import com.streamx.blueprints.rewriter.configuration.Configuration;
 import com.streamx.blueprints.rewriter.contentadjusters.BaseResourceContentAdjuster;
 import com.streamx.blueprints.rewriter.functions.settings.contentprocessing.BaseContentProcessingSettings;
 import com.streamx.blueprints.rewriter.functions.settings.resourcemetadata.BaseResourceMetadata;
@@ -12,9 +11,6 @@ import java.util.Set;
 import java.util.function.BiFunction;
 
 public abstract class BaseProcessingSettings<T extends Resource> {
-
-  @Inject
-  Configuration configuration;
 
   @Inject
   UrlComputationService urlComputationService;

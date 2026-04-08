@@ -12,7 +12,7 @@ public class HtmlWebResourceProcessingSettings extends BaseWebResourceProcessing
   @PostConstruct
   void init() {
     loadSettings(
-        new HtmlContentProcessingSettings(configuration),
+        new HtmlContentProcessingSettings(),
         ".html"
     );
   }
