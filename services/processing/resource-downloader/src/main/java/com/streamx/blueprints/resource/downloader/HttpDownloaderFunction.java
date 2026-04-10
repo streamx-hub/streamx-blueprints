@@ -75,7 +75,10 @@ public class HttpDownloaderFunction {
     return Multi.createFrom().ticks()
         .every(repeatInterval)
         .flatMap(l -> Multi.createFrom().items(repeatableDownloadsStore.values()))
-        .onItem().transformToUniAndMerge(this::downloadAndChooseTarget);
+        .onItem().transformToUniAndMerge(item ->
+            downloadAndChooseTarget(item)
+                .onFailure().recoverWithUni(Uni.createFrom().nothing())
+        );
   }
 
   @Incoming(Channels.DOWNLOAD_REQUESTS)
@@ -148,6 +151,7 @@ public class HttpDownloaderFunction {
     HttpRequest<Buffer> request = webClient
         .getAbs(url)
         .timeout(downloadTimeoutMillis);
+    request.putHeader("Accept-Encoding", "gzip, deflate");
 
     LastModifiedTimestamp lastModifiedTimestamp = lastModifiedTimestampRegistry.get(url);
 
