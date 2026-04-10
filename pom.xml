@@ -4,7 +4,7 @@
 
   <groupId>com.streamx.blueprints</groupId>
   <artifactId>blueprints-project</artifactId>
-  <version>3.0.15-http-SNAPSHOT</version>
+  <version>3.0.15-http</version>
   <packaging>pom</packaging>
   <name>StreamX Blueprints : Project</name>
 
@@ -68,7 +68,7 @@
   <scm>
     <connection>scm:git:git@github.com:streamx-com/streamx-blueprints.git</connection>
     <developerConnection>scm:git:git@github.com:streamx-com/streamx-blueprints.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>3.0.15-http</tag>
     <url>https://github.com/streamx-com/streamx-blueprints</url>
   </scm>
 
