@@ -45,7 +45,7 @@ public abstract class BaseQuarkusIntegrationTest {
     for (String channel : ChannelsReader.OUTGOING_CHANNELS) {
       String endpoint = toEndpoint(channel);
       wiremock.register(post(urlEqualTo(endpoint))
-          .willReturn(aResponse().withStatus(202)));
+          .willReturn(aResponse().withStatus(202).withBody("ACK")));
     }
   }
 
