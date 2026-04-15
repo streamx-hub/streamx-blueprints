@@ -44,7 +44,7 @@
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
     <quarkus.platform.version>3.31.1</quarkus.platform.version> <!-- TODO migrate to LTS, 3.33 is expected to be released in March 2026 -->
-    <quarkus-reactive-messaging-http.version>2.5.0-lts</quarkus-reactive-messaging-http.version>
+    <quarkus-reactive-messaging-http.version>2.7.1-build20260414</quarkus-reactive-messaging-http.version>
 
     <!--  Images tags  -->
     <streamx.container-image.package.type.jvm>jvm</streamx.container-image.package.type.jvm>
