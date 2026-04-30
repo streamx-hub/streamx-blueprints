@@ -240,10 +240,6 @@ descriptors:
         incoming:
           indexable-resources: {}
           indexable-resource-fragments: {}
-        autoRef:
-          - from: indexable-resource-fragments
-            to: indexable-resource-fragments-state
-            using: sync-state
         servicePorts:
           - 8083:8080
         volumes:

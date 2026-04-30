@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.data.IndexableResourceFragment;
-import com.streamx.blueprints.test.unit.StatefulInMemorySource;
 import io.cloudevents.CloudEvent;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
@@ -50,13 +49,13 @@ abstract class SearchServiceTestBase extends BaseOpensearchTest {
   ObjectMapper objectMapper;
 
   private InMemorySource<CloudEvent> indexableResourcesSource;
-  private StatefulInMemorySource indexableResourceFragmentsSource;
+  private InMemorySource<CloudEvent> indexableResourceFragmentsSource;
 
   @BeforeEach
   void initSources() {
     indexableResourcesSource = connector.source(Channels.INDEXABLE_RESOURCES);
-    indexableResourceFragmentsSource = new StatefulInMemorySource(connector,
-        Channels.INDEXABLE_RESOURCE_FRAGMENTS, Channels.INDEXABLE_RESOURCE_FRAGMENTS_STATE);
+    indexableResourceFragmentsSource = connector.source(
+        Channels.INDEXABLE_RESOURCE_FRAGMENTS);
   }
 
   void validateNoSearchResultsForTestKey() {

@@ -140,8 +140,7 @@ public class OpensearchSinkIT extends BaseQuarkusIntegrationTest {
         IndexableResourceFragment.TYPE_PUBLISHED,
         new IndexableResourceFragment(content, "fragments/simple")
     );
-    sendStatefulEvent(event,
-        Channels.INDEXABLE_RESOURCE_FRAGMENTS_STATE, Channels.INDEXABLE_RESOURCE_FRAGMENTS);
+    sendEvent(event, Channels.INDEXABLE_RESOURCE_FRAGMENTS);
   }
 
   private void publishIndexableResource(String key, String content, List<String> fragmentKeys) {
