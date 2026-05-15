@@ -1,6 +1,7 @@
 package com.streamx.blueprints.rewriter.functions;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.DownloadRequest;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.data.WebResource;
 import com.streamx.blueprints.rewriter.Channels;
@@ -8,14 +9,15 @@ import com.streamx.blueprints.rewriter.configuration.Configuration;
 import com.streamx.blueprints.rewriter.data.ExternalResource;
 import com.streamx.blueprints.rewriter.data.ResourceData;
 import com.streamx.blueprints.rewriter.functions.settings.BaseProcessingSettings;
-import com.streamx.blueprints.rewriter.services.DownloadRequestsSender;
 import com.streamx.blueprints.rewriter.services.UrlComputationService;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.v1.CloudEventBuilder;
+import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -35,78 +37,164 @@ public class ProcessResourceFunction {
   UrlComputationService urlComputationService;
 
   @Inject
-  DownloadRequestsSender downloadRequestsSender;
-
-  @Inject
   Instance<BaseProcessingSettings<?>> processingSettings;
 
   @Incoming(Channels.INCOMING_RESOURCES)
   @Outgoing(Channels.OUTGOING_RESOURCES)
   public Uni<CloudEvent> processIncomingEvent(CloudEvent event) {
-    Uni<CloudEvent> sameEvent = Uni.createFrom().item(event);
+
+    return resolveContext(event)
+        .map(ctx -> processIncomingResource(
+            event,
+            ctx
+        ))
+        .orElseGet(() -> Uni.createFrom().item(event));
+  }
+
+  @Incoming(Channels.INCOMING_RESOURCES)
+  @Outgoing(Channels.DOWNLOAD_REQUESTS)
+  public Multi<CloudEvent> emitDownloadRequests(CloudEvent event) {
+    return resolveContext(event)
+        .map(ctx -> processIncomingResourceForExternalDownloads(event, ctx))
+        .orElseGet(Multi.createFrom()::empty);
+  }
+
+  private Optional<ProcessingContext> resolveContext(CloudEvent event) {
     Resource payload = extractResource(event);
     if (payload == null) {
-      return sameEvent;
+      return Optional.empty();
     }
 
     String resourcePath = CloudEventUtils.getSubject(event);
     String payloadType = payload.getType();
+
     if (!configuration.processablePayloadTypes().contains(payloadType)) {
-      log.tracef("Skipping processing %s - the service is not configured to handle payload type %s",
-          resourcePath, payloadType);
-      return sameEvent;
+      log.tracef("Skipping processing %s - unsupported payload type %s", resourcePath,
+          payloadType
+      );
+      return Optional.empty();
     }
 
-    String eventType = event.getType();
-    var settingsOpt = processingSettings.stream()
-        .filter(setting -> setting.handledCloudEventType(eventType))
+    Optional<BaseProcessingSettings<?>> settingsOpt = processingSettings.stream()
+        .filter(setting -> setting.handledCloudEventType(event.getType()))
         .filter(setting -> setting.handlesResourcePath(resourcePath))
         .findFirst();
+
     if (settingsOpt.isEmpty()) {
-      log.tracef("No handler for resource event %s of type %s", resourcePath, eventType);
-      return sameEvent;
+      log.tracef("No handler for resource event %s of type %s", resourcePath,
+          event.getType()
+      );
+      return Optional.empty();
     }
 
     BaseProcessingSettings<?> settings = settingsOpt.get();
+
     if (!settings.getExternalResourcesCollector().hasResourceSelectors()) {
-      log.tracef("Skipping processing %s - no resource selectors are specified", resourcePath);
-      return sameEvent;
+      log.tracef("Skipping processing %s - no resource selectors specified", resourcePath);
+      return Optional.empty();
     }
 
-    return processIncomingResource(payload, payloadType, resourcePath, event, settings);
+    return Optional.of(new ProcessingContext(payload, payloadType, resourcePath, settings));
   }
 
-  private Uni<CloudEvent> processIncomingResource(Resource payload, String payloadType,
-      String resourcePath, CloudEvent event, BaseProcessingSettings<?> settings) {
-    String resourceContent = payload.getContentAsString();
-    ResourceData resource = collectResourceData(resourcePath, resourceContent,
-        settings.getHandledResourceClass(), payloadType);
+  private Multi<CloudEvent> processIncomingResourceForExternalDownloads(CloudEvent event,
+      ProcessingContext ctx) {
+
+    if (!isPublishingEvent(event)) {
+      return Multi.createFrom().empty();
+    }
+
+    ResourceData resource = toResourceData(ctx);
+
+    Set<ExternalResource> externalResources =
+        ctx.settings()
+            .getExternalResourcesCollector()
+            .collectExternalResources(resource);
+
+    if (externalResources.isEmpty()) {
+      return Multi.createFrom().empty();
+    }
+
+    return Multi.createFrom()
+        .items(externalResources.stream()
+            .map(this::createDownloadRequest));
+  }
+
+  private Uni<CloudEvent> processIncomingResource(CloudEvent event, ProcessingContext ctx) {
+    ResourceData resource = toResourceData(ctx);
 
     log.infof("Resource %s, having absolute url %s, will be published to StreamX as %s",
-        resourcePath, resource.absoluteUrl(), resource.streamxKey());
+        ctx.resourcePath(),
+        resource.absoluteUrl(),
+        resource.streamxKey()
+    );
 
-    if (!CloudEventUtils.isPublishingType(event.getType())) {
-      // TODO implement unpublishing orphaned external resources, for now just relay the event
-      // TODO implement it also for publishing an edited resource with some links removed
+    if (!isPublishingEvent(event)) {
+      // TODO implement unpublishing orphaned external resources
+      // TODO implement handling removed links after edit
       return asProcessedEvent(event, resource.streamxKey());
     }
 
-    Set<ExternalResource> externalResources = settings.getExternalResourcesCollector()
-        .collectExternalResources(resource);
+    Set<ExternalResource> externalResources =
+        ctx.settings()
+            .getExternalResourcesCollector()
+            .collectExternalResources(resource);
 
     if (externalResources.isEmpty()) {
       log.tracef("No external resources found for %s", resource.streamxKey());
       return asProcessedEvent(event, resource.streamxKey());
     }
 
-    log.tracef("Found %d external resources for %s: %s",
+    log.tracef(
+        "Found %d external resources for %s: %s",
         externalResources.size(),
         resource.streamxKey(),
-        externalResources.stream().map(ExternalResource::getPaths).collect(Collectors.toList())
+        externalResources.stream()
+            .map(ExternalResource::getPaths)
+            .collect(Collectors.toList())
     );
-    return downloadExternalResourcesAndReturnAdjustedResource(
-        event, resource, externalResources, settings
+
+    return adjustResource(event, resource, externalResources, ctx.settings());
+  }
+
+  private ResourceData toResourceData(ProcessingContext ctx) {
+
+    return collectResourceData(
+        ctx.resourcePath(),
+        ctx.payload().getContentAsString(),
+        ctx.settings().getHandledResourceClass(),
+        ctx.payloadType()
     );
+  }
+
+  private boolean isPublishingEvent(CloudEvent event) {
+    return CloudEventUtils.isPublishingType(event.getType());
+  }
+
+  public CloudEvent createDownloadRequest(ExternalResource resource) {
+
+    String absoluteUrl = resource.getAbsoluteUrl();
+    String streamxKey = resource.getStreamxKey();
+
+    DownloadRequest downloadRequest = new DownloadRequest(
+        absoluteUrl,
+        streamxKey,
+        configuration.emittedPageType(),
+        configuration.emittedWebResourceType(),
+        configuration.emittedAssetType()
+    );
+
+    log.tracef("Sending download request for %s", absoluteUrl);
+
+    return CloudEventUtils.eventWithData(
+        streamxKey,
+        DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE,
+        downloadRequest
+    );
+  }
+
+  private record ProcessingContext(Resource payload, String payloadType,
+                                   String resourcePath, BaseProcessingSettings<?> settings) {
   }
 
   private Resource extractResource(CloudEvent event) {
@@ -146,7 +234,7 @@ public class ProcessResourceFunction {
     }
   }
 
-  private Uni<CloudEvent> downloadExternalResourcesAndReturnAdjustedResource(
+  private Uni<CloudEvent> adjustResource(
       CloudEvent event, ResourceData resource,
       Set<ExternalResource> externalResources, BaseProcessingSettings<?> settings) {
 
@@ -154,24 +242,17 @@ public class ProcessResourceFunction {
     log.tracef("Sending download and publish requests for %d external resources of %s",
         externalResources.size(), resourceStreamxKey);
 
-    return Uni.combine()
-        .all()
-        .unis(externalResources.stream()
-            .map(downloadRequestsSender::sendRequest)
-            .toList())
-        .with(list -> true).onItem().transform(done -> {
-          String content = resource.content();
-          log.tracef("Replacing external links in content of %s", resourceStreamxKey);
-          String adjustedContent = settings.getContentAdjuster()
-              .adjustLinks(content, externalResources);
-          Resource adjustedResource = settings.newResource(adjustedContent, resource.payloadType());
+    String content = resource.content();
+    log.tracef("Replacing external links in content of %s", resourceStreamxKey);
+    String adjustedContent = settings.getContentAdjuster()
+        .adjustLinks(content, externalResources);
+    Resource adjustedResource = settings.newResource(adjustedContent, resource.payloadType());
 
-          log.tracef("Publishing resource %s with all external links adjusted to local paths",
-              resourceStreamxKey);
+    log.tracef("Publishing resource %s with all external links adjusted to local paths",
+        resourceStreamxKey);
 
-          return CloudEventUtils.eventCopyWithData(event, adjustedResource)
-              .withSubject(resource.streamxKey())
-              .build();
-        });
+    return Uni.createFrom().item(CloudEventUtils.eventCopyWithData(event, adjustedResource)
+        .withSubject(resource.streamxKey())
+        .build());
   }
 }

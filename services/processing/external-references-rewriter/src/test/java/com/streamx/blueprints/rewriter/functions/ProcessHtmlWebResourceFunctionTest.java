@@ -20,16 +20,12 @@ class ProcessHtmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     String pagePath = "/page1.html";
     String pageContent = "<img src='./logo.png'>";
 
-    mockDownloadResponse("https://www.my-eds-server.com/logo.png", new byte[]{0, 1, 2});
-
     // when
     publishWebResource(pagePath, pageContent);
 
     // then
-    waitForDownloadedAssets(1);
-    assertDownloadedAsset(0,
-        "/logo.png",
-        new byte[]{0, 1, 2});
+    List<CloudEvent> downloadRequestEvents = waitForDownloadRequestEventsInSink( 1);
+    assertPublishedDownloadRequest(downloadRequestEvents.getFirst(), "/logo.png", "https://www.my-eds-server.com/logo.png");
 
     List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 1);
     assertPublishedWebResource(webResourceEvents.getFirst(),

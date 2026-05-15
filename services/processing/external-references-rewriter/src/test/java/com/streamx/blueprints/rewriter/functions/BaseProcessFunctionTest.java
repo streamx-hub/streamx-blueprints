@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 import com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
+import com.streamx.blueprints.data.DownloadRequest;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.data.WebResource;
@@ -25,7 +26,7 @@ import java.util.Objects;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.BeforeEach;
 
-abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
+abstract class BaseProcessFunctionTest {
 
   // payload types (as in src/test/resources/application.properties)
   public static final String PAGE = "page/blog";
@@ -103,6 +104,16 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
     return waitForEventsInSink(payloadType, expectedCount, expectedCount);
   }
 
+  protected void assertPublishedDownloadRequest(CloudEvent event, String expectedKey,
+      String expectedUrl) {
+    assertThat(event.getSubject()).isEqualTo(expectedKey);
+    DownloadRequest downloadRequest = CloudEventUtils.getData(event, DownloadRequest.class);
+
+    assert downloadRequest != null;
+    assertThat(downloadRequest.emitKey()).isEqualTo(expectedKey);
+    assertThat(downloadRequest.url()).isEqualTo(expectedUrl);
+  }
+
   protected List<CloudEvent> waitForEventsInSink(String payloadType, int expectedCount,
       int expectedTotalCount) {
     await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
@@ -115,6 +126,23 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
           Resource payload = CloudEventUtils.getData(event, Resource.class);
           return payload != null && Objects.equals(payloadType, payload.getType());
         })
+        .toList();
+
+    assertThat(matchingEvents).hasSize(expectedCount);
+    return matchingEvents;
+  }
+
+  protected List<CloudEvent> waitForDownloadRequestEventsInSink(int expectedCount) {
+    return waitForDownloadRequestEventsInSink(expectedCount, expectedCount);
+  }
+
+  protected List<CloudEvent> waitForDownloadRequestEventsInSink(int expectedCount,
+      int expectedTotalCount) {
+    await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+        assertThat(downloadRequestsSink.received()).hasSize(expectedTotalCount)
+    );
+
+    List<CloudEvent> matchingEvents = resourcesSink.received().stream().map(Message::getPayload)
         .toList();
 
     assertThat(matchingEvents).hasSize(expectedCount);
