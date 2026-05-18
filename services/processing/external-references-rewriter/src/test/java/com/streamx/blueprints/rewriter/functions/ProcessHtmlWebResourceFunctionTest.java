@@ -24,8 +24,9 @@ class ProcessHtmlWebResourceFunctionTest extends BaseProcessFunctionTest {
     publishWebResource(pagePath, pageContent);
 
     // then
-    List<CloudEvent> downloadRequestEvents = waitForDownloadRequestEventsInSink( 1);
-    assertPublishedDownloadRequest(downloadRequestEvents.getFirst(), "/logo.png", "https://www.my-eds-server.com/logo.png");
+    List<CloudEvent> downloadRequestEvents = waitForDownloadRequestEventsInSink(1);
+    assertPublishedDownloadRequest(downloadRequestEvents.getFirst(), "/logo.png",
+        "https://www.my-eds-server.com/logo.png");
 
     List<CloudEvent> webResourceEvents = waitForEventsInSink(WEB_RESOURCE, 1);
     assertPublishedWebResource(webResourceEvents.getFirst(),

@@ -15,9 +15,7 @@ import io.cloudevents.core.v1.CloudEventBuilder;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -31,19 +29,20 @@ public class ProcessResourceFunction {
   Logger log;
 
   @Inject
-  Configuration configuration;
+  ProcessingContextResolver contextResolver;
 
   @Inject
   UrlComputationService urlComputationService;
 
   @Inject
-  Instance<BaseProcessingSettings<?>> processingSettings;
+  Configuration configuration;
+
 
   @Incoming(Channels.INCOMING_RESOURCES)
   @Outgoing(Channels.OUTGOING_RESOURCES)
   public Uni<CloudEvent> processIncomingEvent(CloudEvent event) {
 
-    return resolveContext(event)
+    return contextResolver.resolveContext(event)
         .map(ctx -> processIncomingResource(
             event,
             ctx
@@ -54,53 +53,17 @@ public class ProcessResourceFunction {
   @Incoming(Channels.INCOMING_RESOURCES)
   @Outgoing(Channels.DOWNLOAD_REQUESTS)
   public Multi<CloudEvent> emitDownloadRequests(CloudEvent event) {
-    return resolveContext(event)
+    return contextResolver.resolveContext(event)
         .map(ctx -> processIncomingResourceForExternalDownloads(event, ctx))
         .orElseGet(Multi.createFrom()::empty);
   }
 
-  private Optional<ProcessingContext> resolveContext(CloudEvent event) {
-    Resource payload = extractResource(event);
-    if (payload == null) {
-      return Optional.empty();
-    }
 
-    String resourcePath = CloudEventUtils.getSubject(event);
-    String payloadType = payload.getType();
-
-    if (!configuration.processablePayloadTypes().contains(payloadType)) {
-      log.tracef("Skipping processing %s - unsupported payload type %s", resourcePath,
-          payloadType
-      );
-      return Optional.empty();
-    }
-
-    Optional<BaseProcessingSettings<?>> settingsOpt = processingSettings.stream()
-        .filter(setting -> setting.handledCloudEventType(event.getType()))
-        .filter(setting -> setting.handlesResourcePath(resourcePath))
-        .findFirst();
-
-    if (settingsOpt.isEmpty()) {
-      log.tracef("No handler for resource event %s of type %s", resourcePath,
-          event.getType()
-      );
-      return Optional.empty();
-    }
-
-    BaseProcessingSettings<?> settings = settingsOpt.get();
-
-    if (!settings.getExternalResourcesCollector().hasResourceSelectors()) {
-      log.tracef("Skipping processing %s - no resource selectors specified", resourcePath);
-      return Optional.empty();
-    }
-
-    return Optional.of(new ProcessingContext(payload, payloadType, resourcePath, settings));
-  }
 
   private Multi<CloudEvent> processIncomingResourceForExternalDownloads(CloudEvent event,
       ProcessingContext ctx) {
 
-    if (!isPublishingEvent(event)) {
+    if (!CloudEventUtils.isPublishingType(event.getType())) {
       return Multi.createFrom().empty();
     }
 
@@ -129,7 +92,7 @@ public class ProcessResourceFunction {
         resource.streamxKey()
     );
 
-    if (!isPublishingEvent(event)) {
+    if (!CloudEventUtils.isPublishingType(event.getType())) {
       // TODO implement unpublishing orphaned external resources
       // TODO implement handling removed links after edit
       return asProcessedEvent(event, resource.streamxKey());
@@ -167,10 +130,6 @@ public class ProcessResourceFunction {
     );
   }
 
-  private boolean isPublishingEvent(CloudEvent event) {
-    return CloudEventUtils.isPublishingType(event.getType());
-  }
-
   public CloudEvent createDownloadRequest(ExternalResource resource) {
 
     String absoluteUrl = resource.getAbsoluteUrl();
@@ -193,23 +152,6 @@ public class ProcessResourceFunction {
     );
   }
 
-  private record ProcessingContext(Resource payload, String payloadType,
-                                   String resourcePath, BaseProcessingSettings<?> settings) {
-  }
-
-  private Resource extractResource(CloudEvent event) {
-    try {
-      Resource resource = CloudEventUtils.getData(event, Resource.class);
-      if (resource == null) {
-        log.tracef("Skipping processing %s - payload is null - cannot determine payload type",
-            event.getSubject());
-      }
-      return resource;
-    } catch (RuntimeException ex) {
-      log.warnf("Invalid incoming CloudEvent %s: %s", event.getSubject(), ex.getMessage());
-      return null;
-    }
-  }
 
   private Uni<CloudEvent> asProcessedEvent(CloudEvent event, String key) {
     return Uni.createFrom().item(new CloudEventBuilder(event)
@@ -239,8 +181,6 @@ public class ProcessResourceFunction {
       Set<ExternalResource> externalResources, BaseProcessingSettings<?> settings) {
 
     String resourceStreamxKey = resource.streamxKey();
-    log.tracef("Sending download and publish requests for %d external resources of %s",
-        externalResources.size(), resourceStreamxKey);
 
     String content = resource.content();
     log.tracef("Replacing external links in content of %s", resourceStreamxKey);
