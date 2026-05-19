@@ -1,0 +1,48 @@
+package com.streamx.blueprints.rewriter.functions;
+
+import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.rewriter.Channels;
+import com.streamx.blueprints.rewriter.data.ExternalResource;
+import com.streamx.blueprints.rewriter.data.ResourceData;
+import io.cloudevents.CloudEvent;
+import io.smallrye.mutiny.Multi;
+import jakarta.enterprise.context.ApplicationScoped;
+import java.util.Set;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+
+@ApplicationScoped
+public class DownloadRequestEmmiterFunction extends BaseProcessResourceFunction {
+
+  @Incoming(Channels.INCOMING_RESOURCES)
+  @Outgoing(Channels.DOWNLOAD_REQUESTS)
+  public Multi<CloudEvent> emitDownloadRequests(CloudEvent event) {
+    return resolveContext(event)
+        .map(ctx -> emitDownloadRequestForExternalResources(event, ctx))
+        .orElseGet(Multi.createFrom()::empty);
+  }
+
+  private Multi<CloudEvent> emitDownloadRequestForExternalResources(CloudEvent event,
+      ProcessingContext ctx) {
+
+    if (!CloudEventUtils.isPublishingType(event.getType())) {
+      return Multi.createFrom().empty();
+    }
+
+    ResourceData resource = toResourceData(ctx);
+
+    Set<ExternalResource> externalResources =
+        ctx.settings()
+            .getExternalResourcesCollector()
+            .collectExternalResources(resource);
+
+    if (externalResources.isEmpty()) {
+      return Multi.createFrom().empty();
+    }
+
+    return Multi.createFrom()
+        .items(externalResources.stream()
+            .map(this::createDownloadRequest));
+  }
+
+}
