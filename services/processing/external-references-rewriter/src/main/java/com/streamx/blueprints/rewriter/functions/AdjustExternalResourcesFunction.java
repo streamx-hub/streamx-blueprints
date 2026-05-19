@@ -31,7 +31,7 @@ public class AdjustExternalResourcesFunction extends BaseProcessResourceFunction
   }
 
   private Uni<CloudEvent> adjustExternalResources(CloudEvent event, ProcessingContext ctx) {
-    ResourceData resource = toResourceData(ctx);
+    ResourceData resource = collectResourceData(ctx);
 
     log.infof("Resource %s, having absolute url %s, will be published to StreamX as %s",
         ctx.resourcePath(),

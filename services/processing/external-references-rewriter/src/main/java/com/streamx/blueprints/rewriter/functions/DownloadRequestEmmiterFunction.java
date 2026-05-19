@@ -29,7 +29,7 @@ public class DownloadRequestEmmiterFunction extends BaseProcessResourceFunction 
       return Multi.createFrom().empty();
     }
 
-    ResourceData resource = toResourceData(ctx);
+    ResourceData resource = collectResourceData(ctx);
 
     Set<ExternalResource> externalResources =
         ctx.settings()

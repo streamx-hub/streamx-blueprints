@@ -81,16 +81,6 @@ public abstract class BaseProcessResourceFunction {
     }
   }
 
-  protected ResourceData toResourceData(ProcessingContext ctx) {
-
-    return collectResourceData(
-        ctx.resourcePath(),
-        ctx.payload().getContentAsString(),
-        ctx.settings().getHandledResourceClass(),
-        ctx.payloadType()
-    );
-  }
-
   public CloudEvent createDownloadRequest(ExternalResource resource) {
 
     String absoluteUrl = resource.getAbsoluteUrl();
@@ -113,24 +103,26 @@ public abstract class BaseProcessResourceFunction {
     );
   }
 
-  private ResourceData collectResourceData(String path, String content,
-      Class<? extends Resource> handledResourceType, String payloadType) {
-    if (WebResource.class.isAssignableFrom(handledResourceType)) {
+  protected ResourceData collectResourceData(ProcessingContext ctx) {
+    if (WebResource.class.isAssignableFrom(ctx.settings().getHandledResourceClass())) {
       // web resources later become available by http as files, so must sanitize their paths
-      String sanitizedResourcePath = urlComputationService.asStreamxKey(path);
+      String sanitizedResourcePath = urlComputationService.asStreamxKey(ctx.resourcePath());
       String resourceAbsoluteUrl = urlComputationService
           .computeAbsoluteUrlRelativeToConfiguredBaseUrl(sanitizedResourcePath);
       String resourceStreamxKey = urlComputationService
           .asStreamxKeyRelativeToConfiguredBaseUrl(resourceAbsoluteUrl);
       return new ResourceData(
-          resourceAbsoluteUrl, resourceStreamxKey, content, payloadType);
+          resourceAbsoluteUrl, resourceStreamxKey, ctx.payload().getContentAsString(),
+          ctx.payloadType());
     } else {
       return new ResourceData(
-          configuration.baseUrlForRelativePaths(), path, content, payloadType);
+          configuration.baseUrlForRelativePaths(), ctx.resourcePath(),
+          ctx.payload().getContentAsString(), ctx.payloadType());
     }
   }
-  
+
   public record ProcessingContext(Resource payload, String payloadType,
                                   String resourcePath, BaseProcessingSettings<?> settings) {
+
   }
 }
