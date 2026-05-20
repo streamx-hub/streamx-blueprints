@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 import com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
+import com.streamx.blueprints.data.DownloadRequest;
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.data.Resource;
 import com.streamx.blueprints.data.WebResource;
@@ -22,10 +23,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.junit.jupiter.api.BeforeEach;
 
-abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
+abstract class BaseProcessFunctionTest {
 
   // payload types (as in src/test/resources/application.properties)
   public static final String PAGE = "page/blog";
@@ -99,6 +101,45 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
     return event;
   }
 
+  protected void assertPublishedDownloadRequest(CloudEvent event, String expectedKey,
+      String expectedUrl) {
+    assertThat(event.getSubject()).isEqualTo(expectedKey);
+    DownloadRequest downloadRequest = CloudEventUtils.getData(event, DownloadRequest.class);
+
+    assert downloadRequest != null;
+    assertThat(downloadRequest.emitKey()).isEqualTo(expectedKey);
+    assertThat(downloadRequest.url()).isEqualTo(expectedUrl);
+  }
+
+  protected void assertPublishedDownloadRequests(
+      List<CloudEvent> events,
+      List<ImmutablePair<String, String>> expectedKeyAndUrls) {
+
+    assertThat(events).hasSameSizeAs(expectedKeyAndUrls);
+
+    for (ImmutablePair<String, String> expected : expectedKeyAndUrls) {
+
+      boolean found = events.stream().anyMatch(event -> {
+        try {
+          assertPublishedDownloadRequest(
+              event,
+              expected.getLeft(),
+              expected.getRight());
+          return true;
+        } catch (AssertionError e) {
+          return false;
+        }
+      });
+
+      assertThat(found)
+          .as("Missing event for key=%s url=%s",
+              expected.getLeft(),
+              expected.getRight())
+          .isTrue();
+    }
+  }
+
+
   protected List<CloudEvent> waitForEventsInSink(String payloadType, int expectedCount) {
     return waitForEventsInSink(payloadType, expectedCount, expectedCount);
   }
@@ -119,6 +160,28 @@ abstract class BaseProcessFunctionTest extends BaseMockedDownloaderTest {
 
     assertThat(matchingEvents).hasSize(expectedCount);
     return matchingEvents;
+  }
+
+  protected List<CloudEvent> waitForDownloadRequestEventsInSink(int expectedCount) {
+    return waitForDownloadRequestEventsInSink(expectedCount, expectedCount);
+  }
+
+  protected List<CloudEvent> waitForDownloadRequestEventsInSink(int expectedCount,
+      int expectedTotalCount) {
+    await().atMost(Duration.ofSeconds(5)).untilAsserted(() ->
+        assertThat(downloadRequestsSink.received()).hasSize(expectedTotalCount)
+    );
+
+    List<CloudEvent> matchingEvents = downloadRequestsSink.received().stream()
+        .map(Message::getPayload)
+        .toList();
+
+    assertThat(matchingEvents).hasSize(expectedCount);
+    return matchingEvents;
+  }
+
+  protected void verifyNoDownloadRequestsSent() {
+    assertThat(downloadRequestsSink.received()).hasSize(0);
   }
 
   protected void assertPublishedPage(CloudEvent event, String expectedKey, String expectedContent) {

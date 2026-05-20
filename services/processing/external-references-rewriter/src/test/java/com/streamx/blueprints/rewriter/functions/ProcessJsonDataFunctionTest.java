@@ -2,11 +2,11 @@ package com.streamx.blueprints.rewriter.functions;
 
 import static org.assertj.core.api.Assertions.contentOf;
 
-import com.streamx.blueprints.rewriter.testutils.DownloadedResource;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import java.io.File;
 import java.util.List;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -28,23 +28,17 @@ class ProcessJsonDataFunctionTest extends BaseProcessFunctionTest {
         ).distinct()
         .toList();
 
-    byte[] externalImageContent = {0, 1, 2};
-
-    // and
-    for (String externalImageUrl : externalImageUrls) {
-      mockDownloadResponse(externalImageUrl, externalImageContent);
-    }
-
     // when
     publishData(jsonResourceKey, jsonResourceContent);
 
     // then: verify published images
-    waitForDownloadedAssets(externalImageUrls.size());
-    List<DownloadedResource> expectedPublishedImages = externalImageUrls.stream()
-        .map(url -> url.replace("https://", "/https_"))
-        .map(url -> new DownloadedResource(url, externalImageContent))
+    List<CloudEvent> downloadRequestEvents =
+        waitForDownloadRequestEventsInSink(externalImageUrls.size());
+
+    List<ImmutablePair<String, String>> expectedPublishedImages = externalImageUrls.stream()
+        .map(url -> new ImmutablePair<>(url.replace("https://", "/https_"), url))
         .toList();
-    assertDownloadedAssets(expectedPublishedImages);
+    assertPublishedDownloadRequests(downloadRequestEvents, expectedPublishedImages);
 
     // and: verify published processed json
     List<CloudEvent> dataAssets = waitForEventsInSink(DATA, 1);
@@ -66,24 +60,20 @@ class ProcessJsonDataFunctionTest extends BaseProcessFunctionTest {
           ]
         }
         """;
-    final byte[] image1Content = {0, 1, 2};
-    final byte[] image2Content = {2, 1, 0};
-
-    // and
-    mockDownloadResponses(
-        "https://magento.test/url/to/image1.jpg", image1Content,
-        "https://www.my-eds-server.com/relative/url/to/image2.jpg", image2Content
-    );
 
     // when
     publishData(jsonResourceKey, jsonResourceContent);
 
     // then: verify published images
-    waitForDownloadedAssets(2);
-    assertDownloadedAssets(
-        new DownloadedResource("/https_magento.test/url/to/image1.jpg", image1Content),
-        new DownloadedResource("/relative/url/to/image2.jpg", image2Content)
-    );
+    List<CloudEvent> downloadRequestEvents =
+        waitForDownloadRequestEventsInSink(2);
+    assertPublishedDownloadRequest(downloadRequestEvents.get(0),
+        "/https_magento.test/url/to/image1.jpg",
+        "https://magento.test/url/to/image1.jpg");
+    assertPublishedDownloadRequest(downloadRequestEvents.get(1),
+        "/relative/url/to/image2.jpg",
+        "https://www.my-eds-server.com/relative/url/to/image2.jpg");
+
 
     // and: verify published processed json
     List<CloudEvent> dataSink = waitForEventsInSink(DATA, 1);
@@ -111,17 +101,16 @@ class ProcessJsonDataFunctionTest extends BaseProcessFunctionTest {
           "someOtherField": "Value with \\"escaped\\" quoted text"
         }
         """;
-    final byte[] externalResourceContent = "content".getBytes();
-
-    // and
-    mockDownloadResponse("https://www.my-eds-server.com/a/b.jpg", externalResourceContent);
 
     // when
     publishData(jsonResourceKey, jsonResourceContent);
 
     // then: verify published image
-    waitForDownloadedAssets(1);
-    assertDownloadedAsset(0, "/a/b.jpg", externalResourceContent);
+    List<CloudEvent> downloadRequestEvents =
+        waitForDownloadRequestEventsInSink(1);
+    assertPublishedDownloadRequest(downloadRequestEvents.getFirst(),
+        "/a/b.jpg",
+        "https://www.my-eds-server.com/a/b.jpg");
 
     // and: verify published processed json
     List<CloudEvent> dataSink = waitForEventsInSink(DATA, 1);

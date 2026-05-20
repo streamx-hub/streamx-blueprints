@@ -3,19 +3,15 @@ package com.streamx.blueprints.rewriter.functions;
 import static com.streamx.blueprints.cloudevents.utils.CloudEventTestUtils.assertSameEvents;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Page;
-import com.streamx.blueprints.rewriter.data.ExternalResource;
-import com.streamx.blueprints.rewriter.testutils.DownloadedResource;
-import com.streamx.blueprints.rewriter.testutils.SkipVerifyingEachExternalResourceWasDownloadedExactlyOnce;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.jupiter.api.Test;
 
 @QuarkusTest
@@ -26,26 +22,22 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     // given
     final String pagePath = "page.html";
     final String pageContent = "⭐<img src='image-🚀.jpg'>⭐";
-    final byte[] imageContent = generateImageContent("image-🚀.jpg");
-
-    // and: expect the external url to be downloaded (mock response to avoid online call)
-    mockDownloadResponse(
-        "https://www.my-eds-server.com/image-🚀.jpg", imageContent
-    );
 
     // when
     publishPageWithExtension(pagePath, pageContent,
         Map.of("indexable", "true", "category", "blogs"));
 
     // then: wait for expected events to be published
-    waitForDownloadedAssets(1);
+    List<CloudEvent> downloadRequestEvents =
+        waitForDownloadRequestEventsInSink(1);
+    assertPublishedDownloadRequest(downloadRequestEvents.get(0),
+        "/image-_.jpg",
+        "https://www.my-eds-server.com/image-🚀.jpg");
+
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
     CloudEvent editedPageEvent = pageEvents.getFirst();
 
     // and: assert content of published events
-    assertDownloadedAsset(0,
-        "/image-_.jpg",
-        imageContent);
     assertPublishedPage(editedPageEvent,
         "/page.html",
         "⭐<img src='/image-_.jpg'>⭐");
@@ -69,29 +61,24 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
         <img src='/image.png?a=b&c=d'>
         <img src='https://www.my-eds-server.com/image.png?a=b&c=d'>
         """;
-    final byte[] imageContent = generateImageContent("image.png");
-    final byte[] imageCustomizedContent = generateImageContent("image.png?a=b&c=d");
-
-    // and: expect the external url to be downloaded (mock response to avoid online call)
-    mockDownloadResponses(
-        "https://www.my-eds-server.com/image.png", imageContent,
-        "https://www.my-eds-server.com/image.png?a=b&c=d", imageCustomizedContent
-    );
 
     // when
     publishPage(pagePath, pageContent);
 
     // then: wait for expected events to be published
-    waitForDownloadedAssets(2);
+    List<CloudEvent> downloadRequestEvents =
+        waitForDownloadRequestEventsInSink(2);
+
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
     // and: assert content of published events
-    assertDownloadedAsset(0,
+    assertPublishedDownloadRequest(downloadRequestEvents.get(0),
         "/image.png",
-        imageContent);
-    assertDownloadedAsset(1,
+        "https://www.my-eds-server.com/image.png");
+    assertPublishedDownloadRequest(downloadRequestEvents.get(1),
         "/image.png_a_b_c_d.png",
-        imageCustomizedContent);
+        "https://www.my-eds-server.com/image.png?a=b&c=d");
+
     assertPublishedPage(pageEvents.getFirst(),
         "/page1.html",
         """
@@ -117,14 +104,6 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
         </picture>
         """;
 
-    // and: expect the external url to be downloaded (mock response to avoid online call)
-    mockDownloadResponses(
-        "https://www.my-eds-server.com/media_1d5b.jpg?width=2000&format=webply&optimize=medium",
-        "media_1d5b.jpg",
-        "https://www.my-eds-server.com/media_14c1.jpg?width=750&format=jpg&optimize=medium",
-        "media_14c1.jpg"
-    );
-
     // when
     publishPage(page1Path, page1Content);
 
@@ -140,13 +119,15 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
             """
     );
 
-    waitForDownloadedAssets(2);
-    assertDownloadedAsset(0,
-        "/media_14c1.jpg_width_750_format_jpg_optimize_medium.jpg",
-        "media_14c1.jpg".getBytes());
-    assertDownloadedAsset(1,
-        "/media_1d5b.jpg_width_2000_format_webply_optimize_medium.jpg",
-        "media_1d5b.jpg".getBytes());
+    List<CloudEvent> downloadRequestEvents =
+        waitForDownloadRequestEventsInSink(2);
+    assertPublishedDownloadRequests(downloadRequestEvents, List.of(
+        new ImmutablePair<>(
+            "/media_14c1.jpg_width_750_format_jpg_optimize_medium.jpg",
+            "https://www.my-eds-server.com/media_14c1.jpg?width=750&format=jpg&optimize=medium"),
+        new ImmutablePair<>(
+            "/media_1d5b.jpg_width_2000_format_webply_optimize_medium.jpg",
+            "https://www.my-eds-server.com/media_1d5b.jpg?width=2000&format=webply&optimize=medium")));
   }
 
   @Test
@@ -154,24 +135,19 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     // given
     final String pagePath = "page.html";
     final String pageContent = "<img src='http://www.goggle.com/image.jpg'>";
-    final byte[] imageContent = generateImageContent("image.jpg");
-
-    // and: expect the external url to be downloaded (mock response to avoid online call)
-    mockDownloadResponse(
-        "http://www.goggle.com/image.jpg", imageContent
-    );
 
     // when
     publishPage(pagePath, pageContent);
 
     // then: wait for expected events to be published
-    waitForDownloadedAssets(1);
+    List<CloudEvent> downloadRequestEvents =
+        waitForDownloadRequestEventsInSink(1);
+    assertPublishedDownloadRequest(downloadRequestEvents.get(0),
+        "/http_www.goggle.com/image.jpg",
+        "http://www.goggle.com/image.jpg");
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
     // and: assert content of published events
-    assertDownloadedAsset(0,
-        "/http_www.goggle.com/image.jpg",
-        imageContent);
     assertPublishedPage(pageEvents.getFirst(),
         "/page.html",
         "<img src='/http_www.goggle.com/image.jpg'>");
@@ -194,45 +170,30 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
           </body>
         </html>
         """;
-    final byte[] blogImageContent = generateImageContent("blogs/adventures.jpg");
-    final byte[] edsIndexImageContent = generateImageContent("eds-index.jpg");
-    final byte[] logoImageContent = generateImageContent("logo.png");
-    final byte[] meshImageContent = generateImageContent("streamx-mesh-overview.jpg");
-    final byte[] cloudImageContent = generateImageContent("cloud.svg");
-    final String stylesheetContent = "body {color:green}";
-
-    // and: expect these urls to be downloaded (mock responses to avoid online calls)
-    mockDownloadResponses(
-        "https://www.my-eds-server.com/eds/pages/blogs/adventures.jpg", blogImageContent,
-        "https://www.my-eds-server.com/eds/eds-index.jpg", edsIndexImageContent,
-        "https://www.my-eds-server.com/images/logo.png", logoImageContent,
-        "https://www.goggle.com/streamx-mesh-overview.jpg?par=val", meshImageContent,
-        "https://www.goggle.com/assets/jcr:content/cloud.svg", cloudImageContent,
-        "https://www.my-eds-server.com/stylesheets/styles.css", stylesheetContent
-    );
 
     // when
     publishPage(pagePath, initialHtml);
 
     // then: wait for expected events to be published
-    waitForDownloadedAssets(6);
+    List<CloudEvent> downloadRequestEvents =
+        waitForDownloadRequestEventsInSink(6);
+    ;
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
     // and: assert content of published events
-    assertDownloadedAssets(
-        new DownloadedResource("/eds/pages/blogs/adventures.jpg",
-            blogImageContent),
-        new DownloadedResource("/eds/eds-index.jpg",
-            edsIndexImageContent),
-        new DownloadedResource("/images/logo.png",
-            logoImageContent),
-        new DownloadedResource("/https_www.goggle.com/streamx-mesh-overview.jpg_par_val.jpg",
-            meshImageContent),
-        new DownloadedResource("/https_www.goggle.com/assets/jcr_content/cloud.svg",
-            cloudImageContent),
-        new DownloadedResource("/stylesheets/styles.css",
-            stylesheetContent)
-    );
+    assertPublishedDownloadRequests(downloadRequestEvents, List.of(
+        new ImmutablePair<>("/eds/pages/blogs/adventures.jpg",
+            "https://www.my-eds-server.com/eds/pages/blogs/adventures.jpg"),
+        new ImmutablePair<>("/eds/eds-index.jpg",
+            "https://www.my-eds-server.com/eds/eds-index.jpg"),
+        new ImmutablePair<>("/images/logo.png", "https://www.my-eds-server.com/images/logo.png"),
+        new ImmutablePair<>("/https_www.goggle.com/streamx-mesh-overview.jpg_par_val.jpg",
+            "https://www.goggle.com/streamx-mesh-overview.jpg?par=val"),
+        new ImmutablePair<>("/https_www.goggle.com/assets/jcr_content/cloud.svg",
+            "https://www.goggle.com/assets/jcr:content/cloud.svg"),
+        new ImmutablePair<>("/stylesheets/styles.css",
+            "https://www.my-eds-server.com/stylesheets/styles.css")
+    ));
 
     assertPublishedPage(pageEvents.getFirst(),
         "/eds/pages/page.html",
@@ -252,7 +213,6 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
   }
 
   @Test
-  @SkipVerifyingEachExternalResourceWasDownloadedExactlyOnce
   // two independent requests in the test
   void shouldHandleRepublishedPageEditedByUser() {
     // given
@@ -267,26 +227,20 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
         <img src='/eds/images/image3.jpg'>
         """;
 
-    final byte[] image1Content = generateImageContent("image1.jpg");
-    final byte[] image2Content = generateImageContent("image2.jpg");
-    final byte[] image3Content = generateImageContent("image3.jpg");
-
-    // and
-    mockDownloadResponses(
-        "https://www.my-eds-server.com/eds/images/image1.jpg", image1Content,
-        "https://www.my-eds-server.com/eds/images/image2.jpg", image2Content,
-        "https://www.my-eds-server.com/eds/images/image3.jpg", image3Content
-    );
-
     // when 1
     publishPage(pagePath, pageInitialContent);
 
     // then
-    waitForDownloadedAssets(2);
+    List<CloudEvent> downloadRequestEvents =
+        waitForDownloadRequestEventsInSink(2);
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
-    assertDownloadedAsset(0, "/eds/images/image1.jpg", image1Content);
-    assertDownloadedAsset(1, "/eds/images/image2.jpg", image2Content);
+    assertPublishedDownloadRequests(downloadRequestEvents, List.of(
+        new ImmutablePair<>("/eds/images/image1.jpg",
+            "https://www.my-eds-server.com/eds/images/image1.jpg"),
+        new ImmutablePair<>("/eds/images/image2.jpg",
+            "https://www.my-eds-server.com/eds/images/image2.jpg")));
+
     assertPublishedPage(pageEvents.getFirst(),
         "/eds/pages/page.html",
         """
@@ -298,11 +252,20 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     publishPage(pagePath, pageEditedContent);
 
     // then
-    waitForDownloadedAssets(4);
+    downloadRequestEvents =
+        waitForDownloadRequestEventsInSink(4);
     pageEvents = waitForEventsInSink(PAGE, 2);
 
-    assertDownloadedAsset(2, "/eds/images/image1.jpg", image1Content);
-    assertDownloadedAsset(3, "/eds/images/image3.jpg", image3Content);
+    assertPublishedDownloadRequests(downloadRequestEvents, List.of(
+        new ImmutablePair<>("/eds/images/image1.jpg",
+            "https://www.my-eds-server.com/eds/images/image1.jpg"),
+        new ImmutablePair<>("/eds/images/image3.jpg",
+            "https://www.my-eds-server.com/eds/images/image3.jpg"),
+        new ImmutablePair<>("/eds/images/image2.jpg",
+            "https://www.my-eds-server.com/eds/images/image2.jpg"),
+        new ImmutablePair<>("/eds/images/image1.jpg",
+            "https://www.my-eds-server.com/eds/images/image1.jpg")));
+
     assertPublishedPage(pageEvents.get(1),
         "/eds/pages/page.html",
         """
@@ -310,10 +273,6 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
             <img src='/eds/images/image3.jpg'>
             """);
 
-    // and
-    verifyDownloadedTimes("https://www.my-eds-server.com/eds/images/image1.jpg", 2);
-    verifyDownloadedOnce("https://www.my-eds-server.com/eds/images/image2.jpg");
-    verifyDownloadedOnce("https://www.my-eds-server.com/eds/images/image3.jpg");
   }
 
   @Test
@@ -339,21 +298,18 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
         <img src='configuration.xml'>
         <img src='page3.html'>
         """;
-    final String configurationContent = "<cfg key='value'>";
-
-    mockDownloadResponses(
-        "https://www.my-eds-server.com/pages/configuration.xml", configurationContent,
-        "https://www.my-eds-server.com/pages/page3.html", "<html />"
-    );
 
     // when
     publishPage(pagePath, pageContent);
 
     // then
-    waitForDownloadedWebResources(1);
+    List<CloudEvent> downloadRequestEvents =
+        waitForDownloadRequestEventsInSink(2);
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
-    assertDownloadedWebResource(0, "/pages/configuration.xml", configurationContent);
+    assertPublishedDownloadRequest(downloadRequestEvents.getFirst(),
+        "/pages/configuration.xml",
+        "https://www.my-eds-server.com/pages/configuration.xml");
     assertPublishedPage(pageEvents.getFirst(), pagePath,
         """
             <a href='page2.html'>Page 2</a>
@@ -362,57 +318,6 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
             """);
   }
 
-  @Test
-  void shouldNotPublishPageWithChangedLinksWhenUndownloadableResourcesPresent() {
-    // given
-    final String pagePath = "/eds/pages/page.html";
-    final String initialHtml = """
-        <html>
-          <body>
-            <img src="image1.jpg">
-            <img src="image2.jpg">
-            <img src="image3.jpg">
-            <img src="image4.jpg">
-          </body>
-        </html>
-        """;
-    final byte[] image1Content = generateImageContent("image1.jpg");
-    final byte[] image3Content = generateImageContent("image3.jpg");
-
-    // and: simulate images 1 and 3 are downloaded with no errors
-    mockDownloadResponses(
-        "https://www.my-eds-server.com/eds/pages/image1.jpg", image1Content,
-        "https://www.my-eds-server.com/eds/pages/image3.jpg", image3Content
-    );
-
-    // and: simulate images 2 and 4 are undownloadable
-    mockDownloadResourceFails(
-        "https://www.my-eds-server.com/eds/pages/image2.jpg",
-        "https://www.my-eds-server.com/eds/pages/image4.jpg"
-    );
-
-    // when
-    publishPage(pagePath, initialHtml);
-
-    // then: wait for expected assets to be published
-    waitForDownloadedAssets(2);
-
-    assertDownloadedAsset(0, "/eds/pages/image1.jpg", image1Content);
-    assertDownloadedAsset(1, "/eds/pages/image3.jpg", image3Content);
-
-    waitForEventsInSink(PAGE, 0);
-
-    assertThrows(RuntimeException.class,
-        () -> downloadRequestsSender.sendRequest(new ExternalResource("image2.jpg",
-                "https://www.my-eds-server.com/eds/pages/image2.jpg", "eds/pages/image2.jpg"))
-            .await().indefinitely()
-    );
-    assertThrows(RuntimeException.class,
-        () -> downloadRequestsSender.sendRequest(new ExternalResource("image4.jpg",
-                "https://www.my-eds-server.com/eds/pages/image2.jpg", "eds/pages/image4.jpg"))
-            .await().indefinitely()
-    );
-  }
 
   @Test
   void shouldGracefullySkipDownloadingNonHttpUrls() {
@@ -426,7 +331,7 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     // then: expecting nothing to be downloaded and no edits in page content
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
     assertPublishedPage(pageEvents.getFirst(), pagePath, pageContent);
-    verifyNoDownloads();
+    verifyNoDownloadRequestsSent();
   }
 
   @Test
@@ -444,36 +349,25 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
           </body>
         </html>
         """;
-    final byte[] externalImageContent = {0, 1, 2};
-
-    // and
-    mockDownloadResponses(
-        "https://www.my-eds-server.com/pages/image%20with%20spaces%20and%20invalid%20chars%20like%20%5E.jpg",
-        externalImageContent,
-        "http://server.com/image%20with%20spaces.jpg",
-        externalImageContent,
-        "https://www.my-eds-server.com/assets/Cube%20Images/cube1.webp",
-        externalImageContent,
-        "https://www.my-eds-server.com/assets/Cube-Images/cube2.webp",
-        externalImageContent,
-        "https://www.my-eds-server.com/assets/Cube%20Images/cube3.webp",
-        externalImageContent
-    );
 
     // when
     publishPage(pagePath, pageContent);
 
     // then
-    waitForDownloadedAssets(5);
-    assertDownloadedAssets(
-        new DownloadedResource(
-            "/pages/image_20with_20spaces_20and_20invalid_20chars_20like_20_5E.jpg",
-            externalImageContent),
-        new DownloadedResource("/http_server.com/image_20with_20spaces.jpg", externalImageContent),
-        new DownloadedResource("/assets/Cube_20Images/cube1.webp", externalImageContent),
-        new DownloadedResource("/assets/Cube-Images/cube2.webp", externalImageContent),
-        new DownloadedResource("/assets/Cube_20Images/cube3.webp", externalImageContent)
-    );
+    List<CloudEvent> downloadRequestEvents =
+        waitForDownloadRequestEventsInSink(5);
+
+    assertPublishedDownloadRequests(downloadRequestEvents, List.of(
+        new ImmutablePair<>("/pages/image_20with_20spaces_20and_20invalid_20chars_20like_20_5E.jpg",
+            "https://www.my-eds-server.com/pages/image%20with%20spaces%20and%20invalid%20chars%20like%20%5E.jpg"),
+        new ImmutablePair<>("/http_server.com/image_20with_20spaces.jpg",
+            "http://server.com/image%20with%20spaces.jpg"),
+        new ImmutablePair<>("/assets/Cube_20Images/cube1.webp",
+            "https://www.my-eds-server.com/assets/Cube%20Images/cube1.webp"),
+        new ImmutablePair<>("/assets/Cube-Images/cube2.webp",
+            "https://www.my-eds-server.com/assets/Cube-Images/cube2.webp"),
+        new ImmutablePair<>("/assets/Cube_20Images/cube3.webp",
+            "https://www.my-eds-server.com/assets/Cube%20Images/cube3.webp")));
 
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
     assertPublishedPage(pageEvents.getFirst(),
@@ -511,21 +405,19 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     // given
     final String pagePath = "/eds/pages/page%20with%20space.html";
     final String pageContent = "<img src='/Nested%20Images/image.jpg'>";
-    final byte[] nestedImageContent = generateImageContent("image.jpg");
-
-    mockDownloadResponse(
-        "https://www.my-eds-server.com/Nested%20Images/image.jpg", nestedImageContent
-    );
 
     // when
     publishPage(pagePath, pageContent);
 
     // then
-    waitForDownloadedAssets(1);
+    List<CloudEvent> downloadRequestEvents =
+        waitForDownloadRequestEventsInSink(1);
+
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
 
-    assertDownloadedAsset(0, "/Nested_20Images/image.jpg",
-        nestedImageContent);
+    assertPublishedDownloadRequest(downloadRequestEvents.getFirst(), "/Nested_20Images/image.jpg",
+        "https://www.my-eds-server.com/Nested%20Images/image.jpg");
+
     assertPublishedPage(pageEvents.getFirst(), "/eds/pages/page_20with_20space.html",
         "<img src='/Nested_20Images/image.jpg'>");
   }
@@ -553,10 +445,8 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     // then
     List<CloudEvent> pageEvents = waitForEventsInSink(PAGE, 1);
     assertPublishedPage(pageEvents.getFirst(), pagePath, html);
-    waitForDownloadedAssets(0);
+    verifyNoDownloadRequestsSent();
 
-    // and
-    verifyNoDownloads();
   }
 
   @Test
@@ -644,9 +534,5 @@ class ProcessPageFunctionTest extends BaseProcessFunctionTest {
     // assert event is unchanged
     CloudEvent relayedPageEvent = pageEvents.getFirst();
     assertSameEvents(relayedPageEvent, publishPageEvent);
-  }
-
-  private static byte[] generateImageContent(String imagePath) {
-    return imagePath.getBytes();
   }
 }
