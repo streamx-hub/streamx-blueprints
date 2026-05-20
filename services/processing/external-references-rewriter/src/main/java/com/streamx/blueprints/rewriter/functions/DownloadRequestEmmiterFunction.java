@@ -1,6 +1,7 @@
 package com.streamx.blueprints.rewriter.functions;
 
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.DownloadRequest;
 import com.streamx.blueprints.rewriter.Channels;
 import com.streamx.blueprints.rewriter.data.ExternalResource;
 import com.streamx.blueprints.rewriter.data.ResourceData;
@@ -45,4 +46,25 @@ public class DownloadRequestEmmiterFunction extends BaseProcessResourceFunction 
             .map(this::createDownloadRequest));
   }
 
+  private CloudEvent createDownloadRequest(ExternalResource resource) {
+
+    String absoluteUrl = resource.getAbsoluteUrl();
+    String streamxKey = resource.getStreamxKey();
+
+    DownloadRequest downloadRequest = new DownloadRequest(
+        absoluteUrl,
+        streamxKey,
+        configuration.emittedPageType(),
+        configuration.emittedWebResourceType(),
+        configuration.emittedAssetType()
+    );
+
+    log.tracef("Sending download request for %s", absoluteUrl);
+
+    return CloudEventUtils.eventWithData(
+        streamxKey,
+        DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE,
+        downloadRequest
+    );
+  }
 }

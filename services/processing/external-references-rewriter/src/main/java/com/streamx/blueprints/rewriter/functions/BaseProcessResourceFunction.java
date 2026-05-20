@@ -81,28 +81,6 @@ public abstract class BaseProcessResourceFunction {
     }
   }
 
-  public CloudEvent createDownloadRequest(ExternalResource resource) {
-
-    String absoluteUrl = resource.getAbsoluteUrl();
-    String streamxKey = resource.getStreamxKey();
-
-    DownloadRequest downloadRequest = new DownloadRequest(
-        absoluteUrl,
-        streamxKey,
-        configuration.emittedPageType(),
-        configuration.emittedWebResourceType(),
-        configuration.emittedAssetType()
-    );
-
-    log.tracef("Sending download request for %s", absoluteUrl);
-
-    return CloudEventUtils.eventWithData(
-        streamxKey,
-        DownloadRequest.DOWNLOAD_REQUEST_EVENT_TYPE,
-        downloadRequest
-    );
-  }
-
   protected ResourceData collectResourceData(ProcessingContext ctx) {
     if (WebResource.class.isAssignableFrom(ctx.settings().getHandledResourceClass())) {
       // web resources later become available by http as files, so must sanitize their paths
