@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.data.JsonResource;
 import com.streamx.blueprints.data.Page;
+import com.streamx.blueprints.index.facets.FacetsCollector;
 import com.streamx.content.parser.urlinclude.UrlInclude;
 import com.streamx.content.parser.urlinclude.UrlIncludeCollector;
 import com.streamx.content.parser.urlinclude.UrlIncludeRemover;
@@ -16,7 +17,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
@@ -28,6 +31,8 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
 
   @Inject
   TikaParser parser;
+  @Inject
+  FacetsCollector facetsCollector;
 
   @Override
   protected ProducerSettings<Page> producerSettings() {
@@ -50,10 +55,12 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
   protected JsonResource produceIndexableResource(Page incomingPage, String key) {
     String title = null;
     String content = null;
+    Map<String, String> facets = Collections.emptyMap();
     if (hasContent(incomingPage)) {
       var indexableResourceContent = getIndexableResource(incomingPage);
       title = indexableResourceContent.title();
       content = indexableResourceContent.content();
+      facets = indexableResourceContent.facets();
     }
     var resourceTitle = StringUtil.isNullOrEmpty(title) ? key : title;
     var sourceResourceContent = StringUtil.isNullOrEmpty(content) ? key : content;
@@ -61,7 +68,8 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
         ByteBuffer.wrap(sourceResourceContent.getBytes()));
 
     var resourceContent = dropUrlIncludes(sourceResourceContent);
-    var indexableResourceContent = new IndexableResourceContent(resourceTitle, resourceContent);
+    var indexableResourceContent = new IndexableResourceContent(resourceTitle, resourceContent,
+        facets);
 
     var fragments = urlIncludes.stream()
         .map(UrlInclude::url)
@@ -93,7 +101,7 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
 
     log.tracef("Parsed page title and content.", title, body);
 
-    return new IndexableResourceContent(title, body);
+    return new IndexableResourceContent(title, body, facetsCollector.getFacets(page));
   }
 
   private String dropUrlIncludes(String sourceResourceContent) {

@@ -7,6 +7,8 @@ The incoming metadata are passed to outgoing indexable objects.
 - `streamx.blueprints.indexable-resources-producer.index-fragments` - property to decide whether a _fragment_ should be indexed. 
 `false` by default. Decision can be overridden by specifying the `indexable` extension of the _fragment_ event.  
 If fragment is not indexable, the unpublish event is sent for outgoing indexable fragment.
+- `streamx.blueprints.indexable-resources-producer.include-facets` - property to decide whether a _facets_ should be included.
+  `false` by default.
 
 ### Channels
 

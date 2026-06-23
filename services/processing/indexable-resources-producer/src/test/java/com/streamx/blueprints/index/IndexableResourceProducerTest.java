@@ -53,6 +53,7 @@ public class IndexableResourceProducerTest {
         <html>
             <head>
                 <title>Hello Title</title>
+                <meta property="facets:technology" content="salesforce">
             </head>
             <body>
                 <h1>Hello H1</h1>
@@ -73,6 +74,7 @@ public class IndexableResourceProducerTest {
         "Hello H2",
         "Hello paragraph"
     );
+    assertThat(result.facets()).containsEntry("technology", "salesforce");
   }
 
   @Test

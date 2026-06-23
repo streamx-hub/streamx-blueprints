@@ -8,4 +8,7 @@ public interface Configuration {
 
   @WithDefault("false")
   boolean indexFragments();
+
+  @WithDefault("false")
+  boolean includeFacets();
 }
