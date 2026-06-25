@@ -88,11 +88,12 @@ public class IndexableResourcesProducerIT extends BaseQuarkusIntegrationTest {
     protected Map<String, String> getServiceConfigProperties() {
       return Map.of("streamx.blueprints.indexable-resources-producer.index-fragments", "true",
           "streamx.blueprints.indexable-resources-producer.include-facets", "true",
-          "streamx.blueprints.indexable-resources-producer.metadata.selector",
+          "streamx.blueprints.indexable-resources-producer.configurations.eds.selector",
           "meta[property^=facets:]",
-          "streamx.blueprints.indexable-resources-producer.metadata.keys", "property",
-          "streamx.blueprints.indexable-resources-producer.metadata.key-delimiter", "facets:",
-          "streamx.blueprints.indexable-resources-producer.metadata.values", "content");
+          "streamx.blueprints.indexable-resources-producer.configurations.eds.keys", "property",
+          "streamx.blueprints.indexable-resources-producer.configurations.eds.key-delimiter",
+          "facets:",
+          "streamx.blueprints.indexable-resources-producer.configurations.eds.values", "content");
     }
   }
 }

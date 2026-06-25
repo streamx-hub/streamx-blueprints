@@ -302,6 +302,31 @@ public class IndexableResourceProducerTest {
     assertNoResourceFrom(pageEvent);
   }
 
+  @Test
+  void expectHtmlPageWithTwoFacetsBeProcessed() {
+    // given
+    String payload = """
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Hello Title</title>
+                <meta property="facets:technology" content="salesforce">
+            </head>
+            <body>
+                <div class="test" color="red">
+            </body>
+        </html>
+        """;
+
+    // when
+    var result = getResourceFromPageWithContent(payload);
+
+    // then
+    assertThat(result.title()).isEqualTo("Hello Title");
+    assertThat(result.facets()).containsEntry("technology", "salesforce");
+    assertThat(result.facets()).containsEntry("color", "red");
+  }
+
   private IndexableResourceContent getResourceFromPageWithContent(String payload) {
     CloudEvent pageEvent = CloudEventUtils.eventWithData(
         DEFAULT_KEY,
