@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.streamx.blueprints.data.Fragment;
 import com.streamx.blueprints.data.IndexableResourceFragment;
 import com.streamx.blueprints.data.JsonResource;
+import com.streamx.blueprints.index.configuration.Configuration;
 import io.cloudevents.CloudEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
