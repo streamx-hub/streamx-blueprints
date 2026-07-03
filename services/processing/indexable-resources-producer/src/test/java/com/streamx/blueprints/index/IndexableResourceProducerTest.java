@@ -18,6 +18,7 @@ import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -325,6 +326,36 @@ public class IndexableResourceProducerTest {
     assertThat(result.title()).isEqualTo("Hello Title");
     assertThat(result.facets()).containsEntry("technology", "salesforce");
     assertThat(result.facets()).containsEntry("color", "red");
+  }
+
+  @Test
+  void expectHtmlPageWithHierarchicalFacetBeProcessed() {
+    // given
+    String payload = """
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Hello Title</title>
+                <meta name="facets:category" value="Electronics>Phone>iOS">
+            </head>
+            <body>
+                <h1>Hello H1</h1>
+            </body>
+        </html>
+        """;
+
+    // when
+    var result = getResourceFromPageWithContent(payload);
+
+    // then
+    assertThat(result.title()).isEqualTo("Hello Title");
+    assertThat(result.facets()).containsEntry("category_path", "Electronics>Phone>iOS");
+    assertThat(result.facets()).containsEntry("category_level0", "Electronics");
+    assertThat(result.facets()).containsEntry("category_level1", "Phone");
+    assertThat(result.facets()).containsEntry("category_level2", "iOS");
+    assertThat(result.facets()).containsEntry("category_hierarchy", List.of("Electronics",
+        "Electronics>Phone",
+        "Electronics>Phone>iOS"));
   }
 
   private IndexableResourceContent getResourceFromPageWithContent(String payload) {
