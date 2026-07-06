@@ -54,7 +54,7 @@ public class HtmlFacetsCollector implements FacetsCollector {
                     .entrySet()
                     .stream();
               } else {
-                return collectFromDifferentAttributes(config, element).entrySet().stream();
+                return getFacetsFromAttributes(config, element).entrySet().stream();
               }
             }).collect(Collectors.toMap(
                 Map.Entry::getKey,
@@ -63,7 +63,7 @@ public class HtmlFacetsCollector implements FacetsCollector {
     ).orElse(Collections.emptyMap());
   }
 
-  private Map<String, Object> collectFromDifferentAttributes(
+  private Map<String, Object> getFacetsFromAttributes(
       HtmlElementCollectorConfiguration config,
       Element element) {
     String key = findFirst(element, config.keys().orElse(Collections.emptyList()));
@@ -71,33 +71,33 @@ public class HtmlFacetsCollector implements FacetsCollector {
     if (StringUtils.isBlank(key) || StringUtils.isBlank(value)) {
       return Collections.emptyMap();
     }
-    return config.nestedDelimiter()
-        .map(nestedDelimiter -> createHierarchicalFacets(
+    return config.hierarchicalFacetDelimiter()
+        .map(hierarchicalFacetDelimiter -> createHierarchicalFacets(
             normalizeKey(getKey(key, getKeyDelimiter(config))), value,
-            nestedDelimiter))
+            hierarchicalFacetDelimiter))
         .orElse(Map.of(normalizeKey(getKey(key, getKeyDelimiter(config))), value));
   }
 
   private static Map<String, Object> createHierarchicalFacets(String key, String value,
-      String nestedDelimiter) {
+      String hierarchicalFacetDelimiter) {
     Map<String, Object> facets = new LinkedHashMap<>();
-    String[] parts = value.split(nestedDelimiter);
+    String[] parts = value.split(hierarchicalFacetDelimiter);
 
     facets.put(key + "_path", value);
     for (int i = 0; i < parts.length; i++) {
       facets.put(key + "_level" + i, parts[i]);
     }
-    facets.put(key + "_hierarchy", getHierarchy(parts, nestedDelimiter));
+    facets.put(key + "_hierarchy", getHierarchy(parts, hierarchicalFacetDelimiter));
     return facets;
   }
 
-  private static List<String> getHierarchy(String[] parts, String nestedDelimiter) {
+  private static List<String> getHierarchy(String[] parts, String hierarchicalFacetDelimiter) {
     List<String> hierarchy = new ArrayList<>();
     StringBuilder currentPath = new StringBuilder();
 
     for (int i = 0; i < parts.length; i++) {
       if (i > 0) {
-        currentPath.append(nestedDelimiter);
+        currentPath.append(hierarchicalFacetDelimiter);
       }
       currentPath.append(parts[i].trim());
       hierarchy.add(currentPath.toString());

@@ -17,5 +17,5 @@ public interface HtmlElementCollectorConfiguration {
   @WithDefault("false")
   boolean singleAttr();
 
-  Optional<String> nestedDelimiter();
+  Optional<String> hierarchicalFacetDelimiter();
 }

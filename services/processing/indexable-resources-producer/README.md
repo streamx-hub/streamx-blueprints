@@ -28,11 +28,11 @@ The incoming metadata are passed to outgoing indexable objects.
   that the same attribute contains both the key and the value. `false` by default. When enabled,
   values are extracted from the attributes listed in keys, and values does not need to be
   configured.
-- `streamx.blueprints.indexable-resources-producer.configurations.nested.nested-delimiter` -
+- `streamx.blueprints.indexable-resources-producer.configurations.nested.hierarchical-facet-delimiter` -
   delimiter used to represent and split nested metadata into hierarchical structure.
   When set, extracted values containing this delimiter (e.g. parent>child) are treated as nested
   objects rather than flat values. For example, with > as delimiter, a value like Electronics>Phone>
-  iOS would be interpreted as a nested tructure Electronics -> Phone -> iOS.
+  iOS would be interpreted as a nested structure Electronics -> Phone -> iOS.
 
 ### Channels
 
