@@ -24,8 +24,9 @@ public class IndexableResourcesProducerIT extends BaseQuarkusIntegrationTest {
   @Test
   void shouldProduceIndexableResource() {
     // given
-    Page page = new Page("<meta property=\"facets:technology\" "
-        + "content=\"salesforce\"><b>Hello World</b>", "test-page");
+    Page page = new Page("<meta property=\"facets:technology\" content=\"salesforce\">"
+        + "<meta property=\"facets:category\" content=\"Electronics>Phone>iOS\"><b>Hello World</b>",
+        "test-page");
     String key = "pages/test-page.html";
     CloudEvent sourceEvent = CloudEventUtils.eventWithData(key, Page.TYPE_PUBLISHED, page);
 
@@ -34,10 +35,10 @@ public class IndexableResourcesProducerIT extends BaseQuarkusIntegrationTest {
 
     // then
     String expectedJson =
-        "{\"title\":\"pages/test-page.html\","
-            + "\"content\":\"<meta property=\\\"facets:technology\\\" "
-            + "content=\\\"salesforce\\\"><b>Hello World</b>\","
-            + "\"facets\":{\"technology\":\"salesforce\"}}";
+        "{\"title\":\"pages/test-page.html\",\"content\":\"<meta property=\\\"facets:technology\\\""
+            + " content=\\\"salesforce\\\"><meta property=\\\"facets:category\\\" "
+            + "content=\\\"Electronics>Phone>iOS\\\"><b>Hello World</b>\","
+            + "\"facets\":{\"technology\":\"salesforce\",\"category\":\"Electronics>Phone>iOS\"}}";
 
     CloudEvent outgoingEvent = waitForResponseEvent(Channels.INDEXABLE_RESOURCES);
     assertOutgoingEvent(outgoingEvent, sourceEvent, page,
