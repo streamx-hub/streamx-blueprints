@@ -55,7 +55,7 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
   protected JsonResource produceIndexableResource(Page incomingPage, String key) {
     String title = null;
     String content = null;
-    Map<String, String> facets = Collections.emptyMap();
+    Map<String, Object> facets = Collections.emptyMap();
     if (hasContent(incomingPage)) {
       var indexableResourceContent = getIndexableResource(incomingPage);
       title = indexableResourceContent.title();

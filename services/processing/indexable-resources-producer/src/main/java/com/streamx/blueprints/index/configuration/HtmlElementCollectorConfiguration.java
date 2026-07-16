@@ -16,4 +16,6 @@ public interface HtmlElementCollectorConfiguration {
 
   @WithDefault("false")
   boolean singleAttr();
+
+  Optional<String> hierarchicalFacetDelimiter();
 }

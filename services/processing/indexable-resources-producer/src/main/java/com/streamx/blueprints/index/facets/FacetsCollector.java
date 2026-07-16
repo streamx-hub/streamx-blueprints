@@ -5,5 +5,5 @@ import java.util.Map;
 
 public interface FacetsCollector {
 
-  Map<String, String> getFacets(Page page);
+  Map<String, Object> getFacets(Page page);
 }
