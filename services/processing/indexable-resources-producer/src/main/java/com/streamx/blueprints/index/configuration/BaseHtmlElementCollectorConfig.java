@@ -4,7 +4,7 @@ import io.smallrye.config.WithDefault;
 import java.util.List;
 import java.util.Optional;
 
-public interface HtmlElementCollectorConfiguration {
+public interface BaseHtmlElementCollectorConfig {
 
   Optional<String> selector();
 
@@ -12,10 +12,6 @@ public interface HtmlElementCollectorConfiguration {
 
   Optional<List<String>> values();
 
-  Optional<String> keyDelimiter();
-
   @WithDefault("false")
   boolean singleAttr();
-
-  Optional<String> hierarchicalFacetDelimiter();
 }

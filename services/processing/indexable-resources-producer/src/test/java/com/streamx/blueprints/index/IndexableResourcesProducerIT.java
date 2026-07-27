@@ -38,7 +38,8 @@ public class IndexableResourcesProducerIT extends BaseQuarkusIntegrationTest {
         "{\"title\":\"pages/test-page.html\",\"content\":\"<meta property=\\\"facets:technology\\\""
             + " content=\\\"salesforce\\\"><meta property=\\\"facets:category\\\" "
             + "content=\\\"Electronics>Phone>iOS\\\"><b>Hello World</b>\","
-            + "\"facets\":{\"technology\":\"salesforce\",\"category\":\"Electronics>Phone>iOS\"}}";
+            + "\"facets\":{\"technology\":\"salesforce\",\"category\":\"Electronics>Phone>iOS\"},"
+            + "\"fields\":{}}";
 
     CloudEvent outgoingEvent = waitForResponseEvent(Channels.INDEXABLE_RESOURCES);
     assertOutgoingEvent(outgoingEvent, sourceEvent, page,
@@ -89,12 +90,14 @@ public class IndexableResourcesProducerIT extends BaseQuarkusIntegrationTest {
     protected Map<String, String> getServiceConfigProperties() {
       return Map.of("streamx.blueprints.indexable-resources-producer.index-fragments", "true",
           "streamx.blueprints.indexable-resources-producer.include-facets", "true",
-          "streamx.blueprints.indexable-resources-producer.configurations.eds.selector",
+          "streamx.blueprints.indexable-resources-producer.facets-configuration.eds.selector",
           "meta[property^=facets:]",
-          "streamx.blueprints.indexable-resources-producer.configurations.eds.keys", "property",
-          "streamx.blueprints.indexable-resources-producer.configurations.eds.key-delimiter",
+          "streamx.blueprints.indexable-resources-producer.facets-configuration.eds.keys",
+          "property",
+          "streamx.blueprints.indexable-resources-producer.facets-configuration.eds.key-delimiter",
           "facets:",
-          "streamx.blueprints.indexable-resources-producer.configurations.eds.values", "content");
+          "streamx.blueprints.indexable-resources-producer.facets-configuration.eds.values",
+          "content");
     }
   }
 }

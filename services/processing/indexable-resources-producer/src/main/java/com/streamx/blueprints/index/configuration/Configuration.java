@@ -13,5 +13,10 @@ public interface Configuration {
   @WithDefault("false")
   boolean includeFacets();
 
-  Map<String, HtmlElementCollectorConfiguration> configurations();
+  @WithDefault("false")
+  boolean includeFields();
+
+  Map<String, FacetsHtmlElementCollectorConfig> facetsConfiguration();
+
+  Map<String, FieldsHtmlElementCollectorConfig> fieldsConfiguration();
 }

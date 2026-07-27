@@ -358,6 +358,29 @@ public class IndexableResourceProducerTest {
         "Electronics>Phone>iOS"));
   }
 
+  @Test
+  void expectHtmlPageWithTwoFieldsBeProcessed() {
+    // given
+    String payload = """
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Hello Title</title>
+                <meta property="description" content="test">
+            </head>
+            <body>
+            </body>
+        </html>
+        """;
+
+    // when
+    var result = getResourceFromPageWithContent(payload);
+
+    // then
+    assertThat(result.title()).isEqualTo("Hello Title");
+    assertThat(result.fields()).containsEntry("description", "test");
+  }
+
   private IndexableResourceContent getResourceFromPageWithContent(String payload) {
     CloudEvent pageEvent = CloudEventUtils.eventWithData(
         DEFAULT_KEY,

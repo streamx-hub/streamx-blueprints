@@ -1,9 +1,10 @@
-package com.streamx.blueprints.index.facets.impl;
+package com.streamx.blueprints.index.collectors.html.facets.impl;
 
 import com.streamx.blueprints.data.Page;
+import com.streamx.blueprints.index.collectors.html.AbstractHtmlCollector;
+import com.streamx.blueprints.index.collectors.html.facets.FacetsCollector;
 import com.streamx.blueprints.index.configuration.Configuration;
-import com.streamx.blueprints.index.configuration.HtmlElementCollectorConfiguration;
-import com.streamx.blueprints.index.facets.FacetsCollector;
+import com.streamx.blueprints.index.configuration.FacetsHtmlElementCollectorConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.ArrayList;
@@ -12,35 +13,29 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
-import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 @ApplicationScoped
-public class HtmlFacetsCollector implements FacetsCollector {
+public class HtmlFacetsCollector extends AbstractHtmlCollector implements FacetsCollector {
 
   @Inject
   Configuration configuration;
 
   public Map<String, Object> getFacets(Page page) {
-    if (configuration.includeFacets()) {
-      return configuration.configurations()
-          .values()
-          .stream()
-          .flatMap(config -> collectFacets(page, config).entrySet().stream())
-          .collect(Collectors.toMap(
-              Map.Entry::getKey,
-              Map.Entry::getValue
-          ));
-    }
-    return Collections.emptyMap();
+    return collect(
+        configuration.includeFacets(),
+        configuration.facetsConfiguration().values(),
+        this::collectFacets,
+        page.getContentAsString());
   }
 
-  private Map<String, ?> collectFacets(Page page, HtmlElementCollectorConfiguration config) {
+  private Map<String, Object> collectFacets(Document document,
+      FacetsHtmlElementCollectorConfig config) {
     return config.selector().map(selector ->
-        Jsoup.parse(page.getContentAsString())
+        document
             .select(selector)
             .stream()
             .flatMap(element -> {
@@ -50,7 +45,7 @@ public class HtmlFacetsCollector implements FacetsCollector {
                     .flatMap(Collection::stream)
                     .collect(
                         Collectors.toMap(key -> normalizeKey(getKey(key, getKeyDelimiter(config))),
-                            element::attr))
+                            key -> (Object) element.attr(key)))
                     .entrySet()
                     .stream();
               } else {
@@ -64,7 +59,7 @@ public class HtmlFacetsCollector implements FacetsCollector {
   }
 
   private Map<String, Object> getFacetsFromAttributes(
-      HtmlElementCollectorConfiguration config,
+      FacetsHtmlElementCollectorConfig config,
       Element element) {
     String key = findFirst(element, config.keys().orElse(Collections.emptyList()));
     String value = findFirst(element, config.values().orElse(Collections.emptyList()));
@@ -105,29 +100,7 @@ public class HtmlFacetsCollector implements FacetsCollector {
     return hierarchy;
   }
 
-  private String getKeyDelimiter(HtmlElementCollectorConfiguration config) {
+  private String getKeyDelimiter(FacetsHtmlElementCollectorConfig config) {
     return config.keyDelimiter().orElse(null);
-  }
-
-  private String getKey(String key, String delimiter) {
-    if (StringUtils.isBlank(delimiter)) {
-      return key;
-    }
-    String[] parts = key.split(Pattern.quote(delimiter), 2);
-    return parts.length > 1 ? parts[1] : key;
-  }
-
-  private String findFirst(Element element, List<String> attributesNames) {
-    return attributesNames.stream()
-        .filter(element::hasAttr)
-        .map(element::attr)
-        .findFirst()
-        .orElse(null);
-  }
-
-  private String normalizeKey(String key) {
-    return key.trim()
-        .toLowerCase()
-        .replace("-", "_");
   }
 }
