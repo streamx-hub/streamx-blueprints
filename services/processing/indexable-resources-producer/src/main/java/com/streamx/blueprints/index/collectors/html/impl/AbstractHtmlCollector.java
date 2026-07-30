@@ -1,4 +1,4 @@
-package com.streamx.blueprints.index.collectors.html;
+package com.streamx.blueprints.index.collectors.html.impl;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -51,5 +51,9 @@ public abstract class AbstractHtmlCollector {
         .map(element::attr)
         .findFirst()
         .orElse(null);
+  }
+
+  protected static boolean isKeyOrValueBlank(String key, String value) {
+    return StringUtils.isBlank(key) || StringUtils.isBlank(value);
   }
 }

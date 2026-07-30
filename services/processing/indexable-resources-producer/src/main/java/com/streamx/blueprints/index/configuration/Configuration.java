@@ -11,12 +11,7 @@ public interface Configuration {
   boolean indexFragments();
 
   @WithDefault("false")
-  boolean includeFacets();
+  boolean includeHtmlElements();
 
-  @WithDefault("false")
-  boolean includeFields();
-
-  Map<String, FacetsHtmlElementCollectorConfig> facetsConfiguration();
-
-  Map<String, FieldsHtmlElementCollectorConfig> fieldsConfiguration();
+  Map<String, HtmlElementCollectorConfiguration> configurations();
 }

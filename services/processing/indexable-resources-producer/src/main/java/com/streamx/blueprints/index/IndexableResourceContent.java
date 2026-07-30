@@ -5,6 +5,6 @@ import java.util.Map;
 
 @RegisterForReflection
 record IndexableResourceContent(String title, String content, Map<String, Object> facets,
-                                Map<String, String> fields) {
+                                Map<String, Object> fields) {
 
 }

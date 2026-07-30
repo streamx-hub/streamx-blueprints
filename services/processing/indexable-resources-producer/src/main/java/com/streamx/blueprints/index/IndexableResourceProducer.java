@@ -4,8 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.data.JsonResource;
 import com.streamx.blueprints.data.Page;
-import com.streamx.blueprints.index.collectors.html.facets.FacetsCollector;
-import com.streamx.blueprints.index.collectors.html.fields.FieldsCollector;
+import com.streamx.blueprints.index.collectors.html.HtmlCollector;
 import com.streamx.content.parser.urlinclude.UrlInclude;
 import com.streamx.content.parser.urlinclude.UrlIncludeCollector;
 import com.streamx.content.parser.urlinclude.UrlIncludeRemover;
@@ -33,9 +32,7 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
   @Inject
   TikaParser parser;
   @Inject
-  FacetsCollector facetsCollector;
-  @Inject
-  FieldsCollector fieldsCollector;
+  HtmlCollector htmlCollector;
 
   @Override
   protected ProducerSettings<Page> producerSettings() {
@@ -59,7 +56,7 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
     String title = null;
     String content = null;
     Map<String, Object> facets = Collections.emptyMap();
-    Map<String, String> fields = Collections.emptyMap();
+    Map<String, Object> fields = Collections.emptyMap();
     if (hasContent(incomingPage)) {
       var indexableResourceContent = getIndexableResource(incomingPage);
       title = indexableResourceContent.title();
@@ -106,8 +103,8 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
 
     log.tracef("Parsed page title and content.", title, body);
 
-    return new IndexableResourceContent(title, body, facetsCollector.getFacets(page),
-        fieldsCollector.getFields(page));
+    return new IndexableResourceContent(title, body, htmlCollector.getElements(page, true),
+        htmlCollector.getElements(page, false));
   }
 
   private String dropUrlIncludes(String sourceResourceContent) {
@@ -120,5 +117,4 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
   private boolean hasContent(Page page) {
     return page != null && page.getContent() != null && page.getContent().array().length != 0;
   }
-
 }

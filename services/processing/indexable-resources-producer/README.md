@@ -10,8 +10,8 @@ The incoming metadata are passed to outgoing indexable objects.
   `false` by default. Decision can be overridden by specifying the `indexable` extension of the
   _fragment_ event.  
   If fragment is not indexable, the unpublish event is sent for outgoing indexable fragment.
-- `streamx.blueprints.indexable-resources-producer.include-facets` - property to decide whether a
-  _facets_ should be included.
+- `streamx.blueprints.indexable-resources-producer.include-html-elements` - property to decide whether a
+  _HTML elements_ should be included.
   `false` by default.
 - `streamx.blueprints.indexable-resources-producer.configurations.<name>.selector` - CSS element
   selector, that finds elements matching a query.
@@ -28,11 +28,16 @@ The incoming metadata are passed to outgoing indexable objects.
   that the same attribute contains both the key and the value. `false` by default. When enabled,
   values are extracted from the attributes listed in keys, and values does not need to be
   configured.
-- `streamx.blueprints.indexable-resources-producer.configurations.nested.hierarchical-facet-delimiter` -
+- `streamx.blueprints.indexable-resources-producer.configurations.<name>.hierarchical-facet-delimiter` -
   delimiter used to represent and split nested metadata into hierarchical structure.
   When set, extracted values containing this delimiter (e.g. parent>child) are treated as nested
   objects rather than flat values. For example, with > as delimiter, a value like Electronics>Phone>
   iOS would be interpreted as a nested structure Electronics -> Phone -> iOS.
+- `streamx.blueprints.indexable-resources-producer.configurations.<name>.indexed-keys` -
+  optional list of allowed metadata keys whose values should be indexed. When configured, only
+  metadata entries whose extracted key matches one of the configured values are indexed.
+- `streamx.blueprints.indexable-resources-producer.configurations.<name>.is-facet` - indicates
+  whether extracted metadata should be treated as a facet. `false` by default.
 
 ### Channels
 
