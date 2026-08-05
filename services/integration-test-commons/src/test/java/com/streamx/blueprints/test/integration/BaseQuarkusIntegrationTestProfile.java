@@ -3,9 +3,13 @@ package com.streamx.blueprints.test.integration;
 import static com.streamx.blueprints.test.integration.BaseQuarkusIntegrationTest.propertiesForOutgoingChannels;
 
 import io.quarkus.test.junit.QuarkusTestProfile;
+import io.smallrye.config.source.yaml.YamlConfigSource;
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class BaseQuarkusIntegrationTestProfile implements QuarkusTestProfile {
 
@@ -24,4 +28,25 @@ public class BaseQuarkusIntegrationTestProfile implements QuarkusTestProfile {
     return Collections.emptyMap();
   }
 
+  protected Map<String, String> getConfigPropertiesFromYaml(String path) {
+    try {
+      URL yamlUrl = Thread.currentThread()
+          .getContextClassLoader()
+          .getResource(path);
+
+      if (yamlUrl == null) {
+        throw new IllegalStateException("Config not found on classpath: " + path);
+      }
+
+      YamlConfigSource source = new YamlConfigSource(yamlUrl);
+      return source.getPropertyNames()
+          .stream()
+          .collect(Collectors.toMap(
+              Function.identity(),
+              source::getValue
+          ));
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to load YAML config overrides", e);
+    }
+  }
 }

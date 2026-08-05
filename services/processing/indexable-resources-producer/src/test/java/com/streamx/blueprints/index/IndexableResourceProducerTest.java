@@ -75,7 +75,7 @@ public class IndexableResourceProducerTest {
         "Hello H2",
         "Hello paragraph"
     );
-    assertThat(result.facets()).containsEntry("technology", "salesforce");
+    assertThat(result.facets()).containsEntry("technology_level0", "salesforce");
   }
 
   @Test
@@ -324,8 +324,31 @@ public class IndexableResourceProducerTest {
 
     // then
     assertThat(result.title()).isEqualTo("Hello Title");
-    assertThat(result.facets()).containsEntry("technology", "salesforce");
-    assertThat(result.facets()).containsEntry("color", "red");
+    assertThat(result.facets()).containsEntry("technology_level0", "salesforce");
+    assertThat(result.facets()).containsEntry("color_level0", "red");
+  }
+
+  @Test
+  void expectHtmlPageWithTwoSameTypeFacetsBeProcessed() {
+    // given
+    String payload = """
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Hello Title</title>
+                <meta property="facets:technology" content="salesforce">
+                <meta property="facets:category" content="shoes">                
+            </head>
+        </html>
+        """;
+
+    // when
+    var result = getResourceFromPageWithContent(payload);
+
+    // then
+    assertThat(result.title()).isEqualTo("Hello Title");
+    assertThat(result.facets()).containsEntry("technology_level0", "salesforce");
+    assertThat(result.facets()).containsEntry("category_level0", "shoes");
   }
 
   @Test
@@ -379,6 +402,29 @@ public class IndexableResourceProducerTest {
     // then
     assertThat(result.title()).isEqualTo("Hello Title");
     assertThat(result.fields()).containsEntry("description", "test");
+  }
+
+  @Test
+  void expectHtmlPageWithFunctionSelectorBeProcessed() {
+    // given
+    String payload = """
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Hello Title</title>
+            </head>
+            <body>
+                <div name="description">M</div>
+            </body>
+        </html>
+        """;
+
+    // when
+    var result = getResourceFromPageWithContent(payload);
+
+    // then
+    assertThat(result.title()).isEqualTo("Hello Title");
+    assertThat(result.facets()).containsEntry("description_path", "M");
   }
 
   private IndexableResourceContent getResourceFromPageWithContent(String payload) {

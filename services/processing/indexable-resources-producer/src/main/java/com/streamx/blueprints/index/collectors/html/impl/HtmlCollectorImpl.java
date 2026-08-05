@@ -2,123 +2,156 @@ package com.streamx.blueprints.index.collectors.html.impl;
 
 import com.streamx.blueprints.data.Page;
 import com.streamx.blueprints.index.collectors.html.HtmlCollector;
-import com.streamx.blueprints.index.configuration.Configuration;
-import com.streamx.blueprints.index.configuration.HtmlElementCollectorConfiguration;
+import com.streamx.blueprints.index.configuration.SearchFeedExtractorConfig;
+import com.streamx.blueprints.index.configuration.SearchFeedExtractorConfig.Field;
+import com.streamx.blueprints.index.configuration.SearchFeedExtractorConfig.Processor;
+import com.streamx.blueprints.index.processors.ProcessorRegistry;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import org.apache.commons.lang3.StringUtils;
+import org.jboss.logging.Logger;
+import org.jsoup.helper.W3CDom;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
+import org.jspecify.annotations.NonNull;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 @ApplicationScoped
 public class HtmlCollectorImpl extends AbstractHtmlCollector implements HtmlCollector {
 
+  private static final XPathFactory XPATH_FACTORY =
+      XPathFactory.newInstance();
+
   @Inject
-  Configuration configuration;
+  SearchFeedExtractorConfig configuration;
+  @Inject
+  ProcessorRegistry processorRegistry;
+  @Inject
+  protected Logger log;
 
   public Map<String, Object> getElements(Page page, boolean isFacet) {
+    log.debugf("XPath configuration=%s", configuration.xpath().fields().keySet());
     return collect(
-        configuration.includeHtmlElements(),
-        configuration.configurations()
+        configuration.xpath().fields()
             .values()
             .stream()
-            .filter(config -> config.isFacet() == isFacet)
+            .filter(config -> config.facet() == isFacet)
             .toList(),
         this::collectElements,
         page.getContentAsString());
   }
 
-  private Map<String, Object> collectElements(Document document,
-      HtmlElementCollectorConfiguration config) {
-    return config.selector().map(selector ->
-        document
-            .select(selector)
-            .stream()
-            .flatMap(element -> {
-              if (config.singleAttr()) {
-                return config.keys()
-                    .stream()
-                    .flatMap(Collection::stream)
-                    .collect(
-                        Collectors.toMap(key -> normalizeKey(getKey(key, getKeyDelimiter(config))),
-                            key -> (Object) element.attr(key)))
-                    .entrySet()
-                    .stream();
-              } else {
-                return config.isFacet()
-                    ? getFacetsFromAttributes(config, element).entrySet().stream()
-                    : getFieldFromAttributes(config, element).entrySet().stream();
-              }
-            }).collect(Collectors.toMap(
-                Map.Entry::getKey,
-                Map.Entry::getValue
-            ))
-    ).orElse(Collections.emptyMap());
+  private Map<String, Object> collectElements(Document document, Field config) {
+    Map<String, Object> elements = new HashMap<>();
+    String elementSelector = config.elementSelector().orElse(StringUtils.EMPTY);
+    org.w3c.dom.Document xmlDoc = new W3CDom().fromJsoup(document);
+    log.debugf("Elements selector=%s", elementSelector);
+    log.debugf("XML document=%s", xmlDoc);
+
+    try {
+      NodeList nodeList = (NodeList) XPATH_FACTORY.newXPath()
+          .evaluate(elementSelector, xmlDoc, XPathConstants.NODESET);
+
+      log.debugf("Node List size=%s", nodeList.getLength());
+      for (int i = 0; i < nodeList.getLength(); i++) {
+        Node node = nodeList.item(i);
+
+        Map<String, Object> current = config.facet()
+            ? getFacetsFromAttributes(config, node)
+            : getFieldsFromAttributes(config, node);
+
+        elements.putAll(current);
+      }
+    } catch (XPathExpressionException e) {
+      log.warnf(e, "Error during evaluating XPath expression");
+    }
+
+    log.debugf("Collected elements=%s", elements);
+    return elements;
   }
 
-  private Map<String, Object> getFacetsFromAttributes(
-      HtmlElementCollectorConfiguration config,
-      Element element) {
-    String key = findFirst(element, config.keys().orElse(Collections.emptyList()));
-    String value = findFirst(element, config.values().orElse(Collections.emptyList()));
-    if (isKeyOrValueBlank(key, value)) {
+  private Map<String, Object> getFacetsFromAttributes(Field config, Node element) {
+    String key = getText(config.keySelector(), config.key(), element);
+    String value = getText(config.valueSelector(), config.value(), element);
+    log.debugf("Facet key=%s, value=%s", key, value);
+    if (StringUtils.isAnyBlank(key, value)) {
       return Collections.emptyMap();
     }
-    return config.hierarchicalFacetDelimiter()
-        .map(hierarchicalFacetDelimiter -> createHierarchicalFacets(
-            normalizeKey(getKey(key, getKeyDelimiter(config))), value,
-            hierarchicalFacetDelimiter))
-        .orElse(Map.of(normalizeKey(getKey(key, getKeyDelimiter(config))), value));
+
+    return createHierarchicalFacets(applyProcessors(key, config.keyProcessors()).getFirst(), value,
+        config.valueProcessors());
   }
 
-  private Map<String, Object> getFieldFromAttributes(HtmlElementCollectorConfiguration config,
-      Element element) {
-    String key = findFirst(element, config.keys().orElse(Collections.emptyList()));
-    String value = findFirst(element, config.values().orElse(Collections.emptyList()));
-    if (isKeyOrValueBlank(key, value) || !isKeyValueIndexed(config, key)) {
+  private @NonNull String getText(Optional<String> config, Optional<String> defaultValue,
+      Node nodeValue) {
+    return config.map(selector -> {
+      try {
+        return XPATH_FACTORY.newXPath().evaluate(selector, nodeValue);
+      } catch (XPathExpressionException e) {
+        log.warnf(e, "Error during evaluating XPath expression");
+        return StringUtils.EMPTY;
+      }
+    }).orElse(defaultValue.orElse(StringUtils.EMPTY));
+  }
+
+  private Map<String, Object> getFieldsFromAttributes(Field config, Node element) {
+    String key = getText(config.keySelector(), config.key(), element);
+    String value = getText(config.valueSelector(), config.key(), element);
+    log.debugf("Field key=%s, value=%s", key, value);
+    if (StringUtils.isAnyBlank(key, value)) {
       return Collections.emptyMap();
     }
-    return Map.of(getKey(key, null), value);
+    return Map.of(applyProcessors(key, config.keyProcessors()).getFirst(),
+        applyProcessors(value, config.valueProcessors()).getFirst());
   }
 
-  private static Map<String, Object> createHierarchicalFacets(String key, String value,
-      String hierarchicalFacetDelimiter) {
+  private Map<String, Object> createHierarchicalFacets(String key, String value,
+      List<Processor> valueProcessors) {
     Map<String, Object> facets = new LinkedHashMap<>();
-    String[] parts = value.split(hierarchicalFacetDelimiter);
+    List<String> parts = applyProcessors(value, valueProcessors);
 
     facets.put(key + "_path", value);
-    for (int i = 0; i < parts.length; i++) {
-      facets.put(key + "_level" + i, parts[i]);
+    for (int i = 0; i < parts.size(); i++) {
+      facets.put(key + "_level" + i, parts.get(i));
     }
-    facets.put(key + "_hierarchy", getHierarchy(parts, hierarchicalFacetDelimiter));
+    facets.put(key + "_hierarchy", getHierarchy(parts, valueProcessors.stream()
+        .filter(processor -> "split".equals(processor.name()))
+        .flatMap(processor -> processor.config().stream())
+        .findFirst()
+        .orElse(StringUtils.EMPTY)));
     return facets;
   }
 
-  private static List<String> getHierarchy(String[] parts, String hierarchicalFacetDelimiter) {
+  private static List<String> getHierarchy(List<String> parts, String hierarchicalFacetDelimiter) {
     List<String> hierarchy = new ArrayList<>();
     StringBuilder currentPath = new StringBuilder();
 
-    for (int i = 0; i < parts.length; i++) {
+    for (int i = 0; i < parts.size(); i++) {
       if (i > 0) {
         currentPath.append(hierarchicalFacetDelimiter);
       }
-      currentPath.append(parts[i].trim());
+      currentPath.append(parts.get(i).trim());
       hierarchy.add(currentPath.toString());
     }
     return hierarchy;
   }
 
-  private static String getKeyDelimiter(HtmlElementCollectorConfiguration config) {
-    return config.keyDelimiter().orElse(null);
-  }
-
-  private static boolean isKeyValueIndexed(HtmlElementCollectorConfiguration config, String key) {
-    return config.indexedKeys().map(list -> list.contains(key)).orElse(false);
+  private List<String> applyProcessors(String string, List<Processor> processors) {
+    List<String> result = List.of(string);
+    for (Processor processor : processors) {
+      result = processorRegistry.get(processor.name())
+          .process(result, processor.config().orElse(null));
+    }
+    return result;
   }
 }
