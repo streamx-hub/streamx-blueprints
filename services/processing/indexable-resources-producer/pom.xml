@@ -28,6 +28,10 @@
       <groupId>com.streamx</groupId>
       <artifactId>content-parser</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-config-yaml</artifactId>
+    </dependency>
   </dependencies>
 
 </project>
