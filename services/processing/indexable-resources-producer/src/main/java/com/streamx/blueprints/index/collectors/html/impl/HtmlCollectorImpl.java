@@ -6,6 +6,7 @@ import com.streamx.blueprints.index.configuration.SearchFeedExtractorConfig;
 import com.streamx.blueprints.index.configuration.SearchFeedExtractorConfig.Field;
 import com.streamx.blueprints.index.configuration.SearchFeedExtractorConfig.Processor;
 import com.streamx.blueprints.index.processors.ProcessorRegistry;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.ArrayList;
@@ -27,6 +28,12 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 @ApplicationScoped
+@RegisterForReflection(
+    classNames = {
+        "com.sun.org.apache.xpath.internal.functions.FuncLocalPart",
+        "com.sun.org.apache.xpath.internal.functions.FuncStartsWith"
+    }
+)
 public class HtmlCollectorImpl extends AbstractHtmlCollector implements HtmlCollector {
 
   private static final XPathFactory XPATH_FACTORY =
