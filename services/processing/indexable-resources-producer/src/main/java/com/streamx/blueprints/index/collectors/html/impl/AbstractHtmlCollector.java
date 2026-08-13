@@ -1,5 +1,6 @@
 package com.streamx.blueprints.index.collectors.html.impl;
 
+import com.streamx.blueprints.index.collectors.html.HtmlCollector;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -7,7 +8,7 @@ import java.util.stream.Collectors;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-public abstract class AbstractHtmlCollector {
+public abstract class AbstractHtmlCollector implements HtmlCollector {
 
   protected <FieldT, V> Map<String, V> collect(
       Collection<FieldT> configs,

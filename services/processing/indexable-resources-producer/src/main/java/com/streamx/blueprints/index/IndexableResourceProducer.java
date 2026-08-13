@@ -103,8 +103,8 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
 
     log.tracef("Parsed page title and content.", title, body);
 
-    return new IndexableResourceContent(title, body, htmlCollector.getElements(page, true),
-        htmlCollector.getElements(page, false));
+    return new IndexableResourceContent(title, body, htmlCollector.getFacets(page),
+        htmlCollector.getFields(page));
   }
 
   private String dropUrlIncludes(String sourceResourceContent) {

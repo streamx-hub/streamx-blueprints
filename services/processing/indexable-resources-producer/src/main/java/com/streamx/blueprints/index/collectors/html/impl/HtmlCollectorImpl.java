@@ -1,11 +1,11 @@
 package com.streamx.blueprints.index.collectors.html.impl;
 
 import com.streamx.blueprints.data.Page;
-import com.streamx.blueprints.index.collectors.html.HtmlCollector;
 import com.streamx.blueprints.index.configuration.SearchFeedExtractorConfig;
 import com.streamx.blueprints.index.configuration.SearchFeedExtractorConfig.Field;
 import com.streamx.blueprints.index.configuration.SearchFeedExtractorConfig.Processor;
-import com.streamx.blueprints.index.processors.ProcessorRegistry;
+import com.streamx.blueprints.index.processors.string.StringProcessor;
+import io.quarkus.arc.All;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
@@ -34,7 +35,7 @@ import org.w3c.dom.NodeList;
         "com.sun.org.apache.xpath.internal.functions.FuncStartsWith"
     }
 )
-public class HtmlCollectorImpl extends AbstractHtmlCollector implements HtmlCollector {
+public class HtmlCollectorImpl extends AbstractHtmlCollector {
 
   private static final XPathFactory XPATH_FACTORY =
       XPathFactory.newInstance();
@@ -42,17 +43,26 @@ public class HtmlCollectorImpl extends AbstractHtmlCollector implements HtmlColl
   @Inject
   SearchFeedExtractorConfig configuration;
   @Inject
-  ProcessorRegistry processorRegistry;
+  @All
+  List<StringProcessor> processors;
   @Inject
   protected Logger log;
 
-  public Map<String, Object> getElements(Page page, boolean isFacet) {
+  public Map<String, Object> getFacets(Page page) {
+    return getElements(page, Field::facet);
+  }
+
+  public Map<String, Object> getFields(Page page) {
+    return getElements(page, Predicate.not(Field::facet));
+  }
+
+  private Map<String, Object> getElements(Page page, Predicate<Field> filter) {
     log.debugf("XPath configuration=%s", configuration.xpath().fields().keySet());
     return collect(
         configuration.xpath().fields()
             .values()
             .stream()
-            .filter(config -> config.facet() == isFacet)
+            .filter(filter)
             .toList(),
         this::collectElements,
         page.getContentAsString());
@@ -156,8 +166,13 @@ public class HtmlCollectorImpl extends AbstractHtmlCollector implements HtmlColl
   private List<String> applyProcessors(String string, List<Processor> processors) {
     List<String> result = List.of(string);
     for (Processor processor : processors) {
-      result = processorRegistry.get(processor.name())
-          .process(result, processor.config().orElse(null));
+      StringProcessor stringProcessor = this.processors.stream()
+          .filter(p -> p.getName().equals(processor.name()))
+          .findFirst()
+          .orElse(null);
+      if (stringProcessor != null) {
+        result = stringProcessor.process(result, processor.config().orElse(null));
+      }
     }
     return result;
   }

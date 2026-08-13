@@ -5,5 +5,7 @@ import java.util.Map;
 
 public interface HtmlCollector {
 
-  Map<String, Object> getElements(Page page, boolean isFacet);
+  Map<String, Object> getFacets(Page page);
+
+  Map<String, Object> getFields(Page page);
 }

@@ -5,4 +5,6 @@ import java.util.List;
 public interface StringProcessor {
 
   List<String> process(List<String> input, String config);
+
+  String getName();
 }
