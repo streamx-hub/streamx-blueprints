@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -29,4 +29,8 @@ jobs:
 
       - name: Build project
         run: |
-          ./mvnw clean verify
+          ./mvnw clean install -DskipTests -T 5
+
+      - name: Run tests
+        run: |
+          ./mvnw surefire:test failsafe:integration-test failsafe:verify
