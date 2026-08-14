@@ -1,6 +1,7 @@
 package com.streamx.blueprints.index.configuration;
 
 import io.smallrye.config.ConfigMapping;
+import io.smallrye.config.WithDefault;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +33,9 @@ public interface SearchFeedExtractorConfig {
     List<Processor> keyProcessors();
 
     List<Processor> valueProcessors();
+
+    @WithDefault("false")
+    boolean noIndex();
   }
 
   interface Processor {

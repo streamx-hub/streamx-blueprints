@@ -45,6 +45,9 @@ abstract class AbstractIndexableResourceProducer<T extends WebResource> {
         log.warnf("Skipping processing empty incoming %s %s", incomingType, key);
         return null;
       }
+      if (noIndex(resource)) {
+        return null;
+      }
 
       String outgoingEventType = settings.outgoingPublishedEventType();
       log.tracef("Publishing %s as %s", key, outgoingEventType);
@@ -60,6 +63,10 @@ abstract class AbstractIndexableResourceProducer<T extends WebResource> {
 
     log.warnf("Skipping processing event %s with unexpected type: %s", key, eventType);
     return null;
+  }
+
+  protected boolean noIndex(T incomingResource) {
+    return false;
   }
 
   private static <T extends WebResource> boolean shouldPublish(boolean indexable,

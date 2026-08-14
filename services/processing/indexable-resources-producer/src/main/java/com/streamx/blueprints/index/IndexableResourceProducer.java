@@ -89,6 +89,11 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
     }
   }
 
+  @Override
+  protected boolean noIndex(Page incomingPage) {
+    return htmlCollector.noIndex(incomingPage);
+  }
+
   private IndexableResourceContent getIndexableResource(Page page) {
     var input = new ByteArrayInputStream(page.getContentAsBytes());
     String title = null;
