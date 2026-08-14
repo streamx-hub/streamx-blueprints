@@ -1,0 +1,55 @@
+streamx:
+  blueprints:
+    indexable-resources-producer:
+      search-feed-extractor:
+        xpath:
+          fields:
+            eds:
+              facet: true
+              element-selector: "//*[local-name()='meta'][starts-with(@property, 'facets:')]"
+              key-selector: "./@property"
+              value-selector: "./@content"
+
+              key-processors:
+                - name: trim
+                - name: lowercase
+                - name: removeStart
+                  config: 'facets:'
+
+              value-processors:
+                - name: trim
+
+            nested:
+              facet: true
+              element-selector: "//*[local-name()='meta'][starts-with(@name, 'facets:')]"
+              key-selector: "./@name"
+              value-selector: "./@value"
+
+              key-processors:
+                - name: trim
+                - name: lowercase
+                - name: removeStart
+                  config: 'facets:'
+
+              value-processors:
+                - name: trim
+                - name: split
+                  config: ">"
+
+            color:
+              facet: true
+              element-selector: "//*[local-name()='div']/@color"
+              key: color
+              value-selector: "//@color"
+
+            field-description:
+              facet: false
+              element-selector: "//*[local-name()='meta'][@property='description']"
+              key: description
+              value-selector: "./@content"
+
+            size:
+              facet: true
+              element-selector: "//*[local-name()='div'][text()='M']"
+              key-selector: "./@name"
+              value: "M"

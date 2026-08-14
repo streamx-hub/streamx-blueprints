@@ -1,0 +1,22 @@
+streamx:
+  blueprints:
+    indexable-resources-producer:
+      search-feed-extractor:
+        xpath:
+          fields:
+            eds:
+              facet: true
+              element-selector: "//*[local-name()='meta'][starts-with(@property, 'facets:')]"
+              key-selector: "./@property"
+              value-selector: "./@content"
+
+              key-processors:
+                - name: trim
+                - name: lowercase
+                - name: removeStart
+                  config: 'facets:'
+
+              value-processors:
+                - name: trim
+                - name: split
+                  config: ">"

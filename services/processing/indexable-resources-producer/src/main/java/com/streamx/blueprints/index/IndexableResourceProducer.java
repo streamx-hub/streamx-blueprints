@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.data.JsonResource;
 import com.streamx.blueprints.data.Page;
-import com.streamx.blueprints.index.facets.FacetsCollector;
+import com.streamx.blueprints.index.collectors.html.HtmlCollector;
 import com.streamx.content.parser.urlinclude.UrlInclude;
 import com.streamx.content.parser.urlinclude.UrlIncludeCollector;
 import com.streamx.content.parser.urlinclude.UrlIncludeRemover;
@@ -32,7 +32,7 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
   @Inject
   TikaParser parser;
   @Inject
-  FacetsCollector facetsCollector;
+  HtmlCollector htmlCollector;
 
   @Override
   protected ProducerSettings<Page> producerSettings() {
@@ -56,11 +56,13 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
     String title = null;
     String content = null;
     Map<String, Object> facets = Collections.emptyMap();
+    Map<String, Object> fields = Collections.emptyMap();
     if (hasContent(incomingPage)) {
       var indexableResourceContent = getIndexableResource(incomingPage);
       title = indexableResourceContent.title();
       content = indexableResourceContent.content();
       facets = indexableResourceContent.facets();
+      fields = indexableResourceContent.fields();
     }
     var resourceTitle = StringUtil.isNullOrEmpty(title) ? key : title;
     var sourceResourceContent = StringUtil.isNullOrEmpty(content) ? key : content;
@@ -69,7 +71,7 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
 
     var resourceContent = dropUrlIncludes(sourceResourceContent);
     var indexableResourceContent = new IndexableResourceContent(resourceTitle, resourceContent,
-        facets);
+        facets, fields);
 
     var fragments = urlIncludes.stream()
         .map(UrlInclude::url)
@@ -101,7 +103,8 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
 
     log.tracef("Parsed page title and content.", title, body);
 
-    return new IndexableResourceContent(title, body, facetsCollector.getFacets(page));
+    return new IndexableResourceContent(title, body, htmlCollector.getFacets(page),
+        htmlCollector.getFields(page));
   }
 
   private String dropUrlIncludes(String sourceResourceContent) {
@@ -114,5 +117,4 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
   private boolean hasContent(Page page) {
     return page != null && page.getContent() != null && page.getContent().array().length != 0;
   }
-
 }

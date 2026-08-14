@@ -38,7 +38,12 @@ public class IndexableResourcesProducerIT extends BaseQuarkusIntegrationTest {
         "{\"title\":\"pages/test-page.html\",\"content\":\"<meta property=\\\"facets:technology\\\""
             + " content=\\\"salesforce\\\"><meta property=\\\"facets:category\\\" "
             + "content=\\\"Electronics>Phone>iOS\\\"><b>Hello World</b>\","
-            + "\"facets\":{\"technology\":\"salesforce\",\"category\":\"Electronics>Phone>iOS\"}}";
+            + "\"facets\":{\"category_level1\":\"Phone\",\"category_hierarchy\":"
+            + "[\"Electronics\",\"Electronics>Phone\",\"Electronics>Phone>iOS\"],"
+            + "\"category_level2\":\"iOS\",\"technology_hierarchy\":[\"salesforce\"],"
+            + "\"category_level0\":\"Electronics\",\"technology_path\":\"salesforce\","
+            + "\"category_path\":\"Electronics>Phone>iOS\",\"technology_level0\":\"salesforce\"},"
+            + "\"fields\":{}}";
 
     CloudEvent outgoingEvent = waitForResponseEvent(Channels.INDEXABLE_RESOURCES);
     assertOutgoingEvent(outgoingEvent, sourceEvent, page,
@@ -87,14 +92,9 @@ public class IndexableResourcesProducerIT extends BaseQuarkusIntegrationTest {
 
     @Override
     protected Map<String, String> getServiceConfigProperties() {
-      return Map.of("streamx.blueprints.indexable-resources-producer.index-fragments", "true",
-          "streamx.blueprints.indexable-resources-producer.include-facets", "true",
-          "streamx.blueprints.indexable-resources-producer.configurations.eds.selector",
-          "meta[property^=facets:]",
-          "streamx.blueprints.indexable-resources-producer.configurations.eds.keys", "property",
-          "streamx.blueprints.indexable-resources-producer.configurations.eds.key-delimiter",
-          "facets:",
-          "streamx.blueprints.indexable-resources-producer.configurations.eds.values", "content");
+      Map<String, String> properties = getConfigPropertiesFromYaml("application-test.yaml");
+      properties.put("streamx.blueprints.indexable-resources-producer.index-fragments", "true");
+      return properties;
     }
   }
 }
