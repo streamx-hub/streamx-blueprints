@@ -90,8 +90,8 @@ public class IndexableResourceProducer extends AbstractIndexableResourceProducer
   }
 
   @Override
-  protected boolean noIndex(Page incomingPage) {
-    return htmlCollector.noIndex(incomingPage);
+  protected boolean isIndexable(Page incomingPage) {
+    return htmlCollector.isIndexable(incomingPage);
   }
 
   private IndexableResourceContent getIndexableResource(Page page) {

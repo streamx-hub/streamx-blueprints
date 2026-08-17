@@ -448,8 +448,15 @@ public class IndexableResourceProducerTest {
         new Page(payload, RESOURCE_TYPE)
     );
 
-    // when & then
-    assertNoResourceFrom(pageEvent);
+    // when
+    CloudEvent resultEvent = getResourceFrom(pageEvent);
+
+    // then
+    assertThat(resultEvent).isNotNull();
+    assertThat(resultEvent.getData()).isNull();
+    assertThat(resultEvent.getSubject()).isEqualTo(DEFAULT_KEY);
+    assertThat(resultEvent.getTime()).isEqualTo(pageEvent.getTime());
+    assertThat(resultEvent.getType()).isEqualTo(IndexableResource.TYPE_UNPUBLISHED);
   }
 
   private IndexableResourceContent getResourceFromPageWithContent(String payload) {

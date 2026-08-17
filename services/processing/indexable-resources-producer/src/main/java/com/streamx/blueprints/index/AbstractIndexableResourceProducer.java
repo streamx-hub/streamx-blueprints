@@ -39,13 +39,10 @@ abstract class AbstractIndexableResourceProducer<T extends WebResource> {
     log.tracef("Processing incoming %s with key=%s eventType=%s eventTime=%s",
         incomingType, key, eventType, eventTime);
 
-    boolean indexable = isIndexable(event);
+    boolean indexable = isIndexable(event, resource);
     if (shouldPublish(indexable, eventType, settings)) {
       if (Resource.isEmpty(resource)) {
         log.warnf("Skipping processing empty incoming %s %s", incomingType, key);
-        return null;
-      }
-      if (noIndex(resource)) {
         return null;
       }
 
@@ -65,10 +62,6 @@ abstract class AbstractIndexableResourceProducer<T extends WebResource> {
     return null;
   }
 
-  protected boolean noIndex(T incomingResource) {
-    return false;
-  }
-
   private static <T extends WebResource> boolean shouldPublish(boolean indexable,
       String eventType, ProducerSettings<T> settings) {
     return indexable && settings.incomingPublishedEventType().equals(eventType);
@@ -79,15 +72,14 @@ abstract class AbstractIndexableResourceProducer<T extends WebResource> {
     return !indexable || settings.incomingUnpublishedEventType().equals(eventType);
   }
 
-  private boolean isIndexable(CloudEvent event) {
+  private boolean isIndexable(CloudEvent event, T resource) {
     return Optional.ofNullable(event.getExtension(EXTENSION_NAME_INDEXABLE))
         .map(Object::toString)
         .map(Boolean::parseBoolean)
-        .orElse(isIndexableDefault());
+        .orElse(isIndexable(resource));
   }
 
-  protected boolean isIndexableDefault() {
+  protected boolean isIndexable(T incomingResource) {
     return true;
   }
-
 }

@@ -20,7 +20,7 @@ import org.jspecify.annotations.NonNull;
 import org.w3c.dom.Node;
 
 @ApplicationScoped
-public class FieldsCollectorImpl {
+public class FieldsCollector {
 
   private static final XPathFactory XPATH_FACTORY = XPathFactory.newInstance();
 

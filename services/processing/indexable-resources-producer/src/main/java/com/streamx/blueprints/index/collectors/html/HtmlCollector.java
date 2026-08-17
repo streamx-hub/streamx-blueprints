@@ -9,5 +9,5 @@ public interface HtmlCollector {
 
   Map<String, Object> getFields(Page page);
 
-  boolean noIndex(Page page);
+  boolean isIndexable(Page page);
 }

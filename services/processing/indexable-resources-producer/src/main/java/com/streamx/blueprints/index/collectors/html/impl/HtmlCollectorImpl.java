@@ -36,7 +36,7 @@ public class HtmlCollectorImpl extends AbstractHtmlCollector {
   @Inject
   SearchFeedExtractorConfig configuration;
   @Inject
-  FieldsCollectorImpl fieldsCollector;
+  FieldsCollector fieldsCollector;
 
   public Map<String, Object> getFacets(Page page) {
     return getElements(page, Field::facet);
@@ -58,22 +58,21 @@ public class HtmlCollectorImpl extends AbstractHtmlCollector {
         page.getContentAsString());
   }
 
-  public boolean noIndex(Page page) {
+  public boolean isIndexable(Page page) {
     List<Field> noIndexConfig = configuration.xpath().fields().values()
         .stream()
         .filter(Field::noIndex)
         .toList();
-
     if (noIndexConfig.isEmpty()) {
-      return false;
+      return true;
     }
 
     Map<String, Object> noIndex = collect(
         noIndexConfig,
         this::collectElements,
-        page.getContentAsString()
+        page != null ? page.getContentAsString() : StringUtils.EMPTY
     );
-    return !noIndex.isEmpty();
+    return noIndex.isEmpty();
   }
 
   private Map<String, Object> collectElements(Document document, Field config) {
