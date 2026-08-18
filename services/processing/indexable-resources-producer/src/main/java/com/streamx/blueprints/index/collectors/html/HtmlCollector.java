@@ -8,4 +8,6 @@ public interface HtmlCollector {
   Map<String, Object> getFacets(Page page);
 
   Map<String, Object> getFields(Page page);
+
+  boolean isIndexable(Page page);
 }
