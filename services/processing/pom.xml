@@ -25,6 +25,7 @@
     <module>rendering-engine</module>
     <module>resource-downloader</module>
     <module>sitemap-generator</module>
+    <module>indexable-resources-sql-transformer</module>
   </modules>
 
 </project>
