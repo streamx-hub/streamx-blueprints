@@ -1,0 +1,19 @@
+streamx:
+  blueprints:
+    indexable-resources-sql-transformer:
+      persisted-data:
+        fields:
+          - url
+          - author
+          - description
+          - publication_date
+        facets:
+          - test
+          - test2
+      dirty-check:
+        interval: 1s
+        delay: 1s
+        max-dirty-sequence-count: 12
+      transformations:
+        latestArticlesRss:
+          sql-query: "SELECT * FROM indexable_resources"

@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
+import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.IndexableResource;
-import com.streamx.blueprints.data.WebResource;
 import com.streamx.blueprints.sql.configuration.Configuration;
 import com.streamx.blueprints.sql.configuration.Configuration.Transformation;
 import com.streamx.blueprints.sql.database.IndexableResourcesRepository;
@@ -15,7 +15,6 @@ import io.quarkus.scheduler.Scheduled;
 import io.quarkus.scheduler.Scheduled.ConcurrentExecution;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +23,7 @@ import java.util.stream.Collectors;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.jboss.logging.Logger;
 
 @ApplicationScoped
 public class SqlTransformer {
@@ -42,9 +42,12 @@ public class SqlTransformer {
   IndexableResourcesRepository indexableResourcesRepository;
   @Inject
   DirtySequenceStateManager dirtySequenceStateManager;
+  @Inject
+  protected Logger log;
 
   @Incoming(Channels.INDEXABLE_RESOURCES)
   public void produceFrom(CloudEvent event) {
+    log.infof("Received CloudEvent: subject=%s", event.getSubject());
     IndexableResource resource = CloudEventUtils.getData(event, IndexableResource.class);
     if (resource == null) {
       return;
@@ -53,11 +56,11 @@ public class SqlTransformer {
     for (String transformationName : configuration.transformations().keySet()) {
       try {
         save(resource, transformationName);
-      } catch (JsonProcessingException | SQLException e) {
-        throw new RuntimeException(e);
+        dirtySequenceStateManager.newDirtyResource();
+      } catch (JsonProcessingException e) {
+        throw new RuntimeException("Payload could not be deserialized.", e);
       }
     }
-    dirtySequenceStateManager.newDirtyResource();
   }
 
   @Scheduled(
@@ -65,31 +68,31 @@ public class SqlTransformer {
       delayed = "${streamx.blueprints.indexable-resources-sql-transformer.dirty-check.delay}",
       concurrentExecution = ConcurrentExecution.SKIP
   )
-  public void publishFeedsIfNeeded() {
+  public void publishFeedsIfNeeded() throws JsonProcessingException {
+    log.debugf("Publishing feeds");
     if (dirtySequenceStateManager.checkIfActionIsNeededForNewSequence()) {
-      // Serving JSON to outgoing channel
       for (Map.Entry<String, Transformation> entry : configuration.transformations().entrySet()) {
-        indexableResourcesRepository.read(entry.getValue().sqlQuery());
+        List<IndexableSqlResources> resources = indexableResourcesRepository.read(
+            entry.getValue().sqlQuery());
+        CloudEvent event = CloudEventUtils.eventWithData(
+            entry.getKey(), Data.TYPE_PUBLISHED,
+            new Data(objectMapper.writeValueAsString(Map.of("feeds", resources)), "data/json")
+        );
+        emitter.send(event);
+        log.debugf("Send an event with subject %s", entry.getKey());
       }
-
-
-      CloudEvent sitemapEvent = CloudEventUtils.eventWithData(
-          configuration.outputKey(), WebResource.TYPE_PUBLISHED, sitemapWebResource
-      );
-      emitter.send(sitemapEvent);
     }
   }
 
-  private void save(IndexableResource resource, String subject)
-      throws JsonProcessingException, SQLException {
+  private void save(IndexableResource resource, String subject) throws JsonProcessingException {
     IndexableResourceContent indexableResourceContent = objectMapper.readValue(
         resource.getContentAsString(), IndexableResourceContent.class);
 
-    indexableResourcesRepository.save(new IndexableSqlResources(subject,
-        indexableResourceContent.title(),
-        indexableResourceContent.content(),
-        getFields(getConfiguredFields("facets"), indexableResourceContent.facets()),
-        getFields(getConfiguredFields("fields"), indexableResourceContent.fields())));
+    log.debugf("Saving resource with subject %s", subject);
+    indexableResourcesRepository.save(
+        IndexableSqlResources.toEntity(subject,
+            indexableResourceContent.title(),
+            getFields(getConfiguredFields("fields"), indexableResourceContent.fields())));
   }
 
   private static Map<String, Object> getFields(List<String> configuredFields,
