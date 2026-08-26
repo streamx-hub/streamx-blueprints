@@ -1,6 +1,5 @@
 package com.streamx.blueprints.state.sql.repository.impl;
 
-import com.streamx.blueprints.state.sql.EntityMapper;
 import com.streamx.blueprints.state.sql.repository.SqlRepository;
 import jakarta.inject.Inject;
 import java.sql.Connection;
@@ -30,31 +29,40 @@ public abstract class AbstractSqlRepository implements SqlRepository {
     }
   }
 
-  public <T> void save(String sqlQuery, EntityMapper<T> mapper, T resource) {
+  public <T> List<T> query(String sql, RowMapper<T> mapper, Object... parameters) {
     try (Connection connection = dataSource.getConnection();
-        PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+        PreparedStatement statement = connection.prepareStatement(sql)) {
+      for (int i = 0; i < parameters.length; i++) {
+        statement.setObject(i + 1, parameters[i]);
+      }
 
-      mapper.toStatement(statement, resource)
-          .executeUpdate();
-      log.debug("Resource saved");
-    } catch (SQLException e) {
-      throw new RuntimeException("Issue during repository save operation", e);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        List<T> result = new ArrayList<>();
+        while (resultSet.next()) {
+          result.add(mapper.map(resultSet));
+        }
+        return result;
+      }
+    } catch (Exception e) {
+      throw new RuntimeException("Query failed", e);
     }
   }
 
-  public <T> List<T> read(String sqlQuery, EntityMapper<T> mapper) {
-    List<T> resources = new ArrayList<>();
 
-    try (Connection connection = dataSource.getConnection();
-        PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-      try (ResultSet rs = statement.executeQuery()) {
-        while (rs.next()) {
-          resources.add(mapper.map(rs));
-        }
+  public <T> T transaction(SqlTransaction<T> transaction) {
+    try (Connection connection = dataSource.getConnection()) {
+      connection.setAutoCommit(false);
+
+      try {
+        T result = transaction.execute(connection);
+        connection.commit();
+        return result;
+      } catch (Exception e) {
+        connection.rollback();
+        throw e;
       }
-    } catch (SQLException e) {
-      throw new RuntimeException("Issue during repository read operation", e);
+    } catch (Exception e) {
+      throw new RuntimeException("Transaction failed", e);
     }
-    return resources;
   }
 }

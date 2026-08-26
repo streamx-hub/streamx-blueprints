@@ -16,4 +16,4 @@ streamx:
         max-dirty-sequence-count: 12
       transformations:
         latestArticlesRss:
-          sql-query: "SELECT * FROM indexable_resources"
+          sql-query: "SELECT * FROM indexable_resource"

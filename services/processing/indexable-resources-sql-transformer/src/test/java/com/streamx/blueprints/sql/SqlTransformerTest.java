@@ -10,12 +10,12 @@ import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.sql.repository.IndexableResourcesRepository;
-import com.streamx.blueprints.sql.repository.IndexableSqlResources;
+import com.streamx.blueprints.state.sql.SqlRepositoryFactory;
+import com.streamx.blueprints.test.unit.StatefulInMemorySource;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
 import io.smallrye.reactive.messaging.memory.InMemorySink;
-import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.io.IOException;
@@ -23,6 +23,8 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.sql.DataSource;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -32,8 +34,11 @@ public class SqlTransformerTest {
   private static final String DEFAULT_KEY = "/test.html";
   private static final String RESOURCE_TYPE = "any";
 
-  private InMemorySource<CloudEvent> indexableResourceSource;
+  private StatefulInMemorySource indexableResourceSource;
   private InMemorySink<CloudEvent> dataSink;
+
+  @Inject
+  DataSource dataSource;
 
   @Inject
   @Any
@@ -43,17 +48,22 @@ public class SqlTransformerTest {
   @Inject
   IndexableResourcesRepository repository;
   @Inject
+  SqlRepositoryFactory repositoryFactory;
+  @Inject
   ObjectMapper objectMapper;
 
   @BeforeEach
   void beforeEach() {
-    indexableResourceSource = connector.source(Channels.INDEXABLE_RESOURCES);
+    indexableResourceSource = new StatefulInMemorySource(connector,
+        Channels.INDEXABLE_RESOURCES, Channels.INDEXABLE_RESORUCES_STATE);
     dataSink = connector.sink(Channels.DATA);
+  }
+
+  @AfterEach
+  void clearStore() {
     dataSink.clear();
     cleanDatabase();
   }
-
-  // TODO: write test for unpublish
 
   @Test
   void shouldProduceJsonDataFromIndexableResource() throws JsonProcessingException {
@@ -88,11 +98,11 @@ public class SqlTransformerTest {
     assertThat(resultEvent.getSubject()).isEqualTo("latestArticlesRss");
     assertThat(resultEvent.getType()).isEqualTo(Data.TYPE_PUBLISHED);
 
-    IndexableSqlResources resource = getIndexableSqlResources(resultEvent).getFirst();
+    NormalizedResource resource = getNormalizedResources(resultEvent).getFirst();
     assertThat(resource.title()).isEqualTo("test");
-    assertThat(resource.description()).isEqualTo("Description");
-    assertThat(resource.author()).isEqualTo("David Beckham");
-    assertThat(resource.tags()).isNull();
+    assertThat(resource.fields().get("description")).isEqualTo("Description");
+    assertThat(resource.fields().get("author")).isEqualTo("David Beckham");
+    assertThat(resource.fields().get("tags")).isNull();
   }
 
   /**
@@ -110,27 +120,27 @@ public class SqlTransformerTest {
   }
 
   private void waitForEventProcessed() {
-    String sqlQuery = "SELECT * FROM indexable_resources";
+    String sqlQuery = "SELECT * FROM indexable_resource";
     await().atMost(Duration.ofSeconds(1)).untilAsserted(() -> {
           assertThat(repository.read(sqlQuery)).hasSize(1);
         }
     );
   }
 
-  private List<IndexableSqlResources> getIndexableSqlResources(CloudEvent event) {
+  private List<NormalizedResource> getNormalizedResources(CloudEvent event) {
     Data data = CloudEventUtils.getData(event, Data.class);
     assertThat(data).isNotNull();
     String json = data.getContentAsString();
     try {
       return objectMapper.readValue(json,
-          new TypeReference<Map<String, List<IndexableSqlResources>>>() {
-          }).get("feeds");
+          new TypeReference<Map<String, List<NormalizedResource>>>() {
+          }).get("resources");
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
   void cleanDatabase() {
-    repository.executeQuery("DELETE FROM indexable_resources");
+    repositoryFactory.get("sqlite").executeQuery("DELETE FROM indexable_resource");
   }
 }

@@ -7,7 +7,7 @@ import java.util.Map;
 @ConfigMapping(prefix = "streamx.blueprints.indexable-resources-sql-transformer")
 public interface Configuration {
 
-  Map<String, List<String>> persistedData();
+  PersistedData persistedData();
 
   DirtyCheck dirtyCheck();
 
@@ -25,5 +25,12 @@ public interface Configuration {
   interface Transformation {
 
     String sqlQuery();
+  }
+
+  interface PersistedData {
+
+    List<String> fields();
+
+    List<String> facets();
   }
 }
