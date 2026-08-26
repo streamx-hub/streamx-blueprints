@@ -9,8 +9,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.IndexableResource;
-import com.streamx.blueprints.sql.database.IndexableResourcesRepository;
-import com.streamx.blueprints.sql.database.IndexableSqlResources;
+import com.streamx.blueprints.sql.repository.IndexableResourcesRepository;
+import com.streamx.blueprints.sql.repository.IndexableSqlResources;
 import io.cloudevents.CloudEvent;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.reactive.messaging.memory.InMemoryConnector;
@@ -19,14 +19,10 @@ import io.smallrye.reactive.messaging.memory.InMemorySource;
 import jakarta.enterprise.inject.Any;
 import jakarta.inject.Inject;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -48,11 +44,9 @@ public class SqlTransformerTest {
   IndexableResourcesRepository repository;
   @Inject
   ObjectMapper objectMapper;
-  @Inject
-  DataSource dataSource;
 
   @BeforeEach
-  void beforeEach() throws SQLException {
+  void beforeEach() {
     indexableResourceSource = connector.source(Channels.INDEXABLE_RESOURCES);
     dataSink = connector.sink(Channels.DATA);
     dataSink.clear();
@@ -95,10 +89,10 @@ public class SqlTransformerTest {
     assertThat(resultEvent.getType()).isEqualTo(Data.TYPE_PUBLISHED);
 
     IndexableSqlResources resource = getIndexableSqlResources(resultEvent).getFirst();
-    assertThat(resource.getTitle()).isEqualTo("test");
-    assertThat(resource.getDescription()).isEqualTo("Description");
-    assertThat(resource.getAuthor()).isEqualTo("David Beckham");
-    assertThat(resource.getTags()).isNull();
+    assertThat(resource.title()).isEqualTo("test");
+    assertThat(resource.description()).isEqualTo("Description");
+    assertThat(resource.author()).isEqualTo("David Beckham");
+    assertThat(resource.tags()).isNull();
   }
 
   /**
@@ -136,11 +130,7 @@ public class SqlTransformerTest {
     }
   }
 
-  void cleanDatabase() throws SQLException {
-    try (Connection conn = dataSource.getConnection();
-        Statement stmt = conn.createStatement()) {
-
-      stmt.executeUpdate("DELETE FROM indexable_resources");
-    }
+  void cleanDatabase() {
+    repository.executeQuery("DELETE FROM indexable_resources");
   }
 }

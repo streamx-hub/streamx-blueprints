@@ -8,8 +8,8 @@ import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.sql.configuration.Configuration;
 import com.streamx.blueprints.sql.configuration.Configuration.Transformation;
-import com.streamx.blueprints.sql.database.IndexableResourcesRepository;
-import com.streamx.blueprints.sql.database.IndexableSqlResources;
+import com.streamx.blueprints.sql.repository.IndexableResourcesRepository;
+import com.streamx.blueprints.sql.repository.IndexableSqlResources;
 import io.cloudevents.CloudEvent;
 import io.quarkus.scheduler.Scheduled;
 import io.quarkus.scheduler.Scheduled.ConcurrentExecution;
@@ -89,10 +89,10 @@ public class SqlTransformer {
         resource.getContentAsString(), IndexableResourceContent.class);
 
     log.debugf("Saving resource with subject %s", subject);
-    indexableResourcesRepository.save(
-        IndexableSqlResources.toEntity(subject,
-            indexableResourceContent.title(),
-            getFields(getConfiguredFields("fields"), indexableResourceContent.fields())));
+    indexableResourcesRepository.save(subject,
+        indexableResourceContent.title(),
+        getFields(getConfiguredFields("fields"), indexableResourceContent.fields()));
+
   }
 
   private static Map<String, Object> getFields(List<String> configuredFields,
