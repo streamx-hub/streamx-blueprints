@@ -58,7 +58,7 @@ public class SqlTransformerTest {
             connector,
             Channels.INDEXABLE_RESOURCES,
             Channels.INDEXABLE_RESORUCES_STATE);
-    dataSink = connector.sink(Channels.DATA);
+    dataSink = connector.sink(Channels.OUTGOING_TRANSFORMATIONS);
   }
 
   @AfterEach

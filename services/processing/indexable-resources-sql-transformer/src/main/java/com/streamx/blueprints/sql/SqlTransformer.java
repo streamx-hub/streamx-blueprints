@@ -28,7 +28,7 @@ public class SqlTransformer {
   );
 
   @Inject
-  @Channel(Channels.DATA)
+  @Channel(Channels.OUTGOING_TRANSFORMATIONS)
   Emitter<CloudEvent> emitter;
 
   @Inject
@@ -59,12 +59,9 @@ public class SqlTransformer {
   public void publishFeedsIfNeeded() throws JsonProcessingException {
     log.debugf("Publishing feeds");
     if (dirtySequenceStateManager.checkIfActionIsNeededForNewSequence()) {
-      log.debugf("Bede publikowac");
       for (Map.Entry<String, Transformation> entry : configuration.transformations().entrySet()) {
-        log.debugf("Bede publikowac " + entry.getKey());
         List<ResourceEntity> resources = indexableResourcesState.read(
             entry.getValue().sqlQuery());
-        log.debugf("Query zwrocilo " + resources.size());
         CloudEvent event = CloudEventUtils.eventWithData(
             entry.getKey(), Data.TYPE_PUBLISHED,
             new Data(objectMapper.writeValueAsString(Map.of("resources", resources)), "data/json")
