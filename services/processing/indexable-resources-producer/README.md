@@ -40,7 +40,7 @@ Each field configuration specifies:
 
 * How to locate matching elements
 * How to extract field keys and values
-* Whether the field is indexed as a facet
+* Whether the field is indexed as a facet or not indexed at all
 * Optional transformations applied to extracted data
 
 ## Configuration Example
@@ -53,6 +53,7 @@ streamx:
         xpath:
           fields:
             field-name:
+              no-index: true|false
               facet: true|false
               element-selector: "<xpath>"
               key-selector: "<xpath>"
@@ -67,16 +68,17 @@ streamx:
 
 ## Field Properties
 
-| Property           | Description                                                 |
-|--------------------|-------------------------------------------------------------|
+| Property           | Description                                                  |
+|--------------------|--------------------------------------------------------------|
+| `no-index`         | If `true`, the resource is not indexed                       |
 | `facet`            | If `true`, the field is available for filtering/aggregation. |
-| `element-selector` | XPath expression used to locate source elements.            |
-| `key-selector`     | XPath expression used to extract the field name.            |
-| `key`              | Static field name. Alternative to `key-selector`.           |
-| `value-selector`   | XPath expression used to extract the field value.           |
-| `value`            | Static field value. Alternative to `value-selector`.        |
-| `key-processors`   | Processing pipeline applied to extracted keys.              |
-| `value-processors` | Processing pipeline applied to extracted values.            |
+| `element-selector` | XPath expression used to locate source elements.             |
+| `key-selector`     | XPath expression used to extract the field name.             |
+| `key`              | Static field name. Alternative to `key-selector`.            |
+| `value-selector`   | XPath expression used to extract the field value.            |
+| `value`            | Static field value. Alternative to `value-selector`.         |
+| `key-processors`   | Processing pipeline applied to extracted keys.               |
+| `value-processors` | Processing pipeline applied to extracted values.             |
 
 ## Field Definitions
 
