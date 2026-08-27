@@ -51,211 +51,111 @@ class AbstractSqlRepositoryTest {
   }
 
   @Test
-  void shouldThrowExceptionWhenExecuteQueryFails()
-      throws Exception {
-
+  void shouldThrowExceptionWhenExecuteQueryFails() throws Exception {
     when(connection.createStatement())
         .thenThrow(new SQLException("Connection failed"));
 
     RuntimeException exception =
-        assertThrows(
-            RuntimeException.class,
-            () -> repository.executeQuery("INVALID SQL"));
+        assertThrows(RuntimeException.class, () -> repository.executeQuery("INVALID SQL"));
 
-    assertEquals(
-        "SQL execution failed",
-        exception.getMessage());
-
-    assertInstanceOf(
-        SQLException.class,
-        exception.getCause());
-
-    assertEquals(
-        "Connection failed",
-        exception.getCause().getMessage());
+    assertEquals("SQL execution failed", exception.getMessage());
+    assertInstanceOf(SQLException.class, exception.getCause());
+    assertEquals("Connection failed", exception.getCause().getMessage());
   }
 
   @Test
   void shouldQueryAndMapResults() throws Exception {
-    PreparedStatement preparedStatement =
-        mock(PreparedStatement.class);
+    PreparedStatement preparedStatement = mock(PreparedStatement.class);
+    ResultSet resultSet = mock(ResultSet.class);
 
-    ResultSet resultSet =
-        mock(ResultSet.class);
+    String sql = "SELECT id, name FROM test WHERE id = ?";
 
-    String sql =
-        "SELECT id, name FROM test WHERE id = ?";
+    when(connection.prepareStatement(sql)).thenReturn(preparedStatement);
+    when(preparedStatement.executeQuery()).thenReturn(resultSet);
+    when(resultSet.next()).thenReturn(true, true, false);
+    when(resultSet.getString("name")).thenReturn("John", "Jane");
 
-    when(connection.prepareStatement(sql))
-        .thenReturn(preparedStatement);
+    RowMapper<String> mapper = rs -> rs.getString("name");
 
-    when(preparedStatement.executeQuery())
-        .thenReturn(resultSet);
+    List<String> result = repository.query(sql, mapper, 123);
 
-    when(resultSet.next())
-        .thenReturn(true, true, false);
+    assertEquals(List.of("John", "Jane"), result);
 
-    when(resultSet.getString("name"))
-        .thenReturn("John", "Jane");
-
-    RowMapper<String> mapper =
-        rs -> rs.getString("name");
-
-    List<String> result =
-        repository.query(sql, mapper, 123);
-
-    assertEquals(
-        List.of("John", "Jane"),
-        result);
-
-    verify(preparedStatement)
-        .setObject(1, 123);
-
-    verify(preparedStatement)
-        .executeQuery();
-
-    verify(resultSet, times(3))
-        .next();
+    verify(preparedStatement).setObject(1, 123);
+    verify(preparedStatement).executeQuery();
+    verify(resultSet, times(3)).next();
   }
 
   @Test
-  void shouldReturnEmptyListWhenQueryReturnsNoRows()
-      throws Exception {
+  void shouldReturnEmptyListWhenQueryReturnsNoRows() throws Exception {
+    PreparedStatement preparedStatement = mock(PreparedStatement.class);
+    ResultSet resultSet = mock(ResultSet.class);
+    String sql = "SELECT id FROM test";
 
-    PreparedStatement preparedStatement =
-        mock(PreparedStatement.class);
+    when(connection.prepareStatement(sql)).thenReturn(preparedStatement);
+    when(preparedStatement.executeQuery()).thenReturn(resultSet);
+    when(resultSet.next()).thenReturn(false);
 
-    ResultSet resultSet =
-        mock(ResultSet.class);
+    RowMapper<Integer> mapper = rs -> rs.getInt("id");
 
-    String sql =
-        "SELECT id FROM test";
-
-    when(connection.prepareStatement(sql))
-        .thenReturn(preparedStatement);
-
-    when(preparedStatement.executeQuery())
-        .thenReturn(resultSet);
-
-    when(resultSet.next())
-        .thenReturn(false);
-
-    RowMapper<Integer> mapper =
-        rs -> rs.getInt("id");
-
-    List<Integer> result =
-        repository.query(sql, mapper);
+    List<Integer> result = repository.query(sql, mapper);
 
     assertTrue(result.isEmpty());
-
-    verify(preparedStatement)
-        .executeQuery();
-
-    verify(resultSet)
-        .next();
+    verify(preparedStatement).executeQuery();
+    verify(resultSet).next();
   }
 
   @Test
-  void shouldSetAllQueryParameters()
-      throws Exception {
+  void shouldSetAllQueryParameters() throws Exception {
+    PreparedStatement preparedStatement = mock(PreparedStatement.class);
+    ResultSet resultSet = mock(ResultSet.class);
 
-    PreparedStatement preparedStatement =
-        mock(PreparedStatement.class);
+    String sql = "SELECT * FROM test WHERE id = ? AND name = ?";
 
-    ResultSet resultSet =
-        mock(ResultSet.class);
+    when(connection.prepareStatement(sql)).thenReturn(preparedStatement);
+    when(preparedStatement.executeQuery()).thenReturn(resultSet);
+    when(resultSet.next()).thenReturn(false);
 
-    String sql =
-        "SELECT * FROM test WHERE id = ? AND name = ?";
+    repository.query(sql, rs -> rs.getInt("id"), 123, "John");
 
-    when(connection.prepareStatement(sql))
-        .thenReturn(preparedStatement);
-
-    when(preparedStatement.executeQuery())
-        .thenReturn(resultSet);
-
-    when(resultSet.next())
-        .thenReturn(false);
-
-    repository.query(
-        sql,
-        rs -> rs.getInt("id"),
-        123,
-        "John");
-
-    verify(preparedStatement)
-        .setObject(1, 123);
-
-    verify(preparedStatement)
-        .setObject(2, "John");
-
-    verify(preparedStatement)
-        .executeQuery();
+    verify(preparedStatement).setObject(1, 123);
+    verify(preparedStatement).setObject(2, "John");
+    verify(preparedStatement).executeQuery();
   }
 
   @Test
-  void shouldThrowExceptionWhenQueryFails()
-      throws Exception {
-
-    String sql =
-        "SELECT * FROM test";
+  void shouldThrowExceptionWhenQueryFails() throws Exception {
+    String sql = "SELECT * FROM test";
 
     when(connection.prepareStatement(sql))
-        .thenThrow(
-            new SQLException("SQL error"));
+        .thenThrow(new SQLException("SQL error"));
 
     RuntimeException exception =
         assertThrows(
             RuntimeException.class,
-            () -> repository.query(
-                sql,
-                rs -> rs.getString("name")));
+            () -> repository.query(sql, rs -> rs.getString("name")));
 
-    assertEquals(
-        "Query failed",
-        exception.getMessage());
-
-    assertInstanceOf(
-        SQLException.class,
-        exception.getCause());
+    assertEquals("Query failed", exception.getMessage());
+    assertInstanceOf(SQLException.class, exception.getCause());
   }
 
   @Test
-  void shouldExecutePragmaAndCommitTransaction()
-      throws Exception {
+  void shouldExecutePragmaAndCommitTransaction() throws Exception {
+    String result = repository.transaction(conn -> "success");
 
-    String result =
-        repository.transaction(conn -> "success");
+    assertEquals("success", result);
 
-    assertEquals(
-        "success",
-        result);
-
-    verify(connection)
-        .setAutoCommit(false);
-
-    verify(connection)
-        .createStatement();
-
-    verify(statement)
-        .execute("PRAGMA foreign_keys = ON");
-
-    verify(connection)
-        .commit();
-
-    verify(connection, never())
-        .rollback();
-
-    verify(connection)
-        .setAutoCommit(true);
+    verify(connection).setAutoCommit(false);
+    verify(connection).createStatement();
+    verify(statement).execute("PRAGMA foreign_keys = ON");
+    verify(connection).commit();
+    verify(connection, never()).rollback();
+    verify(connection).setAutoCommit(true);
   }
 
   @Test
-  void shouldRollbackTransactionWhenTransactionFails()
-      throws Exception {
-
-    RuntimeException expected =
-        new RuntimeException("Something went wrong");
+  void shouldRollbackTransactionWhenTransactionFails() throws Exception {
+    RuntimeException expected = new RuntimeException("Something went wrong");
 
     RuntimeException exception =
         assertThrows(
@@ -264,122 +164,63 @@ class AbstractSqlRepositoryTest {
               throw expected;
             }));
 
-    assertEquals(
-        "Transaction failed",
-        exception.getMessage());
+    assertEquals("Transaction failed", exception.getMessage());
+    assertSame(expected, exception.getCause());
 
-    assertSame(
-        expected,
-        exception.getCause());
-
-    verify(connection)
-        .setAutoCommit(false);
-
-    verify(statement)
-        .execute("PRAGMA foreign_keys = ON");
-
-    verify(connection)
-        .rollback();
-
-    verify(connection, never())
-        .commit();
-
-    verify(connection)
-        .setAutoCommit(true);
+    verify(connection).setAutoCommit(false);
+    verify(statement).execute("PRAGMA foreign_keys = ON");
+    verify(connection).rollback();
+    verify(connection, never()).commit();
+    verify(connection).setAutoCommit(true);
   }
 
   @Test
-  void shouldRollbackWhenCommitFails()
-      throws Exception {
-
-    doThrow(
-        new SQLException("Commit failed"))
+  void shouldRollbackWhenCommitFails() throws Exception {
+    doThrow(new SQLException("Commit failed"))
         .when(connection)
         .commit();
 
     RuntimeException exception =
         assertThrows(
             RuntimeException.class,
-            () -> repository.transaction(
-                conn -> "success"));
+            () -> repository.transaction(conn -> "success"));
 
-    assertEquals(
-        "Transaction failed",
-        exception.getMessage());
+    assertEquals("Transaction failed", exception.getMessage());
+    assertInstanceOf(SQLException.class, exception.getCause());
+    assertEquals("Commit failed", exception.getCause().getMessage());
 
-    assertInstanceOf(
-        SQLException.class,
-        exception.getCause());
-
-    assertEquals(
-        "Commit failed",
-        exception.getCause().getMessage());
-
-    verify(connection)
-        .setAutoCommit(false);
-
-    verify(statement)
-        .execute("PRAGMA foreign_keys = ON");
-
-    verify(connection)
-        .commit();
-
-    verify(connection)
-        .rollback();
-
-    verify(connection)
-        .setAutoCommit(true);
+    verify(connection).setAutoCommit(false);
+    verify(statement).execute("PRAGMA foreign_keys = ON");
+    verify(connection).commit();
+    verify(connection).rollback();
+    verify(connection).setAutoCommit(true);
   }
 
   @Test
-  void shouldThrowWhenPragmaExecutionFails()
-      throws Exception {
-
-    doThrow(
-        new SQLException("PRAGMA failed"))
+  void shouldThrowWhenPragmaExecutionFails() throws Exception {
+    doThrow(new SQLException("PRAGMA failed"))
         .when(statement)
         .execute("PRAGMA foreign_keys = ON");
 
     RuntimeException exception =
         assertThrows(
             RuntimeException.class,
-            () -> repository.transaction(
-                conn -> "success"));
+            () -> repository.transaction(conn -> "success"));
 
-    assertEquals(
-        "Transaction failed",
-        exception.getMessage());
+    assertEquals("Transaction failed", exception.getMessage());
+    assertInstanceOf(SQLException.class, exception.getCause());
+    assertEquals("PRAGMA failed", exception.getCause().getMessage());
 
-    assertInstanceOf(
-        SQLException.class,
-        exception.getCause());
-
-    assertEquals(
-        "PRAGMA failed",
-        exception.getCause().getMessage());
-
-    verify(connection)
-        .setAutoCommit(false);
-
-    verify(statement)
-        .execute("PRAGMA foreign_keys = ON");
-
-    verify(connection, never())
-        .commit();
-
-    verify(connection, never())
-        .rollback();
-
-    verify(connection)
-        .setAutoCommit(true);
+    verify(connection).setAutoCommit(false);
+    verify(statement).execute("PRAGMA foreign_keys = ON");
+    verify(connection, never()).commit();
+    verify(connection, never()).rollback();
+    verify(connection).setAutoCommit(true);
   }
 
   @Test
-  void shouldRestoreAutoCommitAfterTransactionFailure()
-      throws Exception {
-
-    RuntimeException expected =
-        new RuntimeException("Transaction failed");
+  void shouldRestoreAutoCommitAfterTransactionFailure() throws Exception {
+    RuntimeException expected = new RuntimeException("Transaction failed");
 
     assertThrows(
         RuntimeException.class,
@@ -387,25 +228,16 @@ class AbstractSqlRepositoryTest {
           throw expected;
         }));
 
-    verify(connection)
-        .setAutoCommit(false);
-
-    verify(connection)
-        .rollback();
-
-    verify(connection)
-        .setAutoCommit(true);
+    verify(connection).setAutoCommit(false);
+    verify(connection).rollback();
+    verify(connection).setAutoCommit(true);
   }
 
   @Test
-  void shouldThrowWhenRollbackFails()
-      throws Exception {
+  void shouldThrowWhenRollbackFails() throws Exception {
+    RuntimeException expected = new RuntimeException("Transaction failed");
 
-    RuntimeException expected =
-        new RuntimeException("Transaction failed");
-
-    doThrow(
-        new SQLException("Rollback failed"))
+    doThrow(new SQLException("Rollback failed"))
         .when(connection)
         .rollback();
 
@@ -416,33 +248,17 @@ class AbstractSqlRepositoryTest {
               throw expected;
             }));
 
-    assertEquals(
-        "Transaction failed",
-        exception.getMessage());
+    assertEquals("Transaction failed", exception.getMessage());
+    assertInstanceOf(SQLException.class, exception.getCause());
+    assertEquals("Rollback failed", exception.getCause().getMessage());
 
-    assertInstanceOf(
-        SQLException.class,
-        exception.getCause());
-
-    assertEquals(
-        "Rollback failed",
-        exception.getCause().getMessage());
-
-    verify(connection)
-        .setAutoCommit(false);
-
-    verify(connection)
-        .rollback();
-
-    verify(connection, never())
-        .commit();
-
-    verify(connection)
-        .setAutoCommit(true);
+    verify(connection).setAutoCommit(false);
+    verify(connection).rollback();
+    verify(connection, never()).commit();
+    verify(connection).setAutoCommit(true);
   }
 
-  static class TestSqlRepository
-      extends AbstractSqlRepository {
+  static class TestSqlRepository extends AbstractSqlRepository {
 
     TestSqlRepository(Connection connection) {
       super(connection);

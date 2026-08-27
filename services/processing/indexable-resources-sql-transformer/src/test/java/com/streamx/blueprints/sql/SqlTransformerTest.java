@@ -38,19 +38,26 @@ public class SqlTransformerTest {
   @Inject
   @Any
   InMemoryConnector connector;
+
   @Inject
   SqlTransformer sqlTransformer;
+
   @Inject
   StateRepository repository;
+
   @Inject
   SqlRepositoryFactory repositoryFactory;
+
   @Inject
   ObjectMapper objectMapper;
 
   @BeforeEach
   void beforeEach() {
-    indexableResourceSource = new StatefulInMemorySource(connector,
-        Channels.INDEXABLE_RESOURCES, Channels.INDEXABLE_RESORUCES_STATE);
+    indexableResourceSource =
+        new StatefulInMemorySource(
+            connector,
+            Channels.INDEXABLE_RESOURCES,
+            Channels.INDEXABLE_RESORUCES_STATE);
     dataSink = connector.sink(Channels.DATA);
   }
 
@@ -74,12 +81,12 @@ public class SqlTransformerTest {
             "author":"David Beckham"
          }}
         """;
-    CloudEvent event = CloudEventUtils.eventWithData(
-        DEFAULT_KEY,
-        IndexableResource.TYPE_PUBLISHED,
-        new IndexableResource(payload, RESOURCE_TYPE, Collections.emptyList()),
-        CloudEventUtils.toOffsetDateTime(1)
-    );
+    CloudEvent event =
+        CloudEventUtils.eventWithData(
+            DEFAULT_KEY,
+            IndexableResource.TYPE_PUBLISHED,
+            new IndexableResource(payload, RESOURCE_TYPE, Collections.emptyList()),
+            CloudEventUtils.toOffsetDateTime(1));
 
     // when
     sendEvent(event);
@@ -101,9 +108,7 @@ public class SqlTransformerTest {
   }
 
   @Test
-  void shouldUpdateExistingIndexableResource()
-      throws JsonProcessingException {
-
+  void shouldUpdateExistingIndexableResource() throws JsonProcessingException {
     // given
     String initialPayload = """
         {
@@ -116,20 +121,17 @@ public class SqlTransformerTest {
           }
         }
         """;
-
-    CloudEvent initialEvent = CloudEventUtils.eventWithData(
-        DEFAULT_KEY,
-        IndexableResource.TYPE_PUBLISHED,
-        new IndexableResource(
-            initialPayload,
-            RESOURCE_TYPE,
-            Collections.emptyList()),
-        CloudEventUtils.toOffsetDateTime(1)
-    );
-
+    CloudEvent initialEvent =
+        CloudEventUtils.eventWithData(
+            DEFAULT_KEY,
+            IndexableResource.TYPE_PUBLISHED,
+            new IndexableResource(
+                initialPayload,
+                RESOURCE_TYPE,
+                Collections.emptyList()),
+            CloudEventUtils.toOffsetDateTime(1));
     sendEvent(initialEvent);
     requestFeedsGeneration();
-
     dataSink.clear();
 
     // when
@@ -144,45 +146,31 @@ public class SqlTransformerTest {
           }
         }
         """;
-
-    CloudEvent updatedEvent = CloudEventUtils.eventWithData(
-        DEFAULT_KEY,
-        IndexableResource.TYPE_PUBLISHED,
-        new IndexableResource(
-            updatedPayload,
-            RESOURCE_TYPE,
-            Collections.emptyList()),
-        CloudEventUtils.toOffsetDateTime(2)
-    );
-
+    CloudEvent updatedEvent =
+        CloudEventUtils.eventWithData(
+            DEFAULT_KEY,
+            IndexableResource.TYPE_PUBLISHED,
+            new IndexableResource(
+                updatedPayload,
+                RESOURCE_TYPE,
+                Collections.emptyList()),
+            CloudEventUtils.toOffsetDateTime(2));
     sendEvent(updatedEvent);
     requestFeedsGeneration();
 
     // then
     assertThat(dataSink.received()).hasSize(1);
-
-    CloudEvent resultEvent =
-        dataSink.received().getFirst().getPayload();
-
-    ResourceEntity resource =
-        getNormalizedResources(resultEvent).getFirst();
-
-    assertThat(resource.title())
-        .isEqualTo("updated title");
-
-    assertThat(resource.content())
-        .isEqualTo("updated content");
-
+    CloudEvent resultEvent = dataSink.received().getFirst().getPayload();
+    ResourceEntity resource = getNormalizedResources(resultEvent).getFirst();
+    assertThat(resource.title()).isEqualTo("updated title");
+    assertThat(resource.content()).isEqualTo("updated content");
     assertThat(resource.fields())
         .containsEntry("description", "Updated description")
         .containsEntry("author", "John Smith");
   }
 
-
   @Test
-  void shouldPublishEventWithoutUnpublishedResource()
-      throws JsonProcessingException {
-
+  void shouldPublishEventWithoutUnpublishedResource() throws JsonProcessingException {
     // given
     String payload = """
         {
@@ -196,50 +184,39 @@ public class SqlTransformerTest {
           }
         }
         """;
-
-    CloudEvent publishedEvent = CloudEventUtils.eventWithData(
-        DEFAULT_KEY,
-        IndexableResource.TYPE_PUBLISHED,
-        new IndexableResource(
-            payload,
-            RESOURCE_TYPE,
-            Collections.emptyList()),
-        CloudEventUtils.toOffsetDateTime(1)
-    );
-
+    CloudEvent publishedEvent =
+        CloudEventUtils.eventWithData(
+            DEFAULT_KEY,
+            IndexableResource.TYPE_PUBLISHED,
+            new IndexableResource(
+                payload,
+                RESOURCE_TYPE,
+                Collections.emptyList()),
+            CloudEventUtils.toOffsetDateTime(1));
     sendEvent(publishedEvent);
     requestFeedsGeneration();
-
     dataSink.clear();
 
     // when
-    CloudEvent unpublishedEvent = CloudEventUtils.eventWithData(
-        DEFAULT_KEY,
-        IndexableResource.TYPE_UNPUBLISHED,
-        new IndexableResource(
-            payload,
-            RESOURCE_TYPE,
-            Collections.emptyList()),
-        CloudEventUtils.toOffsetDateTime(2)
-    );
-
+    CloudEvent unpublishedEvent =
+        CloudEventUtils.eventWithData(
+            DEFAULT_KEY,
+            IndexableResource.TYPE_UNPUBLISHED,
+            new IndexableResource(
+                payload,
+                RESOURCE_TYPE,
+                Collections.emptyList()),
+            CloudEventUtils.toOffsetDateTime(2));
     sendEvent(unpublishedEvent);
     requestFeedsGeneration();
 
     // then
     assertThat(dataSink.received()).hasSize(1);
-
-    CloudEvent resultEvent =
-        dataSink.received().getFirst().getPayload();
-
-    List<ResourceEntity> resources =
-        getNormalizedResources(resultEvent);
-
+    CloudEvent resultEvent = dataSink.received().getFirst().getPayload();
+    List<ResourceEntity> resources = getNormalizedResources(resultEvent);
     assertThat(resources)
-        .noneMatch(resource ->
-            DEFAULT_KEY.equals(resource.subject()));
+        .noneMatch(resource -> DEFAULT_KEY.equals(resource.subject()));
   }
-
 
   /**
    * The method will publish feed if there are not included indexable-resources regardless of
@@ -257,33 +234,34 @@ public class SqlTransformerTest {
 
   private void waitForEventProcessed(CloudEvent event) {
     String sqlQuery = "SELECT * FROM indexable_resource";
-
     int expectedSize =
         IndexableResource.TYPE_UNPUBLISHED.equals(event.getType()) ? 0 : 1;
 
     await()
         .atMost(Duration.ofSeconds(1))
-        .untilAsserted(() ->
-            assertThat(repository.read(sqlQuery))
-                .hasSize(expectedSize));
+        .untilAsserted(
+            () ->
+                assertThat(repository.read(sqlQuery))
+                    .hasSize(expectedSize));
   }
-
 
   private List<ResourceEntity> getNormalizedResources(CloudEvent event) {
     Data data = CloudEventUtils.getData(event, Data.class);
     assertThat(data).isNotNull();
     String json = data.getContentAsString();
     try {
-      return objectMapper.readValue(json,
-          new TypeReference<Map<String, List<ResourceEntity>>>() {
-          }).get("resources");
+      return objectMapper.readValue(
+              json,
+              new TypeReference<Map<String, List<ResourceEntity>>>() {})
+          .get("resources");
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
   void cleanDatabase() {
-    repositoryFactory.getOrCreate("indexable-resources")
+    repositoryFactory
+        .getOrCreate("indexable-resources")
         .executeQuery("DELETE FROM indexable_resource");
   }
 }

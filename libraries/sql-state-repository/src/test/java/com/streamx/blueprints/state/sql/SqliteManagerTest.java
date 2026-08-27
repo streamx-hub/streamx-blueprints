@@ -36,27 +36,17 @@ class SqliteManagerTest {
   void shouldCreateDatabaseUsingConfiguredPath() throws Exception {
     Config config = mock(Config.class);
 
-    when(config.getOptionalValue(
-        PropertyNames.SQLITE_PATH,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.SQLITE_PATH, String.class))
         .thenReturn(Optional.of(tempDir.toString()));
 
-    Connection connection =
-        manager.getOrCreateDb(
-            config,
-            "instance-1",
-            "test");
+    Connection connection = manager.getOrCreateDb(config, "instance-1", "test");
 
     assertNotNull(connection);
     assertFalse(connection.isClosed());
 
-    Path expectedPath =
-        tempDir
-            .resolve("instance-1")
-            .resolve("test.db");
+    Path expectedPath = tempDir.resolve("instance-1").resolve("test.db");
 
-    assertTrue(
-        expectedPath.toFile().exists());
+    assertTrue(expectedPath.toFile().exists());
 
     try (Statement statement = connection.createStatement()) {
       statement.execute("CREATE TABLE test (id INTEGER)");
@@ -67,16 +57,10 @@ class SqliteManagerTest {
   void shouldUseDefaultPathWhenConfigurationIsMissing() throws Exception {
     Config config = mock(Config.class);
 
-    when(config.getOptionalValue(
-        PropertyNames.SQLITE_PATH,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.SQLITE_PATH, String.class))
         .thenReturn(Optional.empty());
 
-    Connection connection =
-        manager.getOrCreateDb(
-            config,
-            "test-instance",
-            "test");
+    Connection connection = manager.getOrCreateDb(config, "test-instance", "test");
 
     assertNotNull(connection);
     assertFalse(connection.isClosed());
@@ -93,22 +77,11 @@ class SqliteManagerTest {
   void shouldReturnSameConnectionForSameDatabase() {
     Config config = mock(Config.class);
 
-    when(config.getOptionalValue(
-        PropertyNames.SQLITE_PATH,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.SQLITE_PATH, String.class))
         .thenReturn(Optional.of(tempDir.toString()));
 
-    Connection first =
-        manager.getOrCreateDb(
-            config,
-            "instance-1",
-            "test");
-
-    Connection second =
-        manager.getOrCreateDb(
-            config,
-            "instance-1",
-            "test");
+    Connection first = manager.getOrCreateDb(config, "instance-1", "test");
+    Connection second = manager.getOrCreateDb(config, "instance-1", "test");
 
     assertSame(first, second);
   }
@@ -117,22 +90,13 @@ class SqliteManagerTest {
   void shouldCreateDifferentConnectionsForDifferentDatabases() {
     Config config = mock(Config.class);
 
-    when(config.getOptionalValue(
-        PropertyNames.SQLITE_PATH,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.SQLITE_PATH, String.class))
         .thenReturn(Optional.of(tempDir.toString()));
 
     Connection first =
-        manager.getOrCreateDb(
-            config,
-            "instance-1",
-            "database-1");
-
+        manager.getOrCreateDb(config, "instance-1", "database-1");
     Connection second =
-        manager.getOrCreateDb(
-            config,
-            "instance-1",
-            "database-2");
+        manager.getOrCreateDb(config, "instance-1", "database-2");
 
     assertNotNull(first);
     assertNotNull(second);
@@ -144,22 +108,13 @@ class SqliteManagerTest {
   void shouldCreateDifferentConnectionsForDifferentInstances() {
     Config config = mock(Config.class);
 
-    when(config.getOptionalValue(
-        PropertyNames.SQLITE_PATH,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.SQLITE_PATH, String.class))
         .thenReturn(Optional.of(tempDir.toString()));
 
     Connection first =
-        manager.getOrCreateDb(
-            config,
-            "instance-1",
-            "database");
-
+        manager.getOrCreateDb(config, "instance-1", "database");
     Connection second =
-        manager.getOrCreateDb(
-            config,
-            "instance-2",
-            "database");
+        manager.getOrCreateDb(config, "instance-2", "database");
 
     assertNotNull(first);
     assertNotNull(second);
@@ -171,27 +126,17 @@ class SqliteManagerTest {
   void shouldCloseAllConnections() throws SQLException {
     Config config = mock(Config.class);
 
-    when(config.getOptionalValue(
-        PropertyNames.SQLITE_PATH,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.SQLITE_PATH, String.class))
         .thenReturn(Optional.of(tempDir.toString()));
 
     Connection first =
-        manager.getOrCreateDb(
-            config,
-            "instance-1",
-            "database-1");
-
+        manager.getOrCreateDb(config, "instance-1", "database-1");
     Connection second =
-        manager.getOrCreateDb(
-            config,
-            "instance-1",
-            "database-2");
+        manager.getOrCreateDb(config, "instance-1", "database-2");
 
     manager.closeAll();
 
     assertTrue(first.isClosed());
     assertTrue(second.isClosed());
   }
-
 }

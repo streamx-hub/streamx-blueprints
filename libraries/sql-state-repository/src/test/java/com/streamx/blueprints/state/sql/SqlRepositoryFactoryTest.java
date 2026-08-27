@@ -32,7 +32,6 @@ class SqlRepositoryFactoryTest {
     sqliteManager = mock(SqliteManager.class);
     config = mock(Config.class);
     connection = mock(Connection.class);
-
     factory = new SqlRepositoryFactory();
     factory.sqliteManager = sqliteManager;
   }
@@ -41,40 +40,18 @@ class SqlRepositoryFactoryTest {
   void shouldCreateSqliteRepository() {
     String identifier = "test-db";
     String instanceId = "instance-1";
-
-    when(config.getOptionalValue(
-        PropertyNames.BACKEND,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.BACKEND, String.class))
         .thenReturn(Optional.of(SqliteRepository.BACKEND));
-
-    when(config.getOptionalValue(
-        PropertyNames.SERVICE_INSTANCE_ID,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class))
         .thenReturn(Optional.of(instanceId));
-
-    when(sqliteManager.getOrCreateDb(
-        config,
-        instanceId,
-        identifier))
+    when(sqliteManager.getOrCreateDb(config, instanceId, identifier))
         .thenReturn(connection);
 
-    try (MockedStatic<ConfigProvider> configProvider =
-        mockStatic(ConfigProvider.class)) {
-
-      configProvider
-          .when(ConfigProvider::getConfig)
-          .thenReturn(config);
-
-      SqlRepository result =
-          factory.getOrCreate(identifier);
-
+    try (MockedStatic<ConfigProvider> configProvider = mockStatic(ConfigProvider.class)) {
+      configProvider.when(ConfigProvider::getConfig).thenReturn(config);
+      SqlRepository result = factory.getOrCreate(identifier);
       assertNotNullSqliteRepository(result);
-
-      verify(sqliteManager)
-          .getOrCreateDb(
-              config,
-              instanceId,
-              identifier);
+      verify(sqliteManager).getOrCreateDb(config, instanceId, identifier);
     }
   }
 
@@ -82,40 +59,18 @@ class SqlRepositoryFactoryTest {
   void shouldUseDefaultBackendWhenBackendIsNotConfigured() {
     String identifier = "test-db";
     String instanceId = "instance-1";
-
-    when(config.getOptionalValue(
-        PropertyNames.BACKEND,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.BACKEND, String.class))
         .thenReturn(Optional.empty());
-
-    when(config.getOptionalValue(
-        PropertyNames.SERVICE_INSTANCE_ID,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class))
         .thenReturn(Optional.of(instanceId));
-
-    when(sqliteManager.getOrCreateDb(
-        config,
-        instanceId,
-        identifier))
+    when(sqliteManager.getOrCreateDb(config, instanceId, identifier))
         .thenReturn(connection);
 
-    try (MockedStatic<ConfigProvider> configProvider =
-        mockStatic(ConfigProvider.class)) {
-
-      configProvider
-          .when(ConfigProvider::getConfig)
-          .thenReturn(config);
-
-      SqlRepository result =
-          factory.getOrCreate(identifier);
-
+    try (MockedStatic<ConfigProvider> configProvider = mockStatic(ConfigProvider.class)) {
+      configProvider.when(ConfigProvider::getConfig).thenReturn(config);
+      SqlRepository result = factory.getOrCreate(identifier);
       assertNotNullSqliteRepository(result);
-
-      verify(sqliteManager)
-          .getOrCreateDb(
-              config,
-              instanceId,
-              identifier);
+      verify(sqliteManager).getOrCreateDb(config, instanceId, identifier);
     }
   }
 
@@ -123,99 +78,52 @@ class SqlRepositoryFactoryTest {
   void shouldUseDefaultInstanceIdWhenNotConfigured() {
     String identifier = "test-db";
     String defaultInstanceId = "unnamed";
-
-    when(config.getOptionalValue(
-        PropertyNames.BACKEND,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.BACKEND, String.class))
         .thenReturn(Optional.of(SqliteRepository.BACKEND));
-
-    when(config.getOptionalValue(
-        PropertyNames.SERVICE_INSTANCE_ID,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class))
         .thenReturn(Optional.empty());
-
-    when(sqliteManager.getOrCreateDb(
-        config,
-        defaultInstanceId,
-        identifier))
+    when(sqliteManager.getOrCreateDb(config, defaultInstanceId, identifier))
         .thenReturn(connection);
 
-    try (MockedStatic<ConfigProvider> configProvider =
-        mockStatic(ConfigProvider.class)) {
-
-      configProvider
-          .when(ConfigProvider::getConfig)
-          .thenReturn(config);
-
-      SqlRepository result =
-          factory.getOrCreate(identifier);
-
+    try (MockedStatic<ConfigProvider> configProvider = mockStatic(ConfigProvider.class)) {
+      configProvider.when(ConfigProvider::getConfig).thenReturn(config);
+      SqlRepository result = factory.getOrCreate(identifier);
       assertNotNullSqliteRepository(result);
-
-      verify(sqliteManager)
-          .getOrCreateDb(
-              config,
-              defaultInstanceId,
-              identifier);
+      verify(sqliteManager).getOrCreateDb(config, defaultInstanceId, identifier);
     }
   }
 
   @Test
   void shouldThrowExceptionForUnsupportedBackend() {
     String backend = "postgres";
-
-    when(config.getOptionalValue(
-        PropertyNames.BACKEND,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.BACKEND, String.class))
         .thenReturn(Optional.of(backend));
-
-    when(config.getOptionalValue(
-        PropertyNames.SERVICE_INSTANCE_ID,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class))
         .thenReturn(Optional.of("instance-1"));
 
-    try (MockedStatic<ConfigProvider> configProvider =
-        mockStatic(ConfigProvider.class)) {
-
-      configProvider
-          .when(ConfigProvider::getConfig)
-          .thenReturn(config);
-
+    try (MockedStatic<ConfigProvider> configProvider = mockStatic(ConfigProvider.class)) {
+      configProvider.when(ConfigProvider::getConfig).thenReturn(config);
       UnsupportedOperationException exception =
           assertThrows(
               UnsupportedOperationException.class,
               () -> factory.getOrCreate("test-db"));
-
-      assertEquals(
-          "No SqlRepository for backend postgres",
-          exception.getMessage());
+      assertEquals("No SqlRepository for backend postgres", exception.getMessage());
     }
   }
 
   @Test
   void shouldRejectInvalidIdentifier() {
-    when(config.getOptionalValue(
-        PropertyNames.BACKEND,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.BACKEND, String.class))
         .thenReturn(Optional.of(SqliteRepository.BACKEND));
-
-    when(config.getOptionalValue(
-        PropertyNames.SERVICE_INSTANCE_ID,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class))
         .thenReturn(Optional.of("instance-1"));
 
-    try (MockedStatic<ConfigProvider> configProvider =
-        mockStatic(ConfigProvider.class)) {
-
-      configProvider
-          .when(ConfigProvider::getConfig)
-          .thenReturn(config);
-
+    try (MockedStatic<ConfigProvider> configProvider = mockStatic(ConfigProvider.class)) {
+      configProvider.when(ConfigProvider::getConfig).thenReturn(config);
       IllegalArgumentException exception =
           assertThrows(
               IllegalArgumentException.class,
               () -> factory.getOrCreate("invalid_identifier"));
-
       assertEquals(
           "Invalid identifier: invalid_identifier - "
               + "only letters, digits, dashes and dots allowed",
@@ -225,28 +133,17 @@ class SqlRepositoryFactoryTest {
 
   @Test
   void shouldRejectInvalidInstanceId() {
-    when(config.getOptionalValue(
-        PropertyNames.BACKEND,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.BACKEND, String.class))
         .thenReturn(Optional.of(SqliteRepository.BACKEND));
-
-    when(config.getOptionalValue(
-        PropertyNames.SERVICE_INSTANCE_ID,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class))
         .thenReturn(Optional.of("invalid_instance"));
 
-    try (MockedStatic<ConfigProvider> configProvider =
-        mockStatic(ConfigProvider.class)) {
-
-      configProvider
-          .when(ConfigProvider::getConfig)
-          .thenReturn(config);
-
+    try (MockedStatic<ConfigProvider> configProvider = mockStatic(ConfigProvider.class)) {
+      configProvider.when(ConfigProvider::getConfig).thenReturn(config);
       IllegalArgumentException exception =
           assertThrows(
               IllegalArgumentException.class,
               () -> factory.getOrCreate("test-db"));
-
       assertEquals(
           "Invalid instanceId: invalid_instance - "
               + "only letters, digits, dashes and dots allowed",
@@ -256,47 +153,23 @@ class SqlRepositoryFactoryTest {
 
   @Test
   void shouldAcceptValidIdentifier() {
-    when(config.getOptionalValue(
-        PropertyNames.BACKEND,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.BACKEND, String.class))
         .thenReturn(Optional.of(SqliteRepository.BACKEND));
-
-    when(config.getOptionalValue(
-        PropertyNames.SERVICE_INSTANCE_ID,
-        String.class))
+    when(config.getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class))
         .thenReturn(Optional.of("instance-1.test"));
-
-    when(sqliteManager.getOrCreateDb(
-        config,
-        "instance-1.test",
-        "my-db.test-123"))
+    when(sqliteManager.getOrCreateDb(config, "instance-1.test", "my-db.test-123"))
         .thenReturn(connection);
 
-    try (MockedStatic<ConfigProvider> configProvider =
-        mockStatic(ConfigProvider.class)) {
-
-      configProvider
-          .when(ConfigProvider::getConfig)
-          .thenReturn(config);
-
-      SqlRepository result =
-          factory.getOrCreate("my-db.test-123");
-
+    try (MockedStatic<ConfigProvider> configProvider = mockStatic(ConfigProvider.class)) {
+      configProvider.when(ConfigProvider::getConfig).thenReturn(config);
+      SqlRepository result = factory.getOrCreate("my-db.test-123");
       assertNotNullSqliteRepository(result);
-
       verify(sqliteManager)
-          .getOrCreateDb(
-              config,
-              "instance-1.test",
-              "my-db.test-123");
+          .getOrCreateDb(config, "instance-1.test", "my-db.test-123");
     }
   }
 
-  private void assertNotNullSqliteRepository(
-      SqlRepository repository) {
-
-    assertInstanceOf(
-        SqliteRepository.class,
-        repository);
+  private void assertNotNullSqliteRepository(SqlRepository repository) {
+    assertInstanceOf(SqliteRepository.class, repository);
   }
 }
