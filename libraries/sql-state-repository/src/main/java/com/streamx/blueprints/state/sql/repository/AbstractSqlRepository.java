@@ -46,7 +46,7 @@ public abstract class AbstractSqlRepository implements SqlRepository {
   }
 
   @Override
-  public <T> T transaction(SqlTransaction<T> transaction) {
+  public synchronized <T> T transaction(SqlTransaction<T> transaction) {
     try {
       connection.setAutoCommit(false);
       try {
