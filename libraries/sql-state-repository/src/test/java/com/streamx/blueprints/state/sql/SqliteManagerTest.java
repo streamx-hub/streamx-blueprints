@@ -1,4 +1,4 @@
-package com.streamx.blueprints.state.sql.repository.sqlite;
+package com.streamx.blueprints.state.sql;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.streamx.blueprints.state.sql.repository.PropertyNames;
+import com.streamx.blueprints.state.sql.repository.sqlite.SqliteManager;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
