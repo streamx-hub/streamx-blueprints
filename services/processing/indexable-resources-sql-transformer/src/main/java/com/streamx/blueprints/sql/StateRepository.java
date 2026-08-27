@@ -67,9 +67,8 @@ public class StateRepository {
       IndexableResourceContent content = deserializeValue(
           indexableResource.getContentAsString(),
           IndexableResourceContent.class);
-      ResourceEntity resourceEntity = includeOnlyConfiguredPersistedData(
-          new ResourceEntity(subject, content.title(),
-              content.content(), content.facets(), content.fields()), configuration);
+      ResourceEntity resourceEntity = toResourceEntity(
+          subject, content, configuration);
       save(resourceEntity);
     } else if (IndexableResource.TYPE_UNPUBLISHED.equals(eventType)) {
       delete(subject);
@@ -149,7 +148,7 @@ public class StateRepository {
 
   }
 
-  private ResourceEntity includeOnlyConfiguredPersistedData(ResourceEntity resource,
+  private ResourceEntity toResourceEntity(String subject, IndexableResourceContent content,
       Configuration configuration) {
     List<String> configuredFacets =
         configuration.persistedData().facets().orElseGet(List::of);
@@ -157,22 +156,27 @@ public class StateRepository {
     List<String> configuredFields =
         configuration.persistedData().fields().orElseGet(List::of);
 
-    return new ResourceEntity(
-        resource.subject(),
-        resource.title(),
-        configuration.persistedData().includeContent() ? resource.content() : "",
-        resource.facets().entrySet().stream()
+    Map<String, Object> filteredFacets = configuredFacets.isEmpty() ? content.facets() :
+        content.facets().entrySet().stream()
             .filter(entry -> configuredFacets.contains(entry.getKey()))
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
                 Map.Entry::getValue
-            )),
-        resource.fields().entrySet().stream()
+            ));
+    Map<String, Object> filteredFields = configuredFields.isEmpty() ? content.fields() :
+        content.fields().entrySet().stream()
             .filter(entry -> configuredFields.contains(entry.getKey()))
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
                 Map.Entry::getValue
-            ))
+            ));
+
+    return new ResourceEntity(
+        subject,
+        content.title(),
+        configuration.persistedData().includeContent() ? content.content() : "",
+        filteredFacets,
+        filteredFields
     );
   }
 }
