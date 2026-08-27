@@ -1,5 +1,7 @@
 package com.streamx.blueprints.state.sql.repository.sqlite;
 
+import static io.smallrye.config._private.ConfigLogging.log;
+
 import com.streamx.blueprints.state.sql.repository.PropertyNames;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -8,6 +10,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.FileUtils;
@@ -30,7 +33,11 @@ public class SqliteManager {
 
     return connectionMap.computeIfAbsent(dbPath, path -> {
       try {
-        return DriverManager.getConnection("jdbc:sqlite:" + path);
+        Connection connection = DriverManager.getConnection("jdbc:sqlite:" + path);
+        try (Statement statement = connection.createStatement()) {
+          statement.execute("PRAGMA foreign_keys = ON");
+        }
+        return connection;
       } catch (SQLException e) {
         throw new RuntimeException(
             "Unable to open SQLite at path " + path, e);
@@ -69,7 +76,7 @@ public class SqliteManager {
       try {
         connection.close();
       } catch (SQLException e) {
-        // log
+        log.warn("Failed to close connection", e);
       }
     });
   }

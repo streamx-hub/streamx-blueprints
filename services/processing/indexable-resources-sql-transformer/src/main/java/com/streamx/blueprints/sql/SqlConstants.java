@@ -15,27 +15,25 @@ public class SqlConstants {
 
   public static final String CREATE_INDEXABLE_RESOURCE_FACETS = """
       CREATE TABLE IF NOT EXISTS indexable_resource_facets (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
           resource_subject TEXT NOT NULL,
           key TEXT NOT NULL,
           value TEXT,
+          PRIMARY KEY (resource_subject, key),
           FOREIGN KEY (resource_subject)
               REFERENCES indexable_resource(subject)
-              ON DELETE CASCADE,
-          UNIQUE (resource_subject, key)
+              ON DELETE CASCADE
       )
       """;
 
   public static final String CREATE_INDEXABLE_RESOURCE_FIELDS = """
       CREATE TABLE IF NOT EXISTS indexable_resource_fields (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
           resource_subject TEXT NOT NULL,
           key TEXT NOT NULL,
           value TEXT,
+          PRIMARY KEY (resource_subject, key),
           FOREIGN KEY (resource_subject)
               REFERENCES indexable_resource(subject)
-              ON DELETE CASCADE,
-          UNIQUE (resource_subject, key)
+              ON DELETE CASCADE
       )
       """;
 
@@ -78,6 +76,17 @@ public class SqlConstants {
       DELETE FROM indexable_resource
       WHERE subject = ?
       """;
+
+  public static final String DELETE_FACETS_BY_SUBJECT = """
+      DELETE FROM indexable_resource_facets
+      WHERE resource_subject = ?
+      """;
+
+  public static final String DELETE_FIELDS_BY_SUBJECT = """
+      DELETE FROM indexable_resource_fields
+      WHERE resource_subject = ?
+      """;
+
 
   public static final String SELECT_FACETS = """
       SELECT key, value

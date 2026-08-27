@@ -49,9 +49,6 @@ public abstract class AbstractSqlRepository implements SqlRepository {
   public <T> T transaction(SqlTransaction<T> transaction) {
     try {
       connection.setAutoCommit(false);
-      try (Statement statement = connection.createStatement()) {
-        statement.execute("PRAGMA foreign_keys = ON");
-      }
       try {
         T result = transaction.execute(connection);
         connection.commit();
@@ -60,15 +57,13 @@ public abstract class AbstractSqlRepository implements SqlRepository {
         connection.rollback();
         throw e;
       }
-
     } catch (Exception e) {
       throw new RuntimeException("Transaction failed", e);
     } finally {
       try {
         connection.setAutoCommit(true);
       } catch (SQLException e) {
-        throw new RuntimeException(
-            "Unable to restore autoCommit", e);
+        throw new RuntimeException("Unable to restore autoCommit", e);
       }
     }
   }

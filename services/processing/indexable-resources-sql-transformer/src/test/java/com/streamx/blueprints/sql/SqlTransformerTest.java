@@ -100,7 +100,7 @@ public class SqlTransformerTest {
     assertThat(resultEvent.getSubject()).isEqualTo("latestArticlesRss");
     assertThat(resultEvent.getType()).isEqualTo(Data.TYPE_PUBLISHED);
 
-    ResourceEntity resource = getNormalizedResources(resultEvent).getFirst();
+    ResourceEntity resource = getResourcesList(resultEvent).getFirst();
     assertThat(resource.title()).isEqualTo("test");
     assertThat(resource.fields().get("description")).isEqualTo("Description");
     assertThat(resource.fields().get("author")).isEqualTo("David Beckham");
@@ -114,10 +114,13 @@ public class SqlTransformerTest {
         {
           "title": "initial title",
           "content": "initial content",
-          "facets": {},
+          "facets": {
+            "category": "sports",
+            "language": "en"
+          },
           "fields": {
             "description": "Initial description",
-            "author": "David Beckham"
+            "legacyField" : "legacy"
           }
         }
         """;
@@ -139,7 +142,10 @@ public class SqlTransformerTest {
         {
           "title": "updated title",
           "content": "updated content",
-          "facets": {},
+          "facets": {
+            "category": "football",
+            "country": "uk"
+          },
           "fields": {
             "description": "Updated description",
             "author": "John Smith"
@@ -161,13 +167,22 @@ public class SqlTransformerTest {
     // then
     assertThat(dataSink.received()).hasSize(1);
     CloudEvent resultEvent = dataSink.received().getFirst().getPayload();
-    ResourceEntity resource = getNormalizedResources(resultEvent).getFirst();
+    ResourceEntity resource = getResourcesList(resultEvent).getFirst();
+
     assertThat(resource.title()).isEqualTo("updated title");
     assertThat(resource.content()).isEqualTo("updated content");
+
     assertThat(resource.fields())
         .containsEntry("description", "Updated description")
-        .containsEntry("author", "John Smith");
+        .containsEntry("author", "John Smith")
+        .doesNotContainKey("legacyField");
+
+    assertThat(resource.facets())
+        .containsEntry("category", "football")
+        .containsEntry("country", "uk")
+        .doesNotContainKey("language");
   }
+
 
   @Test
   void shouldPublishEventWithoutUnpublishedResource() throws JsonProcessingException {
@@ -213,7 +228,7 @@ public class SqlTransformerTest {
     // then
     assertThat(dataSink.received()).hasSize(1);
     CloudEvent resultEvent = dataSink.received().getFirst().getPayload();
-    List<ResourceEntity> resources = getNormalizedResources(resultEvent);
+    List<ResourceEntity> resources = getResourcesList(resultEvent);
     assertThat(resources)
         .noneMatch(resource -> DEFAULT_KEY.equals(resource.subject()));
   }
@@ -245,15 +260,14 @@ public class SqlTransformerTest {
                     .hasSize(expectedSize));
   }
 
-  private List<ResourceEntity> getNormalizedResources(CloudEvent event) {
+  private List<ResourceEntity> getResourcesList(CloudEvent event) {
     Data data = CloudEventUtils.getData(event, Data.class);
     assertThat(data).isNotNull();
     String json = data.getContentAsString();
     try {
-      return objectMapper.readValue(
-              json,
-              new TypeReference<Map<String, List<ResourceEntity>>>() {})
-          .get("resources");
+      return objectMapper.readValue(json,
+          new TypeReference<Map<String, List<ResourceEntity>>>() {
+        }).get("resources");
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
