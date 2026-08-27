@@ -6,7 +6,7 @@ public class SqlConstants {
   }
 
   public static final String CREATE_INDEXABLE_RESOURCE = """
-      CREATE TABLE indexable_resource (
+      CREATE TABLE IF NOT EXISTS indexable_resource (
           subject TEXT PRIMARY KEY,
           title TEXT,
           content TEXT
@@ -14,7 +14,7 @@ public class SqlConstants {
       """;
 
   public static final String CREATE_INDEXABLE_RESOURCE_FACETS = """
-      CREATE TABLE indexable_resource_facets (
+      CREATE TABLE IF NOT EXISTS indexable_resource_facets (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           resource_subject TEXT NOT NULL,
           key TEXT NOT NULL,
@@ -27,7 +27,7 @@ public class SqlConstants {
       """;
 
   public static final String CREATE_INDEXABLE_RESOURCE_FIELDS = """
-      CREATE TABLE indexable_resource_fields (
+      CREATE TABLE IF NOT EXISTS indexable_resource_fields (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           resource_subject TEXT NOT NULL,
           key TEXT NOT NULL,
@@ -45,6 +45,10 @@ public class SqlConstants {
           title,
           content
       ) VALUES (?, ?, ?)
+      ON CONFLICT(subject)
+      DO UPDATE SET
+          title = excluded.title,
+          content = excluded.content
       """;
 
   public static final String INSERT_FACET = """
@@ -53,6 +57,9 @@ public class SqlConstants {
           key,
           value
       ) VALUES (?, ?, ?)
+      ON CONFLICT(resource_subject, key)
+      DO UPDATE SET
+          value = excluded.value
       """;
 
   public static final String INSERT_FIELD = """
@@ -61,7 +68,11 @@ public class SqlConstants {
           key,
           value
       ) VALUES (?, ?, ?)
+      ON CONFLICT(resource_subject, key)
+      DO UPDATE SET
+          value = excluded.value
       """;
+
 
   public static final String DELETE_RESOURCE = """
       DELETE FROM indexable_resource

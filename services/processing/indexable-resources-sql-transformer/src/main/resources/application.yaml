@@ -1,7 +1,0 @@
-streamx:
-  blueprints:
-    indexable-resources-sql-transformer:
-      dirty-check:
-        interval: 5s
-        delay: 10s
-        max-dirty-sequence-count: 12

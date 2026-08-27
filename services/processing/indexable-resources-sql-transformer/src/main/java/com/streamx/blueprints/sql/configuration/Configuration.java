@@ -1,8 +1,10 @@
 package com.streamx.blueprints.sql.configuration;
 
 import io.smallrye.config.ConfigMapping;
+import io.smallrye.config.WithDefault;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @ConfigMapping(prefix = "streamx.blueprints.indexable-resources-sql-transformer")
 public interface Configuration {
@@ -29,8 +31,11 @@ public interface Configuration {
 
   interface PersistedData {
 
-    List<String> fields();
+    @WithDefault("false")
+    boolean includeContent();
 
-    List<String> facets();
+    Optional<List<String>> fields();
+
+    Optional<List<String>> facets();
   }
 }

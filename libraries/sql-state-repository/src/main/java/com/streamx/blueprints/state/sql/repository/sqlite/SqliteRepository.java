@@ -1,13 +1,13 @@
 package com.streamx.blueprints.state.sql.repository.sqlite;
 
-import com.streamx.blueprints.state.sql.repository.impl.AbstractSqlRepository;
-import jakarta.enterprise.context.ApplicationScoped;
+import com.streamx.blueprints.state.sql.repository.AbstractSqlRepository;
+import java.sql.Connection;
 
-@ApplicationScoped
 public class SqliteRepository extends AbstractSqlRepository {
 
-  @Override
-  public String getIdentifier() {
-    return "sqlite";
+  public static final String BACKEND = "sqlite";
+
+  public SqliteRepository(Connection connection) {
+    super(connection);
   }
 }

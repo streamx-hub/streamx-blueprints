@@ -13,8 +13,6 @@ public interface SqlRepository {
 
   <T> List<T> query(String sql, RowMapper<T> mapper, Object... parameters);
 
-  String getIdentifier();
-
   @FunctionalInterface
   interface SqlTransaction<T> {
 

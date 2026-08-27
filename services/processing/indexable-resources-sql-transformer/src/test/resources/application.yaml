@@ -2,14 +2,12 @@ streamx:
   blueprints:
     indexable-resources-sql-transformer:
       persisted-data:
+        include-content: true
         fields:
           - url
           - author
           - description
           - publication_date
-        facets:
-          - test
-          - test2
       dirty-check:
         interval: 1s
         delay: 1s

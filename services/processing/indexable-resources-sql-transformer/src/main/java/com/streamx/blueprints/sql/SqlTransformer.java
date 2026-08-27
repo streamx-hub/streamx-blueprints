@@ -8,7 +8,6 @@ import com.streamx.blueprints.data.Data;
 import com.streamx.blueprints.data.IndexableResource;
 import com.streamx.blueprints.sql.configuration.Configuration;
 import com.streamx.blueprints.sql.configuration.Configuration.Transformation;
-import com.streamx.blueprints.sql.repository.IndexableResourcesRepository;
 import io.cloudevents.CloudEvent;
 import io.quarkus.scheduler.Scheduled;
 import io.quarkus.scheduler.Scheduled.ConcurrentExecution;
@@ -35,7 +34,7 @@ public class SqlTransformer {
   @Inject
   Configuration configuration;
   @Inject
-  IndexableResourcesRepository indexableResourcesRepository;
+  StateRepository indexableResourcesState;
   @Inject
   DirtySequenceStateManager dirtySequenceStateManager;
   @Inject
@@ -61,7 +60,7 @@ public class SqlTransformer {
     log.debugf("Publishing feeds");
     if (dirtySequenceStateManager.checkIfActionIsNeededForNewSequence()) {
       for (Map.Entry<String, Transformation> entry : configuration.transformations().entrySet()) {
-        List<NormalizedResource> resources = indexableResourcesRepository.read(
+        List<ResourceEntity> resources = indexableResourcesState.read(
             entry.getValue().sqlQuery());
         CloudEvent event = CloudEventUtils.eventWithData(
             entry.getKey(), Data.TYPE_PUBLISHED,

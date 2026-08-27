@@ -1,4 +1,4 @@
-package com.streamx.blueprints.sql.repository;
+package com.streamx.blueprints.sql;
 
 import static com.streamx.blueprints.sql.Channels.INDEXABLE_RESORUCES_STATE;
 import static com.streamx.blueprints.sql.SqlConstants.CREATE_INDEXABLE_RESOURCE;
@@ -10,21 +10,16 @@ import static com.streamx.blueprints.sql.SqlConstants.INSERT_FIELD;
 import static com.streamx.blueprints.sql.SqlConstants.INSERT_RESOURCE;
 import static com.streamx.blueprints.sql.SqlConstants.SELECT_FACETS;
 import static com.streamx.blueprints.sql.SqlConstants.SELECT_FIELDS;
-import static io.smallrye.config._private.ConfigLogging.log;
+import static com.streamx.blueprints.sql.utils.SerializationUtils.deserializeValue;
+import static com.streamx.blueprints.sql.utils.SerializationUtils.serializeValue;
 import static java.util.Objects.requireNonNull;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.streamx.blueprints.cloudevents.utils.CloudEventUtils;
 import com.streamx.blueprints.data.IndexableResource;
-import com.streamx.blueprints.sql.IndexableResourceContent;
-import com.streamx.blueprints.sql.NormalizedResource;
 import com.streamx.blueprints.sql.configuration.Configuration;
 import com.streamx.blueprints.state.sql.SqlRepositoryFactory;
 import com.streamx.blueprints.state.sql.repository.SqlRepository;
 import io.cloudevents.CloudEvent;
-import io.quarkus.runtime.Startup;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -38,9 +33,7 @@ import java.util.stream.Collectors;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
 @ApplicationScoped
-public class IndexableResourcesRepository {
-
-  SqlRepository repository;
+public class StateRepository {
 
   @Inject
   Configuration configuration;
@@ -48,20 +41,18 @@ public class IndexableResourcesRepository {
   @Inject
   SqlRepositoryFactory repositoryFactory;
 
-  static final ObjectMapper objectMapper = new ObjectMapper().configure(
-      DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false
-  );
+  SqlRepository repository;
 
   @PostConstruct
   void init() {
-    repository = repositoryFactory.get("sqlite");
+    repository = repositoryFactory.getOrCreate("indexable-resources");
 
     repository.executeQuery(CREATE_INDEXABLE_RESOURCE);
     repository.executeQuery(CREATE_INDEXABLE_RESOURCE_FACETS);
     repository.executeQuery(CREATE_INDEXABLE_RESOURCE_FIELDS);
   }
 
-  public List<NormalizedResource> read(String sqlQuery) {
+  public List<ResourceEntity> read(String sqlQuery) {
     return repository.query(sqlQuery, this::mapResource
     );
   }
@@ -73,24 +64,19 @@ public class IndexableResourcesRepository {
     if (IndexableResource.TYPE_PUBLISHED.equals(eventType)) {
       IndexableResource indexableResource = requireNonNull(
           CloudEventUtils.getData(event, IndexableResource.class));
-      try {
-        IndexableResourceContent content = objectMapper.readValue(
-            indexableResource.getContentAsString(),
-            IndexableResourceContent.class);
-        NormalizedResource normalizedResource = filterNormalizedResource(
-            new NormalizedResource(subject, content.title(),
-                content.content(), content.facets(), content.fields()));
-        save(normalizedResource);
-      } catch (JsonProcessingException e) {
-        log.warn("Failed to parse resource");
-      }
-
+      IndexableResourceContent content = deserializeValue(
+          indexableResource.getContentAsString(),
+          IndexableResourceContent.class);
+      ResourceEntity resourceEntity = includeOnlyConfiguredPersistedData(
+          new ResourceEntity(subject, content.title(),
+              content.content(), content.facets(), content.fields()), configuration);
+      save(resourceEntity);
     } else if (IndexableResource.TYPE_UNPUBLISHED.equals(eventType)) {
       delete(subject);
     }
   }
 
-  public void save(NormalizedResource resource) {
+  public void save(ResourceEntity resource) {
     repository.transaction(connection -> {
       insertResource(connection, resource);
       insertProperties(connection, resource.subject(), resource.facets(), INSERT_FACET);
@@ -107,7 +93,7 @@ public class IndexableResourcesRepository {
     });
   }
 
-  private void insertResource(Connection connection, NormalizedResource resource)
+  private void insertResource(Connection connection, ResourceEntity resource)
       throws SQLException {
     try (PreparedStatement statement =
         connection.prepareStatement(INSERT_RESOURCE)) {
@@ -143,71 +129,51 @@ public class IndexableResourcesRepository {
     }
   }
 
-  private NormalizedResource filterNormalizedResource(NormalizedResource resource) {
-    return new NormalizedResource(
-        resource.subject(),
-        resource.title(),
-        resource.content(),
-        resource.facets().entrySet().stream()
-            .filter(entry -> configuration.persistedData().facets().contains(entry.getKey()))
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                Map.Entry::getValue
-            )),
-        resource.fields().entrySet().stream()
-            .filter(entry -> configuration.persistedData().fields().contains(entry.getKey()))
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                Map.Entry::getValue
-            ))
-    );
+  private Map<String, Object> loadProperties(String subject, String sql) {
+    return repository.query(sql, resultSet ->
+        Map.entry(resultSet.getString("key"),
+            deserializeValue(resultSet.getString("value"), Object.class)), subject
+    ).stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
-  private String serializeValue(Object value) {
-    if (value == null) {
-      return null;
-    }
-
-    try {
-      return objectMapper.writeValueAsString(value);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException("Failed to serialize value to JSON", e);
-    }
-  }
-
-  private NormalizedResource mapResource(ResultSet resultSet) throws SQLException {
+  private ResourceEntity mapResource(ResultSet resultSet) throws SQLException {
     String subject = resultSet.getString("subject");
 
-    return new NormalizedResource(
+    return new ResourceEntity(
         subject,
         resultSet.getString("title"),
         resultSet.getString("content"),
         loadProperties(subject, SELECT_FACETS),
         loadProperties(subject, SELECT_FIELDS)
     );
+
   }
 
-  private Map<String, Object> loadProperties(String subject, String sql) {
-    return repository.query(sql, resultSet ->
-        Map.entry(resultSet.getString("key"),
-            deserializeValue(resultSet.getString("value"))), subject
-    ).stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+  private ResourceEntity includeOnlyConfiguredPersistedData(ResourceEntity resource,
+      Configuration configuration) {
+    List<String> configuredFacets =
+        configuration.persistedData().facets().orElseGet(List::of);
+
+    List<String> configuredFields =
+        configuration.persistedData().fields().orElseGet(List::of);
+
+    return new ResourceEntity(
+        resource.subject(),
+        resource.title(),
+        configuration.persistedData().includeContent() ? resource.content() : "",
+        resource.facets().entrySet().stream()
+            .filter(entry -> configuredFacets.contains(entry.getKey()))
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue
+            )),
+        resource.fields().entrySet().stream()
+            .filter(entry -> configuredFields.contains(entry.getKey()))
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue
+            ))
+    );
   }
-
-  private Object deserializeValue(String value) {
-    if (value == null) {
-      return null;
-    }
-
-    try {
-      return objectMapper.readValue(value, Object.class);
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(
-          "Failed to deserialize value from JSON: " + value,
-          e
-      );
-    }
-  }
-
 }
 

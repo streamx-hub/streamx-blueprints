@@ -4,7 +4,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import java.util.Map;
 
 @RegisterForReflection
-public record NormalizedResource(
+public record ResourceEntity(
     String subject,
     String title,
     String content,
