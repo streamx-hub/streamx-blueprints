@@ -1,75 +1,32 @@
-# SQL State Repository
+# sql-state-repository
 
-A CDI-based service for creating and accessing SQL repositories identified by a service instance and repository identifier.
+A module responsible for persistent storage of `IndexableResource` state in an SQL database.
 
-## Overview
+Data is received from CloudEvents (`published` / `unpublished`) and stored as a resource together with its facets and fields.
 
-The main entry point is `SqlRepositoryFactory`. It provides the `getOrCreate` method, which returns a `SqlRepository` for a given identifier.
-
-Currently, the service supports the **SQLite** backend.
-
-## Usage in a Quarkus Service
-
-The `identifier` is used to create a database file.
-
-Example:
-
-```java
-@Inject
-SqlRepositoryFactory repositoryFactory;
-
-public void init() {
-  SqlRepository repository = repositoryFactory.getOrCreate("indexable-resources");
-}
-```
+Currently supported backend: **SQLite**, with connections managed by a HikariCP connection pool. The database runs in WAL mode, which allows concurrent reads without blocking each other or being blocked by writes.
 
 ## Configuration
 
-The service uses MicroProfile Config to determine its runtime configuration.
+All properties use the `streamx.blueprints.sql-state-repository` prefix.
 
-| Property | Required | Default | Description |
-|---|---|---|---|
-| `streamx.blueprints.sql-state-repository.backend` | No | `sqlite` | Repository backend to use |
-| `streamx.service.instance-id` | No | `unnamed` | Identifies the service instance and is used when resolving databases |
+| Property | Description | Default value |
+|---|---|---|
+| `sql-state-repository.backend` | Database backend to use. Currently, only `sqlite` is supported. | `sqlite` |
+| `sql-state-repository.sqlite.path` | Root directory where SQLite database files are created (one `.db` file per `identifier`, in a separate subdirectory for each `instance-id`). | `/tmp/sqlite` |
+| `sql-state-repository.sqlite.max-pool-size` | Maximum HikariCP connection pool size per database (per `.db` file). | `4` |
+| `sql-state-repository.sqlite.max-busy-timeout` | Time (in ms) for which the SQLite driver waits and retries acquiring the write lock before returning a `database is locked` error. | `5000` |
 
-For example:
+The `streamx.service.instance-id` property is also used. It is provided by `streamx-service-mesh` and identifies the service instance, determining the subdirectory in which the database files for that instance are created.
 
-```properties
-streamx.blueprints.sql-state-repository.backend=sqlite
-streamx.service.instance-id=my-service
-```
+### Validation
 
-## Identifiers
+Both `instance-id` and `identifier` (the database name provided when creating the repository) must match the `^[a-zA-Z0-9-.]+$` pattern. Only letters, digits, hyphens, and dots are allowed.
 
-Both `streamx.service.instance-id` and the repository `identifier` are validated before a repository is created.
+An invalid value results in an `IllegalArgumentException` being thrown when the repository is created.
 
-Allowed characters are:
+## Concurrency Considerations
 
-- letters (`a-z`, `A-Z`)
-- digits (`0-9`)
-- dashes (`-`)
-- dots (`.`)
-
-The identifier must match:
-
-```text
-^[a-zA-Z0-9-.]+$
-```
-
-Examples of valid identifiers:
-
-```text
-orders
-orders-v2
-orders.eu
-service-1.eu
-```
-
-Examples of invalid identifiers:
-
-```text
-orders_test
-orders/test
-orders test
-orders@production
-```
+- Each operation (`query`, `executeQuery`, `transaction`) obtains its own independent connection from the pool and returns it when the operation completes. Transaction state is not shared between threads.
+- SQLite physically allows only a single writer at a time. Concurrent writes are safely queued using `max-busy-timeout` rather than being executed in parallel.
+- Increasing `max-pool-size` does not speed up writes due to SQLite's engine-level limitation. It can, however, improve performance when handling a large number of concurrent reads.

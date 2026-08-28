@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.sql.DataSource;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.sqlite.SQLiteConfig;
 
 @ApplicationScoped
@@ -27,19 +28,25 @@ public class SqliteManager {
     File dbFile = initDbFile(config, instanceId, identifier);
     String dbPath = dbFile.toPath().toAbsolutePath().normalize().toString();
 
-    return dataSourceMap.computeIfAbsent(dbPath, this::createDataSource);
+    return dataSourceMap.computeIfAbsent(dbPath,
+        path -> createDataSource(config, path)
+    );
   }
 
-  private HikariDataSource createDataSource(String path) {
+  private HikariDataSource createDataSource(Config config, String path) {
     SQLiteConfig sqliteConfig = new SQLiteConfig();
     sqliteConfig.enforceForeignKeys(true);
     sqliteConfig.setJournalMode(SQLiteConfig.JournalMode.WAL);
-    sqliteConfig.setBusyTimeout(BUSY_TIMEOUT_MS);
+    sqliteConfig.setBusyTimeout(config
+        .getOptionalValue(PropertyNames.SQLITE_MAX_BUSY_TIMEOUT, Integer.class)
+        .orElse(BUSY_TIMEOUT_MS));
 
     HikariConfig hikariConfig = new HikariConfig();
     hikariConfig.setJdbcUrl("jdbc:sqlite:" + path);
     hikariConfig.setDataSourceProperties(sqliteConfig.toProperties());
-    hikariConfig.setMaximumPoolSize(MAX_POOL_SIZE);
+    hikariConfig.setMaximumPoolSize(config
+        .getOptionalValue(PropertyNames.SQLITE_MAX_POOL_SIZE, Integer.class)
+        .orElse(MAX_POOL_SIZE));
     hikariConfig.setPoolName("sqlite-" + path);
     hikariConfig.setConnectionInitSql("PRAGMA foreign_keys = ON");
 
