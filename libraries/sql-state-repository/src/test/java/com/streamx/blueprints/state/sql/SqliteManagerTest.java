@@ -124,6 +124,11 @@ class SqliteManagerTest {
 
     assertNotNull(dataSource);
 
+    // Agroal inicjalizuje połączenia leniwie - wymuszamy fizyczne otwarcie pliku.
+    try (Connection connection = dataSource.getConnection()) {
+      assertNotNull(connection);
+    }
+
     assertTrue(
         Path.of("/tmp/sqlite")
             .resolve("test-instance")
@@ -204,6 +209,8 @@ class SqliteManagerTest {
 
     manager.closeAll();
 
+    // AgroalDataSource nie eksponuje isClosed() - weryfikujemy zamknięcie pośrednio:
+    // pobranie połączenia z zamkniętej puli musi zakończyć się błędem.
     assertThrows(SQLException.class, first::getConnection);
     assertThrows(SQLException.class, second::getConnection);
   }
