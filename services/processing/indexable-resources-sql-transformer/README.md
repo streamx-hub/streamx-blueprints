@@ -143,13 +143,69 @@ When an `IndexableResource` is received, the service marks the state as dirty. I
 
 This batching behavior prevents a feed from being generated for every individual resource change.
 
+## Database Schema
+
+The service persists the normalized `IndexableResource` state in a local SQLite database.
+
+The database consists of three tables:
+
+- `indexable_resource` — stores the core resource data.
+- `indexable_resource_fields` — stores configured resource fields as key-value pairs.
+- `indexable_resource_facets` — stores configured resource facets as key-value pairs.
+
+The relationship between the tables is based on the resource `subject`:
+
+```text
+                    ┌─────────────────────────┐
+                    │   indexable_resource    │
+                    ├─────────────────────────┤
+                    │ subject (PK)            │
+                    │ title                   │
+                    │ content                 │
+                    └────────────┬────────────┘
+                                 │
+                    ┌────────────┴────────────┐
+                    │                         │
+          ┌─────────▼──────────┐    ┌─────────▼──────────┐
+          │ indexable_resource │    │ indexable_resource │
+          │ _fields            │    │ _facets            │
+          ├────────────────────┤    ├────────────────────┤
+          │ resource_subject   │    │ resource_subject   │
+          │ key                │    │ key                │
+          │ value              │    │ value              │
+          └────────────────────┘    └────────────────────┘
+```
+
+### Using the Schema in SQL Transformations
+
+The normalized schema allows transformations to query resource metadata directly using SQL.
+
+For example, a transformation can retrieve all resources:
+
+```sql
+SELECT * FROM indexable_resource;
+```
+
+Fields can be joined using `resource_subject` and filtered by their `key`:
+
+```sql
+SELECT r.*
+FROM indexable_resource r
+LEFT JOIN indexable_resource_fields f
+    ON f.resource_subject = r.subject
+    AND f.key = 'publication_date'
+ORDER BY f.value IS NULL, f.value DESC;
+```
+
+This makes the normalized resource state available as a relational data model while keeping fields and facets flexible through their key-value representation.
+
 ## SQL Transformations
 
 Transformations define the feeds produced by the service.
 
 ```yaml
 transformations:
-  latestArticlesRss:
+  latest-article-rss:
     sql-query: "SELECT * FROM indexable_resource"
 ```
 
@@ -177,7 +233,15 @@ The query result is serialized into the following payload structure:
 {
   "resources": [
     {
-      "...": "..."
+      "subject": "...",
+      "title": "...",
+      "content": "...",
+      "facets": {
+        "...": "..."
+      },
+      "fields": {
+        "...": "..."
+      }
     }
   ]
 }
@@ -191,16 +255,11 @@ Multiple transformations can be configured:
 
 ```yaml
 transformations:
-  latest-articles-rss:
+  all-articles-rss:
     sql-query: "SELECT * FROM indexable_resource"
 
-  popular-articles:
-    sql-query: |
-      SELECT *
-      FROM indexable_resource
-      WHERE category = 'popular'
-      ORDER BY publication_date DESC
-      LIMIT 20
+  latest-articles-rss:
+    sql-query: "SELECT r.* FROM indexable_resource r LEFT JOIN indexable_resource_fields f ON f.resource_subject = r.subject AND f.key = 'publication_date' ORDER BY f.value IS NULL, f.value DESC"
 ```
 
 Whenever a feed generation cycle is triggered, the service executes every configured transformation and publishes one CloudEvent per transformation.
@@ -241,11 +300,17 @@ with data equivalent to:
 {
   "resources": [
     {
-      "url": "...",
-      "author": "...",
-      "description": "...",
-      "publication_date": "...",
-      "modification_date": "..."
+      "subject": "...",
+      "title": "...",
+      "content": "...",
+      "facets": {},
+      "fields": {
+        "url": "...",
+        "author": "...",
+        "description": "...",
+        "publication_date": "...",
+        "modification_date": "..."
+      }
     }
   ]
 }
