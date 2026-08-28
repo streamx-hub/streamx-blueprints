@@ -49,6 +49,8 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Release perform
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ARGS="-DskipTests \
             -Dnative \
