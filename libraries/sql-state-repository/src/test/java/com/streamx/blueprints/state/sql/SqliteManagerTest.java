@@ -1,4 +1,4 @@
-package com.streamx.blueprints.state.sql.repository.sqlite;
+package com.streamx.blueprints.state.sql;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -10,11 +10,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.streamx.blueprints.state.sql.repository.PropertyNames;
-import com.zaxxer.hikari.HikariDataSource;
+import com.streamx.blueprints.state.sql.repository.sqlite.SqliteManager;
 import java.io.File;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
 import javax.sql.DataSource;
@@ -47,12 +48,16 @@ class SqliteManagerTest {
     assertNotNull(dataSource);
 
     Path expectedPath = tempDir.resolve("instance-1").resolve("test.db");
-    assertTrue(expectedPath.toFile().exists());
 
+    // Agroal inicjalizuje połączenia leniwie - dopiero pierwsze getConnection()
+    // fizycznie otwiera (i tworzy) plik SQLite, w przeciwieństwie do Hikari,
+    // które domyślnie tworzy połączenia z góry.
     try (Connection connection = dataSource.getConnection();
         Statement statement = connection.createStatement()) {
       statement.execute("CREATE TABLE test (id INTEGER)");
     }
+
+    assertTrue(expectedPath.toFile().exists());
   }
 
   @Test
@@ -199,7 +204,7 @@ class SqliteManagerTest {
 
     manager.closeAll();
 
-    assertTrue(((HikariDataSource) first).isClosed());
-    assertTrue(((HikariDataSource) second).isClosed());
+    assertThrows(SQLException.class, first::getConnection);
+    assertThrows(SQLException.class, second::getConnection);
   }
 }
