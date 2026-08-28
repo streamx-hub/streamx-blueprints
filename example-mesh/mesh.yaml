@@ -17,7 +17,7 @@ descriptors:
     type: processing
     containers:
       processor:
-        image: ghcr.io/streamx-com/streamx-blueprints/optimized-images-generator:latest-jvm
+        image: ghcr.io/streamx-hub/streamx-blueprints/optimized-images-generator:latest-jvm
         incoming:
           incoming-assets: {}
         outgoing:
@@ -29,7 +29,7 @@ descriptors:
       state: {}
     containers:
       processor:
-        image: ghcr.io/streamx-com/streamx-blueprints/local-references-rewriter:latest-jvm
+        image: ghcr.io/streamx-hub/streamx-blueprints/local-references-rewriter:latest-jvm
         incoming:
           incoming-pages: {}
           optimized-assets:
@@ -47,7 +47,7 @@ descriptors:
       state: {}
     containers:
       processor:
-        image: ghcr.io/streamx-com/streamx-blueprints/json-aggregator:latest-jvm
+        image: ghcr.io/streamx-hub/streamx-blueprints/json-aggregator:latest-jvm
         incoming:
           data: {}
           multivalued-data: {}
@@ -68,7 +68,7 @@ descriptors:
     type: processing
     containers:
       processor:
-        image: ghcr.io/streamx-com/streamx-blueprints/external-references-rewriter:latest-jvm
+        image: ghcr.io/streamx-hub/streamx-blueprints/external-references-rewriter:latest-jvm
         incoming:
           incoming-resources: {}
         outgoing:
@@ -81,7 +81,7 @@ descriptors:
       state: {}
     containers:
       processor:
-        image: ghcr.io/streamx-com/streamx-blueprints/resource-downloader:latest-jvm
+        image: ghcr.io/streamx-hub/streamx-blueprints/resource-downloader:latest-jvm
         incoming:
           download-requests: {}
         outgoing:
@@ -99,7 +99,7 @@ descriptors:
     type: processing
     containers:
       processor:
-        image: ghcr.io/streamx-com/streamx-blueprints/event-converter:latest-jvm
+        image: ghcr.io/streamx-hub/streamx-blueprints/event-converter:latest-jvm
         incoming:
           resources: {}
         outgoing:
@@ -111,7 +111,7 @@ descriptors:
       state: {}
     containers:
       processor:
-        image: ghcr.io/streamx-com/streamx-blueprints/rendering-engine:latest-jvm
+        image: ghcr.io/streamx-hub/streamx-blueprints/rendering-engine:latest-jvm
         incoming:
           data: {}
           renderers: {}
@@ -141,7 +141,7 @@ descriptors:
       state: {}
     containers:
       processor:
-        image: ghcr.io/streamx-com/streamx-blueprints/composition-engine:latest-jvm
+        image: ghcr.io/streamx-hub/streamx-blueprints/composition-engine:latest-jvm
         incoming:
           layouts: {}
           compositions: {}
@@ -166,7 +166,7 @@ descriptors:
       state: {}
     containers:
       processor:
-        image: ghcr.io/streamx-com/streamx-blueprints/data-collector:latest-jvm
+        image: ghcr.io/streamx-hub/streamx-blueprints/data-collector:latest-jvm
         incoming:
           data: {}
         outgoing:
@@ -185,7 +185,7 @@ descriptors:
       state: {}
     containers:
       processor:
-        image: ghcr.io/streamx-com/streamx-blueprints/sitemap-generator:latest-jvm
+        image: ghcr.io/streamx-hub/streamx-blueprints/sitemap-generator:latest-jvm
         incoming:
           incoming-pages: {}
         outgoing:
@@ -201,7 +201,7 @@ descriptors:
     type: processing
     containers:
       processor:
-        image: ghcr.io/streamx-com/streamx-blueprints/indexable-resources-producer:latest-jvm
+        image: ghcr.io/streamx-hub/streamx-blueprints/indexable-resources-producer:latest-jvm
         incoming:
           pages: {}
           fragments: {}
@@ -215,7 +215,7 @@ descriptors:
       repository-volume: {}
     containers:
       sink:
-        image: ghcr.io/streamx-com/streamx-blueprints/web-server-sink:latest-jvm
+        image: ghcr.io/streamx-hub/streamx-blueprints/web-server-sink:latest-jvm
         incoming:
           resources: {}
         servicePorts:
@@ -236,7 +236,7 @@ descriptors:
       state: {}
     containers:
       sink:
-        image: ghcr.io/streamx-com/streamx-blueprints/opensearch-sink:latest-jvm
+        image: ghcr.io/streamx-hub/streamx-blueprints/opensearch-sink:latest-jvm
         incoming:
           indexable-resources: {}
           indexable-resource-fragments: {}

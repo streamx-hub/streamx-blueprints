@@ -54,7 +54,7 @@
     <!--  Docker  -->
     <quarkus.container-image.build>true</quarkus.container-image.build>
     <quarkus.container-image.registry>ghcr.io</quarkus.container-image.registry>
-    <quarkus.container-image.group>streamx-com/streamx-blueprints</quarkus.container-image.group>
+    <quarkus.container-image.group>streamx-hub/streamx-blueprints</quarkus.container-image.group>
     <quarkus.container-image.name>${project.artifactId}</quarkus.container-image.name>
     <quarkus.container-image.package.type>${streamx.container-image.package.type.jvm}</quarkus.container-image.package.type>
     <quarkus.container-image.tag>${project.version}-${quarkus.container-image.package.type}</quarkus.container-image.tag>
@@ -66,10 +66,10 @@
   </properties>
 
   <scm>
-    <connection>scm:git:git@github.com:streamx-com/streamx-blueprints.git</connection>
-    <developerConnection>scm:git:git@github.com:streamx-com/streamx-blueprints.git</developerConnection>
+    <connection>scm:git:git@github.com:streamx-hub/streamx-blueprints.git</connection>
+    <developerConnection>scm:git:git@github.com:streamx-hub/streamx-blueprints.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/streamx-com/streamx-blueprints</url>
+    <url>https://github.com/streamx-hub/streamx-blueprints</url>
   </scm>
 
   <distributionManagement>
