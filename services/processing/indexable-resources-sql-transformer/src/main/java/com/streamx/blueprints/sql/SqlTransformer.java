@@ -43,11 +43,6 @@ public class SqlTransformer {
   @Incoming(Channels.INDEXABLE_RESOURCES)
   public void produceFrom(CloudEvent event) {
     log.debugf("Received CloudEvent: subject=%s", event.getSubject());
-    IndexableResource resource = CloudEventUtils.getData(event, IndexableResource.class);
-    if (resource == null) {
-      return;
-    }
-
     dirtySequenceStateManager.newDirtyResource();
   }
 

@@ -427,6 +427,38 @@ public class IndexableResourceProducerTest {
     assertThat(result.facets()).containsEntry("description_path", "M");
   }
 
+  @Test
+  void shouldSkipProcessingEventWithRobotsNoIndex() {
+    // given
+    String payload = """
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Hello Title</title>
+                <meta name="robots" content="nofollow, noindex">
+            </head>
+            <body>
+            </body>
+        </html>
+        """;
+
+    CloudEvent pageEvent = CloudEventUtils.eventWithData(
+        DEFAULT_KEY,
+        Page.TYPE_PUBLISHED,
+        new Page(payload, RESOURCE_TYPE)
+    );
+
+    // when
+    CloudEvent resultEvent = getResourceFrom(pageEvent);
+
+    // then
+    assertThat(resultEvent).isNotNull();
+    assertThat(resultEvent.getData()).isNull();
+    assertThat(resultEvent.getSubject()).isEqualTo(DEFAULT_KEY);
+    assertThat(resultEvent.getTime()).isEqualTo(pageEvent.getTime());
+    assertThat(resultEvent.getType()).isEqualTo(IndexableResource.TYPE_UNPUBLISHED);
+  }
+
   private IndexableResourceContent getResourceFromPageWithContent(String payload) {
     CloudEvent pageEvent = CloudEventUtils.eventWithData(
         DEFAULT_KEY,

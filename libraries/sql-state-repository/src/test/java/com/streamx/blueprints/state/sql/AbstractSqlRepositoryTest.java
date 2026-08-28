@@ -140,14 +140,14 @@ class AbstractSqlRepositoryTest {
   }
 
   @Test
-  void shouldExecutePragmaAndCommitTransaction() throws Exception {
+  void shouldCommitTransaction() throws Exception {
     String result = repository.transaction(conn -> "success");
 
     assertEquals("success", result);
 
     verify(connection).setAutoCommit(false);
-    verify(connection).createStatement();
-    verify(statement).execute("PRAGMA foreign_keys = ON");
+    verify(connection, never()).createStatement();
+    verify(statement, never()).execute("PRAGMA foreign_keys = ON");
     verify(connection).commit();
     verify(connection, never()).rollback();
     verify(connection).setAutoCommit(true);
@@ -168,7 +168,6 @@ class AbstractSqlRepositoryTest {
     assertSame(expected, exception.getCause());
 
     verify(connection).setAutoCommit(false);
-    verify(statement).execute("PRAGMA foreign_keys = ON");
     verify(connection).rollback();
     verify(connection, never()).commit();
     verify(connection).setAutoCommit(true);
@@ -190,31 +189,8 @@ class AbstractSqlRepositoryTest {
     assertEquals("Commit failed", exception.getCause().getMessage());
 
     verify(connection).setAutoCommit(false);
-    verify(statement).execute("PRAGMA foreign_keys = ON");
     verify(connection).commit();
     verify(connection).rollback();
-    verify(connection).setAutoCommit(true);
-  }
-
-  @Test
-  void shouldThrowWhenPragmaExecutionFails() throws Exception {
-    doThrow(new SQLException("PRAGMA failed"))
-        .when(statement)
-        .execute("PRAGMA foreign_keys = ON");
-
-    RuntimeException exception =
-        assertThrows(
-            RuntimeException.class,
-            () -> repository.transaction(conn -> "success"));
-
-    assertEquals("Transaction failed", exception.getMessage());
-    assertInstanceOf(SQLException.class, exception.getCause());
-    assertEquals("PRAGMA failed", exception.getCause().getMessage());
-
-    verify(connection).setAutoCommit(false);
-    verify(statement).execute("PRAGMA foreign_keys = ON");
-    verify(connection, never()).commit();
-    verify(connection, never()).rollback();
     verify(connection).setAutoCommit(true);
   }
 

@@ -4,6 +4,8 @@ import static com.streamx.blueprints.sql.Channels.INDEXABLE_RESORUCES_STATE;
 import static com.streamx.blueprints.sql.SqlConstants.CREATE_INDEXABLE_RESOURCE;
 import static com.streamx.blueprints.sql.SqlConstants.CREATE_INDEXABLE_RESOURCE_FACETS;
 import static com.streamx.blueprints.sql.SqlConstants.CREATE_INDEXABLE_RESOURCE_FIELDS;
+import static com.streamx.blueprints.sql.SqlConstants.DELETE_FACETS_BY_SUBJECT;
+import static com.streamx.blueprints.sql.SqlConstants.DELETE_FIELDS_BY_SUBJECT;
 import static com.streamx.blueprints.sql.SqlConstants.DELETE_RESOURCE;
 import static com.streamx.blueprints.sql.SqlConstants.INSERT_FACET;
 import static com.streamx.blueprints.sql.SqlConstants.INSERT_FIELD;
@@ -67,28 +69,22 @@ public class StateRepository {
       IndexableResourceContent content = deserializeValue(
           indexableResource.getContentAsString(),
           IndexableResourceContent.class);
-      ResourceEntity resourceEntity = includeOnlyConfiguredPersistedData(
-          new ResourceEntity(subject, content.title(),
-              content.content(), content.facets(), content.fields()), configuration);
+      ResourceEntity resourceEntity = toResourceEntity(
+          subject, content, configuration);
       save(resourceEntity);
     } else if (IndexableResource.TYPE_UNPUBLISHED.equals(eventType)) {
-      delete(subject);
+      delete(subject, DELETE_RESOURCE);
     }
   }
 
   public void save(ResourceEntity resource) {
     repository.transaction(connection -> {
       insertResource(connection, resource);
+      delete(connection, resource.subject(), DELETE_FIELDS_BY_SUBJECT);
+      delete(connection, resource.subject(), DELETE_FACETS_BY_SUBJECT);
       insertProperties(connection, resource.subject(), resource.facets(), INSERT_FACET);
       insertProperties(connection, resource.subject(), resource.fields(), INSERT_FIELD);
 
-      return null;
-    });
-  }
-
-  public void delete(String subject) {
-    repository.transaction(connection -> {
-      deleteResource(connection, subject);
       return null;
     });
   }
@@ -122,8 +118,15 @@ public class StateRepository {
     }
   }
 
-  private void deleteResource(Connection connection, String subject) throws SQLException {
-    try (PreparedStatement statement = connection.prepareStatement(DELETE_RESOURCE)) {
+  public void delete(String subject, String sql) {
+    repository.transaction(connection -> {
+      delete(connection, subject, sql);
+      return null;
+    });
+  }
+
+  private void delete(Connection connection, String subject, String sql) throws SQLException {
+    try (PreparedStatement statement = connection.prepareStatement(sql)) {
       statement.setString(1, subject);
       statement.executeUpdate();
     }
@@ -149,7 +152,7 @@ public class StateRepository {
 
   }
 
-  private ResourceEntity includeOnlyConfiguredPersistedData(ResourceEntity resource,
+  private ResourceEntity toResourceEntity(String subject, IndexableResourceContent content,
       Configuration configuration) {
     List<String> configuredFacets =
         configuration.persistedData().facets().orElseGet(List::of);
@@ -157,22 +160,27 @@ public class StateRepository {
     List<String> configuredFields =
         configuration.persistedData().fields().orElseGet(List::of);
 
-    return new ResourceEntity(
-        resource.subject(),
-        resource.title(),
-        configuration.persistedData().includeContent() ? resource.content() : "",
-        resource.facets().entrySet().stream()
+    Map<String, Object> filteredFacets = configuredFacets.isEmpty() ? content.facets() :
+        content.facets().entrySet().stream()
             .filter(entry -> configuredFacets.contains(entry.getKey()))
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
                 Map.Entry::getValue
-            )),
-        resource.fields().entrySet().stream()
+            ));
+    Map<String, Object> filteredFields = configuredFields.isEmpty() ? content.fields() :
+        content.fields().entrySet().stream()
             .filter(entry -> configuredFields.contains(entry.getKey()))
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
                 Map.Entry::getValue
-            ))
+            ));
+
+    return new ResourceEntity(
+        subject,
+        content.title(),
+        configuration.persistedData().includeContent() ? content.content() : "",
+        filteredFacets,
+        filteredFields
     );
   }
 }
