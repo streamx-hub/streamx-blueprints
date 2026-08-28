@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.streamx.blueprints</groupId>
     <artifactId>quarkus-rocksdb-native-support-parent</artifactId>
-    <version>3.0.23</version>
+    <version>3.0.24-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
