@@ -49,9 +49,6 @@ class SqliteManagerTest {
 
     Path expectedPath = tempDir.resolve("instance-1").resolve("test.db");
 
-    // Agroal inicjalizuje połączenia leniwie - dopiero pierwsze getConnection()
-    // fizycznie otwiera (i tworzy) plik SQLite, w przeciwieństwie do Hikari,
-    // które domyślnie tworzy połączenia z góry.
     try (Connection connection = dataSource.getConnection();
         Statement statement = connection.createStatement()) {
       statement.execute("CREATE TABLE test (id INTEGER)");
@@ -123,8 +120,6 @@ class SqliteManagerTest {
     DataSource dataSource = manager.getOrCreateDb(config, "test-instance", "test");
 
     assertNotNull(dataSource);
-
-    // Agroal inicjalizuje połączenia leniwie - wymuszamy fizyczne otwarcie pliku.
     try (Connection connection = dataSource.getConnection()) {
       assertNotNull(connection);
     }
@@ -208,9 +203,6 @@ class SqliteManagerTest {
     DataSource second = manager.getOrCreateDb(config, "instance-1", "database-2");
 
     manager.closeAll();
-
-    // AgroalDataSource nie eksponuje isClosed() - weryfikujemy zamknięcie pośrednio:
-    // pobranie połączenia z zamkniętej puli musi zakończyć się błędem.
     assertThrows(SQLException.class, first::getConnection);
     assertThrows(SQLException.class, second::getConnection);
   }
