@@ -68,7 +68,7 @@ public class RenderingEngineIT extends BaseQuarkusIntegrationTest {
         .isEqualTo("<html>Product with ID 1 and name Bag</html>");
   }
 
-  private static void publishData(String key, Data data) {
+  private void publishData(String key, Data data) {
     sendStatefulEvent(
         CloudEventUtils.eventWithData(key, Data.TYPE_PUBLISHED, data),
         Incoming.DATA_STATE,
@@ -76,7 +76,7 @@ public class RenderingEngineIT extends BaseQuarkusIntegrationTest {
     );
   }
 
-  private static void publishRenderer(String key, Renderer renderer) {
+  private void publishRenderer(String key, Renderer renderer) {
     sendStatefulEvent(
         CloudEventUtils.eventWithData(key, Renderer.TYPE_PUBLISHED, renderer),
         Incoming.RENDERERS_STATE,
@@ -84,7 +84,7 @@ public class RenderingEngineIT extends BaseQuarkusIntegrationTest {
     );
   }
 
-  private static void publishRenderingContext(String key, RenderingContext renderingContext) {
+  private void publishRenderingContext(String key, RenderingContext renderingContext) {
     sendStatefulEvent(
         CloudEventUtils.eventWithData(key, RenderingContext.TYPE_PUBLISHED, renderingContext),
         Incoming.RENDERING_CONTEXTS_STATE,
