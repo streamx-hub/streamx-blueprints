@@ -4,7 +4,7 @@
 
   <groupId>com.streamx.blueprints</groupId>
   <artifactId>blueprints-project</artifactId>
-  <version>3.0.23-SNAPSHOT</version>
+  <version>3.0.24-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>StreamX Blueprints : Project</name>
 
