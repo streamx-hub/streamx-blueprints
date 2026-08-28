@@ -20,24 +20,27 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class AbstractSqlRepositoryTest {
 
+  private DataSource dataSource;
   private Connection connection;
   private Statement statement;
   private TestSqlRepository repository;
 
   @BeforeEach
   void setUp() throws Exception {
+    dataSource = mock(DataSource.class);
     connection = mock(Connection.class);
     statement = mock(Statement.class);
 
-    when(connection.createStatement())
-        .thenReturn(statement);
+    when(dataSource.getConnection()).thenReturn(connection);
+    when(connection.createStatement()).thenReturn(statement);
 
-    repository = new TestSqlRepository(connection);
+    repository = new TestSqlRepository(dataSource);
   }
 
   @Test
@@ -46,13 +49,15 @@ class AbstractSqlRepositoryTest {
 
     repository.executeQuery(sql);
 
+    verify(dataSource).getConnection();
     verify(connection).createStatement();
     verify(statement).execute(sql);
+    verify(connection).close();
   }
 
   @Test
-  void shouldThrowExceptionWhenExecuteQueryFails() throws Exception {
-    when(connection.createStatement())
+  void shouldThrowExceptionWhenGetConnectionFailsForExecuteQuery() throws Exception {
+    when(dataSource.getConnection())
         .thenThrow(new SQLException("Connection failed"));
 
     RuntimeException exception =
@@ -61,6 +66,20 @@ class AbstractSqlRepositoryTest {
     assertEquals("SQL execution failed", exception.getMessage());
     assertInstanceOf(SQLException.class, exception.getCause());
     assertEquals("Connection failed", exception.getCause().getMessage());
+  }
+
+  @Test
+  void shouldThrowExceptionWhenExecuteQueryFails() throws Exception {
+    when(connection.createStatement())
+        .thenThrow(new SQLException("Statement failed"));
+
+    RuntimeException exception =
+        assertThrows(RuntimeException.class, () -> repository.executeQuery("INVALID SQL"));
+
+    assertEquals("SQL execution failed", exception.getMessage());
+    assertInstanceOf(SQLException.class, exception.getCause());
+    assertEquals("Statement failed", exception.getCause().getMessage());
+    verify(connection).close();
   }
 
   @Test
@@ -81,9 +100,11 @@ class AbstractSqlRepositoryTest {
 
     assertEquals(List.of("John", "Jane"), result);
 
+    verify(dataSource).getConnection();
     verify(preparedStatement).setObject(1, 123);
     verify(preparedStatement).executeQuery();
     verify(resultSet, times(3)).next();
+    verify(connection).close();
   }
 
   @Test
@@ -140,17 +161,34 @@ class AbstractSqlRepositoryTest {
   }
 
   @Test
+  void shouldThrowExceptionWhenGetConnectionFailsForQuery() throws Exception {
+    when(dataSource.getConnection())
+        .thenThrow(new SQLException("Connection failed"));
+
+    RuntimeException exception =
+        assertThrows(
+            RuntimeException.class,
+            () -> repository.query("SELECT 1", rs -> rs.getString("name")));
+
+    assertEquals("Query failed", exception.getMessage());
+    assertInstanceOf(SQLException.class, exception.getCause());
+    assertEquals("Connection failed", exception.getCause().getMessage());
+  }
+
+  @Test
   void shouldCommitTransaction() throws Exception {
     String result = repository.transaction(conn -> "success");
 
     assertEquals("success", result);
 
+    verify(dataSource).getConnection();
     verify(connection).setAutoCommit(false);
     verify(connection, never()).createStatement();
     verify(statement, never()).execute("PRAGMA foreign_keys = ON");
     verify(connection).commit();
     verify(connection, never()).rollback();
     verify(connection).setAutoCommit(true);
+    verify(connection).close();
   }
 
   @Test
@@ -171,6 +209,7 @@ class AbstractSqlRepositoryTest {
     verify(connection).rollback();
     verify(connection, never()).commit();
     verify(connection).setAutoCommit(true);
+    verify(connection).close();
   }
 
   @Test
@@ -192,6 +231,7 @@ class AbstractSqlRepositoryTest {
     verify(connection).commit();
     verify(connection).rollback();
     verify(connection).setAutoCommit(true);
+    verify(connection).close();
   }
 
   @Test
@@ -232,12 +272,28 @@ class AbstractSqlRepositoryTest {
     verify(connection).rollback();
     verify(connection, never()).commit();
     verify(connection).setAutoCommit(true);
+    verify(connection).close();
+  }
+
+  @Test
+  void shouldThrowExceptionWhenGetConnectionFailsForTransaction() throws Exception {
+    when(dataSource.getConnection())
+        .thenThrow(new SQLException("Connection failed"));
+
+    RuntimeException exception =
+        assertThrows(
+            RuntimeException.class,
+            () -> repository.transaction(conn -> "success"));
+
+    assertEquals("Transaction failed", exception.getMessage());
+    assertInstanceOf(SQLException.class, exception.getCause());
+    assertEquals("Connection failed", exception.getCause().getMessage());
   }
 
   static class TestSqlRepository extends AbstractSqlRepository {
 
-    TestSqlRepository(Connection connection) {
-      super(connection);
+    TestSqlRepository(DataSource dataSource) {
+      super(dataSource);
     }
   }
 }

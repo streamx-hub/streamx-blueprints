@@ -7,18 +7,20 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import javax.sql.DataSource;
 
 public abstract class AbstractSqlRepository implements SqlRepository {
 
-  protected final Connection connection;
+  protected final DataSource dataSource;
 
-  protected AbstractSqlRepository(Connection connection) {
-    this.connection = connection;
+  protected AbstractSqlRepository(DataSource dataSource) {
+    this.dataSource = dataSource;
   }
 
   @Override
   public void executeQuery(String sqlQuery) {
-    try (Statement statement = connection.createStatement()) {
+    try (Connection connection = dataSource.getConnection();
+        Statement statement = connection.createStatement()) {
       statement.execute(sqlQuery);
     } catch (SQLException e) {
       throw new RuntimeException("SQL execution failed", e);
@@ -27,14 +29,14 @@ public abstract class AbstractSqlRepository implements SqlRepository {
 
   @Override
   public <T> List<T> query(String sql, RowMapper<T> mapper, Object... parameters) {
-    try (PreparedStatement statement = connection.prepareStatement(sql)) {
+    try (Connection connection = dataSource.getConnection();
+        PreparedStatement statement = connection.prepareStatement(sql)) {
       for (int i = 0; i < parameters.length; i++) {
         statement.setObject(i + 1, parameters[i]);
       }
 
       try (ResultSet resultSet = statement.executeQuery()) {
         List<T> result = new ArrayList<>();
-
         while (resultSet.next()) {
           result.add(mapper.map(resultSet));
         }
@@ -46,8 +48,8 @@ public abstract class AbstractSqlRepository implements SqlRepository {
   }
 
   @Override
-  public synchronized <T> T transaction(SqlTransaction<T> transaction) {
-    try {
+  public <T> T transaction(SqlTransaction<T> transaction) {
+    try (Connection connection = dataSource.getConnection()) {
       connection.setAutoCommit(false);
       try {
         T result = transaction.execute(connection);
@@ -56,15 +58,11 @@ public abstract class AbstractSqlRepository implements SqlRepository {
       } catch (Exception e) {
         connection.rollback();
         throw e;
+      } finally {
+        connection.setAutoCommit(true);
       }
     } catch (Exception e) {
       throw new RuntimeException("Transaction failed", e);
-    } finally {
-      try {
-        connection.setAutoCommit(true);
-      } catch (SQLException e) {
-        throw new RuntimeException("Unable to restore autoCommit", e);
-      }
     }
   }
 }

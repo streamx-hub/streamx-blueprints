@@ -12,8 +12,8 @@ import com.streamx.blueprints.state.sql.repository.PropertyNames;
 import com.streamx.blueprints.state.sql.repository.SqlRepository;
 import com.streamx.blueprints.state.sql.repository.sqlite.SqliteManager;
 import com.streamx.blueprints.state.sql.repository.sqlite.SqliteRepository;
-import java.sql.Connection;
 import java.util.Optional;
+import javax.sql.DataSource;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,13 +25,13 @@ class SqlRepositoryFactoryTest {
   private SqliteManager sqliteManager;
   private SqlRepositoryFactory factory;
   private Config config;
-  private Connection connection;
+  private DataSource dataSource;
 
   @BeforeEach
   void setUp() {
     sqliteManager = mock(SqliteManager.class);
     config = mock(Config.class);
-    connection = mock(Connection.class);
+    dataSource = mock(DataSource.class);
     factory = new SqlRepositoryFactory();
     factory.sqliteManager = sqliteManager;
   }
@@ -45,7 +45,7 @@ class SqlRepositoryFactoryTest {
     when(config.getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class))
         .thenReturn(Optional.of(instanceId));
     when(sqliteManager.getOrCreateDb(config, instanceId, identifier))
-        .thenReturn(connection);
+        .thenReturn(dataSource);
 
     try (MockedStatic<ConfigProvider> configProvider = mockStatic(ConfigProvider.class)) {
       configProvider.when(ConfigProvider::getConfig).thenReturn(config);
@@ -64,7 +64,7 @@ class SqlRepositoryFactoryTest {
     when(config.getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class))
         .thenReturn(Optional.of(instanceId));
     when(sqliteManager.getOrCreateDb(config, instanceId, identifier))
-        .thenReturn(connection);
+        .thenReturn(dataSource);
 
     try (MockedStatic<ConfigProvider> configProvider = mockStatic(ConfigProvider.class)) {
       configProvider.when(ConfigProvider::getConfig).thenReturn(config);
@@ -83,7 +83,7 @@ class SqlRepositoryFactoryTest {
     when(config.getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class))
         .thenReturn(Optional.empty());
     when(sqliteManager.getOrCreateDb(config, defaultInstanceId, identifier))
-        .thenReturn(connection);
+        .thenReturn(dataSource);
 
     try (MockedStatic<ConfigProvider> configProvider = mockStatic(ConfigProvider.class)) {
       configProvider.when(ConfigProvider::getConfig).thenReturn(config);
@@ -158,7 +158,7 @@ class SqlRepositoryFactoryTest {
     when(config.getOptionalValue(PropertyNames.SERVICE_INSTANCE_ID, String.class))
         .thenReturn(Optional.of("instance-1.test"));
     when(sqliteManager.getOrCreateDb(config, "instance-1.test", "my-db.test-123"))
-        .thenReturn(connection);
+        .thenReturn(dataSource);
 
     try (MockedStatic<ConfigProvider> configProvider = mockStatic(ConfigProvider.class)) {
       configProvider.when(ConfigProvider::getConfig).thenReturn(config);
