@@ -74,8 +74,8 @@
 
   <distributionManagement>
     <repository>
-      <id>streamx-maven-public-releases</id>
-      <url>artifactregistry://europe-west1-maven.pkg.dev/streamx-releases/streamx-maven-public-releases</url>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/streamx-hub/streamx-blueprints</url>
     </repository>
   </distributionManagement>
 
@@ -87,8 +87,8 @@
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-      <id>streamx-maven-public-releases</id>
-      <url>https://europe-west1-maven.pkg.dev/streamx-releases/streamx-maven-public-releases</url>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/streamx-hub/streamx-blueprints</url>
     </repository>
   </repositories>
 
