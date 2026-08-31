@@ -60,7 +60,7 @@ jobs:
           ./mvnw -B release:perform -Darguments="$ARGS"
 
   release-arm64-native:
-    runs-on: ubuntu-latest-m-arm
+    runs-on: ubuntu-24.04-arm
     needs: release-amd64-native
     steps:
       - name: Checkout release tag
