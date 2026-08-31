@@ -95,6 +95,7 @@ jobs:
         shell: bash
         env:
           TAG: ${{ needs.release-amd64-native.outputs.release_tag }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           set -x  # print each command for debugging
