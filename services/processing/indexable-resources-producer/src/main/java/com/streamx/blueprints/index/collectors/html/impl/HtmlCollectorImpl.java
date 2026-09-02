@@ -24,7 +24,10 @@ import org.w3c.dom.NodeList;
 @RegisterForReflection(
     classNames = {
         "com.sun.org.apache.xpath.internal.functions.FuncLocalPart",
-        "com.sun.org.apache.xpath.internal.functions.FuncStartsWith"
+        "com.sun.org.apache.xpath.internal.functions.FuncStartsWith",
+        "com.sun.org.apache.xpath.internal.functions.FuncContains",
+        "com.sun.org.apache.xpath.internal.functions.FuncConcat",
+        "com.sun.org.apache.xpath.internal.functions.FuncTranslate"
     }
 )
 public class HtmlCollectorImpl extends AbstractHtmlCollector {
