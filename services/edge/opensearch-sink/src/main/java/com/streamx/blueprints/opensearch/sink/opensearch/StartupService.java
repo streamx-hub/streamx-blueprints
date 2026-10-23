@@ -24,10 +24,7 @@ public class StartupService {
   ElasticsearchEvolution elasticsearchEvolution;
 
   void setup(@Observes @Priority(PRIORITY) StartupEvent event) {
-    if (healthCheckService.waitForClusterHealth()) {
-      elasticsearchEvolution.migrate();
-    } else {
-      throw new IllegalStateException("Cannot perform migrations, cluster is not healthy");
-    }
+    healthCheckService.waitForClusterHealth();
+    elasticsearchEvolution.migrate();
   }
 }

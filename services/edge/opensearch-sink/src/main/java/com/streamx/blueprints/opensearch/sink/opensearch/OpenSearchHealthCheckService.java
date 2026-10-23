@@ -2,7 +2,6 @@ package com.streamx.blueprints.opensearch.sink.opensearch;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.streamx.blueprints.opensearch.sink.config.Configuration;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.HttpMethod;
@@ -33,25 +32,15 @@ public class OpenSearchHealthCheckService {
   @Inject
   ObjectMapper objectMapper;
 
-  @Inject
-  Configuration configuration;
-
-  boolean waitForClusterHealth() {
+  void waitForClusterHealth() {
     log.info("Start waiting for Cluster Health");
     Request request = createRequest();
-    int timeoutSeconds = configuration.opensearchHealthCheckWaitTimeoutSeconds();
 
-    for (int i = 0; i < timeoutSeconds; i++) {
-      if (verifyClusterHealth(request)) {
-        log.infof("Cluster is healthy");
-        return true;
-      }
+    while (!verifyClusterHealth(request)) {
       log.infof("Waiting for Cluster Health to be in %s", HEALTHY_STATUSES);
       ThreadUtils.sleepQuietly(Duration.ofSeconds(1));
     }
-
-    log.warnf("Cluster Health was not in %s within %d seconds", HEALTHY_STATUSES, timeoutSeconds);
-    return false;
+    log.info("Cluster is healthy");
   }
 
   private boolean verifyClusterHealth(Request request) {
