@@ -1,12 +1,12 @@
 package com.streamx.blueprints.opensearch.sink.opensearch;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-import com.streamx.blueprints.opensearch.sink.config.Configuration;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectSpy;
 import java.io.IOException;
@@ -28,7 +28,6 @@ class OpenSearchHealthCheckServiceTest {
   OpenSearchHealthCheckService service;
 
   private final RestClient restClient = mock();
-  private final Configuration configuration = mock();
 
   private final Response response = mock();
   private final StatusLine statusLine = mock();
@@ -36,16 +35,14 @@ class OpenSearchHealthCheckServiceTest {
   @BeforeEach
   void setupCommonMocks() throws Exception {
     service.restClient = restClient;
-    service.configuration = configuration;
 
-    doReturn(1).when(configuration).opensearchHealthCheckWaitTimeoutSeconds();
     doReturn(statusLine).when(response).getStatusLine();
     doReturn(response).when(restClient).performRequest(any(Request.class));
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"green", "yellow"})
-  void shouldReturnHealthy_WhenGreenOrYellowStatus(String status) throws Exception {
+  void shouldFinishWaiting_WhenGreenOrYellowStatus(String status) throws Exception {
     // when
     setResponseStatus(200);
     setResponseEntity("""
@@ -54,56 +51,89 @@ class OpenSearchHealthCheckServiceTest {
           "active_shards": 2
         }""".formatted(status));
 
+    service.waitForClusterHealth();
+
     // then
-    assertThat(service.waitForClusterHealth()).isTrue();
+    verify(restClient).performRequest(any(Request.class));
   }
 
   @Test
-  void shouldReturnUnhealthy_WhenNotGreenNorYellowStatus() throws Exception {
+  void shouldRetry_WhenNotGreenNorYellowStatus() throws Exception {
     // when
     setResponseStatus(200);
-    setResponseEntity("""
-        {
-          "status": "red",
-          "active_shards": 2
-        }""");
+    setResponseEntities("red", "green");
+
+    service.waitForClusterHealth();
 
     // then
-    assertThat(service.waitForClusterHealth()).isFalse();
+    verify(restClient, times(2)).performRequest(any(Request.class));
   }
 
   @Test
-  void shouldReturnUnhealthy_WhenNot200HttpStatus() throws Exception {
+  void shouldRetry_WhenNot200HttpStatus() throws Exception {
     // when
-    setResponseStatus(503);
+    doReturn(503, 200).when(statusLine).getStatusCode();
     setResponseEntity("""
         {
           "status": "green",
           "active_shards": 2
         }""");
 
+    service.waitForClusterHealth();
+
     // then
-    assertThat(service.waitForClusterHealth()).isFalse();
+    verify(restClient, times(2)).performRequest(any(Request.class));
   }
 
   @Test
-  void shouldReturnUnhealthy_WhenResponseNotJson() throws Exception {
+  void shouldRetry_WhenResponseNotJson() throws Exception {
     // when
     setResponseStatus(200);
-    setResponseEntity("Unexpected response format");
+    doReturn(
+        new StringEntity("Unexpected response format"),
+        new StringEntity("""
+            {
+              "status": "green",
+              "active_shards": 2
+            }"""))
+        .when(response).getEntity();
+
+    service.waitForClusterHealth();
 
     // then
-    assertThat(service.waitForClusterHealth()).isFalse();
+    verify(restClient, times(2)).performRequest(any(Request.class));
   }
 
   @Test
-  void shouldReturnUnhealthy_WhenIoException() throws Exception {
+  void shouldRetry_WhenIoException() throws Exception {
     // when
     doThrow(new IOException("I/O Error"))
+        .doReturn(response)
         .when(restClient).performRequest(any(Request.class));
+    setResponseStatus(200);
+    setResponseEntity("""
+        {
+          "status": "green",
+          "active_shards": 2
+        }""");
+
+    service.waitForClusterHealth();
 
     // then
-    assertThat(service.waitForClusterHealth()).isFalse();
+    verify(restClient, times(2)).performRequest(any(Request.class));
+  }
+
+  private void setResponseEntities(String firstStatus, String secondStatus) throws Exception {
+    doReturn(createResponseEntity(firstStatus), createResponseEntity(secondStatus))
+        .when(response).getEntity();
+  }
+
+  private HttpEntity createResponseEntity(String status) throws Exception {
+    return new StringEntity("""
+        {
+          "status": "%s",
+          "active_shards": 2
+        }""".formatted(status));
   }
 
   private void setResponseEntity(String responseJson) throws Exception {

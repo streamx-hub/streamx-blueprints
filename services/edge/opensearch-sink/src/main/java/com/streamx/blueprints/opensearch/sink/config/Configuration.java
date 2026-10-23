@@ -14,8 +14,4 @@ public interface Configuration {
   List<String> migrationScriptLocations();
 
   List<String> allowedJsonPaths();
-
-  @WithDefault("60")
-  int opensearchHealthCheckWaitTimeoutSeconds();
-
 }
