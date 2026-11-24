@@ -239,9 +239,6 @@ descriptors:
         image: ghcr.io/streamx-hub/streamx-blueprints/opensearch-sink:latest-jvm
         healthCheck:
           enabled: true
-          httpGet:
-            path: /q/health/ready
-            port: 8080
         lifecycle:
           drainDelaySeconds: 5
         incoming:
