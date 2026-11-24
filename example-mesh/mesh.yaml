@@ -237,6 +237,10 @@ descriptors:
     containers:
       sink:
         image: ghcr.io/streamx-hub/streamx-blueprints/opensearch-sink:latest-jvm
+        healthCheck:
+          enabled: true
+        lifecycle:
+          drainDelaySeconds: 5
         incoming:
           indexable-resources: {}
           indexable-resource-fragments: {}
@@ -249,6 +253,8 @@ descriptors:
           QUARKUS_ELASTICSEARCH_HOSTS: ${STREAMX_SERVICE_ID}.opensearch:9200
       opensearch:
         image: docker.io/opensearchproject/opensearch:2.16.0
+        lifecycle:
+          dependency: true
         servicePorts:
           - 9201:9200
           - 9301:9300
