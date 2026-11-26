@@ -36,8 +36,8 @@ public class AdjustImgSrcFunction {
 
   /**
    * Receives the page from incoming channel and if the {@code eventType} is Page.TYPE_PUBLISHED -
-   * adjusts all values of img src tags to use optimized version of the images, if such optimized
-   * images are available. The adjusted page is published to the outgoing channel. When there are no
+   * adjusts inline image sources and Open Graph image metadata to use optimized assets when
+   * available. The adjusted page is published to the outgoing channel. When there are no
    * adjustments to be made, or when the {@code eventType} is Page.TYPE_UNPUBLISHED - the message is
    * relayed to the outgoing channel with no changes
    *
