@@ -115,6 +115,26 @@ abstract class BaseAdjustImgSrcFunctionTest {
   }
 
   @Test
+  void shouldAdjustOpenGraphImageWhenOptimizedAssetExists() {
+    publishOptimizedImage(JPG_IMAGE);
+
+    String html = """
+        <meta property="og:image" content="%s?width=1200">
+        <meta property="og:image" content="%s">
+        <meta property="og:image:secure_url" content="%s">
+        """.formatted(JPG_IMAGE.originalPath, PNG_IMAGE.originalPath, JPG_IMAGE.originalPath);
+    CloudEvent pageEvent = createPublishPageEvent("/pages/open-graph.html", html);
+    pagesChannel.send(pageEvent);
+
+    assertThat(extractPageHtml(waitForAdjustedOutputEvent(pageEvent)))
+        .contains("property=\"og:image\" content=\"%s?width=1200\""
+            .formatted(JPG_IMAGE.optimizedPath))
+        .contains("property=\"og:image\" content=\"%s\"".formatted(PNG_IMAGE.originalPath))
+        .contains("property=\"og:image:secure_url\" content=\"%s\""
+            .formatted(JPG_IMAGE.originalPath));
+  }
+
+  @Test
   void shouldAdjustImgSrcOnEveryPublicationOfTheSamePage() {
     // given: prepare optimized image and page to be published (referencing that image)
     publishOptimizedImage(JPG_IMAGE);

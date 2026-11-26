@@ -4,7 +4,6 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
 import org.jsoup.Jsoup;
@@ -38,25 +37,28 @@ class ImgSrcAdjuster {
    * if any of the images it contains was adjusted.
    */
   private boolean adjustDocument(Document document) {
-    return document.select("img[src]")
-        .stream()
-        .map(this::adjustImgSrc)
-        .collect(Collectors.toSet())
-        .contains(true);
+    boolean adjusted = false;
+    for (Element image : document.select("img[src]")) {
+      adjusted |= adjustImageReference(image, "src");
+    }
+    for (Element metadata : document.select("meta[property=og:image][content]")) {
+      adjusted |= adjustImageReference(metadata, "content");
+    }
+    return adjusted;
   }
 
   /**
    * @return true if image was adjusted, false if no changes
    */
-  private boolean adjustImgSrc(Element img) {
-    String imagePath = img.attr("src");
+  private boolean adjustImageReference(Element element, String attribute) {
+    String imagePath = element.attr(attribute);
     String imagePathWithoutQueryString = StringUtils.substringBeforeLast(imagePath, "?");
     String queryString = StringUtils.substringAfterLast(imagePath, "?");
     String optimizedImagePath = getOptimizedImagePath(imagePathWithoutQueryString, queryString);
 
     if (optimizedImagePath != null) {
       log.tracef("Updating %s to %s", imagePath, optimizedImagePath);
-      img.attr("src", optimizedImagePath);
+      element.attr(attribute, optimizedImagePath);
       return true;
     }
 
